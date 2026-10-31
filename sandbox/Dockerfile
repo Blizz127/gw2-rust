@@ -17,7 +17,7 @@ RUN dpkg --add-architecture i386 \
       wine wine64 libwine fonts-wine \
       mesa-vulkan-drivers vulkan-tools \
       xvfb xauth x11-utils x11-apps netpbm \
-      ca-certificates curl tini procps \
+      ca-certificates curl tini procps libc6:i386 libgcc-s1:i386 libstdc++6:i386 libfreetype6 libfreetype6:i386 \
  && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL -o /tmp/dxvk.tgz \

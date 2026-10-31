@@ -61,11 +61,20 @@ case "$mode" in
     [[ -w "$src" ]] || { echo "$src is not writable; refusing to mount a frozen baseline"; exit 2; }
     [[ -f "$src/.prepared" ]] || { echo "run: $0 prepare $build (Gw2-64.exe is still the installer bootstrap)"; exit 2; }
     mkdir -p "$STATE/home"
+    # WINE_RUNTIME=proton uses the devbox's GE-Proton (read-only) with its own prefix.
+    runtime_args=(); prefix="$STATE/prefix"
+    if [[ "${WINE_RUNTIME:-system}" == proton ]]; then
+      proton_dir="${PROTON_DIR:-/home/blizz/.local/share/Steam/compatibilitytools.d/GE-Proton11-6-x86_64}"
+      [[ -x "$proton_dir/files/bin/wine" ]] || { echo "no Proton wine at $proton_dir"; exit 2; }
+      runtime_args=(-v "$proton_dir:/opt/proton:ro" -e WINE=/opt/proton/files/bin/wine)
+      prefix="$STATE/prefix-proton"
+    fi
+    mkdir -p "$prefix"
     mkdir -p "$STATE/prefix" "$STATE/logs"
     exec docker run --rm --network none --name "gw2-sandbox-$build" \
       --user "$(id -u):$(id -g)" -e HOME=/sandbox/home -v "$STATE/home:/sandbox/home" \
       --dns 127.0.0.1 --dns-search . -e DNS_SINK="${DNS_SINK:-1}" -e WINEDEBUG="${WINEDEBUG:--all}" \
-      --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$STATE/prefix:/sandbox/prefix" -v "$STATE/logs:/sandbox/logs" \
+      --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$prefix:/sandbox/prefix" "${runtime_args[@]}" -v "$STATE/logs:/sandbox/logs" \
       -v "$HERE/../target/debug:/server:ro" -e SERVER="${SERVER:-}" \
       "$IMAGE" client "$@" ;;
   *) echo "usage: $0 build|preflight|selftest|prepare <build>|client <build> [args]"; exit 2 ;;

@@ -6,6 +6,7 @@
 #                      the same isolated network (e.g. SERVER="gw2-login-observe
 #                      --log /sandbox/logs/capture").
 set -euo pipefail
+WINE="${WINE:-wine}"
 
 isolated() {
   # Pass only if no interface other than lo exists and an outbound connect fails.
@@ -26,11 +27,11 @@ start_x() {
 
 prepare_prefix() {
   if [[ ! -f "$WINEPREFIX/.dxvk-installed" ]]; then
-    wineboot -i >/sandbox/logs/wineboot.log 2>&1 || true
+    "$WINE" wineboot -i >/sandbox/logs/wineboot.log 2>&1 || true
     local sys="$WINEPREFIX/drive_c/windows/system32"
     for dll in d3d11 dxgi d3d10core d3d9; do
       cp "/opt/dxvk/x64/$dll.dll" "$sys/$dll.dll"
-      wine reg add 'HKCU\Software\Wine\DllOverrides' /v "$dll" /d native /f >/dev/null 2>&1
+      "$WINE" reg add 'HKCU\Software\Wine\DllOverrides' /v "$dll" /d native /f >/dev/null 2>&1
     done
     touch "$WINEPREFIX/.dxvk-installed"
   fi
@@ -41,7 +42,7 @@ mode="${1:-preflight}"; shift || true
 isolated
 case "$mode" in
   preflight)
-    wine --version
+    "$WINE" --version
     start_x
     vk=$(vulkaninfo --summary 2>&1 || true)
     grep -E 'deviceName|driverName' <<<"$vk" | head -4
@@ -69,7 +70,7 @@ case "$mode" in
         xwd -root -silent 2>/dev/null | xwdtopnm 2>/dev/null | pnmtopng > "/sandbox/logs/shots/shot-$(printf %03d $i).png" 2>/dev/null || true
       done ) &
     cd /client
-    exec wine /client/Gw2-64.exe "$@" 2> >(tee /sandbox/logs/wine.err >&2)
+    exec "$WINE" /client/Gw2-64.exe "$@" 2> >(tee /sandbox/logs/wine.err >&2)
     ;;
   *) echo "unknown mode $mode"; exit 2 ;;
 esac
