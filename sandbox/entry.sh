@@ -69,7 +69,7 @@ case "$mode" in
         xwd -root -silent 2>/dev/null | xwdtopnm 2>/dev/null | pnmtopng > "/sandbox/logs/shots/shot-$(printf %03d $i).png" 2>/dev/null || true
       done ) &
     cd /client
-    exec wine /client/Gw2-64.exe "$@"
+    exec wine /client/Gw2-64.exe "$@" 2> >(tee /sandbox/logs/wine.err >&2)
     ;;
   *) echo "unknown mode $mode"; exit 2 ;;
 esac
