@@ -47,6 +47,7 @@ lavapipe, DXVK 3.1.1 and Xvfb. `sandbox/run.sh` always starts it with `--network
 | --- | --- |
 | `sandbox/run.sh build` | Build the image. This needs network; no client is involved. |
 | `sandbox/run.sh preflight` | Run the checks below. No client needed. |
+| `sandbox/run.sh selftest` | Build `gw2-login-observe`, run it inside the isolated container, send a scripted STS Connect over loopback, and assert the capture. Passed 2026-10-31 (`selftest: ok`). The extra 0-byte connection in the log is the readiness probe. |
 | `SERVER="gw2-login-observe --log /sandbox/logs/capture" sandbox/run.sh client <build> [args]` | Start a workspace binary from `target/debug` (mounted read-only at `/server`) inside the same isolated network, then run `/client/Gw2-64.exe` from the read-only mount. |
 
 **Preflight checks:**
