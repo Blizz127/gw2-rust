@@ -48,7 +48,8 @@ lavapipe, DXVK 3.1.1 and Xvfb. `sandbox/run.sh` always starts it with `--network
 | `sandbox/run.sh build` | Build the image. This needs network; no client is involved. |
 | `sandbox/run.sh preflight` | Run the checks below. No client needed. |
 | `sandbox/run.sh selftest` | Build `gw2-login-observe`, run it inside the isolated container, send a scripted STS Connect over loopback, and assert the capture. Passed 2026-10-31 (`selftest: ok`). The extra 0-byte connection in the log is the readiness probe. |
-| `SERVER="gw2-login-observe --log /sandbox/logs/capture" sandbox/run.sh client <build> [args]` | Start a workspace binary from `target/debug` (mounted read-only at `/server`) inside the same isolated network, then run `/client/Gw2-64.exe` from the read-only mount. |
+| `sandbox/run.sh prepare <build>` | Check the writable working copy `/home/blizz/gw2-sandbox/client-work-<build>` against the frozen baseline: `Gw2.dat` size, and `Gw2-64.new.exe` byte-identical. Then do the launcher's own swap: `Gw2-64.new.exe` becomes `Gw2-64.exe`, and the old `Gw2-64.exe`, the installer bootstrap, is dropped since it is identical to `Gw2Setup-64.exe`. |
+| `SERVER="gw2-login-observe --log /sandbox/logs/capture" sandbox/run.sh client <build> [args]` | Run the prepared working copy (writable, so the client can unpack `bin64/`), as the host user, on cores 0-15 by default (`CPUS=`). It optionally starts a workspace binary first. The frozen baseline is never mounted. |
 
 **Preflight checks:**
 - isolation: only `lo` exists, and outbound TCP fails
@@ -66,6 +67,13 @@ lavapipe, DXVK 3.1.1 and Xvfb. `sandbox/run.sh` always starts it with `--network
 
 **Server in the container:** the host-built `gw2-login-observe` (glibc 2.43 host) ran inside
 the container and captured an STS message over loopback.
+
+**Incident 2026-10-31 19:25Z:** while I was testing a guard, `run.sh client 209026` started a
+container. It used the half-copied working copy, whose `Gw2-64.exe` at that point was the
+installer bootstrap. Wine refused the root-owned run (`'/sandbox/prefix' is not owned by
+you`) and the container exited before any game executable was launched. It ran with
+`--network none`, and no container was left behind. Fixes: client mode now runs as the host
+user and requires `prepare`, which only swaps in the real client after verifying it.
 
 **Where state lives:** the Wine prefix and logs persist under `/home/blizz/gw2-sandbox/`.
 DXVK goes into the prefix on first client run (`.dxvk-installed` marker).
