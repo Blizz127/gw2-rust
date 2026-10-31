@@ -12,6 +12,8 @@
 //! - Server → client: `u16 compressed_len | u16 raw_len | LZ4 block`, and the
 //!   whole frame, header included, is RC4'd.
 
+pub mod dh;
+
 use std::io::{Error, ErrorKind, Result};
 
 use bytes::{Bytes, BytesMut};

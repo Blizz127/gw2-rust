@@ -12,3 +12,5 @@ bytes = { workspace = true }
 lz4_flex = { workspace = true }
 rc4 = { workspace = true }
 tokio-util = { workspace = true }
+getrandom = { workspace = true }
+num-bigint = { workspace = true }

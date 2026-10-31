@@ -17,6 +17,8 @@ gw2-proto = { path = "crates/gw2-proto" }
 
 anyhow = "1"
 bytes = "1"
+getrandom = "0.4"
+num-bigint = "0.4"
 lz4_flex = "0.14"
 quick-xml = "0.39"
 rc4 = "0.2"
