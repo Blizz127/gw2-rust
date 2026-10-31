@@ -8,6 +8,13 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
   [client-build.md](client-build.md)). The REA target is `Gw2-64.new.exe` (sha256 `99342078…`).
   The REA import is running.
 - `Gw2.dat` reader is verified on real data (see client-build.md). Queensdale = map file 192711.
+- The client runs offline in the sandbox (Wine 10 and GE-Proton 11).
+  - First hop: `cligate.101.ncplatform.net` on TCP 80, redirected by DNS. The connection
+    stays silent for 10 s.
+  - The portal is authenticated against pinned RSA-1024 keys (docs/re/209026-portal-pins.md).
+  - `-authsrv host[:6112]` sets the later AuthSrv hop (docs/re/209026-cmdline-and-hosts.md).
+  - **Current blocker:** the cligate:80 handshake. Find who speaks first and the framing,
+    via REA on the code that consumes the pin table and the connect path.
 
 ## Stages
 

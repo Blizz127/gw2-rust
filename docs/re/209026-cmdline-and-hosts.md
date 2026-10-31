@@ -62,6 +62,22 @@ on TCP 80.
 - `-clientPort` probably selects the client→server port (the default 80 was observed at runtime).
 - The `101/102/103/112` suffix is a portal/region index, shared with `assetcdn.%u`.
 
+## `-authsrv` consumer (REA)
+
+- `xrefs` to the string `AuthSrv (%S)` at `0x1419243e0` give one reference, at
+  `0x140243431` (`ev_79199b07…`). It lies in `FUN_1402433f0` (`ev_9703c0ab…`).
+- **Observed** in the decompilation (`ev_53bb297dc18308a637b92aaa7a100558e0843c5cbc66634ce2ea6fa73f608f22`):
+  - `FUN_1402433f0(wchar* value)` initializes an address object.
+  - It calls `thunk_FUN_1409c02a0(addr, value, 0x17e0)`: parse `value` with a **default port
+    of 0x17e0 = 6112**.
+  - On success it logs `AuthSrv (%S)`, sets flags at `DAT_14266c55c`, `c534` and `c568`,
+    and copies the 0x1c-byte (28-byte, sockaddr-sized) result into `DAT_14266c528`.
+  - On failure it logs `AuthSrv invalid (%S)` and clears `DAT_14266c568`.
+- **Inferred:** `-authsrv host[:port]` overrides the auth/game-login server address, default
+  port 6112. It is a **different hop** from the portal gate `cligate.<n>:80`, which explains
+  why `-authsrv` did not change the first connection in runs 8 and 9. The client reaches the
+  AuthSrv hop only after the cligate step succeeds.
+
 ## Unknown
 
 - The exact argument syntax (`-authsrv host[:port]`?), and whether these switches are
