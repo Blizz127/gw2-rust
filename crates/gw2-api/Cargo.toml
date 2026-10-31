@@ -1,0 +1,18 @@
+[package]
+name = "gw2-api"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Importer/cache for the public, unauthenticated Guild Wars 2 web API (v2)"
+
+[dependencies]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+ureq = { workspace = true }
+
+[[bin]]
+name = "gw2-api-import"
+path = "src/bin/gw2-api-import.rs"
