@@ -16,7 +16,7 @@ RUN dpkg --add-architecture i386 \
  && apt-get install -y --no-install-recommends \
       wine wine64 libwine fonts-wine \
       mesa-vulkan-drivers vulkan-tools \
-      xvfb xauth x11-utils \
+      xvfb xauth x11-utils x11-apps netpbm \
       ca-certificates curl tini procps \
  && rm -rf /var/lib/apt/lists/*
 
@@ -26,6 +26,6 @@ RUN curl -fsSL -o /tmp/dxvk.tgz \
  && ln -s /opt/dxvk-${DXVK_VERSION} /opt/dxvk
 
 COPY entry.sh /usr/local/bin/entry.sh
-RUN chmod +x /usr/local/bin/entry.sh
+RUN chmod 755 /usr/local/bin/entry.sh && mkdir -p /sandbox && chmod 1777 /sandbox
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entry.sh"]
 CMD ["preflight"]

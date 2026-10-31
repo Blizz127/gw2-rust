@@ -75,6 +75,24 @@ you`) and the container exited before any game executable was launched. It ran w
 `--network none`, and no container was left behind. Fixes: client mode now runs as the host
 user and requires `prepare`, which only swaps in the real client after verifying it.
 
+**First offline client runs (2026-10-31 19:28–19:40Z, build 209026, `--network none`):**
+- **Run 1:** the container user couldn't execute `entry.sh`, because the file mode in the
+  image was owner-only. Fixed with mode 755 and a world-writable `/sandbox`.
+- **Run 2:** the prepared working copy `Gw2-64.exe` (sha256 `99342078…`) starts under
+  Wine 10.0 + DXVK 3.1.1 on lavapipe (`Found device: llvmpipe`). The DXVK log shows the
+  launcher UI uses D3D9.
+  - It shows the GW2 launcher window, "Connection error(s) detected. Retrying…"
+    (screenshot kept privately at `~/re/gw2/notes/run2-offline-launcher.png`).
+  - **Nothing reached the observer** on 127.0.0.1 ports 80, 443, 6112 and 6600. The name
+    lookups fail first, since there is no DNS offline.
+  - `bin64/` stayed as 0-byte placeholders. The client zeroed its `Gw2-64.tmp`
+    (self-update staging) and created a fresh `Local.dat` in the sandbox's own Wine prefix.
+    It holds no credentials.
+  - Next: map the client's hostnames, from REA string evidence, to 127.0.0.1 with
+    `--add-host`, so its first connection lands on the observer.
+- Client runs now take a screenshot of the virtual display every 20 s into
+  `/sandbox/logs/shots/` (`SHOT_EVERY`).
+
 **Where state lives:** the Wine prefix and logs persist under `/home/blizz/gw2-sandbox/`.
 DXVK goes into the prefix on first client run (`.dxvk-installed` marker).
 

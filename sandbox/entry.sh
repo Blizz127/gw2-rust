@@ -59,6 +59,11 @@ case "$mode" in
       sleep 1
       echo "server started: $SERVER"
     fi
+    # Screenshot the virtual display every ${SHOT_EVERY:-20}s into /sandbox/logs/shots/.
+    mkdir -p /sandbox/logs/shots
+    ( i=0; while sleep "${SHOT_EVERY:-20}"; do i=$((i+1));
+        xwd -root -silent 2>/dev/null | xwdtopnm 2>/dev/null | pnmtopng > "/sandbox/logs/shots/shot-$(printf %03d $i).png" 2>/dev/null || true
+      done ) &
     cd /client
     exec wine /client/Gw2-64.exe "$@"
     ;;

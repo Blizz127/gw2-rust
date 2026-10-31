@@ -33,6 +33,21 @@ engineered (stage 3).
 | Patch suppression | Candidate `-nopatchui` (2013 public flag, unverified). The launcher must never let the client self-patch. |
 | Steam/Epic | Both are delay-loaded (REA `ev_2b7cf3c4…`, docs/re/209026-pe-imports.md). The plan is a plain ArenaNet-provider launch with neither loaded. |
 
+## Decisions and agreements so far (2026-10-31)
+
+- **D1 (owner, 2:30 PM CT):** the launcher downloads the frozen build 209026 for the owner
+  only: owner tier, per-file hashes, never auto-updated, never public.
+  - The file set is `/home/blizz/gw2-client/build-209026.ship-manifest.tsv`: 10 files.
+  - The entry point is `Gw2-64.exe`, which is the frozen `Gw2-64.new.exe` renamed.
+  - Excluded: the installer bootstrap, `Gw2Setup-64.exe`, crash logs and installer temp files.
+  - No per-user state lives in the install folder.
+- **D2 (a per-process network restriction on the owner's device):** unanswered.
+- **The launcher entry ships with PLAY blocked** until our redirect runner works. It never
+  launches the client unrestricted. The ticket goes to our runner on **stdin**, not argv.
+- An offline sandbox run shows the unredirected client starts its own update/login flow.
+  On an unrestricted device it would reach ArenaNet and self-patch, which is why PLAY stays
+  blocked.
+
 ## Hard rules
 
 - Never the owner's real ArenaNet, Steam or Epic account. No real credentials anywhere.
