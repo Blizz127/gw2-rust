@@ -14,12 +14,29 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 | # | Stage | State |
 | --- | --- | --- |
 | 1 | Freeze client, capture traffic, message list for our build | blocked: no client |
-| 2 | Gw2.dat reader | in progress (written from ascalon MIT reference; synthetic tests only) |
+| 2 | Gw2.dat reader | `gw2-dat` written (ascalon port, hardened); 18 synthetic tests; unverified on real data |
 | 3 | Login stub: redirect, secure login, our own key | blocked: no client |
 | 4 | Character select / creation | not started |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | not started |
-| 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | web API import in progress |
+| 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done; build 209026 maps/professions/races cached |
 | 7 | Combat, events, loot | later |
+
+## Crates (workspace tests: 38 pass, clippy clean)
+
+| Crate | State |
+| --- | --- |
+| `gw2-net` | RC4 key derivation, LZ4 server frames, DH module (own server key, 136-byte param blob). Byte order and the secret/block combination are provisional. |
+| `gw2-proto` | Primitive encodings (varint Dword, Guid, Point3, Address, Optional…) and the `protocols.xml` loader. 208039 reference schema vendored and labeled. |
+| `gw2-dat` | AN/MFT archive, Huffman/LZ decompressor, PF chunks. `gw2-dat-ls <Gw2.dat>` is the first check on arrival. |
+| `gw2-api` | `gw2-api-import build / fetch <ep>... / fetch-map <id>`. Cache in gitignored `data/api/<build>/`. |
+
+## On arrival checklist (client copy)
+
+1. Hash `Gw2-64.exe` / `Gw2.dat` into `docs/client-build.md`, then `chmod -R a-w`.
+2. `gw2-dat-ls Gw2.dat`: validates the archive layout, block trailer and decompressor
+   on real data.
+3. REA probes below.
+4. Build the Wine sandbox image ([SANDBOX.md](SANDBOX.md)).
 
 ## Known facts and their sources
 
@@ -69,3 +86,5 @@ there is no binary.
 ## Log
 
 - 2026-10-31: lane accepted, CLIENT-NEEDED.md written, ascalon studied, workspace started.
+- 2026-10-31: Wine chosen by owner; docker `--network none` sandbox preflight passed;
+  gw2-net/proto/dat/api landed; public 2012–13 protocol notes in `docs/re/`.

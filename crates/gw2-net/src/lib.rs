@@ -274,9 +274,8 @@ mod tests {
         let mut wire = BytesMut::new();
         server.encode(Bytes::from(vec![1u8; 500]), &mut wire).unwrap();
         // Either an error, an incomplete frame, or garbage: never the original payload.
-        match client.decode(&mut wire) {
-            Ok(Some(b)) => assert_ne!(&b[..], &[1u8; 500][..]),
-            Ok(None) | Err(_) => {}
+        if let Ok(Some(b)) = client.decode(&mut wire) {
+            assert_ne!(&b[..], &[1u8; 500][..]);
         }
     }
 }
