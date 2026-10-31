@@ -37,3 +37,36 @@ Preflight, 2026-10-31, using `debian:trixie-slim` and bash `/dev/tcp`:
   and repairs `Gw2.dat`, and the on-disk copy stays pristine.
 - **Teardown:** confirm the container exited and that no `wineserver` is left running.
 - The image is built only once the client has arrived. There is nothing to run before that.
+
+## Implemented (2026-10-31): `sandbox/`
+
+The image (`gw2-rust-sandbox:latest`) is Debian trixie-slim with Wine 10.0, Mesa
+lavapipe, DXVK 3.1.1 and Xvfb. `sandbox/run.sh` always starts it with `--network none`.
+
+| Command | What it does |
+| --- | --- |
+| `sandbox/run.sh build` | Build the image. This needs network; no client is involved. |
+| `sandbox/run.sh preflight` | Run the checks below. No client needed. |
+| `SERVER="gw2-login-observe --log /sandbox/logs/capture" sandbox/run.sh client <build> [args]` | Start a workspace binary from `target/debug` (mounted read-only at `/server`) inside the same isolated network, then run `/client/Gw2-64.exe` from the read-only mount. |
+
+**Preflight checks:**
+- isolation: only `lo` exists, and outbound TCP fails
+- Wine starts
+- Xvfb starts
+- Vulkan reports `llvmpipe`
+- DXVK DLLs are present
+
+**Preflight result 2026-10-31:**
+- `isolation: ok (lo only, outbound unreachable)`
+- `wine-10.0 (Debian 10.0~repack-6)`
+- Vulkan device `llvmpipe (LLVM 19.1.7, 256 bits)`
+- `preflight: ok`
+- No container left behind.
+
+**Server in the container:** the host-built `gw2-login-observe` (glibc 2.43 host) ran inside
+the container and captured an STS message over loopback.
+
+**Where state lives:** the Wine prefix and logs persist under `/home/blizz/gw2-sandbox/`.
+DXVK goes into the prefix on first client run (`.dxvk-installed` marker).
+
+The client has never been run, because there is no install yet.
