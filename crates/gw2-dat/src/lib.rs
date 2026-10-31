@@ -9,6 +9,7 @@
 
 pub mod archive;
 pub mod decompress;
+pub mod mapc;
 pub mod packfile;
 pub mod pfread;
 pub mod pfschema;

@@ -9,7 +9,7 @@ use std::process::ExitCode;
 use gw2_dat::archive::Archive;
 use gw2_dat::packfile::Packfile;
 use gw2_dat::pfread::{Limits, PfValue, read_chunk};
-use gw2_dat::pfschema::{find, parse};
+use gw2_dat::pfschema::{find_all, parse};
 
 const REFERENCE: &str = include_str!("../../reference/packfiles-208039.xml");
 
@@ -123,19 +123,34 @@ fn main() -> ExitCode {
             let name = fourcc(chunk.name());
             let ver = chunk.version() as u32;
             print!("  chunk {name:?} v{ver} ({} bytes): ", chunk.bytes().len());
-            let Some(vs) = find(&schemas, &ty, &name).and_then(|c| c.version(ver)) else {
+            let candidates: Vec<_> =
+                find_all(&schemas, &ty, &name).into_iter().filter_map(|c| c.version(ver)).collect();
+            if candidates.is_empty() {
                 println!("no schema");
                 continue;
-            };
-            match read_chunk(chunk.bytes(), vs, pf.is_64bit(), Limits::default()) {
-                Ok(v) => {
-                    println!("{} ok", vs.type_name);
+            }
+            // Ambiguous names: the first candidate that decodes wins.
+            let mut errors = Vec::new();
+            let mut decoded = None;
+            for vs in &candidates {
+                match read_chunk(chunk.bytes(), vs, pf.is_64bit(), Limits::default()) {
+                    Ok(v) => {
+                        decoded = Some((vs.type_name.clone(), v));
+                        break;
+                    }
+                    Err(e) => errors.push(format!("{}: {e}", vs.type_name)),
+                }
+            }
+            match decoded {
+                Some((ty_name, v)) => {
+                    let note = if candidates.len() > 1 { format!(" (of {} candidates)", candidates.len()) } else { String::new() };
+                    println!("{ty_name} ok{note}");
                     let mut s = String::new();
                     show(&v, 2, depth, &mut s);
                     print!("{s}");
                 }
-                Err(e) => {
-                    println!("{} FAILED: {e}", vs.type_name);
+                None => {
+                    println!("FAILED: {}", errors.join("; "));
                     failures += 1;
                 }
             }

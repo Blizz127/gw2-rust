@@ -40,7 +40,24 @@ impl ChunkSchema {
     }
 }
 
-/// Finds the schema for a packfile type and chunk name (4CCs, NULs trimmed).
+/// All schemas for a packfile type and chunk name. The reference schema has
+/// ambiguous duplicates (e.g. `mapc`/`nm15` appears twice with different
+/// structs), so callers that decode real data should try each candidate.
+pub fn find_all<'s>(
+    schemas: &'s [PackfileSchema],
+    pf_type: &str,
+    chunk: &str,
+) -> Vec<&'s ChunkSchema> {
+    schemas
+        .iter()
+        .filter(|p| p.name == pf_type)
+        .flat_map(|p| &p.chunks)
+        .filter(|c| c.name == chunk)
+        .collect()
+}
+
+/// Finds the first schema for a packfile type and chunk name (4CCs, NULs trimmed).
+/// See [`find_all`] for ambiguous names.
 pub fn find<'s>(
     schemas: &'s [PackfileSchema],
     pf_type: &str,
@@ -179,6 +196,10 @@ mod tests {
         let mopp = &v6.fields[2];
         assert_eq!((mopp.kind.as_str(), mopp.type_name.as_deref()), ("ArrayPtr", Some("PackMapCollideMoppCodeV6")));
         assert_eq!(mopp.fields[0].type_name.as_deref(), Some("Byte"));
+
+        let nm = find_all(&s, "mapc", "nm15");
+        let types: Vec<_> = nm.iter().map(|c| c.versions.last().unwrap().type_name.as_str()).collect();
+        assert_eq!(types, ["PackMapNavMeshChunkV3", "PackMapNavMeshV3"]);
     }
 
     #[test]
