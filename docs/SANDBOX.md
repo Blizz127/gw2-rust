@@ -96,4 +96,14 @@ user and requires `prepare`, which only swaps in the real client after verifying
 **Where state lives:** the Wine prefix and logs persist under `/home/blizz/gw2-sandbox/`.
 DXVK goes into the prefix on first client run (`.dxvk-installed` marker).
 
-The client has never been run, because there is no install yet.
+**Sandbox network notes (2026-10-31, runs 11–21):**
+- **Map ArenaNet names to 127.1.0.x, never 127.0.0.x.** The client's StsLib
+  address lookup recurses until the stack overflows when the target is in 127.0.0.0/24 and
+  the host has no non-loopback address (docs/re/209026-connect-path.md). Use `DNS_SINK=0`
+  with
+  `ADD_HOSTS="cligate.101.ncplatform.net=127.1.0.1 cligate.101.ncplatform.net.=127.1.0.1 assetcdn.101.arenanetworks.com=127.1.0.2"`.
+  The trailing-dot form is needed: the client looks up `cligate.101.ncplatform.net.`.
+- The container gets a fixed hostname (`gw2-sandbox`) that resolves to 127.0.0.1.
+- `GDB_STACKDUMP=1` runs the client under gdb (in the image now). It dumps the PE stack
+  (`STACK_LO`..`STACK_HI`, default `0x7c0000`..`0x8c0000`) into
+  `logs/stack-dump.bin` when Wine reports a fatal stack overflow.

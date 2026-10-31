@@ -13,6 +13,14 @@ running).
 
 ## Observed (runs 3 and 4, 2026-10-31 ~20:03–20:08Z)
 
+> **Correction (2026-10-31, run 21, see [209026-connect-path.md](209026-connect-path.md)):**
+> the port-80 connection below was the **asset CDN patch check** (`GET /latest64/101`,
+> `Host: assetcdn.101.ArenaNetworks.com`), not cligate. It was silent because the client's
+> socket worker thread had died from a StsLib recursion that only triggers when cligate
+> resolves to 127.0.0.0/24. With cligate on 127.1.0.1, the client reaches cligate on
+> **TCP 6112** and sends `P /Sts/Connect STS/1.0` first. The "reached on TCP 80" inference
+> below is wrong.
+
 1. **Name lookups:**
    - the container's own hostname
    - `assetcdn.101.ArenaNetworks.com` (via `WSAAsyncGetHostByName`)

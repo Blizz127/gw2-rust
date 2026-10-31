@@ -70,6 +70,31 @@ case "$mode" in
         xwd -root -silent 2>/dev/null | xwdtopnm 2>/dev/null | pnmtopng > "/sandbox/logs/shots/shot-$(printf %03d $i).png" 2>/dev/null || true
       done ) &
     cd /client
+    if [[ "${GDB_STACKDUMP:-0}" == 1 ]]; then
+      # Debug aid: run the client under gdb; when Wine reports a fatal "stack overflow",
+      # dump that thread's PE stack (STACK_LO..STACK_HI) for offline return-address analysis.
+      cat > /sandbox/logs/stackdump.gdb <<GDB
+set pagination off
+set confirm off
+set disable-randomization off
+set follow-fork-mode parent
+set detach-on-fork on
+handle all nostop noprint pass
+set breakpoint pending on
+# matches "XXXX:err:virtual:virtual_setup_exception stack ov..." ("err:virt" at +5, "stack ov" at +41)
+break write if \$rdi == 2 && \$rdx > 49 && *(unsigned long long *)(\$rsi + 5) == 0x747269763a727265 && *(unsigned long long *)(\$rsi + 41) == 0x766f206b63617473
+commands
+  silent
+  printf "GDB: stack overflow write in thread %d\\n", \$_thread
+  dump binary memory /sandbox/logs/stack-dump.bin ${STACK_LO:-0x7c0000} ${STACK_HI:-0x8c0000}
+  printf "GDB: dumped ${STACK_LO:-0x7c0000}-${STACK_HI:-0x8c0000}\\n"
+  continue
+end
+run
+GDB
+      exec gdb -q -batch -x /sandbox/logs/stackdump.gdb --args /usr/lib/wine/wine64 /client/Gw2-64.exe "$@" \
+        2> >(tee /sandbox/logs/wine.err >&2)
+    fi
     exec "$WINE" /client/Gw2-64.exe "$@" 2> >(tee /sandbox/logs/wine.err >&2)
     ;;
   *) echo "unknown mode $mode"; exit 2 ;;

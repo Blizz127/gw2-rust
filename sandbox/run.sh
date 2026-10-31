@@ -71,9 +71,15 @@ case "$mode" in
     fi
     mkdir -p "$prefix"
     mkdir -p "$STATE/prefix" "$STATE/logs"
+    # ADD_HOSTS="name[=ip] ..." maps extra names via /etc/hosts (default ip 127.0.0.1; use with DNS_SINK=0).
+    host_args=(); for h in ${ADD_HOSTS:-}; do
+      ip=127.0.0.1; [[ $h == *=* ]] && { ip=${h#*=}; h=${h%%=*}; }
+      [[ $ip == 127.* ]] || { echo "ADD_HOSTS: $h -> $ip is not loopback"; exit 2; }
+      host_args+=(--add-host "$h:$ip"); done
     exec docker run --rm --network none --name "gw2-sandbox-$build" \
       --user "$(id -u):$(id -g)" -e HOME=/sandbox/home -v "$STATE/home:/sandbox/home" \
-      --dns 127.0.0.1 --dns-search . -e DNS_SINK="${DNS_SINK:-1}" -e WINEDEBUG="${WINEDEBUG:--all}" \
+      --dns 127.0.0.1 --dns-search . -e DNS_SINK="${DNS_SINK:-1}" -e WINEDEBUG="${WINEDEBUG:--all}" -e GDB_STACKDUMP="${GDB_STACKDUMP:-0}" \
+      --hostname gw2-sandbox --add-host gw2-sandbox:127.0.0.1 "${host_args[@]}" \
       --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$prefix:/sandbox/prefix" "${runtime_args[@]}" -v "$STATE/logs:/sandbox/logs" \
       -v "$HERE/../target/debug:/server:ro" -e SERVER="${SERVER:-}" \
       "$IMAGE" client "$@" ;;
