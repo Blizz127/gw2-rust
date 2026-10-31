@@ -1,0 +1,10 @@
+[package]
+name = "gw2-login"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "GW2 portal/login: STS/1.0 message codec and an observe-only capture listener"
+
+[dependencies]

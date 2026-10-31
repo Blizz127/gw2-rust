@@ -152,6 +152,10 @@ name = "gw2-dat"
 version = "0.1.0"
 
 [[package]]
+name = "gw2-login"
+version = "0.1.0"
+
+[[package]]
 name = "gw2-net"
 version = "0.1.0"
 dependencies = [
