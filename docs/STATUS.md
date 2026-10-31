@@ -28,12 +28,12 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
-## Crates (workspace tests: 44 pass, clippy clean)
+## Crates (workspace tests: 49 pass, clippy clean)
 
 | Crate | State |
 | --- | --- |
 | `gw2-net` | RC4 key derivation, LZ4 server frames, DH module (own server key, 136-byte param blob). Byte order and the secret/block combination are provisional. |
-| `gw2-proto` | Primitive encodings (varint Dword, Guid, Point3, Address, Optional…) and the `protocols.xml` loader. 208039 reference schema vendored and labeled. |
+| `gw2-proto` | Primitive encodings (varint Dword, Guid, Point3, Address, Optional…), the `protocols.xml` loader, and `dynamic`: a schema-driven decoder/encoder. Unconfirmed kinds (String, ArrayVar*, Buffer*, CString) are rejected until `Rules` are set from REA. `gw2-schema-census <xml>`: 1440 of 1770 messages in the 208039 reference decode with confirmed kinds only. |
 | `gw2-dat` | AN/MFT archive, Huffman/LZ decompressor, PF chunks. `gw2-dat-ls <Gw2.dat>` is the first check on arrival. |
 | `gw2-login` | STS/1.0 codec (from public notes, **unverified**) + `gw2-login-observe`: logs STS messages, then hex-dumps once the stream leaves STS. Never replies. Stage 3 starts by pointing the sandboxed client at it. |
 | `gw2-api` | `gw2-api-import build / fetch <ep>... / fetch-map <id>`. Cache in gitignored `data/api/<build>/`. |

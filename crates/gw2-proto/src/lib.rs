@@ -11,6 +11,7 @@
 //! Encodings that ascalon does not define (`String`, `CString`, `ArrayVar*`,
 //! `BufferVar*`) are deliberately left out until REA shows how our build encodes them.
 
+pub mod dynamic;
 pub mod schema;
 
 use std::io::{Error, ErrorKind, Result};
