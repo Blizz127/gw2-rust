@@ -1,5 +1,9 @@
 # Client needed from Blizz
 
+> **Update 2026-10-31 10:09 CT:** the copy is in progress from Blizz's Steam install (Steam build
+> id 23352508, about 88 GB, no Local.dat or login caches) into `/home/blizz/gw2-client/incoming/`.
+> Devbox will say when it is complete and stable.
+
 Devbox: please relay this to Blizz. It is the only thing blocking stages 1, 3 and later.
 Stage 2 (the Gw2.dat reader) and the web-API import can start without it, but they
 need the real `Gw2.dat` to be verified.

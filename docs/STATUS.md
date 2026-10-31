@@ -4,8 +4,11 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 
 ## Blocker
 
-- **No client on the devbox.** The request is in [CLIENT-NEEDED.md](CLIENT-NEEDED.md).
-  Stages 1, 3 and later wait on it.
+- **Client copy in transit** (Devbox task 159ac9597aba, started 2026-10-31 10:09 CT).
+  - Source: Blizz's **Steam** install (Steam build id 23352508, about 88 GB).
+  - Destination: `/home/blizz/gw2-client/incoming/`, at about 2.7 MB/s, so 9–10 h.
+  - A final rsync pass runs after he closes the game. **Do not read `incoming/` until Devbox
+    says the copy is complete and stable.** Then run `tools/freeze-client.sh steam-23352508`.
 - Platform decided (Blizz, 2026-10-31): the client runs on the devbox under Wine
   (wine-10.0, no GPU, software Vulkan), firewalled.
 
@@ -33,7 +36,8 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 
 ## On arrival checklist (client copy)
 
-1. Hash `Gw2-64.exe` / `Gw2.dat` into `docs/client-build.md`, then `chmod -R a-w`.
+1. `tools/freeze-client.sh steam-23352508`. This moves `incoming/`, makes it read-only, and writes
+   a SHA256 manifest. Copy the key hashes into `docs/client-build.md`.
 2. `gw2-dat-ls Gw2.dat 20 --sample 25`: opens the archive and reads 25 compressed and
    25 uncompressed entries, printing each one's length and magic. That tests the
    block-trailer guess (probably a per-block CRC) and the decompressor on real data.
@@ -90,7 +94,13 @@ there is no binary.
      **statically**. A runtime Frida agent under Wine is the labeled fallback.
 4. `search_strings` for `authsrv`, `portal`, `nopatchui`, `assetsrv` and auth hostnames.
    Then trace the login flow.
-5. Packfile schema: locate the schema tables that `research/packfiles.py` walks
+5. Steam provider. This is a Steam install, so the launcher normally passes `-provider Steam`
+   and logs in with a Steam ticket via `steam_api64.dll`.
+   - `search_strings` for `provider`, `Steam`, `Portal` and `authsrv`.
+   - Inspect PE imports and `bin64/` for steam_api.
+   - Find which login path (portal SRP vs Steam ticket) needs the fewest in-memory patches
+     to reach our server with no Steam client running.
+6. Packfile schema: locate the schema tables that `research/packfiles.py` walks
    (type ids 1..37) for our build.
 
 ## Log
