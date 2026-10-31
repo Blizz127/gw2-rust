@@ -150,6 +150,9 @@ dependencies = [
 [[package]]
 name = "gw2-dat"
 version = "0.1.0"
+dependencies = [
+ "quick-xml",
+]
 
 [[package]]
 name = "gw2-login"

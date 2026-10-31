@@ -10,6 +10,8 @@
 pub mod archive;
 pub mod decompress;
 pub mod packfile;
+pub mod pfread;
+pub mod pfschema;
 
 #[cfg(test)]
 mod synthetic;
