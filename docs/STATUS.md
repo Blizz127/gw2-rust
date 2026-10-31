@@ -38,7 +38,7 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
    25 uncompressed entries, printing each one's length and magic. That tests the
    block-trailer guess (probably a per-block CRC) and the decompressor on real data.
 3. REA probes below.
-4. Build the Wine sandbox image ([SANDBOX.md](SANDBOX.md)).
+4. Sandbox image is already built and preflighted ([SANDBOX.md](SANDBOX.md)); run `sandbox/run.sh client <build>`.
 5. Run `gw2-login-observe` inside the sandbox. Launch the client with `-authsrv 127.0.0.1`
    if REA shows the flag still exists. Commit the capture summary under `docs/re/` and
    keep the raw logs in `~/re/gw2/notes/`.

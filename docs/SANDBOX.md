@@ -36,7 +36,7 @@ Preflight, 2026-10-31, using `debian:trixie-slim` and bash `/dev/tcp`:
   is patched in memory, never by editing `Gw2-64.exe` or `Gw2.dat`. The client checks
   and repairs `Gw2.dat`, and the on-disk copy stays pristine.
 - **Teardown:** confirm the container exited and that no `wineserver` is left running.
-- The image is built only once the client has arrived. There is nothing to run before that.
+- The image is built and preflighted ahead of time (below). Only the client run waits for the install.
 
 ## Implemented (2026-10-31): `sandbox/`
 
