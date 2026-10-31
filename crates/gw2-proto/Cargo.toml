@@ -1,0 +1,12 @@
+[package]
+name = "gw2-proto"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "GW2 message primitives and message-schema loader"
+
+[dependencies]
+bytes = { workspace = true }
+quick-xml = { workspace = true }

@@ -66,4 +66,6 @@ The devbox has about 4.2 TB free on `/home/blizz` (checked 2026-10-31). Any of t
   You play from there.
 - (c) Both: devbox for automated testing, your Windows machine for playtests.
 
-Until you answer, we work statically and plan for (c).
+**Answered 2026-10-31 (Blizz, relayed by Devbox): "wine is fine".** The client runs on
+the devbox under Wine, firewalled. This covers the platform only. The install copy is
+still needed.

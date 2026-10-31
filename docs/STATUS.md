@@ -6,6 +6,8 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 
 - **No client on the devbox.** The request is in [CLIENT-NEEDED.md](CLIENT-NEEDED.md).
   Stages 1, 3 and later wait on it.
+- Platform decided (Blizz, 2026-10-31): the client runs on the devbox under Wine
+  (wine-10.0, no GPU, software Vulkan), firewalled.
 
 ## Stages
 
