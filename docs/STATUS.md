@@ -28,7 +28,7 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
-## Crates (workspace tests: 58 pass, clippy clean)
+## Crates (workspace tests: 57 pass, clippy clean)
 
 | Crate | State |
 | --- | --- |
