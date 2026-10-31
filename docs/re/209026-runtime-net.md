@@ -64,6 +64,25 @@ running).
   **REA should find the cligate connect path**: xrefs from the `cligate`/`ncplatform`
   strings to the socket code.
 
+## Switch and runtime experiments (2026-10-31 ~20:55–21:15Z)
+
+- **Run 8,** `-authsrv 127.0.0.2 -clientPort 6112 -nopatchui`: the arguments reach the client.
+  With `-nopatchui` the launcher window disappears and the screen stays black. **The single
+  connection is still cligate.101:80 → 127.0.0.1:80.** Neither `-authsrv` nor `-clientPort`
+  changed it.
+- **Run 9:** adding `-nopatch` gave the same single connection to cligate:80.
+- **Run 10, GE-Proton 11-6** (`wine-11.0 (Staging)`) instead of Debian Wine 10.0:
+  **identical** behaviour (cligate:80, 0 bytes, reset at 10,012 ms). A
+  `virtual_setup_exception stack overflow` appears in a client thread under both runtimes
+  (`run7-seh.trace`, `run10-proton.trace`).
+- **Inference update:** GW2 runs online under Proton for real players, so "Wine never
+  completes ConnectEx" is now less likely. The leading hypothesis is that the server speaks
+  first with a binary frame. Our 18-byte text greeting would not form a valid frame, so
+  the client kept waiting. The cligate:80 step happens even with `-nopatch`, which makes it
+  the portal/login gate rather than file patching. `-authsrv` probably applies to a later
+  hop. The pinned cligate RSA keys (docs/re/209026-portal-pins.md) point to an RSA-based
+  handshake on this connection.
+
 ## Unknown
 
 - The protocol on cligate:80: STS/1.0 text, TLS-first, or something new.
