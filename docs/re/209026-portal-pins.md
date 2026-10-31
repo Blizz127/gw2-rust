@@ -40,6 +40,29 @@ A table of pinned server identities in `.rdata`. Each entry is a DER X.509 Name
 - The game connection's DH parameters (ascalon `dh_params.py`: 136 bytes in `.rdata`,
   starting `u32 1, u32 4`) are a separate key for the game server, still to be located.
 
+## The trust table and who loads it (REA)
+
+- A masked pointer search (`ev_60d22e63…`) found a `.data` table of `{ptr, len}` pairs at
+  **`0x14261ff20`** (`ev_6c2c0c5a…`):
+  - `0x14230a450`/4000: unknown, maybe a certificate bundle.
+  - `0x14230afe0`/125: the StartCom Certification Authority Name (`ev_f5acb264…`).
+  - `0x14230b060`/526: an RSA-4096 key, probably StartCom's.
+  - Then (Name, RSAPublicKey) pairs for cligate.102, .103, .101, .112 (ncplatform),
+    cligate-pvg.112 and .113 (cnportal), the GeoTrust SSL CA - G2 (key length 0x10e, RSA-2048)
+    and cligate.111 (cnportal).
+  - Then `{1, 0xc020}` and later a pointer to `0x14230beb0`.
+- `xrefs` to `0x14261ff20` (`ev_147edaa9…`) give 8 sites in `FUN_141585490` and its
+  neighbour (`ev_1bf2aae1…`).
+- **Observed** in `FUN_141585490` (`ev_3c0a59cfe9ccae330da4c22c1a49618e54d10c3c2852d11a54679f51813876d5`):
+  - It calls `FUN_14156db70(1, connType, &PTR_PTR_14261ff20, 0, 0, …)` for connTypes
+    **0x47 'G', 0x50 'P', 0x44 'D'**, and for a caller-given `connType` when flag 0x800 is set.
+  - It asserts `"connType > MAX_BYTE"` with source path
+    `…\Arena\Services\StsInetSocket\StsInetListen.cpp`.
+- **Inferred:** the portal is the ArenaNet **STS** stack (StsInetSocket). Each STS
+  "connection type" is keyed by one byte, and 'P' matches the first byte of
+  `P /Sts/Connect STS/1.0`. Each gets this trust store (CA roots plus pinned cligate RSA keys)
+  for its secure (`StartTls`) phase. Our existing `gw2-login::sts` codec is on the right track.
+
 ## Unknown
 
 - The portal record format on TCP 80. The 2012–13 notes describe STS/1.0 with
