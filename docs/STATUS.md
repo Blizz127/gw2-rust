@@ -83,15 +83,16 @@ there is no binary.
 
 ## First REA probes when Gw2-64.exe arrives
 
-1. Pin SHA256. Do the cold Ghidra import through the CLI in the background, so the MCP
-   client deadline doesn't kill it:
-   `REA_GHIDRA_STARTUP_TIMEOUT_MS=3600000 rea analyze <frozen>/Gw2-64.exe --provider ghidra --snapshot ~/re/gw2/notes/gw2-64.snapshot --format json > ~/re/gw2/notes/analyze.json`
-   (with the PATH, GHIDRA_INSTALL_DIR and JAVA_HOME exports from docs/REA.md).
-   Then use MCP `open_binary` with that `snapshot_path`. `inspect_pe_imports` defaults to
-   64 MiB, so raise `max_file_bytes` if the exe is bigger.
-   - Toolchain dry run 2026-10-31 on Wine's `winver.exe`: Ghidra 12.1.4 import,
-     `search_bytes` and `search_strings` all returned Evidence
-     (`ev_2388d15e…`, `ev_e43adee3…`). Closed cleanly.
+1. `tools/rea-import.sh <frozen>/Gw2-64.exe` (run in the background). It refuses paths
+   under `incoming/` or `arenanet-download/` and writable files. It runs a cold Ghidra
+   import with a 1 h startup budget and writes
+   `~/re/gw2/notes/gw2-64-<sha12>.{snapshot,analyze.json,import.log}`. Then open it in MCP
+   with `open_binary(path, provider_id: "ghidra", snapshot_path)`.
+   - `inspect_pe_imports` defaults to 64 MiB, so raise `max_file_bytes` if the exe is bigger.
+   - Pipeline dry run 2026-10-31 on a read-only copy of Wine's `winver.exe`:
+     - the script imported it in 34 s and wrote the snapshot
+     - MCP `open_binary` with that snapshot answered `search_strings` (`ev_200eb91d…`) without re-importing
+     - outputs were moved to `~/re/gw2/notes/dryrun/`
 2. `search_bytes` for the `(1, 4)` DH header in `.rdata` and confirm the 136-byte layout
    by xrefs into the handshake code.
 3. Message schema. The register-messages prologue (`48 89 6c 24 08 48 89 74 24 10 48 89 7c 24 18`)
