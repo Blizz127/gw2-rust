@@ -79,7 +79,15 @@ there is no binary.
 
 ## First REA probes when Gw2-64.exe arrives
 
-1. Pin SHA256. `open_binary` (Ghidra provider). Snapshot to `~/re/gw2/notes/gw2-64.snapshot`.
+1. Pin SHA256. Do the cold Ghidra import through the CLI in the background, so the MCP
+   client deadline doesn't kill it:
+   `REA_GHIDRA_STARTUP_TIMEOUT_MS=3600000 rea analyze <frozen>/Gw2-64.exe --provider ghidra --snapshot ~/re/gw2/notes/gw2-64.snapshot --format json > ~/re/gw2/notes/analyze.json`
+   (with the PATH, GHIDRA_INSTALL_DIR and JAVA_HOME exports from docs/REA.md).
+   Then use MCP `open_binary` with that `snapshot_path`. `inspect_pe_imports` defaults to
+   64 MiB, so raise `max_file_bytes` if the exe is bigger.
+   - Toolchain dry run 2026-10-31 on Wine's `winver.exe`: Ghidra 12.1.4 import,
+     `search_bytes` and `search_strings` all returned Evidence
+     (`ev_2388d15e…`, `ev_e43adee3…`). Closed cleanly.
 2. `search_bytes` for the `(1, 4)` DH header in `.rdata` and confirm the 136-byte layout
    by xrefs into the handshake code.
 3. Message schema. The register-messages prologue (`48 89 6c 24 08 48 89 74 24 10 48 89 7c 24 18`)
