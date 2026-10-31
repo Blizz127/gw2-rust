@@ -188,9 +188,20 @@ impl<R: Read + Seek> Archive<R> {
 
     /// Read (and decompress, if needed) the contents of `file_id`.
     pub fn read(&self, file_id: u32) -> Result<Vec<u8>> {
+        self.read_limited(file_id, None)
+    }
+
+    /// The first `n` decoded bytes of an entry (fewer if the entry is shorter).
+    /// For compressed entries only the first stored block is read and only `n`
+    /// bytes are decompressed, which makes type scans over the whole archive cheap.
+    pub fn read_head(&self, file_id: u32, n: usize) -> Result<Vec<u8>> {
+        self.read_limited(file_id, Some(n))
+    }
+
+    fn read_limited(&self, file_id: u32, head: Option<usize>) -> Result<Vec<u8>> {
         let entry = self.index.get(&file_id).ok_or(ErrorKind::NotFound)?;
 
-        let size = entry.size as usize;
+        let full = entry.size as usize;
         let end = entry
             .offset
             .checked_add(u64::from(entry.size))
@@ -198,6 +209,8 @@ impl<R: Read + Seek> Archive<R> {
         if end > self.len {
             return Err(invalid("entry out of bounds"));
         }
+        // A head read stops after the first stored block.
+        let size = if head.is_some() { full.min(BLOCK_SIZE) } else { full };
 
         let mut bytes = Vec::new();
         bytes
@@ -222,7 +235,12 @@ impl<R: Read + Seek> Archive<R> {
         }
 
         match entry.extra_bytes {
-            0 => Ok(bytes),
+            0 => {
+                if let Some(n) = head {
+                    bytes.truncate(n);
+                }
+                Ok(bytes)
+            }
             8 => {
                 let header: [u8; 8] = bytes
                     .get(..8)
@@ -238,12 +256,13 @@ impl<R: Read + Seek> Archive<R> {
                 if output_len > MAX_DECOMPRESSED_SIZE {
                     return Err(invalid("decompressed size too large"));
                 }
+                let want = head.map_or(output_len as usize, |n| n.min(output_len as usize));
 
                 let mut output = Vec::new();
                 output
-                    .try_reserve_exact(output_len as usize)
+                    .try_reserve_exact(want)
                     .map_err(|_| Error::from(ErrorKind::OutOfMemory))?;
-                output.resize(output_len as usize, 0);
+                output.resize(want, 0);
                 decompress(&bytes[8..], &mut output)?;
                 Ok(output)
             }

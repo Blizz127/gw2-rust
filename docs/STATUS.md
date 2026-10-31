@@ -4,25 +4,18 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 
 ## Blocker
 
-- **Client copy in transit** (Devbox task 159ac9597aba, started 2026-10-31 10:09 CT).
-  - Source: Blizz's **Steam** install (Steam build id 23352508, about 88 GB).
-  - Destination: `/home/blizz/gw2-client/incoming/`, at about 2.7 MB/s, so 9–10 h.
-  - A final rsync pass runs after he closes the game.
-- **Faster source** (Devbox task 145d51d8f62e): ArenaNet's public installer is downloading
-  build 209026 into `/home/blizz/gw2-client/arenanet-download` (no login, ETA ~14:00 CT).
-  `incoming/` is the fallback.
-- **Do not read either folder until Devbox's "complete" note names which one to freeze.**
-  Then run `tools/freeze-client.sh build-209026 /home/blizz/gw2-client/<that folder>`.
-- Platform decided (Blizz, 2026-10-31): the client runs on the devbox under Wine
-  (wine-10.0, no GPU, software Vulkan), firewalled.
+- **Client frozen** 2026-10-31 19:03Z as `/home/blizz/gw2-client/build-209026` (see
+  [client-build.md](client-build.md)). The REA target is `Gw2-64.new.exe` (sha256 `99342078…`).
+  The REA import is running.
+- `Gw2.dat` reader is verified on real data (see client-build.md). Queensdale = map file 192711.
 
 ## Stages
 
 | # | Stage | State |
 | --- | --- | --- |
-| 1 | Freeze client, capture traffic, message list for our build | blocked: no client |
-| 2 | Gw2.dat reader | `gw2-dat` written (ascalon port, hardened); 18 synthetic tests; unverified on real data |
-| 3 | Login stub: redirect, secure login, our own key | blocked: no client |
+| 1 | Freeze client, capture traffic, message list for our build | client frozen; REA import running; capture not started |
+| 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
+| 3 | Login stub: redirect, secure login, our own key | next: REA probes on Gw2-64.new.exe |
 | 4 | Character select / creation | not started |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |

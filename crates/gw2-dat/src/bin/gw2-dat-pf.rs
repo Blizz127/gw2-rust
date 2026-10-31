@@ -145,6 +145,19 @@ fn main() -> ExitCode {
                 Some((ty_name, v)) => {
                     let note = if candidates.len() > 1 { format!(" (of {} candidates)", candidates.len()) } else { String::new() };
                     println!("{ty_name} ok{note}");
+                    if name == "havk" {
+                        match gw2_dat::mapc::MapCollide::from_value(&v) {
+                            Ok(m) => println!(
+                                "    MapCollide: bounds {:?}..{:?}, {} collision meshes, {} triangles, {} geometries, {} animations, {} props, {} zone models, water z {:?}",
+                                m.bounds_min, m.bounds_max, m.collisions.len(), m.triangle_count(),
+                                m.geometries.len(), m.animations.len(), m.prop_models.len(), m.zone_models.len(), m.water_surface_z
+                            ),
+                            Err(e) => {
+                                println!("    MapCollide FAILED: {e}");
+                                failures += 1;
+                            }
+                        }
+                    }
                     let mut s = String::new();
                     show(&v, 2, depth, &mut s);
                     print!("{s}");

@@ -69,6 +69,9 @@ fn invalid(msg: impl Into<String>) -> Error {
 /// Decodes a chunk payload with the given version schema.
 /// `ptr64` comes from the packfile header (`Packfile::is_64bit`).
 pub fn read_chunk(data: &[u8], version: &VersionSchema, ptr64: bool, limits: Limits) -> Result<PfValue> {
+    // Every element occupies at least one byte of the payload (or one pointer
+    // target), so a budget of twice the payload size never rejects real data.
+    let limits = Limits { max_elements: limits.max_elements.max(data.len().saturating_mul(2)), ..limits };
     let mut r = Reader { data, ptr_width: if ptr64 { 8 } else { 4 }, limits, elements: 0 };
     let mut pos = 0usize;
     r.read_struct(&version.fields, &mut pos, 0)
