@@ -17,11 +17,11 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 | 2 | Gw2.dat reader | `gw2-dat` written (ascalon port, hardened); 18 synthetic tests; unverified on real data |
 | 3 | Login stub: redirect, secure login, our own key | blocked: no client |
 | 4 | Character select / creation | not started |
-| 5 | One zone (Queensdale, map 15) load-in and spawn | not started |
-| 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done; build 209026 maps/professions/races cached |
+| 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
+| 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
-## Crates (workspace tests: 41 pass, clippy clean)
+## Crates (workspace tests: 44 pass, clippy clean)
 
 | Crate | State |
 | --- | --- |

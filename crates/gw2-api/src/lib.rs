@@ -8,6 +8,8 @@
 //! typed structs ([`Map`], [`Item`], [`Skill`]) are tolerant views used when
 //! loading from that cache.
 
+pub mod floor;
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -303,6 +305,19 @@ impl Client {
             }
         }
         Ok(all)
+    }
+
+    /// `GET /v2/continents/<c>/floors/<f>/regions/<r>/maps/<m>` as raw JSON.
+    pub fn fetch_map_floor(
+        &self,
+        continent: u32,
+        floor: i32,
+        region: u32,
+        map: u32,
+    ) -> Result<serde_json::Value> {
+        let path = format!("continents/{continent}/floors/{floor}/regions/{region}/maps/{map}");
+        let raw = self.get(&path)?;
+        serde_json::from_str(&raw.body).with_context(|| format!("parsing {path}"))
     }
 
     /// `GET /v2/maps/<id>` as raw JSON.

@@ -15,6 +15,8 @@ Commands:
                             (maps, items, skills, professions, races,
                             specializations, continents, ...)
   fetch-map <id>            fetch a single map
+  fetch-map-floor <id>      fetch a map's floor data (POIs, waypoints, hearts,
+                            hero challenges, sectors) on its default floor
 
 Options:
   --out DIR   cache root (default: <workspace>/data/api)
@@ -84,6 +86,30 @@ fn run() -> Result<()> {
             println!(
                 "map {id} ({}) -> {}",
                 map["name"].as_str().unwrap_or("?"),
+                path.display()
+            );
+        }
+        "fetch-map-floor" => {
+            let [id] = params else {
+                bail!("fetch-map-floor needs exactly one map id\n\n{USAGE}");
+            };
+            let id: u32 = id.parse().with_context(|| format!("bad map id {id:?}"))?;
+            let build = client.fetch_build()?;
+            let map: gw2_api::Map = serde_json::from_value(client.fetch_map(id)?)?;
+            let (Some(c), Some(r)) = (map.continent_id, map.region_id) else {
+                bail!("map {id} has no continent/region");
+            };
+            let floor = client.fetch_map_floor(c, map.default_floor, r, id)?;
+            let path = write_single(&root, build, "map-floors", u64::from(id), &floor)?;
+            let typed: gw2_api::floor::MapFloor = serde_json::from_value(floor)?;
+            println!(
+                "map {id} ({}) floor {}: {} POIs, {} hearts, {} hero challenges, {} sectors -> {}",
+                map.name,
+                map.default_floor,
+                typed.points_of_interest.len(),
+                typed.tasks.len(),
+                typed.skill_challenges.len(),
+                typed.sectors.len(),
                 path.display()
             );
         }
