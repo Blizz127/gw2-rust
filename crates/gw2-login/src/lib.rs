@@ -5,4 +5,5 @@
 //! None of it is REA-confirmed for our client build. The observer
 //! (`gw2-login-observe`) exists to capture what the real client actually sends.
 
+pub mod dns;
 pub mod sts;

@@ -64,6 +64,7 @@ case "$mode" in
     mkdir -p "$STATE/prefix" "$STATE/logs"
     exec docker run --rm --network none --name "gw2-sandbox-$build" \
       --user "$(id -u):$(id -g)" -e HOME=/sandbox/home -v "$STATE/home:/sandbox/home" \
+      --dns 127.0.0.1 --dns-search . -e DNS_SINK="${DNS_SINK:-1}" \
       --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$STATE/prefix:/sandbox/prefix" -v "$STATE/logs:/sandbox/logs" \
       -v "$HERE/../target/debug:/server:ro" -e SERVER="${SERVER:-}" \
       "$IMAGE" client "$@" ;;
