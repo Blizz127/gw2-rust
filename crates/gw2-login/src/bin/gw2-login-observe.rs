@@ -1,7 +1,9 @@
-//! `gw2-login-observe [--listen ADDR]... [--log DIR]`
+//! `gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX]`
 //!
-//! Observe-only capture listener for stage 3. It accepts TCP connections and
-//! **never sends a byte**. It logs what arrives:
+//! Capture listener for stage 3. It accepts TCP connections and, by default,
+//! **never sends a byte**. `--greet-hex` is an opt-in experiment: it sends those
+//! bytes right after accept, to test whether the peer expects the server to
+//! speak first. It logs what arrives:
 //! - STS/1.0 messages, decoded (start line, headers, body)
 //! - everything after the first non-STS byte (e.g. TLS-style records after
 //!   `/Auth/StartTls`, or a binary game handshake) as a raw hex dump
@@ -23,6 +25,7 @@ static CONN_ID: AtomicU64 = AtomicU64::new(1);
 fn main() {
     let mut listen: Vec<SocketAddr> = Vec::new();
     let mut log_dir = PathBuf::from("capture");
+    let mut greet: Vec<u8> = Vec::new();
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match (a.as_str(), args.next()) {
@@ -31,7 +34,14 @@ fn main() {
                 Err(e) => die(&format!("bad --listen {v}: {e}")),
             },
             ("--log", Some(v)) => log_dir = PathBuf::from(v),
-            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR]"),
+            ("--greet-hex", Some(v)) => {
+                greet = (0..v.len())
+                    .step_by(2)
+                    .map(|i| v.get(i..i + 2).and_then(|h| u8::from_str_radix(h, 16).ok()))
+                    .collect::<Option<Vec<u8>>>()
+                    .unwrap_or_else(|| die("bad --greet-hex"))
+            }
+            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX]"),
         }
     }
     if listen.is_empty() {
@@ -49,12 +59,14 @@ fn main() {
         let listener = TcpListener::bind(addr).unwrap_or_else(|e| die(&format!("bind {addr}: {e}")));
         println!("observing {addr} -> {}", log_dir.display());
         let dir = log_dir.clone();
+        let greet = greet.clone();
         handles.push(std::thread::spawn(move || {
             for stream in listener.incoming() {
                 match stream {
                     Ok(s) => {
                         let dir = dir.clone();
-                        std::thread::spawn(move || observe(s, addr, dir));
+                        let greet = greet.clone();
+                        std::thread::spawn(move || observe(s, addr, dir, greet));
                     }
                     Err(e) => eprintln!("{addr}: accept failed: {e}"),
                 }
@@ -75,7 +87,7 @@ fn unix_ms() -> u128 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis())
 }
 
-fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf) {
+fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>) {
     let id = CONN_ID.fetch_add(1, Ordering::Relaxed);
     let peer = stream.peer_addr().map_or("?".into(), |p| p.to_string());
     let path = dir.join(format!("{}-conn{id}-port{}.log", unix_ms(), local.port()));
@@ -87,6 +99,10 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf) {
     let _ = writeln!(log, "# conn {id} peer={peer} local={local} start_unix_ms={}", unix_ms());
 
     let start = Instant::now();
+    if !greet.is_empty() {
+        let r = stream.write_all(&greet);
+        let _ = writeln!(log, "## sent greeting {} bytes: {:02x?} -> {r:?}", greet.len(), greet);
+    }
     let mut buf = Vec::new();
     let mut raw_mode = false;
     let mut total = 0usize;

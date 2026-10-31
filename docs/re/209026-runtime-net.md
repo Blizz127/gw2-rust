@@ -43,6 +43,27 @@ running).
   and timed out. **Unknown**; REA and the next run settle it. A test is to have the
   observer send a probe byte, or to trace `+iocp`/`+sync`.
 
+## Follow-up experiments (2026-10-31 ~20:45–20:50Z)
+
+- **Wine control probe** (`tools/probes/connectex-probe.c`, our own program, built with
+  `zig cc` for x86_64-windows-gnu). It runs in the same image and user setup and mirrors the
+  client's socket sequence: overlapped `WSASocketW` → `FIONBIO` → `bind(0.0.0.0:0)` →
+  `ConnectEx` → IOCP.
+  - **Wine delivers the `ConnectEx` completion** (`connect completion: got=1`).
+  - The probe's follow-up `setsockopt(SO_UPDATE_CONNECT_CONTEXT)` **does** appear in the
+    `+winsock` trace. The client's trace never shows that call.
+  - Wine's `+winsock` channel does not trace `WSARecv`/`WSASend` at all, so the missing
+    recv/send lines in the client trace prove nothing on their own.
+- **Run 5, greeting:** the observer sent 18 bytes (`STS/1.0 200 OK\r\n\r\n`) right after
+  accept. **The client's behaviour did not change:** 0 bytes sent, reset after 10,027 ms,
+  the same `SO_LINGER` + `closesocket`.
+- **Revised inference:** "the server must speak first" is now unlikely, because the client
+  doesn't even react to data. The likely explanation is that the client never handles its
+  connect completion under Wine and gives up on a 10 s connect timeout. Its completion
+  mechanism (IOCP thread, thread-pool IO, event or alertable wait) is not identified yet.
+  **REA should find the cligate connect path**: xrefs from the `cligate`/`ncplatform`
+  strings to the socket code.
+
 ## Unknown
 
 - The protocol on cligate:80: STS/1.0 text, TLS-first, or something new.
