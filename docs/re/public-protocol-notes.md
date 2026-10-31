@@ -30,7 +30,7 @@ Sources:
   precomputed and baked into the client, and the prime changes every build.
 - The client sends version info, then its public value A. The server replies with a
   20-byte block. The RC4 key comes from the DH secret XOR that block, through a hash.
-  That hash matches what ascalon implements as `rc4_key`: one SHA-1 round over the
+  The blog calls that hash unidentified. It plausibly corresponds to what ascalon implements as `rc4_key`: one SHA-1 round over the
   folded input (see `crates/gw2-net`).
 - Message type ids change between client builds.
 

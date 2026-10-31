@@ -33,8 +33,9 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 ## On arrival checklist (client copy)
 
 1. Hash `Gw2-64.exe` / `Gw2.dat` into `docs/client-build.md`, then `chmod -R a-w`.
-2. `gw2-dat-ls Gw2.dat`: validates the archive layout, block trailer and decompressor
-   on real data.
+2. `gw2-dat-ls Gw2.dat 20 --sample 25`: opens the archive and reads 25 compressed and
+   25 uncompressed entries, printing each one's length and magic. That tests the
+   block-trailer guess (probably a per-block CRC) and the decompressor on real data.
 3. REA probes below.
 4. Build the Wine sandbox image ([SANDBOX.md](SANDBOX.md)).
 
@@ -73,11 +74,16 @@ there is no binary.
 1. Pin SHA256. `open_binary` (Ghidra provider). Snapshot to `~/re/gw2/notes/gw2-64.snapshot`.
 2. `search_bytes` for the `(1, 4)` DH header in `.rdata` and confirm the 136-byte layout
    by xrefs into the handshake code.
-3. `search_bytes` for the register-messages prologue (`48 89 6c 24 08 48 89 74 24 10 48 89 7c 24 18`)
-   and the dispatch prologue (`40 53 55 56 48 81 ec b0 00 00 00`). xrefs + decompile
-   the four variants, then read the static message-def arrays their callers pass in,
-   and regenerate `protocols.xml` for our build **statically**. A runtime Frida
-   agent is the labeled fallback.
+3. Message schema. The register-messages prologue (`48 89 6c 24 08 48 89 74 24 10 48 89 7c 24 18`)
+   is a generic MSVC shadow-space save that matches thousands of functions, so filter
+   the hits by **adjacency**: four small register functions in a row (spaced +0,
+   +0xC0, +0x180, +0x210 in 208039; expect the spacing to drift).
+   - Cross-check with the more specific dispatch prologue (`40 53 55 56 48 81 ec b0 00 00 00`)
+     and its xrefs from the receive path (the RC4/LZ4 decode loop).
+   - Fallback: scan the data sections for arrays of pointers to defs whose u16 at +0x10
+     runs through sequential message ids. That is the def layout ascalon's agent reads.
+   - Then decompile, read the static def arrays, and regenerate `protocols.xml`
+     **statically**. A runtime Frida agent under Wine is the labeled fallback.
 4. `search_strings` for `authsrv`, `portal`, `nopatchui`, `assetsrv` and auth hostnames.
    Then trace the login flow.
 5. Packfile schema: locate the schema tables that `research/packfiles.py` walks
