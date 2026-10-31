@@ -3,9 +3,9 @@
 # and stable (no rsync still writing).
 #
 #   tools/freeze-client.sh <name> [src]
-#     name  frozen directory name, e.g. steam-23352508 (the game build id is
-#           recorded separately once REA/the client reports it)
-#     src   default /home/blizz/gw2-client/incoming
+#     name  frozen directory name, e.g. build-209026 or steam-23352508
+#     src   default /home/blizz/gw2-client/incoming (Devbox names which folder;
+#           expected /home/blizz/gw2-client/arenanet-download)
 #
 # It moves src (same filesystem, no copy) to /home/blizz/gw2-client/<name>, makes it
 # read-only, and writes <name>.manifest.txt next to it (SHA256 of Gw2-64.exe, Gw2.dat
@@ -24,11 +24,12 @@ manifest="$ROOT/$name.manifest.txt"
 if pgrep -af rsync | grep -F -- "$src" >/dev/null; then
   echo "an rsync touching $src is still running; refusing"; exit 2
 fi
-for f in "$src"/Gw2.dat "$src"/Gw2-64.exe; do
-  if command -v fuser >/dev/null && fuser "$f" >/dev/null 2>&1; then
-    echo "$f is open by a process; refusing"; exit 2
-  fi
-done
+# Any process (installer, wine, rsync...) with an open file or cwd under src blocks the freeze.
+# Only processes visible to this user are seen; root-owned (e.g. docker) ones are not.
+real_src="$(realpath "$src")"
+busy="$( (find /proc/[0-9]*/cwd /proc/[0-9]*/fd -maxdepth 1 \( -lname "$real_src" -o -lname "$real_src/*" \) 2>/dev/null || true) |
+        cut -d/ -f3 | sort -u | while read -r pid; do printf '%s:%s ' "$pid" "$(cat /proc/$pid/comm 2>/dev/null)"; done)"
+[[ -z "$busy" ]] || { echo "processes still using $src: $busy; refusing"; exit 2; }
 
 mv -T "$src" "$dst"
 chmod -R a-w "$dst"

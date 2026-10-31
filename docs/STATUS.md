@@ -7,8 +7,12 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 - **Client copy in transit** (Devbox task 159ac9597aba, started 2026-10-31 10:09 CT).
   - Source: Blizz's **Steam** install (Steam build id 23352508, about 88 GB).
   - Destination: `/home/blizz/gw2-client/incoming/`, at about 2.7 MB/s, so 9–10 h.
-  - A final rsync pass runs after he closes the game. **Do not read `incoming/` until Devbox
-    says the copy is complete and stable.** Then run `tools/freeze-client.sh steam-23352508`.
+  - A final rsync pass runs after he closes the game.
+- **Faster source** (Devbox task 145d51d8f62e): ArenaNet's public installer is downloading
+  build 209026 into `/home/blizz/gw2-client/arenanet-download` (no login, ETA ~14:00 CT).
+  `incoming/` is the fallback.
+- **Do not read either folder until Devbox's "complete" note names which one to freeze.**
+  Then run `tools/freeze-client.sh build-209026 /home/blizz/gw2-client/<that folder>`.
 - Platform decided (Blizz, 2026-10-31): the client runs on the devbox under Wine
   (wine-10.0, no GPU, software Vulkan), firewalled.
 
@@ -36,7 +40,7 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 
 ## On arrival checklist (client copy)
 
-1. `tools/freeze-client.sh steam-23352508`. This moves `incoming/`, makes it read-only, and writes
+1. `tools/freeze-client.sh build-209026 <folder>`. This moves the folder Devbox names, makes it read-only, and writes
    a SHA256 manifest. Copy the key hashes into `docs/client-build.md`.
 2. `gw2-dat-ls Gw2.dat 20 --sample 25`: opens the archive and reads 25 compressed and
    25 uncompressed entries, printing each one's length and magic. That tests the
