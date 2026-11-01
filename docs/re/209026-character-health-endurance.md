@@ -233,6 +233,22 @@ Private REA bundle: `~/re/gw2/notes/209026-endurance-fields-1.json`
 
 ## Offline framing check
 
+### Typed endurance-frame scope
+
+`gw2_proto::endurance::EnduranceFrame209026` covers IDs 217–221 with an
+explicit character index and operation enum. All Dwords remain unsigned
+varints. The fourth creation value is named `segment_divisor`, describing
+the observed division without assigning a dodge-cost meaning. The codec
+preserves raw values, chooses no defaults and does not enforce lifetime
+or gameplay constraints. Decode commits input advancement only on success.
+
+Three focused tests and `cargo build -p gw2-proto --lib` pass. Independent
+hand-authored fixtures exercise every operation, unsigned varint boundaries
+through u32::MAX, output-prefix preservation and concatenated boundaries.
+Every truncation, both invalid neighboring IDs, and overflow/overlong
+varints in all five creation Dword positions leave the input unchanged.
+No endurance frame was sent to the client.
+
 ### Typed health-frame scope
 
 The typed health codec covers IDs 256–260 with an explicit character index
