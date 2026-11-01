@@ -70,7 +70,7 @@ The character +8 interface's virtual +0x30 (`0x1411d8e50`) compares its
 `character->IsAlive() || (character->IsDowned() && character->IsInWater())`.
 Thus the labels are directly tied to the health creation byte. The update
 branch still ignores this byte; sending 256 to an existing component is
-not a health-state transition mechanism.
+not a health-state transition mechanism. The later [transition trace](209026-health-transitions.md) maps dead/downed/alive packed commands through server 84.
 
 The same party consumer obtains health through primary virtual +0x68,
 `0x1411d7cb0`, which returns character +0x3e8. It publishes health virtual

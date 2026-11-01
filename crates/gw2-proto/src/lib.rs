@@ -12,6 +12,7 @@
 //! Variable-field encodings require explicit rules in [`dynamic`]. The capture
 //! census enables only the subset verified for build 209026.
 
+pub mod agent_behavior;
 pub mod agent_creation;
 pub mod character_creation;
 pub mod character_setup;
