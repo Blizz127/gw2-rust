@@ -86,8 +86,10 @@ asserting runtime subscription state.
 | +0x70, package | `0x142185928` | `0x1412d0660` |
 | +0x160, error | `0x142185a18` | No-op `0x140163990` |
 
-The item/package callbacks have executable bodies; their full mutation
-and notification paths remain to be traced. The error slot itself cannot
+The item/package callbacks have executable bodies. The
+[item follow-up](209026-quest-store-item-followup.md) traces a guarded quest
+notification that can build a separate Purchase request with zero
+TotalPrice; other mutation and notification paths remain unclassified. The error slot itself cannot
 clear this service's quest subscription or complete the separate tracker.
 The separate tracker listener does react to a matching ID, as documented
 in that follow-up. This is not a

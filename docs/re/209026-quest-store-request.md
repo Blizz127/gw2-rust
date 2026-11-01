@@ -56,7 +56,9 @@ then opens/closes the XML body. The common builder looks up selector 2
 in the table at `0x14289b4b0`. Initializer `0x1402043e0` supplies three
 pairs from `0x142114080`; selector 2 points to **`GetLimits`** at
 `0x1421140c8`. Selector 1 is `Purchase`, but this initial request supplies
-2. Only the read/query path is traced here.
+2. This initial chain is a read/query path; a later
+[item-result follow-up](209026-quest-store-item-followup.md) traces a
+conditional, separate zero-TotalPrice Purchase builder.
 
 Request interface +0x20 points to `0x140ff6e60`. Its inspected body reads
 XML data through its second argument's virtual +0x58 and constructs a
@@ -73,8 +75,10 @@ two pairs from `0x142112cc0`. Selector 1 is **`GemStoreSearch`** at
 array and emits fields through XML helpers. Exact XML field names,
 namespace construction and response requirements remain to be documented.
 The [callback follow-up](209026-quest-store-callbacks.md) traces internal
-item/package events and the request-ID error event; receiving handlers and
-request-tracker completion remain unresolved. These static request names do not establish an observed
+item/package events and the request-ID error event. The
+[dispatch trace](209026-quest-store-dispatch.md) identifies receiving
+handlers, and the [tracker trace](209026-quest-store-tracker.md) establishes
+conditional error cleanup; successful empty-response cleanup remains open. These static request names do not establish an observed
 wire exchange, successful response, purchase, or a required zone-load wait.
 
 The practical bootstrap finding is conditional: when the quest subscriber
