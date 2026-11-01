@@ -48,6 +48,51 @@ Thus a character with coreStats needs inventory before finalization;
 skipping server 282 merely because no items are present is unsupported.
 Whether an empty inventory is sufficient for all later consumers is untested.
 
+### Empty equipment and the inspected skill paths
+
+The complete inventory constructor `0x1411ebdf0..0x1411ec12d` installs
+primary vtable `0x142163228`. It zeroes the 0x220-byte equipment pointer
+array at +0x160 (68 slots) and the 0x80-byte bag pointer array at +0x380
+(16 slots). Equipment getter `0x14128fb10` asserts
+`equipSlot < arrsize(m_equipmentSlots)` with bound 68. The initial
+active weapon-set field at +0x46c is **11**; the getter at primary +0xe8
+(`0x14128f500`) returns that value.
+
+The weapon-slot helpers `0x14128fdc0` and `0x14128fe70` both map weapon
+set 11 to sentinel **68**. Their switch diagnostic names **weaponSet**;
+the exact case targets are verified by table entries `0x14128fe6c` and
+`0x14128ff1c`. Inventory virtual +0x18/+0x20 route through these helpers
+and return null for that sentinel. Thus the [skill-bar palette getters](209026-character-skillbar.md)
+for slots 5–7 and 8–9 see no equipment item in the newly constructed state.
+The slot-19 route uses inventory virtual +0xd8, which obtains the slot
+from +0x468 (initially 34), then reads its null equipment pointer.
+
+The [availability search](209026-skill-palette-content.md) also checks
+inventory virtual +0x160 (equipment pointer +0x230, slot 26), slot 33,
+and slots 34/35/36/60/61/62. These all lie in the cleared array. Their
+inspected consumers test null before following item content. This gives
+a bounded reason those particular searches tolerate absent equipment;
+it does not prove the whole skill bar or playable client is ready.
+
+Constructor field +0x440 starts at five bag slots. Its final helper
+`0x141291c40` updates player bag flags through `0x14122ba40`; it does not
+populate the equipment array or change the initial weapon-set selector.
+Source diagnostics identify `ChCliItemStorageEquipment.cpp` and
+`ChCliItemStorageBags.cpp`.
+
+Private bundle: `~/re/gw2/notes/209026-inventory-empty-state-1.json`
+(1,064 records, 23,549,514 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_e4ff87fba5e2c19201fa96e8fdceadc18c69b2b590e07d069998381f6a5bab04` | Constructor field initialization and array zeroing. |
+| `ev_acf5e65462b8fc5ca9de46396a7ef81d5d868f75e62d8ddd650723ea6c08a308` | Vtable entries and constructor tail. |
+| `ev_4bc8da6fa9a54704c1a7f444a45e83cce5d3aac5741931d88400a097bcded55b` | Inventory getters and bag-count helper. |
+| `ev_22b5d48a1e1309c6d077843fbfa8b53eac673df63e008a2c33b1001e85b61d1a` | Equipment bound, slot helper targets and bag flag updater. |
+| `ev_2c4bd05dc910fbe047d8b178233205dbf6df6d094d418703ad6ad929f24f42fb` | Complete selected-slot helpers and equipment assertion. |
+| `ev_9231415cd93c2b67847f6f8f7107d1a9af8ffbdacb4ca6b888723cd1a70ecc06` | Weapon-set mapping functions and availability getter target. |
+| `ev_503068ec7460627820e322e446cb30f6c70b07336b34c29719e1b2b4cf3265f2` | Exact sentinel targets, six-slot constants and source/weaponSet literals. |
+
 ## CoreStats constructor: embedded transformation listener
 
 The unconditional registration at `0x141207bfb..0x141207c26` gets
@@ -114,6 +159,9 @@ ordering of event listeners and content setup.
 | Server 182 or 183: coreStats | Character exists; component not already created. |
 | Server 443: owned-character assignment | Player entry and character exist. |
 | Server 151: attitude | Character exists; an earlier update would be ignored. |
+| Server 605: initial skill availability | Player entry exists and type-64 skill key resolves; direct path does not require an owned character. |
+| Server 612: palette selection | Player entry, owned character and skill bar exist; immediate rebuild has profession/coreStats/inventory dependencies. |
+| Server 609/613: live skill availability change | Player entry, owned character and skill bar exist; type-64 skill key resolves. |
 | Server 170: fresh owned-player finalization | Player association, attitude, owned-character pointer, owned coreStats, inventory and a profession component. |
 | Server 444: equal-ID controlled assignment | Player entry and finalized character exist. |
 
