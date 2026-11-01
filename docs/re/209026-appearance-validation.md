@@ -4,7 +4,8 @@ Static REA analysis, 2026-11-01, on the frozen executable identified in
 [character creation](209026-character-creation.md). No appearance fixture
 was sent. Subsequent work extracted all 90 race/sex/profession defaults;
 see [content registry](209026-content-registry.md). The branch map below
-still does not establish full content-dependent validity of those defaults.
+is now paired with an offline reconstruction covering the values in those
+90 defaults. This is not a live client-validator or rendering result.
 
 ## Race/sex content selection
 
@@ -157,6 +158,69 @@ Evidence bundle: `~/re/gw2/notes/209026-appearance-comp-counts-1.json`.
 | `ev_ca3853117583a16046598f69b4baa5ef83bb9020e1a088e151d1bfc12d587b77` | Name table and packing routine. |
 | `ev_f664f16a40bc3864b98d1e6bb0fa6429e57d4f50d0ff8dbce0989bb1e2cf78cf` | Selected names and five-bit packing loop. |
 | `ev_ae2bed1b5bb8b29ca3887ceabfac0bab8bc922252a9ee143f5179d863aa1a632` | All ten profile matches and 336 additional nonzero checks. |
+
+### Packed keys and palette audit
+
+For nonzero offset 12, `0x1412da5c0` selects a Qword from composite profile
++0x60 (count +0x5c), using byte 12 modulo count. Its low 60 bits combine
+with byte 13 shifted left 60, then must match a Qword at entry +8 in the
+type-137 record's +0x38 array (count +0x40, stride 32). Offset 13 checks the
+same combination when nonzero. Offset 16 similarly uses profile +0x7c
+(count +0x78), combines byte 17, and checks type-137 +0x48 / count +0x50.
+All shifts are bounded to the actual 64-bit result.
+
+The offline audit passes 78 nonzero byte-12 and 81 nonzero byte-16 checks.
+Offsets 1, 5 and 13 are zero throughout this corpus, so their nonzero
+branches are not exercised. The initial auxiliary cache audit incorrectly
+assumed all composite model keys were unique and stopped; the corrected
+audit records duplicates and checks existence only. No default in this
+corpus enters those auxiliary key-lookup branches.
+
+Palette getters return UTF-16 content names from composite profile +0x84
+(appearance byte 14), +0xa0 (30), +0xa8 (32), and +0x48 (44). Byte 15 uses
+`0x1411c3180`: for these known race/sex profiles it chooses a fixed accessory
+palette, or the Sylvari hair-mask palette for race 4. Content-service +0x50
+dispatches through `0x1412e1ad0` to `0x1412e6650`, which uses the **name
+index at backend +0xe8**, then requires content type **147 (0x93)**.
+This is distinct from the UID and data-ID indexes.
+
+The frozen base containers contain 78 type-147 records. Type metadata's
+name offset is 24, pointing to a name object whose first pointer is the
+full stored name. The first container's flag bit 1 requests the encoded
+name conversion described in [content names](209026-content-names.md).
+After that conversion, all 50 race/sex/field palette references match.
+Every nonzero palette index is below palette +0x38, and its 24-byte entry
+in palette +0x30 has +0x14 equal to zero, as required when the validator's
+third argument is zero. These are **349 passing nonzero checks**.
+
+The audits together account for all 4,050 bytes: 795 zero shortcuts,
+1,916 explicit generic bounds, 495 missing-property success paths, 336
+count/simple checks, 159 packed-key checks and 349 palette checks. No
+failure or unchecked byte remains **for these 90 defaults after the
+documented Sylvari adjustment**. This does not cover arbitrary appearance
+inputs, validate actual rendering, or establish server acceptance. The
+495 missing-property paths retain the client's permissive behavior.
+
+Private results (mode 0600):
+
+- `appearance-packed-keys-209026.json`: 1,284 bytes, SHA-256
+  `2d062c993e7f07eaad6ec9c11ff611faa7ae1ec8ceb85955d2e32bf87d353f3e`.
+- `appearance-palette-bounds-209026.json`: 9,301 bytes, SHA-256
+  `06c6f23d66f5b8ad1355e92e89db65bb2f0b09ccb067a36e0411b7b7bd5c31fb`.
+
+Both are under `~/re/gw2/notes/`. Evidence is retained in
+`209026-appearance-palettes-and-keys-1.json` there.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_0d5a84e1f6e2521c09cf7f4c7a3d447dd0605a33789f2f250517d1a39df72071` | Composite packed-key helpers. |
+| `ev_f0137d074977fa2782a15dffc4db6c74b6e21ca940dcbb784bb6b607bf7636c5` | Modulo selection and helper tails. |
+| `ev_dd91028c52bd697d21b9d337524d20206d426ad25500bd56557724f892633805` | Corrected packed-key audit: 159 passing nonzero checks. |
+| `ev_440cf3ff29e833fbdec3bf11c03777c8c428cf771111a1d459de06312ad5105b` | Name-index lookup and content-type check. |
+| `ev_823928d86064678daba9039f23872da8d85f4e07e262dac6c4528fab41719b42` | All 32 base containers scanned: 78 palettes. |
+| `ev_df5d1c28c38145b1ac8bb734c716a369261ccbdd6891e0a902e7f4598c39ce59` | Indirect name-object structure and index insertion. |
+| `ev_3c0ec4caff565c0bcd4544d7625d9ddba0521c182b863bca33876a4f15aba8df` | 24-byte palette-entry accessor. |
+| `ev_69206444a562909c0f6632964f0b9df37670f05a3f3c3fe0f4af2eaee8614f28` | All 50 palette references and 349 nonzero checks pass. |
 
 ### Original branch mapping
 

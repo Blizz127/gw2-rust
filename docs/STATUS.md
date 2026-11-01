@@ -238,6 +238,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     A follow-up locates composite archive 154681 (`comp` version 19), matches
     all ten race/sex profiles and passes 336 more nonzero count/simple-branch
     checks, reducing the unchecked set to 508 packed-key/palette bytes.
+    The remaining 159 packed-key and 349 palette checks now pass. All 4,050
+    appearance bytes in the 90 adjusted defaults are accounted for by the
+    static reconstruction, including permissive missing-property paths;
+    no live validator/rendering result is claimed. Encoded palette-name
+    conversion is documented in [re/209026-content-names.md](re/209026-content-names.md).
     Server 256 creates or updates health; server 217 creates endurance.
     Their framing smoke consumed two frames/44 bytes and rejected a truncated
     float. Scalar meanings and live initialization remain partly unresolved;
