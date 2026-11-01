@@ -4,6 +4,7 @@ use gw2_dat::{
     archive::Archive,
     content::{ContentIndex, resolve_reference},
     packfile::Packfile,
+    setting_content::IntegerSettingDefinition209026,
     skill_palette_content::{
         SkillDefinition209026, SkillPaletteDefinition209026, SkillPaletteEntry209026,
         SkillPaletteRow209026,
@@ -36,6 +37,22 @@ fn run(path: &str) -> io::Result<()> {
         .iter()
         .map(ContentIndex::parse)
         .collect::<io::Result<_>>()?;
+    // Frozen descriptor GUID words, in standard-slot order; see the RE note.
+    let slot_guids = [
+        [0x2903742du32, 0x452437c6, 0x84f9cea1, 0x7f2159c7],
+        [0xd5ae524d, 0x4ab59f15, 0x0e9107bf, 0x5b0f04a6],
+        [0xec8901ab, 0x4527a16e, 0xa7ddd6bd, 0x3641dcd1],
+        [0x7a36e8bd, 0x454e62cf, 0x98cfd989, 0x7d6f811f],
+        [0x84450e1b, 0x45bfa978, 0xa4c77482, 0x502a4462],
+    ]
+    .map(|words| {
+        let mut guid = [0u8; 16];
+        for (part, word) in guid.chunks_exact_mut(4).zip(words) {
+            part.copy_from_slice(&word.to_le_bytes());
+        }
+        guid
+    });
+    let mut slot_levels = [None; 5];
     let mut keys = BTreeSet::new();
     let mut uids = BTreeSet::new();
     let mut rows = 0usize;
@@ -43,7 +60,24 @@ fn run(path: &str) -> io::Result<()> {
     let mut guardian_rows = 0usize;
     let mut candidates = BTreeMap::<u32, Vec<(u32, u32, u32, u32)>>::new();
     for (container, index) in containers.iter().enumerate() {
-        for indexed in index.entries().filter(|e| e.content_type == 65) {
+        for indexed in index.entries() {
+            if indexed.content_type == 150 {
+                let start = indexed.offset as usize;
+                let guid = start
+                    .checked_add(16)
+                    .and_then(|end| index.content_bytes().get(start..end))
+                    .ok_or_else(|| invalid("short setting GUID"))?;
+                if let Some(slot) = slot_guids.iter().position(|wanted| wanted == guid) {
+                    let setting = IntegerSettingDefinition209026::read(index, indexed.offset)?;
+                    if setting.value < 0 || slot_levels[slot].replace(setting.value).is_some() {
+                        return Err(invalid("negative or duplicate standard-slot setting"));
+                    }
+                }
+                continue;
+            }
+            if indexed.content_type != 65 {
+                continue;
+            }
             let palette = SkillPaletteDefinition209026::read(index, indexed.offset)?;
             if !keys.insert(palette.key) || !uids.insert(palette.uid) {
                 return Err(invalid("duplicate palette key or UID"));
@@ -93,6 +127,10 @@ fn run(path: &str) -> io::Result<()> {
             }
         }
     }
+    if slot_levels.iter().any(Option::is_none) {
+        return Err(invalid("missing frozen standard-slot setting"));
+    }
+    println!("standard-slot setting levels (slots 0–4): {slot_levels:?}");
     println!(
         "checked 32 base containers: palettes={} rows={rows} entries={entries} resolved_type64_skills={entries} guardian_rows={guardian_rows}",
         keys.len()

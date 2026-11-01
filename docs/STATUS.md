@@ -290,7 +290,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     [Slot-level settings](re/209026-skill-slot-levels.md) resolve standard
     slots 0–4 to frozen values 0/11/15/19/31. Executable initializer defaults
     differ; missing-record behavior and earlier membership success remain
-    separate from these final fallback thresholds.
+    separate from these final fallback thresholds. The bounded integer-
+    setting reader passes two focused tests and the optimized checker
+    build; a REA smoke confirms one matching record per standard slot
+    across all 32 base containers.
     [Slot follow-up](re/209026-reward-track-slots.md) identifies 565/569
     pin values, 568 active-track selection and 566 map-specific selection.
     Pin value domains and 567 keyed-state meaning remain unresolved.

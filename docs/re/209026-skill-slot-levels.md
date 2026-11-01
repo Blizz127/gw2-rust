@@ -57,6 +57,22 @@ Thus the five archived values, initializer fallbacks and missing-record
 zero behavior are three different cases. A future implementation should
 preserve that distinction rather than hard-code the initializer defaults.
 
+## Typed reader scope
+
+`gw2_dat::setting_content::IntegerSettingDefinition209026` requires record
+type 150, declared value type 434 and embedded variant type 434 before
+reading signed Dword +0x38. It preserves the record GUID and full i32
+domain, leaving nonnegative level validation to the caller. Other setting
+kinds return an error. No descriptor default or missing-record policy is
+applied by this raw view.
+
+Two focused tests pass for GUID retention, signed extrema, every truncated
+record extent, overflowing offsets and mismatched record/variant types.
+The optimized palette checker build passes. Its extended REA archive
+smoke visits all 32 containers, requires exactly one nonnegative integer
+record for each of the five descriptor GUIDs, and confirms 0/11/15/19/31.
+The existing palette counts and six candidate records remain unchanged.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-skill-slot-levels-1.json`.
@@ -73,3 +89,4 @@ Private helper/results: `inspect-slot-level-settings.py` and
 | `ev_602a68d4a0fb60851227d3aed94691e864164f00351498107a353828785f5f63` | Candidate RIP-relative initializer stores, subsequently disassembled. |
 | `ev_da10f6d4ff4e82bb255f79cd7ac3cdcb0097bc3cde95c492f9c441e58332464d` | Descriptor ID/type/GUID stores and supplied fallback integers. |
 | `ev_2691b4468b0bec08e80130a6641f289e9b858d7c7c9784afcb89ad7399ff73bf` | All five matched archive records and integer-variant constructor. |
+| `ev_efc955a570d72d3c6fb43c92d08994480088f17f0ff021b0ca141431746560ef` | Typed Rust setting reads match all five values across the full base-container set. |
