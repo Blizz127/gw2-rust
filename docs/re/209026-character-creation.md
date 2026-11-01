@@ -170,8 +170,10 @@ REA extraction from the frozen artifact generated ignored
 and 54 server definitions, 12,104 bytes, SHA-256
 `aa140ba13e1107d9411c227f5320fdd9ee4cd305beca3906eb0b0ba7ff6fb44d`.
 The extractor checks the executable hash and writes exclusively with mode 0600.
-Kinds 6, 7, 8 and 14 retain explicit `UnverifiedKind` tags; this schema is a
-partial protocol extraction, not the full mission message registry.
+That initial extraction retained explicit `UnverifiedKind` tags for kinds 6,
+7, 8 and 14. The [subsequent primitive check](209026-primitive-fields.md)
+establishes kinds 6–8 and records the updated schema hash; kind 14 remains
+unsupported. This is a partial extraction, not the full mission message registry.
 
 The schema parser accepts all 97 definitions. With the capture census, local
 handwritten fixtures parse server IDs 1049/1050 as two 2-byte frames, client

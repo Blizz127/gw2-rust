@@ -102,6 +102,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     The dynamic codec also now enforces variable-buffer `Size` maxima in both
     directions, matching the client; two focused tests and observer/census
     builds pass, and saved capture boundaries remain unchanged.
+    REA also confirms raw 4/8/12-byte Float/Float2/Float3 encodings in both
+    directions. The census admits them; four focused tests, build and private
+    mission-control fixture smoke pass. See
+    [re/209026-primitive-fields.md](re/209026-primitive-fields.md).
   - **Static character-creation path:** creation context sends ID 415 through
     mission protocol 0, group 39. Registration and descriptor establish its
     bounded string, fixed/variable arrays and scalar wire layout. The static

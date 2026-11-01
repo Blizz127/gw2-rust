@@ -36,6 +36,9 @@ fn verified_primitive(field: &Field) -> bool {
                 | "Word"
                 | "Qword"
                 | "Dword"
+                | "Float"
+                | "Float2"
+                | "Float3"
                 | "Guid"
                 | "Address"
                 | "String"
@@ -232,7 +235,7 @@ mod tests {
         small[2] = 3;
         assert!(census(messages, &small, &mut Vec::new()).is_err());
         for field in [
-            r#"<ArrayVarSmall Size="2"><Float/></ArrayVarSmall>"#,
+            r#"<ArrayVarSmall Size="2"><Float4/></ArrayVarSmall>"#,
             r#"<ArrayVarSmall Size="2"><ArrayVarSmall Size="2"><Byte/></ArrayVarSmall></ArrayVarSmall>"#,
             r#"<ArrayVarSmall Size="2" TypeName="Word"/>"#,
             r#"<ArrayVarSmall Size="2"><BufferFixed Size="0"/></ArrayVarSmall>"#,
@@ -254,8 +257,32 @@ mod tests {
     }
 
     #[test]
+    fn float_fields_preserve_boundaries_in_scalars_vectors_and_arrays() {
+        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="0"><Messages Name="40"><Server><Message Id="5"><Float/><Word/><Float/><Word/><Word/><Word/></Message><Message Id="6"><Float2/><Float3/><ArrayVarSmall Size="2"><Float/></ArrayVarSmall></Message></Server></Messages></Protocol></Protocols>"#).unwrap();
+        let messages = &schema.protocols[0].groups[0].server;
+        // ID 5 follows the real control descriptor. ID 6 is test-only.
+        let control = [5, 0, 0, 0, 0x80, 0x3f, 1, 0, 0, 0, 0x20, 0xc0, 2, 0, 3, 0, 4, 0];
+        let mut vectors = vec![6, 0];
+        // Raw f32 bit patterns, including signed zero, infinity and a NaN.
+        for bits in [0x80000000u32, 0x7f800000, 0x7fc00001, 0x3f800000, 0xc0200000] {
+            vectors.extend_from_slice(&bits.to_le_bytes());
+        }
+        vectors.extend_from_slice(&[2, 0, 0, 0, 0, 0, 0, 0x80, 0x3f]);
+        for frame in [control.as_slice(), vectors.as_slice()] {
+            for cut in 1..frame.len() {
+                assert!(census(messages, &frame[..cut], &mut Vec::new()).is_err());
+            }
+        }
+        let mut input = control.to_vec();
+        input.extend_from_slice(&vectors);
+        let mut output = Vec::new();
+        assert_eq!(census(messages, &input, &mut output).unwrap(), 2);
+        assert_eq!(String::from_utf8(output).unwrap(), "offset=0 id=5 bytes=18\noffset=18 id=6 bytes=31\nmessages=2 bytes=49 complete=true\n");
+    }
+
+    #[test]
     fn reports_boundaries_without_values_and_stops_on_unverified_encoding() {
-        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="3"><Messages Name="40"><Client><Message Id="2"><String Size="32"/></Message><Message Id="3"><Float/></Message></Client></Messages></Protocol></Protocols>"#).unwrap();
+        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="3"><Messages Name="40"><Client><Message Id="2"><String Size="32"/></Message><Message Id="3"><Float4/></Message></Client></Messages></Protocol></Protocols>"#).unwrap();
         let messages = &schema.protocols[0].groups[0].client;
         let mut bytes = vec![2, 0];
         for unit in "private-test-value".encode_utf16().chain([0]) {
