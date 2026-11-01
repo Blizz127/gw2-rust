@@ -195,6 +195,29 @@ launched for this follow-up.
 
 ## Offline validation
 
+### Typed creation-frame scope
+
+The typed core-stat creation codec supports the two established alternatives:
+server 183 has only the common fields, and server 182 additionally has the
+Dword, twelve three-Word records and three floats. It preserves row 0 even
+though the client handler skips it, represents each third Word as signed
+16-bit data, and preserves all float bits. The common fields remain an
+explicit character index, 45 appearance bytes, earned level, second level
+and profession. No content defaults, valid-level claim or choice of variant
+for the controlled player is supplied. Decoding consumes exactly one frame
+transactionally, including its ID; fixed arrays impose fixed memory bounds.
+
+Implemented as `gw2_proto::core_stats::CoreStatsCreation209026`, with an
+explicit optional `ExtendedCoreStats209026`. Three focused tests and the
+library build pass. Hand-authored 52-byte common and 141-byte extended
+fixtures verify exact wire bytes and following-frame boundaries; distinct
+attribute columns check signedness at -32768, -1 and 32767; float checks
+preserve negative zero, a NaN payload and infinity. Every truncation and
+malformed ID/overflowing Dword leaves the input unchanged. These intentionally
+include values unsuitable for a live player and establish framing only.
+
+### Descriptor/census validation
+
 The hash-guarded extractor emitted these four messages and the already
 mapped owned-character message 443 to private mode-0600
 `data/protocol/209026/character-core-stats.xml` (1516 bytes, SHA-256
