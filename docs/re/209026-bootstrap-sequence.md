@@ -27,14 +27,13 @@ plus a parsed fixture ([character protocol](209026-character-protocol.md)).
 
 | Step | Message | Status | Source |
 | --- | --- | --- | --- |
-| 2a | client auth 29, route request | Creation route traced (`[req, 1, 0,0,0,0]` + zero GUID, `GAME_TYPE_CHARCREATE`). **The Play-existing-character route is not traced.** | [mission join](209026-mission-join.md) |
+| 2a | client auth 29, route request | Creation route: `[req, 1, 0,0,0,0]` + zero GUID. **Play route traced:** game type from the summary map's type, map key, the character's 16-byte value and 20-byte string | [mission join](209026-mission-join.md), [play route](209026-play-route.md) |
 | 2b | server auth 20, route result (address, params) | Stated: follows 29 | mission join |
 | 2c | protocol-0 game join, 84-byte preamble | Stated: follows 20. Observer support exists; untested | mission join |
 
-**Gap:** general route setup `0x141417d50` (redirect type 1) is named but not
-traced as the Play path. The game type and GUID that ID 29 carries for an
-existing character are unknown. This is the first RE gap on the path to a
-live join.
+The [Play route](209026-play-route.md) closes the main phase-2 gap. Still
+open: Queensdale's map type (and so its game-type value), the ctx +0xdd
+source, and the hashed string.
 
 ## Phase 3: map load (loader states)
 
@@ -130,7 +129,7 @@ and phase 2 for Play are open.**
 
 ## Highest-value open RE items
 
-1. The existing-character Play route: ID 29 fields and general route setup `0x141417d50`.
+1. ~~The existing-character Play route~~ (traced in [play route](209026-play-route.md)); Queensdale's map type → game type remains.
 2. AGENT_STREAM `0x140951ce0`: its full conditions beyond a controlled character.
 3. Whether population (phase 4) and world entry (phase 5) must precede 1060, or only precede AGENT_STREAM.
 4. The position of 431 relative to 1036 and READY.
