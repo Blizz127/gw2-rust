@@ -25,9 +25,18 @@ entry `0x141b7e878` = `0x14094b180`) with the selected character's name:
 3. Completion event **0x5d** (`0x140950d40` → `0x140950eba`): looks up the
    character record by name, then calls `0x14094db50`.
 
-The dialog plus 0x1c re-dispatch is a **candidate** for the Run59
-User Agreement step, which sits before client 22. That is not confirmed;
-the panel was not exercised.
+The `0xc27b` branch is a conditional character-select dialog that
+re-dispatches 0x1c. It is **not** the Run59 User Agreement panel. Run 59
+opens that panel from the launcher's Play, before character select exists.
+Text `0xc27b` (argument 7, through `0x1410dbde0`) is also built by the
+request tracker's absent-entry error path `0x1402efc10`, so it is a shared
+message. The agreement panel's code path is untraced.
+
+Server 8 is not a hard requirement on the traced Play path. It supplies
+the character value that reaches ctx +0x20 and the client global
+`0x14266c050`. Only the creation continuation `0x141410f30` asserts that
+value is nonzero, and ID 29 does not carry it. Server 3 is what completes
+the transaction.
 
 ## Selection callback and branch
 
@@ -139,8 +148,9 @@ The table, as `mapType → gameType`:
 Statically, Play from character select requires this exchange before the
 game route:
 
-client 22 (name) → server 8 (type-0x15 character value, while pending) →
-server 3 (completion) → client 29 → server 20 → game join.
+client 22 (name) → [server 8, type-0x15 character value while pending;
+inferred, not asserted on this path] → server 3 (completion) → client 29 →
+server 20 → game join.
 
 Client 29 carries a non-creation game type derived from the summary map's
 type, the summary map key (15 for the Queensdale fixture), the hash and
@@ -149,7 +159,7 @@ the ctx +0xdd value. A server parser should follow the wire table above.
 Still open:
 - Queensdale's map type, and therefore its game-type value; the content field read by `0x1412e2cd0` is not decoded.
 - The source of ctx +0xdd and of the hashed string.
-- Whether the `0xc27b` dialog branch is the User Agreement panel.
+- The User Agreement panel's code path and its position relative to client 22.
 - The meaning of the override settings (0x31 gate, bits 0x13–0x15).
 
 ## Evidence

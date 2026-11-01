@@ -63,9 +63,9 @@ DNS_SINK=0 ADD_HOSTS="cligate.101.ncplatform.net=127.1.0.1 cligate.101.ncplatfor
 
 ## Exact remaining blockers to a usable launch path
 
-1. **Owner decision (Run59 hold):** Play opens the User Agreement panel. Static analysis
-   places it before the name transaction (client 22) ([play route](re/209026-play-route.md)).
-   No progress past it without explicit owner direction.
+1. **Owner decision (Run59 hold):** run 59 shows the User Agreement panel after the
+   launcher's Play and before character select. Its code path is untraced. No progress
+   past it without explicit owner direction.
 2. **Game server:** route result 20, then the game join, map load (1063/1060), character
    population (428…444) and BeginPlaying (1036) have no server implementation yet.
 3. **Launcher runner:** host mapping, the guarded memory substitutions, and stdin ticket

@@ -27,7 +27,7 @@ plus a parsed fixture ([character protocol](209026-character-protocol.md)).
 
 | Step | Message | Status | Source |
 | --- | --- | --- | --- |
-| 2-pre | client 22 (name) → server 8 (type-0x15 value, pending) → server 3 (completion) | Stated: Play calls view slot +0x60, the name transaction; completion reaches `0x14094db50` | [character creation](209026-character-creation.md), [play route](209026-play-route.md) |
+| 2-pre | client 22 (name) → server 3 (completion); server 8 (type-0x15 value, while pending) | Stated: Play calls view slot +0x60, the name transaction, and server 3 completes it to reach `0x14094db50`. Server 8 is inferred: it supplies the character value used downstream but is not asserted on the traced Play path. | [character creation](209026-character-creation.md), [play route](209026-play-route.md) |
 | 2a | client auth 29, route request | Creation route: `[req, 1, 0,0,0,0]` + zero GUID. **Play route traced:** game type from the summary map's type, map key, the character's 16-byte value and 20-byte string | [mission join](209026-mission-join.md), [play route](209026-play-route.md) |
 | 2b | server auth 20, route result (address, params) | Stated: follows 29 | mission join |
 | 2c | protocol-0 game join, 84-byte preamble | Stated: follows 20. Observer support exists; untested | mission join |
@@ -116,7 +116,7 @@ statically.
 
 ## Candidate order (for fixture design, not a validated sequence)
 
-1. Phase 2: 22 → server 8 → server 3 → 29 → 20 → join.
+1. Phase 2: 22 → (server 8) → server 3 → 29 → 20 → join.
 2. 1063 → 1060.
 3. 428 → 37 → 443 → 182/183 → 282 → profession → 151 → 247/248 → 565 → 538 → 605 → 170 → 618 → 444.
 4. 46.
