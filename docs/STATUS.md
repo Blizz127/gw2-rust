@@ -94,7 +94,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     the character-select scene. The summary blob's version-11 size and validation
     checks are mapped; several field meanings remain unresolved. Account reply
     consumers identify home shard, auth base time and a billing category enum.
-    Character-slot capacity is still unresolved. The new
+    Character-slot capacity is computed from the ID-8/ID-13 account array plus
+    mode-dependent base counts; the formula is documented, runtime UI untested. The new
     `gw2-capture-census` reports IDs/boundaries without field values; focused
     tests/build/clippy pass and the run-58 capture parses completely. See
     [re/209026-character-protocol.md](re/209026-character-protocol.md).

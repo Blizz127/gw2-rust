@@ -177,7 +177,8 @@ Getter `0x14023cd90` returns field 3. A billing-info consumer at
 `RetailUser`, `PressDemo`, `NcsoftUser`, `AlphaTester`, `PlayNC`, and
 `OmegaTester`. These are observed enum labels, not recommended fixture values.
 
-No scalar is yet identified as character-slot capacity. These findings do not
+No scalar is identified as character-slot capacity; the array path below supplies
+the relevant inputs. These findings do not
 change runtime fixtures or advance the held agreement screen.
 
 | REA evidence | Observation |
@@ -218,3 +219,45 @@ consumes all six messages/233 bytes. A locally reconstructed outgoing fixture
 using the saved account body parses IDs 8, 10 and 7 completely; this verifies
 fixture boundaries, not a captured server stream or client consumption of a
 nonempty array.
+
+## Character-slot capacity uses the account array
+
+The character-select scene calls `0x140311c80` before comparing the current
+list count with a capacity and enabling control 2. `CharSelectList.cpp`
+(`0x141aed2d0`) independently uses the same routine to size its list and
+populate empty entries after the character records. This establishes a slot
+capacity consumer without assigning a guessed meaning to an ID-8 scalar.
+
+Define `A(k)` as the first matching record's second Word in the account array,
+keyed by its first Word; absent keys return zero. Getter `0x14023ceb0` implements
+this over the 16-byte decoded records at `0x14266c008`, count `0x14266c014`.
+Those are the array supplied by ID 8 (schema field 12) at successful login.
+Server ID 13 replaces the same array through `0x1402409c0` -> `0x14023a8f0`
+and emits event 0x1d. The remaining three Dwords in each record are not read by
+this getter; their meanings remain unresolved.
+
+The capacity routine computes:
+
+- If predicate `0x1410f5f00` is nonzero: `2 + A(1)`.
+- Otherwise: `5 + A(1) + [A(0x3d) != 0] + [A(0x45) != 0] +
+  [A(0x4b) != 0] + [A(0x51) != 0] + [A(0x58) != 0]`.
+
+Brackets contribute either zero or one. A second capacity routine,
+`0x140311d40`, returns zero when predicate `0x1410f4d30` is zero and otherwise
+returns `A(0x31)`. The list sums these two capacities. Under two additional
+mode predicates it displays at least five entries and at least one more than
+that sum, with a distinct empty-entry presentation. These are UI display rules,
+not evidence that those extra entries can create characters.
+
+The mode predicates consult account/context state; their names and runtime
+outcomes remain unverified. An empty account array therefore does **not** imply
+zero base slots. This is static evidence only: the held UI has not reached
+character selection, and no nonempty entitlement fixture has been exercised.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_cee327649ca6991cfb4445b5746e3c073d598749ec50b7684eb876ff5a862d03` | Scene compares current count with capacity. |
+| `ev_cb76ef7ebaa3eb7a1a615e4de11f5792817e387e259eaaa7ac09c13c36ed63d3` | Both capacity formulas. |
+| `ev_fd58d419693c9ccb8b0f152a78df0b767478a3d130d2f9fdf8acc8d6c208059f` | Account-array lookup and capacity callers. |
+| `ev_bb7c1febd36bd638450e30017eb9a2df7ea90b60259c1b668c867043c468bf15` | List sizing, ID-13 handler, mode branches. |
+| `ev_5ad62f85857a595c860ed78c77874fb78931556b7421f1b11217f895f676a7af` | Named list source, array replacement, empty-entry loop. |
