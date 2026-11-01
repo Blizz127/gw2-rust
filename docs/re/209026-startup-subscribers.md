@@ -406,8 +406,8 @@ initialization body is treated as the +0x80 event callback.
 
 These findings add no component requirement to **this startup event**.
 They do not prove initialization harmless or classify other virtual slots.
-The remaining unclassified sites in the original bounded search are
-`0x1411031e3`, `0x1411dfd98`, and `0x1412c3d0c`. The search covered only
+The last three sites in the original bounded search are classified in
+the follow-up below. The search covered only
 `0x141100000..0x141300000` with a nearby context-field heuristic; the
 [map-layout listener](209026-quest-navigation-guard.md) outside that range
 already demonstrates why this is not an exhaustive runtime subscriber list.
@@ -430,3 +430,52 @@ sites and function ranges used here.
 | `ev_86e8480d62dd2dfe844aa3eba52ad0c852c9fd5d1cf3243c801807627908765c` / `ev_e2e6e5ac1791ac7900702fa22d39c35c5c396d487ccc45bbfc4744c5f3759f3d` | Alert primary-table function reference and start. |
 | `ev_e3b13215bc02a08b3dac127d9b1158edd8eb0a58d4bb068f293849fa2129c50a` / `ev_34fe750dffad82e7b3f658390bc5c27cdde27f026de13f8da820647a674d9ee1` / `ev_01180183d43bf97898cb4124429b2251f626028ff7554c8a23252fb5f16919c0` | Alert constructor-reference candidate, interface stores and validated constructor boundary. |
 | `ev_93104572b22e4acedc8e61576d540bf5e373fd3f45a6f807537f475cf477fa18` / `ev_cec0814ca13673d92be0def46188e8b0eafd620c8eba6a45c4ca8d187abd8096` | Alert no-op startup entry and source-path/flag assertion strings. |
+
+## Character, buff and state-dependent listener slots
+
+The final three retained candidates also use `0x140163990` for startup
++0x80. These classifications close the six outstanding sites named by the
+original bounded search, without extending its coverage claim.
+
+| Object | Constructor / registration site | Registered interface / table | Startup +0x80 entry |
+| --- | --- | --- | --- |
+| Character | `0x1411d2810` / `0x1411dfd98` | Whole +0x10 / `0x142161358` | `0x1421613d8` |
+| Character buff component | `0x1412c2560` / `0x1412c3d0c` | Whole +0x10 / `0x142184288` | `0x142184308` |
+| Unnamed state-dependent object | `0x1410f8dc0` / `0x1411031e3` | Whole +0x20 / `0x142140560` | `0x1421405e0` |
+
+Character registration is in `0x1411dfd30`: it requires whole +0x248
+nonnull, queries the current player through context +0x70, and registers
+when that result is null and whole +0x178 mask 4 is clear. Constructor
+stores at `0x1411d28b8..0x1411d28c6` establish the +0x10 interface table.
+The buff constructor installs its +0x10 table at
+`0x1412c259c..0x1412c25a3`; its primary table is `0x1421841a8`.
+
+For the unnamed object, `0x141103180` compares requested state EDX to
+whole +0x90. Its registration branch requires the previous state to be 1,
+a different requested state, and whole +0x388 null; it stores the context
+there and subscribes whole +0x20. The direct wrapper `0x141103f40` supplies
+requested state 1, so that wrapper alone does not establish this branch's
+startup reachability. Its primary table `0x14213fed0` includes the wrapper
+at `0x142140098`; the validated constructor installs the actual listener
+table at `0x1410f8e0a..0x1410f8e11`. The object remains unnamed because
+identity is not needed to classify the constructed callback slot.
+
+None of these **startup slots** reads components or emits messages. This
+does not classify their initialization methods, other callbacks, or actual
+runtime subscription state. The earlier search still excludes other code
+regions and can miss aliases or register-indirect call patterns.
+
+Private bundle: `~/re/gw2/notes/209026-startup-remaining-1.json`
+(1,883 records). Static REA only; no client launch, network request or
+source behavior changed. Raw reference scans selected candidates; final
+claims use constructor stores, validated disassembly and direct table reads.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_7430d3c5defa0941417d26b2258c477a97ed3e749c64340c726ef4c3ffe74d36` | Character and state-dependent registration guards. |
+| `ev_40885e1517a09db26e7f36d693fec0326e36055728c51de284b3720da4bb84ba` | Character constructor leading table stores. |
+| `ev_6a7aba08934afe4372207a8de5ebc69369e4c24ee28869d0bf91296b9767dbd5` | Character and buff registered-interface stores. |
+| `ev_1c8ebf8aed7a6766c147283b82d39c78a707055dea87c7c426a9811e4a8b5a7d` | Both startup table entries resolve to the no-op. |
+| `ev_ed2aff6774ec30e7585979ab3871ab727f2ce5430988a2a4693102e3baed19dc` / `ev_b2bfb9ed9d8324d30236559539df1beda2daf78f5d083e78a4630bd44a20df52` | State wrapper and primary-table reference. |
+| `ev_4f0f56ee06cd7363fbb948373269483b0a16cc327f452ffce2520329e74a376e` / `ev_bea7fb24045904e2a57d87b4f50beecb2c3db04b083e24ff169da325040f4910` | Validated constructor and +0x20 interface store; complete registration branch. |
+| `ev_5ac115b655cc7090b4646394c902ce83fcadb19a071241d9d83135c22c59ef60` | Unnamed object's startup table entry is the no-op. |
