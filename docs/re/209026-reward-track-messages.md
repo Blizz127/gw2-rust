@@ -95,6 +95,11 @@ other callbacks, packet's full meaning and placement in the startup
 sequence remain open. This establishes a further consumer requiring
 565's manager, not a complete instruction to send 431.
 
+The [wardrobe follow-up](209026-wardrobe-startup.md) identifies +0xb00
+as m_wardrobeMgr, maps lazy allocation through 247/248, and resolves
+431's direct wardrobe/coreStats and skill-bar owner checks. Its remaining
+listener and progress callbacks still do not establish full readiness.
+
 ## Evidence
 
 The typed `RewardTrackCreationFrame209026` in

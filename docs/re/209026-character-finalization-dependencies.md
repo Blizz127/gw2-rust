@@ -169,11 +169,13 @@ ordering of event listeners and content setup.
 | Server 151: attitude | Character exists; an earlier update would be ignored. |
 | Server 605: initial skill availability | Player entry exists and type-64 skill key resolves; direct path does not require an owned character. |
 | Server 565: reward-track manager creation | Player entry exists and manager is absent; four type-353 IDs and four raw slot bytes initialize it. Content validity and runtime listener effects remain open; see [reward tracks](209026-reward-track-messages.md). |
+| Server 247/248: wardrobe updates | Character exists; manager is created lazily. 247 resolves a type-23 ID; 248 stores four unnamed Words. Fresh zero 248 leaves cleared fields unchanged. See [wardrobe trace](209026-wardrobe-startup.md). |
 | Server 612: palette selection | Player entry, owned character and skill bar exist; immediate rebuild has profession/coreStats/inventory dependencies. |
 | Server 609/613: live skill availability change | Player entry, owned character and skill bar exist; type-64 skill key resolves. |
 | Server 640/642: specialization update | Player entry; changed non-null specialization requires owned character during progress recalculation and conditionally reward-track manager. Any existing skill bar is rebuilt; see [specialization trace](209026-specialization-messages.md). |
 | Server 170: fresh owned-player finalization | Player association, attitude, owned-character pointer, owned coreStats, inventory and a profession component. |
 | Server 444: equal-ID controlled assignment | Player entry and finalized character exist; owned-character branch also directly dereferences coreStats. Local-player subscriptions use embedded objects; control-change listener dependencies remain open. See [control branches](209026-character-control.md). |
+| Server 431: payload-free startup callback | Direct body requires controlled player character, associated controlled player, skill bar, wardrobe manager, coreStats and reward-track manager. Rebuild, content and later listener/progress dependencies remain incomplete; this is not a replay-ready sequence. |
 
 Appearance/content validity and further component dependencies remain open.
 

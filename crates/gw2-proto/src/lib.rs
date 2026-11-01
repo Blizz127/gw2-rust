@@ -28,6 +28,7 @@ pub mod skill_availability;
 pub mod skill_palette;
 pub mod skillbar;
 pub mod specialization;
+pub mod wardrobe;
 
 use std::io::{Error, ErrorKind, Result};
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};

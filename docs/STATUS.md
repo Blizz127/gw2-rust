@@ -230,6 +230,13 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     manager consumer with unresolved startup callbacks; valid track IDs,
     slot bytes and its exact sequencing remain open. See
     [reward-track messages](re/209026-reward-track-messages.md).
+    The 431 follow-up names its extra character object m_wardrobeMgr
+    and maps lazy creation through 247/248. Typed small wardrobe frames
+    pass three focused tests and library build; their Word meanings remain
+    open. Fresh zero 248 allocates the manager without changing its cleared
+    four-Word state. 431 additionally asserts skill-bar owner association
+    and dereferences wardrobe coreStats; later progress/content callbacks
+    still need work ([wardrobe startup](re/209026-wardrobe-startup.md)).
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message
