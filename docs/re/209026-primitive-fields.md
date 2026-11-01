@@ -26,8 +26,9 @@ with `movss` and passes them to `0x14023b110`, which stores single-precision
 values in globals. Vector coordinate meanings remain unassigned.
 
 This evidence admits Float, Float2 and Float3 as capture-census primitives,
-including in the already supported one-level arrays. Float4 and Point3 remain
-outside that tool's whitelist until separately checked. This is boundary
+including in the already supported one-level arrays. Float4 remains outside
+that tool's whitelist. Point3 was subsequently verified and admitted; see
+[agent creation](209026-agent-creation.md). This is boundary
 decoding: arbitrary float bit patterns do not establish valid game values.
 
 ## Kind 14: terminated raw bytes

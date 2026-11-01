@@ -1,7 +1,7 @@
 //! Metadata-only inspection of decrypted build-209026 captures.
 //! Wire evidence and limits: docs/re/209026-character-protocol.md,
 //! docs/re/209026-character-creation.md, docs/re/209026-mission-join.md,
-//! docs/re/209026-primitive-fields.md.
+//! docs/re/209026-primitive-fields.md, docs/re/209026-agent-creation.md.
 use std::{
     collections::HashSet,
     fs::File,
@@ -40,6 +40,7 @@ fn verified_primitive(field: &Field) -> bool {
                 | "Float"
                 | "Float2"
                 | "Float3"
+                | "Point3"
                 | "Guid"
                 | "Address"
                 | "String"
@@ -300,6 +301,42 @@ mod tests {
         let mut output = Vec::new();
         assert_eq!(census(messages, &input, &mut output).unwrap(), 2);
         assert_eq!(String::from_utf8(output).unwrap(), "offset=0 id=5 bytes=18\noffset=18 id=6 bytes=31\nmessages=2 bytes=49 complete=true\n");
+    }
+
+    #[test]
+    fn point3_varint_preserves_the_next_field_and_frame_boundary() {
+        use gw2_proto::{Decode, Encode, Point3};
+
+        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="0"><Messages Name="0"><Server><Message Id="1"><Point3/><Word/></Message><Message Id="2"/></Server></Messages></Protocol></Protocols>"#).unwrap();
+        let messages = &schema.protocols[0].groups[0].server;
+        let mut raw = Vec::new();
+        for bits in [0x80000000u32, 0x7f800000, 0x7fc00001] {
+            raw.extend_from_slice(&bits.to_le_bytes());
+        }
+        // Hand-authored varint for u32::MAX, not a codec-generated fixture.
+        raw.extend_from_slice(&[0xff, 0xff, 0xff, 0xff, 0x0f]);
+        let mut remaining = raw.as_slice();
+        let point = Point3::decode(&mut remaining).unwrap();
+        assert!(remaining.is_empty());
+        assert_eq!(point.0.map(f32::to_bits), [0x80000000, 0x7f800000, 0x7fc00001]);
+        assert_eq!(point.1, u32::MAX);
+        let mut encoded = bytes::BytesMut::new();
+        point.encode(&mut encoded);
+        assert_eq!(encoded.as_ref(), raw.as_slice());
+
+        let mut frame = vec![1, 0];
+        frame.extend_from_slice(&raw);
+        frame.extend_from_slice(&[0x34, 0x12]);
+        for cut in 1..frame.len() {
+            assert!(census(messages, &frame[..cut], &mut Vec::new()).is_err());
+        }
+        let mut invalid = frame.clone();
+        invalid[18] = 0x10; // Fifth varint byte overflows u32.
+        assert!(census(messages, &invalid, &mut Vec::new()).is_err());
+        frame.extend_from_slice(&[2, 0]);
+        let mut output = Vec::new();
+        assert_eq!(census(messages, &frame, &mut output).unwrap(), 2);
+        assert_eq!(String::from_utf8(output).unwrap(), "offset=0 id=1 bytes=21\noffset=21 id=2 bytes=2\nmessages=2 bytes=23 complete=true\n");
     }
 
     #[test]

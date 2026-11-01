@@ -174,8 +174,13 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message
     framing fixture parsed completely (34 bytes), without client replay.
-    Engine-agent creation and initialization remain unresolved; see
+    Initial character components remain unresolved; see
     [re/209026-character-population.md](re/209026-character-population.md).
+    Server 37 reaches the registered character factory through a queued
+    engine-agent creation command. Its Point3 encoding is now verified and
+    admitted by the census; focused test/build and 386-byte framing smoke
+    passed. No live bootstrap is claimed; queue timing and required content
+    remain open ([re/209026-agent-creation.md](re/209026-agent-creation.md)).
     See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.

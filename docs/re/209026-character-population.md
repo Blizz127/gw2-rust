@@ -33,7 +33,9 @@ The callback allocates a 0xb08-byte character, constructs it through
 `0x1411d2810`, obtains its index through virtual +0x190, grows the character
 pointer array at context +0x60, and stores the new character at that index.
 It returns the character's +0x48 interface. The engine message that invokes
-this factory and the initial component data remain unresolved.
+this factory was subsequently traced to server 37's queued creation path;
+see [agent creation](209026-agent-creation.md). Initial component data and
+queue timing remain unresolved.
 
 ## Finalization: server 170
 
