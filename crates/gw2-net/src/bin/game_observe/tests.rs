@@ -3,8 +3,12 @@ use gw2_net::ClientCodec;
 use std::net::Shutdown;
 
 #[test]
-fn auth_and_mission_loopback_exchange_capture_only_plaintext() {
-    for mode in [Preamble::Auth, Preamble::Mission] {
+fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
+    for (mode, payload) in [
+        (Preamble::Auth, vec![0x9a, 1]),
+        (Preamble::Mission, vec![0x9a, 1]),
+        (Preamble::Mission, vec![0xa5; CAPTURE_LIMIT + 23]),
+    ] {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let address = listener.local_addr().unwrap();
         let epoch = SystemTime::now()
@@ -63,12 +67,27 @@ fn auth_and_mission_loopback_exchange_capture_only_plaintext() {
         assert_eq!(&received[..], &[0x19, 4]);
         let mut wire = BytesMut::new();
         codec
-            .encode(Bytes::from_static(&[0x9a, 1]), &mut wire)
+            .encode(Bytes::copy_from_slice(&payload), &mut wire)
             .unwrap();
-        client.write_all(&wire).unwrap();
+        if payload.len() > CAPTURE_LIMIT {
+            // Force a non-aligned first read, so a full final chunk would
+            // exceed the cap even though the cap is divisible by 8192.
+            client.write_all(&wire[..1]).unwrap();
+            let deadline = std::time::Instant::now() + Duration::from_secs(5);
+            while fs::metadata(&path).unwrap().len() == 0 {
+                assert!(std::time::Instant::now() < deadline);
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            client.write_all(&wire[1..]).unwrap();
+        } else {
+            client.write_all(&wire).unwrap();
+        }
         client.shutdown(Shutdown::Both).unwrap();
         server.join().unwrap().unwrap();
-        assert_eq!(fs::read(&path).unwrap(), [0x9a, 1]);
+        assert_eq!(
+            fs::read(&path).unwrap(),
+            payload[..payload.len().min(CAPTURE_LIMIT)]
+        );
         let prefix_path = path.with_extension("preamble.bin");
         assert_eq!(fs::read(&prefix_path).unwrap(), preamble::fixture(mode));
         #[cfg(unix)]

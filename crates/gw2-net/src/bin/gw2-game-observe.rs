@@ -27,6 +27,8 @@ use preamble::Preamble;
 #[path = "game_observe/tests.rs"]
 mod tests;
 
+const CAPTURE_LIMIT: usize = 1024 * 1024;
+
 fn invalid(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidInput, message)
 }
@@ -94,8 +96,9 @@ fn observe(
     }
     let mut chunk = [0u8; 8192];
     let mut total = 0;
-    while total < 1024 * 1024 {
-        let n = match stream.read(&mut chunk) {
+    while total < CAPTURE_LIMIT {
+        let available = chunk.len().min(CAPTURE_LIMIT - total);
+        let n = match stream.read(&mut chunk[..available]) {
             Ok(n) => n,
             Err(e)
                 if matches!(

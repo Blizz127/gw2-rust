@@ -104,6 +104,14 @@ The extended auth/mission loopback test verifies exact sidecar bytes, mode 0600
 on both files, and refusal to overwrite either file. All three observer tests
 and the build pass after this change; no frozen-client replay was run.
 
+The plaintext capture cap is exactly 1 MiB: each read is limited to the
+remaining budget. Previously a final 8192-byte read could overshoot after an
+earlier short read. The focused loopback regression forces a one-byte first
+read, then sends more than the cap and verifies an exact 1 MiB plaintext file.
+It also retains the auth/mission prefix and file-permission checks. That test
+and the observer build pass; the other unchanged tests were not rerun for this
+read-budget-only correction.
+
 REA evidence: `ev_5509884917cbe400b5ce9e7327858c44e7a105edaa5643ba53eb9d8513914105`
 (queued preamble and protocol-0 factory call),
 `ev_a13e50a1dd75cbeb1662c654e568c897886de17e5ca3e5461039782f916c5273`
