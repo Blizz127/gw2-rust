@@ -18,3 +18,15 @@ controlled-character path, while unequal fields select a different path.
 They must remain explicit, rather than being silently filled or equated by
 the codec. The other messages also have stateful prerequisites; their
 representation does not itself enforce ordering or validate a bootstrap.
+
+`gw2_proto::character_setup::CharacterSetupFrame209026` now represents
+these five layouts with explicit fields and transactional decoding. It
+preserves raw u32 values, including unequal A/B and values outside known
+gameplay constraints, and never emits messages automatically.
+
+Three focused tests and `cargo build -p gw2-proto --lib` pass. Hand-authored
+hex fixtures verify every layout, field ordering, unequal/equal A/B,
+distinct varint widths, zero and u32 maxima. Additional checks verify
+append prefixes, exact concatenated boundaries, every truncated fixture,
+neighboring IDs and overflowing/overlong varints at every field position.
+No client replay occurred.

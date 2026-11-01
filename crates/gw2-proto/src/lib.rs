@@ -14,6 +14,7 @@
 
 pub mod agent_creation;
 pub mod character_creation;
+pub mod character_setup;
 pub mod character_summary;
 pub mod core_stats;
 pub mod dynamic;
