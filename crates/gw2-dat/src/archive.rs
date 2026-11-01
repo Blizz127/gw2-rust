@@ -88,6 +88,8 @@ pub struct Archive<R = File> {
     index: HashMap<u32, MftEntry>,
     /// Every MFT entry after the header slot, in MFT order (0-based).
     entries: Vec<MftEntry>,
+    /// Raw file index: `(file id, 0-based MFT entry)` in on-disk order, id 0 skipped.
+    pairs: Vec<(u32, usize)>,
 }
 
 impl Archive<File> {
@@ -145,6 +147,7 @@ impl<R: Read + Seek> Archive<R> {
         }
 
         let mut index = HashMap::new();
+        let mut pairs = Vec::new();
         for raw in index_chunks {
             let file_id = le_u32(raw, 0);
             if file_id == 0 {
@@ -156,6 +159,7 @@ impl<R: Read + Seek> Archive<R> {
                 .and_then(|i| entries.get(i))
                 .ok_or_else(|| invalid("file index refers to missing MFT entry"))?;
             index.insert(file_id, *entry);
+            pairs.push((file_id, le_u32(raw, 4) as usize - 1));
         }
 
         Ok(Self {
@@ -163,6 +167,7 @@ impl<R: Read + Seek> Archive<R> {
             len,
             index,
             entries,
+            pairs,
         })
     }
 
@@ -205,6 +210,43 @@ impl<R: Read + Seek> Archive<R> {
     /// points at, such as the archive's own index entries.
     pub fn mft_entries(&self) -> &[MftEntry] {
         &self.entries
+    }
+
+    /// The raw file index as `(file id, 0-based MFT entry)` pairs, in on-disk order.
+    /// Several ids can name the same entry (an asset's base id and current file id).
+    pub fn index_pairs(&self) -> &[(u32, usize)] {
+        &self.pairs
+    }
+
+    /// Decoded size of an MFT entry (0-based): the size field of the compression
+    /// header for compressed entries, else the stored size minus the 4-byte trailer
+    /// of every 64 KiB block. Reads at most 8 bytes.
+    pub fn decoded_size(&self, mft: usize) -> Result<u32> {
+        let entry = *self.entries.get(mft).ok_or(ErrorKind::NotFound)?;
+        match entry.extra_bytes {
+            0 => {
+                let blocks = (entry.size as usize).div_ceil(BLOCK_SIZE) as u32;
+                Ok(entry.size.saturating_sub(4 * blocks))
+            }
+            8 => {
+                let end = entry.offset.checked_add(8).ok_or_else(|| invalid("entry out of bounds"))?;
+                if entry.size < 8 || end > self.len {
+                    return Err(invalid("compressed entry too short"));
+                }
+                let mut h = [0u8; 8];
+                {
+                    let mut reader = self.reader.lock().unwrap_or_else(PoisonError::into_inner);
+                    reader.seek(SeekFrom::Start(entry.offset))?;
+                    reader.read_exact(&mut h)?;
+                }
+                match h[..4] {
+                    [0x08, 0x00, 0x01, 0x80] => Ok(u32::from_le_bytes([h[4], h[5], h[6], h[7]])),
+                    [0x80, 0x01, 0x00, 0x08] => Ok(u32::from_be_bytes([h[4], h[5], h[6], h[7]])),
+                    _ => Err(invalid("invalid compression header")),
+                }
+            }
+            _ => Err(invalid("unknown MFT extra_bytes")),
+        }
     }
 
     /// Like [`Archive::read_head`], but for a raw MFT entry number (0-based).
@@ -356,6 +398,10 @@ mod tests {
         assert!(a.contains(0x10) && !a.contains(0x99));
         assert_eq!(a.entry(0x10).unwrap().size, 104);
         assert_eq!(a.read(0x99).unwrap_err().kind(), ErrorKind::NotFound);
+        // decoded_size agrees with a full read for every indexed entry
+        for &(id, mft) in a.index_pairs() {
+            assert_eq!(a.decoded_size(mft).unwrap() as usize, a.read(id).unwrap().len(), "id {id:#x}");
+        }
     }
 
     #[test]
@@ -369,6 +415,8 @@ mod tests {
         let a = Archive::from_reader(Cursor::new(img)).unwrap();
         assert!(a.entry(7).unwrap().is_compressed());
         assert_eq!(a.read(7).unwrap(), expected);
+        let (_, mft) = a.index_pairs()[0];
+        assert_eq!(a.decoded_size(mft).unwrap() as usize, expected.len());
     }
 
     #[test]

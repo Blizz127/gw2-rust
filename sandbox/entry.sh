@@ -76,6 +76,11 @@ case "$mode" in
         xwd -root -silent 2>/dev/null | xwdtopnm 2>/dev/null | pnmtopng > "/sandbox/logs/shots/shot-$(printf %03d $i).png" 2>/dev/null || true
       done ) &
     cd /client
+    if [[ -n "${GDB_SCRIPT:-}" ]]; then
+      # Debug aid: run the client under gdb with a caller-supplied script (it must end in `run`).
+      exec gdb -q -batch -x "$GDB_SCRIPT" --args /usr/lib/wine/wine64 /client/Gw2-64.exe "$@" \
+        2> >(tee /sandbox/logs/wine.err >&2)
+    fi
     if [[ "${GDB_STACKDUMP:-0}" == 1 ]]; then
       # Debug aid: run the client under gdb; when Wine reports a fatal "stack overflow",
       # dump that thread's PE stack (STACK_LO..STACK_HI) for offline return-address analysis.

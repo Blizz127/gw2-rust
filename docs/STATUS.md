@@ -22,9 +22,19 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
       Build 1004), then `/Sts/Ping` every 30 s.
   - The portal is authenticated against pinned RSA-1024 keys (docs/re/209026-portal-pins.md).
   - `-authsrv host[:6112]` sets the later AuthSrv hop (docs/re/209026-cmdline-and-hosts.md).
+  - **Patch step (2026-11-01, runs 22–31,
+    [re/209026-patcher.md](re/209026-patcher.md)):**
+    - `gw2-assetcdn` answers `/latest64/101` and serves files.
+    - `gw2-manifest-gen` builds an `ARMF` root manifest plus a `Launcher64` `MFST` from
+      the local `Gw2.dat`.
+    - The client downloads and accepts both and no longer asserts.
+    - It still queues every asset for download, so the launcher sits at
+      "Downloading 0KB". The deciding check is being traced in REA.
   - **Next:**
-    1. Serve `/latest64/101` so the launcher passes the patch step (REA on its parser).
-    2. Capture what cligate receives next (auth / StartTls).
+    1. Make the launcher see local assets as present.
+    2. Capture what cligate receives after the patch step (auth / StartTls).
+  - Scope and ordering for the time-locked progression, plus the core-game completion
+    matrix: [SCOPE.md](SCOPE.md).
 
 ## Stages
 

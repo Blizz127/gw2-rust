@@ -63,6 +63,60 @@ pub fn root_manifest(build: u32, manifests: &[ManifestFile], extra: &[ExtraFile]
     packfile(*b"ARMF", &[(*b"ARMF", 1, &b)])
 }
 
+/// One `PackAssetManifestRecord`: an asset's base id, current file id, size, flags.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Record {
+    pub base_id: u32,
+    pub file_id: u32,
+    pub size: u32,
+    pub flags: u32,
+}
+
+/// Records for every asset in a local archive: entries with two ids become
+/// `base = smaller id, file = larger id`, single ids become `base = file = id`.
+/// `size` is the decoded size (run 30: with the stored size the client re-downloaded
+/// every asset). Sorted by base id. The pairing rule is an
+/// inference from the index layout, not confirmed in REA.
+pub fn records_from_archive<R: std::io::Read + std::io::Seek>(a: &crate::archive::Archive<R>) -> Vec<Record> {
+    let mut by_mft: std::collections::BTreeMap<usize, Vec<u32>> = std::collections::BTreeMap::new();
+    for &(id, mft) in a.index_pairs() {
+        by_mft.entry(mft).or_default().push(id);
+    }
+    let mut out: Vec<Record> = by_mft
+        .into_iter()
+        .filter_map(|(mft, ids)| {
+            let size = a.decoded_size(mft).ok()?;
+            let (lo, hi) = (*ids.iter().min()?, *ids.iter().max()?);
+            Some(Record { base_id: lo, file_id: hi, size, flags: 0 })
+        })
+        .collect();
+    out.sort_by_key(|r| r.base_id);
+    out
+}
+
+/// `MFST` v6 (`PackAssetManifest`): `buildId, totalRecordSize (Token, 8 bytes),
+/// records[], streams[], properties[], propertyTable[]`. Streams and properties are
+/// written empty. 64-bit pointers, like [`root_manifest`].
+pub fn manifest(build: u32, records: &[Record]) -> Vec<u8> {
+    let mut b = ChunkBuilder::new64();
+    b.u32(build);
+    b.u64(records.iter().map(|r| u64::from(r.size)).sum());
+    b.u32(records.len() as u32);
+    let r_ptr = b.ptr_slot();
+    for _ in 0..3 {
+        b.u32(0);
+        b.ptr_slot();
+    }
+    if !records.is_empty() {
+        let start = b.pos();
+        b.point(r_ptr, start);
+        for r in records {
+            b.u32(r.base_id).u32(r.file_id).u32(r.size).u32(r.flags);
+        }
+    }
+    packfile(*b"MFST", &[(*b"MFST", 6, &b)])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -94,6 +148,23 @@ mod tests {
         assert_eq!(es[0].get("fileType"), Some(&PfValue::U32(3)));
         // name pointer + both array pointers are fixed up
         assert_eq!(chunk.fixup_offsets().unwrap().len(), 3);
+    }
+
+    #[test]
+    fn manifest_v6_decodes_with_reference_schema() {
+        let recs = [Record { base_id: 1, file_id: 2, size: 3, flags: 0 }, Record { base_id: 4, file_id: 5, size: 6, flags: 1 }];
+        let pf = Packfile::new(manifest(209026, &recs)).unwrap();
+        assert_eq!(pf.r#type(), *b"MFST");
+        let chunk = pf.chunks().next().unwrap().unwrap();
+        assert_eq!(chunk.version(), 6);
+        let schemas = parse(REFERENCE).unwrap();
+        let v6 = find(&schemas, "MFST", "MFST").unwrap().version(6).unwrap();
+        let v = read_chunk(chunk.bytes(), v6, true, Limits::default()).unwrap();
+        assert_eq!(v.get("buildId"), Some(&PfValue::U32(209026)));
+        let PfValue::Array(rs) = v.get("records").unwrap() else { panic!() };
+        assert_eq!(rs.len(), 2);
+        assert_eq!(rs[1].get("fileId"), Some(&PfValue::U32(5)));
+        assert_eq!(v.get("streams"), Some(&PfValue::Array(vec![])));
     }
 
     #[test]

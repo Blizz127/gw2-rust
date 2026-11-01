@@ -1,34 +1,73 @@
-//! `gw2-manifest-gen --out DIR [--build N] [--root-id N]`
+//! `gw2-manifest-gen --out DIR [--build N] [--root-id N] [--manifest NAME]... [--from-dat Gw2.dat]`
 //!
-//! Writes an `ARMF` root manifest for the offline asset CDN to `DIR/<root-id>` and
-//! prints the matching `/latest64` reply line (`build 0 0 root-id size`). For now the
-//! root manifest lists no manifests (probe for the client's next requirement).
+//! Writes patcher manifests for the offline asset CDN into `DIR/<fileId>`:
+//! - an `ARMF` root manifest at `--root-id`;
+//! - for each `--manifest NAME`, an `MFST` manifest listed in the root under that
+//!   name, at the following ids (`root-id + 1`, `+ 2`, …).
+//!
+//! With `--from-dat`, the first manifest lists every asset of that archive
+//! (`manifest::records_from_archive`); the others stay empty.
+//!
+//! It prints the matching `/latest64` reply line (`build 0 0 root-id root-size`).
+//! The client caches downloaded manifests in its `Gw2.dat` by file id, so use a fresh
+//! `--root-id` whenever the content changes. The manifests list no records yet; they are
+//! probes for what the client checks next.
 
 use std::process::ExitCode;
 
-use gw2_dat::manifest::root_manifest;
+use gw2_dat::archive::Archive;
+use gw2_dat::manifest::{ManifestFile, Record, manifest, records_from_archive, root_manifest};
+
+fn usage() -> ExitCode {
+    eprintln!("usage: gw2-manifest-gen --out DIR [--build N] [--root-id N] [--manifest NAME]... [--from-dat Gw2.dat]");
+    ExitCode::from(2)
+}
 
 fn main() -> ExitCode {
     let (mut out, mut build, mut root_id) = (None, 209026u32, 0x7f00_0001u32);
+    let mut names = Vec::new();
+    let mut dat = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
-        let v = args.next();
-        match (a.as_str(), v) {
-            ("--out", Some(v)) => out = Some(v),
-            ("--build", Some(v)) => build = v.parse().unwrap_or(build),
-            ("--root-id", Some(v)) => root_id = v.parse().unwrap_or(root_id),
-            _ => {
-                eprintln!("usage: gw2-manifest-gen --out DIR [--build N] [--root-id N]");
-                return ExitCode::from(2);
-            }
+        let Some(v) = args.next() else { return usage() };
+        match a.as_str() {
+            "--out" => out = Some(v),
+            "--build" => build = v.parse().unwrap_or(build),
+            "--root-id" => root_id = v.parse().unwrap_or(root_id),
+            "--manifest" => names.push(v),
+            "--from-dat" => dat = Some(v),
+            _ => return usage(),
         }
     }
-    let Some(out) = out else {
-        eprintln!("usage: gw2-manifest-gen --out DIR [--build N] [--root-id N]");
-        return ExitCode::from(2);
+    let Some(out) = out else { return usage() };
+    let write = |id: u32, bytes: &[u8]| std::fs::write(format!("{out}/{id}"), bytes);
+    if let Err(e) = std::fs::create_dir_all(&out) {
+        eprintln!("create {out}: {e}");
+        return ExitCode::FAILURE;
+    }
+    let all: Vec<Record> = match &dat {
+        None => Vec::new(),
+        Some(p) => match Archive::open(p) {
+            Ok(a) => records_from_archive(&a),
+            Err(e) => {
+                eprintln!("{p}: {e}");
+                return ExitCode::FAILURE;
+            }
+        },
     };
-    let root = root_manifest(build, &[], &[]);
-    if let Err(e) = std::fs::create_dir_all(&out).and_then(|_| std::fs::write(format!("{out}/{root_id}"), &root)) {
+    let mut files = Vec::new();
+    for (i, name) in names.iter().enumerate() {
+        let id = root_id + 1 + i as u32;
+        let m = manifest(build, if i == 0 { &all } else { &[] });
+        if let Err(e) = write(id, &m) {
+            eprintln!("write {out}/{id}: {e}");
+            return ExitCode::FAILURE;
+        }
+        files.push(ManifestFile { base_id: id, file_id: id, size: m.len() as u32, flags: 0, name: name.clone() });
+        eprintln!("manifest {name:?}: id {id}, {} bytes", m.len());
+    }
+    let root = root_manifest(build, &files, &[]);
+    if let Err(e) = write(root_id, &root) {
         eprintln!("write {out}/{root_id}: {e}");
         return ExitCode::FAILURE;
     }
