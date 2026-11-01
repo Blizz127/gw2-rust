@@ -118,7 +118,13 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     five census tests, observer/census builds and real-descriptor fixture pass.
     Text encoding and gameplay meanings remain unknown. See
     [re/209026-primitive-fields.md](re/209026-primitive-fields.md).
-  - **Static character-creation path:** creation context sends ID 415 through
+  - **Static character-creation path:** the appearance constant registry now maps to
+    ten GUIDs and 32 base content containers (archive IDs 1282830–1282861).
+    All ten type-137 records are located in file 1282852. Relocation-checked
+    extraction yields 90 shipped default strings, one per race/sex/profession;
+    complete value parsing and runtime validity remain unverified.
+    See [re/209026-content-registry.md](re/209026-content-registry.md).
+    Creation context sends ID 415 through
     mission protocol 0, group 39. Registration and descriptor establish its
     bounded string, fixed/variable arrays and scalar wire layout. Local validation
     identifies race/sex offsets and the separate profession byte, with embedded

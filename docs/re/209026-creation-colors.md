@@ -62,6 +62,11 @@ The earlier handwritten request-415 fixture, whose first final-array Dword
 is 300 and others zero, remains a serialization boundary fixture. It does
 not establish a valid color choice or a usable character.
 
+The [content-registry trace](209026-content-registry.md) now locates the
+ten race/sex definitions in archive file 1282852 and extracts their 90
+profession-specific default strings privately. This provides shipped input
+for parsing appearance and color selections; runtime use remains untested.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-creation-colors-static-1.json`.

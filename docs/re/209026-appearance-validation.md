@@ -23,7 +23,9 @@ The race/sex labels come from the previously mapped embedded getters.
 These numbers are **content keys, not archive file IDs**. When the lookup's
 out-parameter is nonzero, the helper resolves result +0x30 through
 `0x1412e38a0`; it finally requires a nonnull result. The exact content-storage
-and indirection formats remain unresolved.
+and indirection formats are being traced in
+[content registry](209026-content-registry.md), which identifies the base
+archive containers and the intermediate GUID lookup.
 
 The same helper supplies the creation defaults described in
 [creation colors](209026-creation-colors.md). This provides a concrete
