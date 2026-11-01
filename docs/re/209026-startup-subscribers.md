@@ -66,9 +66,67 @@ global-service branch still execute.
 
 The first helper `0x141202810` calls **`0x141203060` before its own null
 checks**, then compares the two 16-byte values with their static sentinel.
-Its later owned-character/quest-content work is guarded, but the leading
-helper remains to be followed. No new mandatory network packet is inferred
+Its later owned-character/quest-content work is guarded. The leading
+helper is followed below. No new mandatory network packet is inferred
 from this partial callback trace.
+
+## Leading quest helper with unchanged constructor state
+
+`0x141203060` first calls predicate **`0x141202610`**. That predicate
+queries global-service +0x1b0 virtual +0x88 through getter
+`0x1413f6970`, then returns false if that query is false or quest +0x58
+is null. A null quest therefore avoids its later owned-character and
+quest-definition accesses, but does not avoid the global service query.
+
+The caller invokes quest virtual +0x20 **even after the false predicate**.
+That slot is `0x1411ff8e0`, forwarding to +0x18 (`0x1411ff3b0`) with
+both optional output pointers null. For unchanged constructor state:
+
+- Both position-like values +0x100/+0x118 equal the static sentinel at
+  `0x1425be660`: three Float32 bit patterns `0x7f7fffff`, then a zero
+  Dword. These are finite values, so their equality checks succeed.
+- The getter queries character-context virtual +0x60 (`0x1411b4ef0`).
+  It checks context +0x98, then, if present, calls that character's +8
+  interface virtual +0. The ordinary interface table `0x142161250`
+  resolves this to `0x140400100`, a direct read of interface +0x90
+  (whole-character +0x98). It does not allocate or assert nonnull.
+- A null result returns the sentinel. A nonnull result reaches the quest
+  array count +0x74, which is initially zero. The constructor reserves
+  capacity five but does not add entries. The zero count skips the
+  per-quest selection loop and also returns the sentinel. The wrapper's
+  null optional outputs skip their secondary calls.
+
+With its predicate false, `0x141203060` then checks marker +0x128.
+Constructor-null skips both marker allocation and removal and returns.
+Back in `0x141202810`, the two unchanged sentinel values take its early
+false-return branch before its later quest/owned-character work. The
+second refresh helper's null-quest false result was established above.
+
+This narrows **these two refresh helpers** for unchanged constructor
+state, conditional on the first global service query returning normally.
+It does not establish that the quest listener was registered or that the
+callback's later global-service branch is empty. The latter getter
+`0x141466a80` returns global-service +0x228, which the callback still
+queries separately. Nonempty quest collections, existing markers and
+changed position values retain broader behavior outside this empty-path
+trace.
+
+Private bundle: `~/re/gw2/notes/209026-quest-startup-empty-1.json`.
+All observations are static; no quest messages or runtime calls were run.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_0b0eb6eba9245637bc64c8baecf4014beb5d2e72aafd7940509460f6c7c625a3` | Complete predicate and leading helper's false/no-marker branch. |
+| `ev_dfa6b1c3f83bfa4863c9e823dddae66c8e80341e7688e79ee5403873d04d6e1c` | Position-wrapper method entry. |
+| `ev_bc36bfd63ea71157a4003f53bcaeb6f81360e1229ca2c83e0612d55e5dbb84e7` | Two global-service getters. |
+| `ev_a7eaee2f0b1460ef3f0a78f07fd85a2e02b33460ddb414b5aa63cad34fb992b8` | Complete +0x20 wrapper. |
+| `ev_8ba7ed75cc13eb0b675d3aa304fd80199ffeab51c6c2be629047aa6c93ce1346` | Underlying +0x18 entry. |
+| `ev_d2040c49c6c532690483829e9ef1e6157593a659c26fddf56e77f1036d7c1567` | Sentinel comparisons, context getter and zero-count exit. |
+| `ev_32c3923c212734e14caece44723c644f5aebd44ed04e24fefb6835e198633397` | Optional-output guards and sentinel returns. |
+| `ev_cafbaaa7d2e9968160bfe6d9579e3c8b03a89b78898de76e784740ce45bb429f` | Context +0x60 entry and finite sentinel bits. |
+| `ev_bb2280b7270ae318c5fd0289239af7d050e25592c2ac0544d64b8794f9bc203d` | Complete nullable context getter. |
+| `ev_2c944a8412f66fc4db91641a5af4ae58b35593e8b01990de018853e1097b1856` | Ordinary character interface +0 entry. |
+| `ev_7057d962e2d5e1e81c940db3c2e4c4627cf9783bc7d2e7f4e2ad09edb300c51b` | Direct character field getter. |
 
 ## Coverage and evidence
 
