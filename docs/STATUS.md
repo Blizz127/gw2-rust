@@ -278,7 +278,12 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     [Character locale](re/209026-character-locale.md) now maps all 15
     agent states to skill-palette locale, including two history-dependent
     states and a callback correction/rebuild. Constructor state 1 supports
-    locale 0; later callbacks and full entry eligibility remain unverified.
+    locale 0; later callbacks remain unverified. The [Guardian entry
+    follow-up](re/209026-guardian-palette-eligibility.md) reduces six actual
+    palette rows and identifies nonrecursive standard-slot membership.
+    Palette 127 / skill 9083 is a conditional static slot-0 candidate,
+    requiring level, locale, availability and component prerequisites;
+    no rendered skill bar or usable action is claimed.
     [Slot follow-up](re/209026-reward-track-slots.md) identifies 565/569
     pin values, 568 active-track selection and 566 map-specific selection.
     Pin value domains and 567 keyed-state meaning remain unresolved.

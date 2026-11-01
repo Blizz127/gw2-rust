@@ -46,7 +46,9 @@ bound the next eligibility work; they are **not validated initial choices**:
 Palette 127 is in file 1282837; the other five are in 1282848. All six
 have zero palette flags and null entry references at +8/+0x30/+0x40.
 Other entry fields differ or invoke additional checks, so those nulls
-do not make an entry unconditional.
+do not make an entry unconditional. The [entry follow-up](209026-guardian-palette-eligibility.md)
+now reduces these six records against the complete predicate and traces
+standard-slot membership separately from availability.
 
 ## Level threshold and character locale
 
