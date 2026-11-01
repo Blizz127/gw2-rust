@@ -145,6 +145,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     The capture limit is now exactly 1 MiB even after a short initial read;
     the focused loopback regression and observer build pass.
     See [re/209026-mission-join.md](re/209026-mission-join.md).
+    Static mission ID 1065 supplies an immediate/deferred next destination;
+    map-loading IDs 1060/1061/1063 are mapped separately. The synthetic
+    redirect fixture parses all 39 bytes, but no transfer sequence was sent.
+    See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
