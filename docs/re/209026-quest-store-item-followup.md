@@ -82,8 +82,9 @@ guarded path the proven values are **Quantity=1, AsContent=1,
 TotalPrice=0**, with the cached item +0x12 GUID. No currency, server
 acceptance or entitlement effect is inferred from those values.
 
-The separate request result callback, package-result effects, subsequent
-content notifications and readiness implications remain untraced. A
+The [Purchase result callback](209026-quest-store-purchase-callback.md)
+discards success and posts event 0x50 only on error. Package-result effects,
+subsequent content notifications and readiness implications remain untraced. A
 future offline fixture must account for this possible continuation;
 this finding does not select or implement such a fixture.
 
