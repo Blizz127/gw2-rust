@@ -69,16 +69,33 @@ ev_90256eab…, `FUN_140d95270` ev_cab3e33c…). The client keeps an install tab
 **11. The archive trimmer** emptied the working copy, while the frozen baseline stayed
 untouched. After run 27, which used a root manifest with no manifests, MFT entry 1 (the
 file index) of the working copy's `Gw2.dat` was all zeros. So runs 30–33 tested against
-an empty archive, and their "everything missing" result is explained by that, not by the
-record format. Recovery: `sandbox/run.sh restore 209026`.
+an empty archive. Run 34 confirmed that was the cause of their "everything missing"
+result. Recovery: `sandbox/run.sh restore 209026`.
+
+**12. Language manifest** (`FUN_140d91ad0`, ev_f12e1038…). The root must list exactly
+one manifest with flag bit `0x8` whose name equals the client language's name
+(`FUN_1409c9420(lang)`). Language 0 (English) is the fallback. With none, the client
+asserts `foundLanguageManifest` (`MultiManifest.cpp:202`).
+
+**13. Run 34** (restored `Gw2.dat`, full `Launcher64` manifest): no download requests,
+and the index stays at 1,124,232 entries (no trim). This confirms `base = smaller id`.
+The next assert was `foundLanguageManifest`.
+
+**14. Run 35 — patch step passes offline.** Root manifest = `Launcher64` (every local
+asset) + `English` (flags 8). The launcher reaches its normal screen: 100%, PLAYABLE,
+READY, the account name / password form, and "BUILD: 209026" (screenshot kept privately
+in `~/re/gw2/notes/run35-launcher-ready.png`). The embedded browser then tries WPAD
+(`/wpad.dat`), a Chromium component-updater POST and TLS ClientHellos on 443. All of
+them hit our sinkhole; none leave the box.
+
+Generator command:
+`gw2-manifest-gen --out DIR --root-id <fresh> --manifest Launcher64 --manifest English:8 --from-dat Gw2.dat`
 
 ## Inferred / open
 
-- **Base and file ids:** of the 819,347 MFT entries the index references, 304,885 have
-  two ids and 514,462 have one. We record `base = smaller`, `file = larger`. Not
-  confirmed.
-- **Next run:** restored `Gw2.dat` plus a full-archive `Launcher64` manifest. Expect no
-  downloads if `base = smaller id` matches the archive's file table. Check the index
-  afterwards (no trim).
+- **Base and file ids:** confirmed by run 34. 304,885 entries have two ids
+  (`base = smaller`), 514,462 have one.
+- **`Map<name>` / `Region<name>` manifests** will be needed when maps load (`MhHelper`,
+  `MpQuery`). Not exercised yet.
 - **Exe self-update:** the latest-reply exe fields (1, 2) are 0. No exe download has been
   observed so far.

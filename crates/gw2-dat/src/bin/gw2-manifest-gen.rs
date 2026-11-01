@@ -2,7 +2,7 @@
 //!
 //! Writes patcher manifests for the offline asset CDN into `DIR/<fileId>`:
 //! - an `ARMF` root manifest at `--root-id`;
-//! - for each `--manifest NAME`, an `MFST` manifest listed in the root under that
+//! - for each `--manifest NAME[:FLAGS]`, an `MFST` manifest listed in the root under that
 //!   name, at the following ids (`root-id + 1`, `+ 2`, …).
 //!
 //! With `--from-dat`, the first manifest lists every asset of that archive
@@ -67,14 +67,21 @@ fn main() -> ExitCode {
         },
     };
     let mut files = Vec::new();
-    for (i, name) in names.iter().enumerate() {
+    for (i, spec) in names.iter().enumerate() {
+        // NAME or NAME:FLAGS (flags bit 8 marks a language manifest, REA FUN_140d91ad0).
+        let (name, flags) = match spec.split_once(':') {
+            Some((n, f)) => (n.to_string(), f.parse().unwrap_or(manifest_flags)),
+            None => (spec.clone(), manifest_flags),
+        };
         let id = root_id + 1 + i as u32;
-        let m = manifest(build, if i == 0 { &all } else { &[] });
+        // The first manifest lists every asset; the others repeat its first record, since
+        // a manifest without records asserts `manifest->records`.
+        let m = manifest(build, if i == 0 { &all } else { &all[..all.len().min(1)] });
         if let Err(e) = write(id, &m) {
             eprintln!("write {out}/{id}: {e}");
             return ExitCode::FAILURE;
         }
-        files.push(ManifestFile { base_id: id, file_id: id, size: m.len() as u32, flags: manifest_flags, name: name.clone() });
+        files.push(ManifestFile { base_id: id, file_id: id, size: m.len() as u32, flags, name: name.clone() });
         eprintln!("manifest {name:?}: id {id}, {} bytes", m.len());
     }
     let root = root_manifest(build, &files, &[]);
