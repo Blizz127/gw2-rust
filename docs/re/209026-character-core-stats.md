@@ -47,8 +47,10 @@ Both then invoke:
 
 Server 182 additionally supplies a Dword, three floats and twelve records
 of three Words. Its handler iterates record indexes **1 through 11**, skipping
-record 0, and passes each record to three setters. The middle Word is sign
-extended. Their content meanings are not assigned here.
+record 0, and passes each record to three setters. The **third Word** is
+sign extended; the first two are zero extended. This corrects the earlier
+note's mistaken attribution to the middle Word. The verified stores and
+remaining naming limits are recorded in the follow-up below.
 
 Server 185's handler `0x14124df50` requires an existing coreStats component,
 then only applies the 45-byte update through `0x141208c70`. It does not
@@ -86,6 +88,71 @@ The two level fields remain separately identified by storage and getters:
 virtual 0 (`0x141207eb0`) and +8 (`0x141207f20`) normally return +0xac but
 can return 80 under player-state conditions; virtual +0x10 (`0x140282470`)
 reads +0xe0 directly. Base/effective-level names still need a named consumer.
+
+## Appearance and extended-record follow-up
+
+The appearance setter `0x141208c70` copies exactly 45 bytes to component
++0x18. Primary virtual +0x30 resolves to `0x14026f760`, returning that
+same address. The scalar getters preserve the previously established
+appearance offsets:
+
+| Appearance offset | Component getter | Behavior |
+| --- | --- | --- |
+| 27 | `0x141207d50` | Byte at component +0x33, race. |
+| 28 | `0x141207d60` | Byte at +0x34, converted by `0x1411c30c0`. |
+| 29 | `0x141207d70` | Byte at +0x35, sex. |
+
+Setter `0x1412092f0` names byte 28 through assertion
+`scale <= CHAR_APPEARANCE_SCALE_MAX` (`0x142169190`) and compares against
+15. The conversion helper returns 1.0 for values above 15; for 0..15 its
+integer instructions recover the original value, then separate f32
+multiply/add instructions compute:
+
+```text
+scale = f32(value) * f32_bits(0x3c5a7411) + f32_bits(0x3f666666)
+      ≈ value * 0.013333333 + 0.9
+```
+
+The multiply constant is at `0x142160410`, the add constant at
+`0x141933f58`, and the fallback 1.0 at `0x141924c5c`. This identifies
+the appearance scale conversion. It does not establish a formula for
+server-37 capsule height/radius or verify rendering. The content checks
+for the 45-byte appearance are documented separately in
+[appearance validation](209026-appearance-validation.md).
+
+Server 182's nested descriptor `0x1425dcf80` contains exactly three Words.
+Its handler uses a six-byte stride and these offsets for rows 1..11:
+
+| Word in wire order | Extension | Setter | Stored Dword |
+| --- | --- | --- | --- |
+| 0, offset +0 | Unsigned | `0x141209080` | coreStats +0xb0 + 4*row |
+| 1, offset +2 | Unsigned | `0x141208e90` | coreStats +0x7c + 4*row |
+| 2, offset +4 | Signed | `0x141208d00` | coreStats +0x48 + 4*row |
+
+The decisive instruction at `0x14124def1` is `movsx r8d, word [rax+rdi+4]`;
+the other two loads are `movzx`. Record 0 is present on the wire but skipped
+by this handler. Bounds assertions name attribute arrays, but the +0x48
+getter/setter use different `m_earnedAttributes` / `m_effectiveAttributes`
+assertion strings. This note therefore retains concrete offsets rather than
+assigning an unsupported semantic name to each column.
+
+The additional Dword is passed to `0x1412091e0` with arguments 0 and 0x13;
+it is stored at +0xe4 after a conditional cap. The trailing three floats
+go to `0x141209340` and are stored, in wire order, at +0x120/+0x124/+0x128.
+Their gameplay names remain open. These stores do not establish whether
+183 alone is sufficient for the locally controlled player.
+
+Follow-up private bundle: `~/re/gw2/notes/209026-core-stats-appearance-1.json`
+(948 records, 21,731,440 bytes). No executable code was changed or client
+launched for this follow-up.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_b26be48cce6fe74074ae60e28980e0284e91d2c7226a742158b589d80d83676f` | Appearance copy, primary vtable and attribute stores. |
+| `ev_3f0940ec069f4208360ff0ce9a97b4fe48e44c0e387fbc331bdb2b2f9a0ceea6` | Race/scale/sex getters and attribute assertion strings. |
+| `ev_10f6c004f3a8e4bf203e0348a625a7d552c51c5e2c6e9997d5ad27b1c82b5575` | Appearance pointer, scale conversion, complete 182/183 handlers. |
+| `ev_45660f76758671a8a58320389a7bdfb084cd561d4b820e3e114633818a6ed4ab` | Hash-guarded 182 descriptor, remaining stores and scale constants. |
+| `ev_1edec003e99c01c483f57aefa2fa3e2026bd7c5e6959dd07d6c1dfc18e2bebfc` | Three-Word nested descriptor, attribute notifications and named scale assertion. |
 
 ## Offline validation
 
