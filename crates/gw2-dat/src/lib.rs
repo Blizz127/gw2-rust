@@ -19,6 +19,7 @@ pub mod packfile;
 pub mod pfread;
 pub mod pfschema;
 pub mod pfwrite;
+pub mod profession_content;
 pub mod scene_bounds;
 pub mod terrain;
 pub mod surface;

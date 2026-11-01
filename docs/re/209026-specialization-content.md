@@ -133,6 +133,37 @@ contains 1,126 records, 24,224,037 bytes.
 | `ev_a4aedf50407f919ceede159fd89e11491e8d3cf01fbc426e7e90b1812babc441` | Definition scan 24..31, Revenant list. |
 | `ev_6a2120a8717e08b6ae286cd6aae8bece977c6b39276fc5f3410d8b49281d8d8b` | Exact nine-profession/81-specialization coverage audit. |
 
+## Bounded reader scope
+
+`gw2_dat::profession_content` exposes typed views of the verified type-315,
+type-386 and type-77 fields through the existing `ContentIndex`.
+It checks the stored content type and each accessed byte range, preserves
+raw keys/flags/tiers, and return classified references for profession and
+major-trait arrays. Local array ranges must fit the current container;
+external arrays remain explicit references whose destination bounds and
+record types the caller must validate. String references are not valid
+record-array targets. This reader will not select a build or infer unlock
+state, and does not load or send network messages.
+
+Three focused tests, the library build and the `gw2-profession-check`
+binary build pass. Synthetic cases exercise nonzero record offsets, raw
+scalar preservation, classified external zero offsets, wrong types,
+truncated records, null nonempty arrays, local array extents, arithmetic
+overflow and invalid reference classes. Empty arrays remain explicit.
+
+The read-only checker, run through REA against all 32 frozen base
+containers, reports **9 professions, 81 specializations, 2,425 traits,
+81 specialization references and 729 major-trait references**, matching
+the independent Python census. It rejects duplicate keys/enums but does
+not resolve external targets or validate eligibility. Command:
+`gw2-profession-check /path/to/frozen-209026/Gw2.dat`.
+
+Smoke evidence `ev_7e6865593fe6e90352eeafd348791a3a3cca1c2d9e2d6a63ca5cf6b56f49dd37`;
+private bundle `~/re/gw2/notes/209026-profession-reader-smoke-1.json`
+(1,128 records, 24,231,497 bytes). The first shell-escape invocation was
+rejected by Rizin and did not run the checker; the corrected invocation
+above completed successfully.
+
 ## Evidence
 
 Private census outputs: `specializations-209026-{0-8,8-16,16-24,24-32}.json`

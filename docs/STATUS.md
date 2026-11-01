@@ -256,6 +256,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     partition all 81 specializations exactly once, confirming the Guardian
     list; level/unlock/runtime eligibility remains separate. See
     [re/209026-specialization-content.md](re/209026-specialization-content.md).
+    Bounded `gw2-dat` profession/specialization/trait views now expose these
+    fields and explicit references. Three focused tests and library/checker
+    builds pass; the 32-container Rust smoke matches the independent census.
+    External target resolution and gameplay eligibility remain separate.
     Appearance validation now has a 45-byte branch map and ten race/sex
     content keys (type 137). All 90 shipped defaults have since been extracted
     and parsed; full content-dependent validation remains unresolved. See
