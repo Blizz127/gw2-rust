@@ -10,6 +10,8 @@
 //!
 //! With an explicit TLS identity, StartTls defaults to `<Reply/>`, completes TLS,
 //! and captures decrypted STS messages to private files. Use synthetic accounts only.
+//! `--answer-gethostname HOST` additionally answers GetHostname with that hostname
+//! and a Local marker, allowing an offline login experiment to advance.
 //!
 //! Defaults: listens on 127.0.0.1:6112 and 127.0.0.1:6600 (portal/game ports in the
 //! public notes, unverified). Logs to `./capture/`. Use it inside the
@@ -34,6 +36,7 @@ fn main() {
     let mut starttls: Option<String> = None;
     let mut key = None;
     let mut cert = None;
+    let mut hostname_reply = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match (a.as_str(), args.next()) {
@@ -54,7 +57,14 @@ fn main() {
             ("--answer-starttls", Some(v)) => starttls = Some(if v == "-" { String::new() } else { v }),
             ("--tls-key", Some(v)) => key = Some(PathBuf::from(v)),
             ("--tls-cert", Some(v)) => cert = Some(PathBuf::from(v)),
-            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER]"),
+            ("--answer-gethostname", Some(v)) => {
+                if v.is_empty() || v.len() > 253 || !v.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'.' || c == b'-') {
+                    die("--answer-gethostname requires an ASCII DNS hostname");
+                }
+                // Build 209026's XML accessor rejects bodies without a final LF.
+                hostname_reply = Some(format!("<Reply><Hostname>{v}</Hostname><Local/></Reply>\n"));
+            }
+            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER] [--answer-gethostname HOST]"),
         }
     }
     let tls_config = match (key, cert) {
@@ -65,6 +75,9 @@ fn main() {
         }
         _ => die("--tls-key and --tls-cert must be supplied together"),
     };
+    if hostname_reply.is_some() && tls_config.is_none() {
+        die("--answer-gethostname requires --tls-key and --tls-cert");
+    }
     if listen.is_empty() {
         listen = vec!["127.0.0.1:6112".parse().unwrap(), "127.0.0.1:6600".parse().unwrap()];
     }
@@ -84,6 +97,7 @@ fn main() {
         let greet = greet.clone();
         let starttls = starttls.clone();
         let tls_config = tls_config.clone();
+        let hostname_reply = hostname_reply.clone();
         handles.push(std::thread::spawn(move || {
             for stream in listener.incoming() {
                 match stream {
@@ -92,7 +106,8 @@ fn main() {
                         let greet = greet.clone();
                         let starttls = starttls.clone();
                         let tls_config = tls_config.clone();
-                        std::thread::spawn(move || observe(s, addr, dir, greet, starttls, tls_config));
+                        let hostname_reply = hostname_reply.clone();
+                        std::thread::spawn(move || observe(s, addr, dir, greet, starttls, tls_config, hostname_reply));
                     }
                     Err(e) => eprintln!("{addr}: accept failed: {e}"),
                 }
@@ -113,7 +128,7 @@ fn unix_ms() -> u128 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis())
 }
 
-fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>, starttls: Option<String>, tls_config: Option<Arc<tls::ServerConfig>>) {
+fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>, starttls: Option<String>, tls_config: Option<Arc<tls::ServerConfig>>, hostname_reply: Option<String>) {
     let id = CONN_ID.fetch_add(1, Ordering::Relaxed);
     let peer = stream.peer_addr().map_or("?".into(), |p| p.to_string());
     let path = dir.join(format!("{}-conn{id}-port{}.log", unix_ms(), local.port()));
@@ -173,7 +188,7 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
                         let _ = log.write_all(&reply);
                         if r.is_err() { return; }
                         if let Some(cfg) = &tls_config {
-                            observe_tls(stream, cfg, buf, &mut log, start);
+                            observe_tls(stream, cfg, buf, &mut log, start, hostname_reply.as_deref());
                             println!("conn {id}: TLS capture closed");
                             return;
                         }
@@ -205,7 +220,7 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
     println!("conn {id}: closed");
 }
 
-fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut std::fs::File, start: Instant) {
+fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut std::fs::File, start: Instant, hostname_reply: Option<&str>) {
     // Preserve bytes read beyond the plaintext STS message (possibly a ClientHello).
     let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
     let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
@@ -241,6 +256,15 @@ fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &m
                     let _ = writeln!(log);
                     println!("TLS STS: {} ({} body bytes)", msg.path().unwrap_or("response"), msg.body.len());
                     pending.drain(..used);
+                    if let (Some(body), Some("/Auth/GetHostname"), Some(seq)) = (hostname_reply, msg.path(), msg.seq()) {
+                        let reply = sts::Message::reply(200, "OK", seq, body.as_bytes()).encode();
+                        if let Err(e) = secure.write_app(&reply) {
+                            let _ = writeln!(log, "# TLS GetHostname reply failed: {e}");
+                            return;
+                        }
+                        let _ = writeln!(log, "## sent TLS GetHostname reply ({} bytes)", reply.len());
+                        let _ = log.write_all(&reply);
+                    }
                 }
                 Ok(None) => break,
                 Err(_) => {
