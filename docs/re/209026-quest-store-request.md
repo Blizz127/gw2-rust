@@ -72,8 +72,9 @@ two pairs from `0x142112cc0`. Selector 1 is **`GemStoreSearch`** at
 `0x142112ce8`. The builder puts the supplied GUID into a one-element
 array and emits fields through XML helpers. Exact XML field names,
 namespace construction and response requirements remain to be documented.
-The response continuation and eventual request-ID callback are not yet
-fully traced. These static request names do not establish an observed
+The [callback follow-up](209026-quest-store-callbacks.md) traces internal
+item/package events and the request-ID error event; receiving handlers and
+request-tracker completion remain unresolved. These static request names do not establish an observed
 wire exchange, successful response, purchase, or a required zone-load wait.
 
 The practical bootstrap finding is conditional: when the quest subscriber
