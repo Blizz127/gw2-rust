@@ -106,6 +106,58 @@ records first-match kind/pointer checks and the inclusive bound; and
 `ev_cdb7cf86c028e567cef9c37ec32f80ac7d56897e17add59803bb613ea5b25d46`
 records the hash-guarded archive audit.
 
+### Composite profile counts
+
+The count helpers read a separate **`cmpc` file, `comp` chunk version 19**.
+Startup at `0x14094c7c5` passes the encoded file reference at `0x141b7ee54`
+through `0x1412d88b0` / `0x1412db250` to `0x1412dba00`. Decoding its two
+Words with the established file-reference rule yields archive ID **154681**.
+The loader requests chunk `comp` and version 19 (`0x14235ffc0`), retaining
+the chunk at TLS +0xd0 context +0xb8. The frozen archive matches both.
+
+The chunk has 29 profile records: count +0x24, pointer +0x28, stride 0xe0.
+`0x1411c67c0` selects a UTF-16 name from `0x1425bdec0[race*3+sex]` and
+packs it with `0x140e4cb60`. All ten selected names are lowercase letters,
+at most twelve characters; each letter contributes its 1–26 value in
+successive five-bit positions. `0x1412db990` matches that packed key against
+profile +8. All ten race/sex keys have unique matches in the archive.
+
+| Appearance byte | Count source | Nonzero validator comparison |
+| --- | --- | --- |
+| 0, except Sylvari | Composite profile +0x18 | value <= count |
+| 2 | Type-137 appearance record +0x30 | value < count |
+| 4 | Composite profile +0x3c | value < count |
+| 31 | Composite profile +0x94 | value <= count |
+
+A second offline audit checks these counts plus the already traced simple
+branches at offsets 17/27/28/29. It passes **336 additional nonzero bytes**
+across the 90 defaults, without recounting zero bytes or Sylvari byte 0.
+There are no nonzero byte-17 values in this corpus. Together with the
+generic audit, this leaves **508 nonzero bytes** needing packed-key or
+palette checks. These remain partial static checks, not a runtime validation.
+
+The private decoded file `~/re/gw2/notes/appearance-comp-154681.pf`
+is 14,641,324 bytes, SHA-256
+`94796c36a36c506ed4d616d798d8c90ae44dfed49372b21ff66a37f3299ab7f5`.
+The count audit checks relative pointers against the chunk's fixup table
+and retains its result in `appearance-count-bounds-209026.json`
+(2,890 bytes, SHA-256
+`b7333d90998cb3d21f1c6d9e432008f3300622d8fd80a0e70c11714774576eff`).
+Both files are private, mode 0600.
+
+Evidence bundle: `~/re/gw2/notes/209026-appearance-comp-counts-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_48dbc613737ca5f167c53ab05a45b1671f12597669f809780ac106eee382e6f3` | Composite chunk loader and profile stride. |
+| `ev_62268d982d5f13db64f4e9ec083c71cad9dd72bf3fe08bb5a06a0f3992cb76a9` | Startup passes the embedded file reference. |
+| `ev_9cf17087b771b1bf329e71528bbc01839ba643ab71f9f96c616e23027902d1de` | Hash-guarded reference decode and frozen archive extraction. |
+| `ev_d61d9218defbd60fa1a4ccb1008e6f1073169b92d69c9a8164b2f6d8b31f2abc` | Three profile count getters. |
+| `ev_f225678109ad2307c18b1d823989d2a78ae1407141283b81075472eccd4c465e` | Race/sex profile-name lookup. |
+| `ev_ca3853117583a16046598f69b4baa5ef83bb9020e1a088e151d1bfc12d587b77` | Name table and packing routine. |
+| `ev_f664f16a40bc3864b98d1e6bb0fa6429e57d4f50d0ff8dbce0989bb1e2cf78cf` | Selected names and five-bit packing loop. |
+| `ev_ae2bed1b5bb8b29ca3887ceabfac0bab8bc922252a9ee143f5179d863aa1a632` | All ten profile matches and 336 additional nonzero checks. |
+
 ### Original branch mapping
 
 Private bundle: `~/re/gw2/notes/209026-appearance-validation-static-1.json`.
