@@ -48,6 +48,49 @@ Thus a character with coreStats needs inventory before finalization;
 skipping server 282 merely because no items are present is unsupported.
 Whether an empty inventory is sufficient for all later consumers is untested.
 
+## CoreStats constructor: embedded transformation listener
+
+The unconditional registration at `0x141207bfb..0x141207c26` gets
+character primary virtual +0xd8, stores its result at coreStats +0x138,
+and calls result virtual +0x40. This initially looks like another nullable
+component dependency, but the resolved chain establishes embedded storage:
+
+- Primary character vtable `0x142160be0` +0xd8 is `0x1411d88c0`, which
+  returns the address **character +0x548**, not a pointer loaded from it.
+- Character construction initializes that address through `0x141287a80`
+  at `0x1411d2d12`, installing vtable `0x14217a190` and empty listener state.
+- That object's +0x40 method is `0x141288410`, which adds the supplied
+  listener to its collection. Its assertion source explicitly identifies
+  `Game/Char/Cli/ChCliTransformation.cpp` (`0x14217a1e0`). CoreStats destruction
+  unsubscribes through virtual +0x48.
+
+Therefore this constructor path registers with an already constructed
+transformation object. It does not establish an additional network
+component-creation prerequisite. The separately allocated inventory remains
+a prerequisite at finalization, as described above.
+
+The complete coreStats constructor also zeroes the three twelve-Dword
+attribute arrays (+0x48/+0x7c/+0xb0), the three floats at +0x120 and both
+Dwords at +0xe0/+0xe4. The zero helper `0x1409b7550` forwards to the byte-fill
+routine with fill value zero and the supplied byte count. Thus server 183
+leaves the extra fields absent from its layout initialized, rather than
+uninitialized. This does not establish that zero values are useful gameplay
+values, that later listeners cannot change them, or that 183 is sufficient
+for the locally controlled player.
+
+Private bundle: `~/re/gw2/notes/209026-core-construction-dependencies-1.json`
+(963 records, 21,911,700 bytes). Static analysis only; no client launch.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_955d29cde26226585e4dcb5bb6103bb14a8d215f2f7b373e60bf639ef9e741cd` | Constructor zeroing and unconditional component getter call. |
+| `ev_b4090e77a322d3371aeebe6d9a177be6c0f4112e578e28e6fdb69a98244a5564` | Getter vtable entry, complete registration/destruction and zero-helper wrapper. |
+| `ev_8ad7ecce214fcab8ea3c4ed458610ff25fd5076879a0ee933dd062c575d1e2e4` | Getter returns embedded +0x548 address. |
+| `ev_880c8660c1325ccc659e3fc5a87ee9412feef450550924d666701cd2fe2488d2` | Character initializes the embedded object; inventory registration at finalization. |
+| `ev_ac98ca10a5c389aadf314ac813e4040066ce7700e5cb38008331144859517035` | Embedded object vtable and listener-state initialization. |
+| `ev_e29068dd57b162e7fb1f648874ee6205ce6d359ca672c8abedfc5b34af9d443e` | Listener method pointers and zero-fill implementation. |
+| `ev_13cccb9031d259e5450348d4ea1712a8b5e6f820efb7b83733325a2ccc764e7f` | Listener registration body with direct transformation source reference. |
+
 ## Minimum known ordering constraints
 
 These are dependencies, not a complete playable bootstrap or an exhaustive
