@@ -75,6 +75,11 @@ case "$mode" in
     ( i=0; while sleep "${SHOT_EVERY:-20}"; do i=$((i+1));
         xwd -root -silent 2>/dev/null | xwdtopnm 2>/dev/null | pnmtopng > "/sandbox/logs/shots/shot-$(printf %03d $i).png" 2>/dev/null || true
       done ) &
+    # UI_CMD: a shell command run in the background after UI_DELAY seconds (default 60),
+    # e.g. xdotool input for a test login against our own server. Never real credentials.
+    if [[ -n "${UI_CMD:-}" ]]; then
+      ( sleep "${UI_DELAY:-60}"; bash -c "$UI_CMD" >/sandbox/logs/ui.log 2>&1 ) &
+    fi
     cd /client
     if [[ -n "${GDB_SCRIPT:-}" ]]; then
       # Debug aid: run the client under gdb with a caller-supplied script (it must end in `run`).

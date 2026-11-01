@@ -94,9 +94,16 @@ impl Message {
         self.headers.iter().find(|(k, _)| k == key).map(|(_, v)| v.as_str())
     }
 
-    /// Request sequence number from `s:` (a trailing `R` is accepted).
+    /// Request sequence number from `s:`. A trailing `R` and `;key=value` parameters
+    /// are accepted (build 209026 sends `s:1;timeout=29000` on `/Auth/StartTls`).
     pub fn seq(&self) -> Option<u32> {
-        self.header("s")?.trim_end_matches('R').parse().ok()
+        let v = self.header("s")?;
+        v.split(';').next()?.trim_end_matches('R').parse().ok()
+    }
+
+    /// A `;key=value` parameter of the `s:` header (e.g. `timeout`).
+    pub fn seq_param(&self, key: &str) -> Option<&str> {
+        self.header("s")?.split(';').skip(1).find_map(|kv| kv.split_once('=').filter(|(k, _)| *k == key).map(|(_, v)| v))
     }
 
     pub fn path(&self) -> Option<&str> {
@@ -231,6 +238,17 @@ mod tests {
         assert_eq!(n2, b.len());
         assert_eq!(m2.path(), Some("/Auth/StartTls"));
         assert!(m2.body.is_empty());
+    }
+
+    #[test]
+    fn captured_starttls_request_from_build_209026() {
+        let wire = b"P /Auth/StartTls STS/1.0\r\ns:1;timeout=29000\r\nl:11\r\n\r\n<Request/>\n";
+        let (m, used) = decode(wire).unwrap().unwrap();
+        assert_eq!(used, wire.len());
+        assert_eq!(m.path(), Some("/Auth/StartTls"));
+        assert_eq!(m.seq(), Some(1));
+        assert_eq!(m.seq_param("timeout"), Some("29000"));
+        assert_eq!(m.body, b"<Request/>\n");
     }
 
     #[test]

@@ -1,4 +1,4 @@
-//! `gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX]`
+//! `gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY]`
 //!
 //! Capture listener for stage 3. It accepts TCP connections and, by default,
 //! **never sends a byte**. `--greet-hex` is an opt-in experiment: it sends those
@@ -26,6 +26,7 @@ fn main() {
     let mut listen: Vec<SocketAddr> = Vec::new();
     let mut log_dir = PathBuf::from("capture");
     let mut greet: Vec<u8> = Vec::new();
+    let mut starttls: Option<String> = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match (a.as_str(), args.next()) {
@@ -41,7 +42,10 @@ fn main() {
                     .collect::<Option<Vec<u8>>>()
                     .unwrap_or_else(|| die("bad --greet-hex"))
             }
-            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX]"),
+            // Opt-in: answer `/Auth/StartTls` with `STS/1.0 200 OK`, `s:<n>R` and this body
+            // (`-` = empty), then log the rest of the stream raw (the TLS handshake).
+            ("--answer-starttls", Some(v)) => starttls = Some(if v == "-" { String::new() } else { v }),
+            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY]"),
         }
     }
     if listen.is_empty() {
@@ -60,13 +64,15 @@ fn main() {
         println!("observing {addr} -> {}", log_dir.display());
         let dir = log_dir.clone();
         let greet = greet.clone();
+        let starttls = starttls.clone();
         handles.push(std::thread::spawn(move || {
             for stream in listener.incoming() {
                 match stream {
                     Ok(s) => {
                         let dir = dir.clone();
                         let greet = greet.clone();
-                        std::thread::spawn(move || observe(s, addr, dir, greet));
+                        let starttls = starttls.clone();
+                        std::thread::spawn(move || observe(s, addr, dir, greet, starttls));
                     }
                     Err(e) => eprintln!("{addr}: accept failed: {e}"),
                 }
@@ -87,7 +93,7 @@ fn unix_ms() -> u128 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis())
 }
 
-fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>) {
+fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>, starttls: Option<String>) {
     let id = CONN_ID.fetch_add(1, Ordering::Relaxed);
     let peer = stream.peer_addr().map_or("?".into(), |p| p.to_string());
     let path = dir.join(format!("{}-conn{id}-port{}.log", unix_ms(), local.port()));
@@ -133,6 +139,18 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
                     let _ = writeln!(log);
                     buf.drain(..used);
                     total += used;
+                    if let (Some(body), Some("/Auth/StartTls")) = (&starttls, msg.path()) {
+                        let reply = sts::Message::reply(200, "OK", msg.seq().unwrap_or(0), body.as_bytes()).encode();
+                        let r = stream.write_all(&reply);
+                        let _ = writeln!(log, "## +{t}ms sent StartTls reply ({} bytes) -> {r:?}", reply.len());
+                        let _ = log.write_all(&reply);
+                        let _ = writeln!(log, "\n## switching to raw after StartTls");
+                        let _ = log.write_all(hexdump(&buf).as_bytes());
+                        total += buf.len();
+                        buf.clear();
+                        raw_mode = true;
+                        break;
+                    }
                 }
                 Ok(None) => break,
                 Err(e) => {

@@ -29,10 +29,14 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
       `English` (language) manifests from `Gw2.dat`.
     - The launcher reaches its normal ready screen offline: 100%, PLAYABLE, READY, login
       form, build 209026.
-  - **Next:** the login exchange on cligate:6112. Capture what the client sends after a
-    test login (our own server only; a throwaway test name, never real credentials). Then
-    answer it in `gw2-login`, and decide how the Banshee ticket enters (`-autologin`,
-    `-token`, `AUTH_*` switches).
+  - **Login (run 36/37, [re/209026-login.md](re/209026-login.md)):**
+    - LOG IN sends `P /Auth/StartTls` (`s:1;timeout=29000`).
+    - After our `200 OK` the client sends a TLS 1.2 ClientHello: static-RSA AES-CBC
+      suites only, no extensions.
+  - **Next:**
+    1. A minimal TLS 1.2 RSA server in `gw2-login`.
+    2. REA on the certificate check, then swap in our key in memory.
+    3. Capture the login messages inside TLS.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
 
