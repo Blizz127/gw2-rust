@@ -1,16 +1,18 @@
 //! GW2 message primitives and the message-schema loader.
 //!
-//! The primitive encodings are ported from valaphee/ascalon `protocol/src/lib.rs`
-//! (MIT, commit `03fb60b`) and rewritten for stable Rust. They are reference
-//! encodings for build 208039, **not yet confirmed by REA for our build.**
+//! The primitive encodings originated in valaphee/ascalon `protocol/src/lib.rs`
+//! (MIT, commit `03fb60b`) and were rewritten for stable Rust. Build-209026
+//! evidence and the verified subset are recorded in `docs/re/`; support in this
+//! library alone does not establish an encoding for a particular client build.
 //!
 //! A message on the wire starts with a little-endian `u16` id, followed by its
 //! fields in schema order. That comes from the 208039 dispatch hook in ascalon's
 //! Frida agent, which reads `rawData.readU16()`.
 //!
-//! Encodings that ascalon does not define (`String`, `CString`, `ArrayVar*`,
-//! `BufferVar*`) are deliberately left out until REA shows how our build encodes them.
+//! Variable-field encodings require explicit rules in [`dynamic`]. The capture
+//! census enables only the subset verified for build 209026.
 
+pub mod character_summary;
 pub mod dynamic;
 pub mod schema;
 

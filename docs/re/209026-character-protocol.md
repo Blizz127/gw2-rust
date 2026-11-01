@@ -196,6 +196,28 @@ Private REA bundle: `~/re/gw2/notes/209026-summary-preview-static-1.json`.
 | `ev_4e9cedcd7dd0401f519be4daf2aa65162fbab841ba984dfeb83dbc27e0e56c30` | Named race/sex assertions, 1–9 predicate and summary text consumers. |
 | `ev_c66c815beebbc427f8bd47338c44e59508ffc3ed37d49e558db3fbfbabe681fa` | Localized text selector and combined summary display format. |
 
+## Offline version-11 summary checker
+
+`gw2_proto::character_summary::SummaryV11` borrows an exact 159-byte version-11
+blob and enforces the decoder's five scalar bounds. It exposes the verified
+map key, level, profession, race, sex and 45-byte appearance slice while
+retaining every opaque byte. Other versions are rejected; no historical
+conversion, content lookup or preview validity is implied.
+
+`gw2-summary-check RAW_SUMMARY` reads at most 160 bytes and prints only check
+metadata. It reports the preview sex check separately, because normalization
+admits sex 2, and explicitly leaves map lookup, appearance content and preview
+unverified. A successful exit means structural checks passed, even when the
+separate preview sex check fails. Input is a raw summary blob, not a capture
+or full character-record message.
+
+Two focused library tests pass: exact boundaries/every truncation/unsupported
+versions/opaque-byte preservation, and scalar limits including summary level
+zero and sex 2. The checker and capture-census builds pass. Six CLI smoke
+cases pass (structural success, preview sex rejection, truncation, oversize,
+wrong version and usage). All fixtures are synthetic boundary data, removed
+after the smoke; no client was launched and no character validity is claimed.
+
 ## Word and Qword encoding confirmed statically
 
 The encoder's switch table at `0x140ff178c` maps kind 3 (Word) to
