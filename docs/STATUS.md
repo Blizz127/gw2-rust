@@ -247,6 +247,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Six focused tests, library/binary builds and the 32-container Rust
     smoke pass, including the independently checked Guardian mapping.
     Palette, availability, reward-track and wardrobe paths use data keys.
+    The [reward-track census](re/209026-reward-track-content.md) resolves
+    all 529 tracks to type-53 progress definitions and maps Guardian
+    thresholds. Missing progress yields zero passed Guardian thresholds;
+    active-track selection alone does not grant progress. No replay occurred.
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message

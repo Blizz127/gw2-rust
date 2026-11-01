@@ -67,7 +67,9 @@ track +0x40 and reads that referenced record's numeric key at +0x28.
 Progress virtual +0x28 (`0x141231a20`) looks up that key in its sorted
 16-byte entries. Missing progress returns zero; an existing progress
 object supplies virtual +0x30. The nonnull track's +0x40 reference is
-not null-guarded. Content validity therefore remains a prerequisite.
+not null-guarded. Content validity therefore remains a prerequisite. The
+[base-content follow-up](209026-reward-track-content.md) resolves all 529
+track progress references to type 53 and maps Guardian thresholds.
 
 The direct creation/initialization bodies add no owned-character or
 coreStats dereference. They do require an existing player and global
