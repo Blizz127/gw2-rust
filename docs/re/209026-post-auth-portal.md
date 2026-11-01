@@ -91,3 +91,16 @@ count remain verified. Evidence:
 `ev_45df8de04911ffada7751aeb6d9beed2d1ffbfd23f864e4d6b00dad44d11cdb6`,
 private export `~/re/gw2/notes/209026-launcher-play-run58.json`.
 Next: select Play and capture the engine's next requests/UI in the same isolation.
+
+## Play reaches an owner-decision gate: run 59
+
+Selecting Play opens a Guild Wars 2 User Agreement panel, displaying an April 28,
+2026 update date and an I ACCEPT control. The control was left untouched. No
+agreement was accepted or bypassed. Explicit owner direction was requested through
+the coordinator; further UI progression waits on that decision. Independent
+character-protocol analysis continues.
+
+The bounded run cleaned up its container and verified isolation, executable
+hashes and archive count. No character-selection traffic or screen is established.
+Evidence: `ev_b03577c4fd19cfd334b960532d58bb57168ec21ea21a8b87afec843525e4b078`,
+private export `~/re/gw2/notes/209026-play-agreement-run59.json`.
