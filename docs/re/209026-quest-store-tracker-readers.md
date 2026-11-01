@@ -26,8 +26,8 @@ The destructor fixes the map fields: +0x48 is the slot capacity (reset to
 8), +0x4c the occupied count, and +0x50 the 24-byte slot array. This matches
 the earlier note's slot layout. No other instruction addresses these
 fields RIP-relatively. The other hits in the window (0x14255a9a0 and up)
-belong to a separate neighbouring object. A byte search finds no stored
-pointer to the getter.
+belong to a separate neighbouring object. Byte searches find no stored pointer to the getter, the object, or its
++8 and +0x10 interfaces.
 
 The three installed tables are:
 
@@ -111,15 +111,13 @@ Runtime ordering remains unobserved.
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-quest-store-tracker-readers-1.json`
-(12 records). Frozen executable SHA-256
-`99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`.
-All reads went through REA's Rizin provider; the executable digest was
-unchanged after each call.
-
-The first three bundle records are Ghidra startup timeouts with no
-results. They are retained only as the record of that failed attempt.
-
-The helper scripts are `~/re/gw2/notes/disasm-and-refs.py` and
+(15 Rizin command records). Frozen executable SHA-256
+`99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`; the
+digest was unchanged after every call. Two records are failed shell
+invocations with no output used here: `rg` was missing from REA's PATH, and
+an objdump chain was cut short by Rizin's `;` command splitting. A Ghidra
+attempt timed out at REA's 330 s startup deadline and left no records.
+Helper scripts: `~/re/gw2/notes/disasm-and-refs.py` and
 `getter-call-windows.py`.
 
 | REA evidence | Observation |
@@ -131,3 +129,4 @@ The helper scripts are `~/re/gw2/notes/disasm-and-refs.py` and
 | `ev_2e67c6a51eaadc89560928d358c3bf480cc67bbf7f64cd285b8ba0c6300d8891` | Primary +0/+8/+0x20/+0x28 and +0x10 interface entry bodies. |
 | `ev_798a2674eff2a6e563831e4f6cb5113ebfe8152995847dcc120c1fc04cea81e7` | Insert/remove helper and callback call sites. |
 | `ev_6aa9fff9e0317eecc74df9f17f40fd6e718314c380fa49dc7950aacd2b833fc8` | No stored pointer to the getter. |
+| `ev_3a7b78fb1fc804ac44724b4ad81f18f5cbba29fcb25b18d1dbac0c4f291074e3` / `ev_39cedf245c54aa191bad3dc7d7b7a42ff66f4581b9955ff6fc97aac558ca5d86` / `ev_f0d40dea05dd8f8a9c5219e705c329f77fbed89a8277c68c738db766830867d0` | No stored pointer to the object, its +8 or its +0x10 interface. |
