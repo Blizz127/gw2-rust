@@ -9,15 +9,60 @@
 
 use std::io::Write;
 use std::net::TcpListener;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 use gw2_login::tls::{ServerConfig, accept};
-use rsa::RsaPrivateKey;
-use rsa::pkcs8::DecodePrivateKey;
 
 fn have_openssl() -> bool {
     Command::new("openssl").arg("version").output().is_ok_and(|o| o.status.success())
+}
+
+fn gen_script() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tools/gen-test-cert.sh")
+}
+
+/// Runs `tools/gen-test-cert.sh` into `dir` and loads the result.
+fn gen_and_load(dir: &Path) -> ServerConfig {
+    let _ = std::fs::remove_dir_all(dir);
+    let out = Command::new("bash").arg(gen_script()).arg(dir).output().unwrap();
+    assert!(out.status.success(), "gen-test-cert.sh: {}", String::from_utf8_lossy(&out.stderr));
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("CN=cligate.101.ncplatform.net,L=Bellevue,ST=Washington,C=US"), "{stdout}");
+    ServerConfig::load(&dir.join("cligate-101.key.pem"), &dir.join("cligate-101.cert.der")).expect("load")
+}
+
+#[test]
+fn gen_test_cert_output_loads_and_bad_shapes_are_rejected() {
+    if !have_openssl() {
+        eprintln!("skipped: openssl not found");
+        return;
+    }
+    let base = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("tls-gen-{}", std::process::id()));
+    let (a, b) = (base.join("a"), base.join("b"));
+    let cfg = gen_and_load(&a);
+    assert_eq!(cfg.modulus().len(), 128);
+    assert!(cfg.modulus()[0] & 0x80 != 0);
+    // The script refuses to overwrite an existing key without --force.
+    let again = Command::new("bash").arg(gen_script()).arg(&a).output().unwrap();
+    assert!(!again.status.success());
+    // A certificate for a different key is rejected.
+    gen_and_load(&b);
+    let mixed = ServerConfig::load(&a.join("cligate-101.key.pem"), &b.join("cligate-101.cert.der"));
+    assert!(mixed.is_err());
+    // A 2048-bit key doesn't fit the pinned 128-byte slot.
+    let big = base.join("big.key.pem");
+    let st = Command::new("openssl")
+        .args(["genpkey", "-algorithm", "RSA", "-pkeyopt", "rsa_keygen_bits:2048", "-out"])
+        .arg(&big)
+        .stderr(Stdio::null())
+        .status()
+        .unwrap();
+    assert!(st.success());
+    let err = ServerConfig::load(&big, &a.join("cligate-101.cert.der")).err().expect("2048-bit key rejected");
+    assert!(err.to_string().contains("RSA-1024"), "{err}");
+    let _ = std::fs::remove_dir_all(&base);
 }
 
 #[test]
@@ -26,24 +71,9 @@ fn openssl_s_client_completes_handshake_and_exchanges_data() {
         eprintln!("skipped: openssl not found");
         return;
     }
-    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("tls-interop-{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let (key_pem, cert_der) = (dir.join("key.pem"), dir.join("cert.der"));
-    let st = Command::new("openssl")
-        .args(["req", "-x509", "-newkey", "rsa:1024", "-nodes", "-days", "1"])
-        .args(["-subj", "/CN=cligate.101.ncplatform.net", "-outform", "DER"])
-        .arg("-keyout")
-        .arg(&key_pem)
-        .arg("-out")
-        .arg(&cert_der)
-        .stderr(Stdio::null())
-        .status()
-        .unwrap();
-    assert!(st.success(), "openssl req failed");
-    let cfg = ServerConfig {
-        key: RsaPrivateKey::from_pkcs8_pem(&std::fs::read_to_string(&key_pem).unwrap()).unwrap(),
-        cert_chain: vec![std::fs::read(&cert_der).unwrap()],
-    };
+    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("tls-interop-{}", std::process::id()));
+    let cfg = gen_and_load(&dir);
+    assert_eq!(cfg.modulus().len(), 128);
 
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();

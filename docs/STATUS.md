@@ -35,6 +35,9 @@ Lead: Claude session `gw2-rust` (Devbox tasks f7f99ff037fe, ce075451d399). Updat
       suites only, no extensions.
   - **Next:**
     1. ~~A minimal TLS 1.2 RSA server in `gw2-login`.~~ Done 2026-11-01 (`gw2_login::tls`, interop-tested).
+    1b. ~~Our own test key/cert.~~ Done 2026-11-01: `tools/gen-test-cert.sh` writes an RSA-1024
+       (e = 65537) key and a self-signed cert to gitignored `data/tls/`. The subject is byte-identical
+       to the Name pinned beside the cligate.101 key. `ServerConfig::load` enforces that shape.
     2. REA on the certificate check, then swap in our key in memory.
     3. Capture the login messages inside TLS.
   - Scope and ordering for the time-locked progression, plus the core-game completion
@@ -52,7 +55,7 @@ Lead: Claude session `gw2-rust` (Devbox tasks f7f99ff037fe, ce075451d399). Updat
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
-## Crates (workspace tests: 74 pass, clippy clean)
+## Crates (workspace tests: 75 pass, clippy clean)
 
 | Crate | State |
 | --- | --- |

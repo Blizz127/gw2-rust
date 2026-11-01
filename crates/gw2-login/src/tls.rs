@@ -17,12 +17,15 @@
 
 use std::fmt;
 use std::io::{Read, Write};
+use std::path::Path;
 
 use aes::Aes128;
 use cbc::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit, block_padding::NoPadding};
 use hmac::{Hmac, Mac};
 use rand::RngCore;
-use rsa::{Pkcs1v15Encrypt, RsaPrivateKey};
+use rsa::pkcs8::DecodePrivateKey;
+use rsa::traits::PublicKeyParts;
+use rsa::{BigUint, Pkcs1v15Encrypt, RsaPrivateKey};
 use sha1::Sha1;
 use sha2::{Digest, Sha256};
 
@@ -39,6 +42,8 @@ const MAX_RECORD: usize = 16384 + 2048;
 pub enum TlsError {
     Io(std::io::Error),
     Protocol(String),
+    /// Bad server key or certificate files.
+    Config(String),
     /// The peer sent an alert `(level, description)`.
     Alert(u8, u8),
 }
@@ -48,6 +53,7 @@ impl fmt::Display for TlsError {
         match self {
             Self::Io(e) => write!(f, "tls io: {e}"),
             Self::Protocol(m) => write!(f, "tls protocol: {m}"),
+            Self::Config(m) => write!(f, "tls config: {m}"),
             Self::Alert(l, d) => write!(f, "tls alert level {l} description {d}"),
         }
     }
@@ -86,6 +92,38 @@ pub fn prf(secret: &[u8], label: &[u8], seed: &[u8], out_len: usize) -> Vec<u8> 
 pub struct ServerConfig {
     pub key: RsaPrivateKey,
     pub cert_chain: Vec<Vec<u8>>,
+}
+
+/// Default paths written by `tools/gen-test-cert.sh` (gitignored `data/`).
+pub const DEFAULT_KEY_PEM: &str = "data/tls/cligate-101.key.pem";
+pub const DEFAULT_CERT_DER: &str = "data/tls/cligate-101.cert.der";
+
+impl ServerConfig {
+    /// Loads our own test identity: a PKCS#8 PEM private key and a DER certificate.
+    ///
+    /// Enforces the shape of the client's pinned cligate keys (RSA-1024, e = 65537), since
+    /// our modulus has to fit the pinned 128-byte slot, and checks that the certificate
+    /// carries this key's modulus. Error messages never include key material.
+    pub fn load(key_pem: &Path, cert_der: &Path) -> Result<Self, TlsError> {
+        let cfg = |m: String| TlsError::Config(m);
+        let pem = std::fs::read_to_string(key_pem)?;
+        let key = RsaPrivateKey::from_pkcs8_pem(&pem)
+            .map_err(|_| cfg(format!("{}: not a PKCS#8 RSA private key", key_pem.display())))?;
+        let n = key.n().to_bytes_be();
+        if n.len() != 128 || *key.e() != BigUint::from(65537u32) {
+            return Err(cfg(format!("{}: need RSA-1024 with e=65537, got {} bits", key_pem.display(), key.n().bits())));
+        }
+        let cert = std::fs::read(cert_der)?;
+        if !cert.windows(n.len()).any(|w| w == n.as_slice()) {
+            return Err(cfg(format!("{} does not carry the key in {}", cert_der.display(), key_pem.display())));
+        }
+        Ok(Self { key, cert_chain: vec![cert] })
+    }
+
+    /// The 128-byte big-endian modulus, as it would sit in the client's pinned key slot.
+    pub fn modulus(&self) -> Vec<u8> {
+        self.key.n().to_bytes_be()
+    }
 }
 
 struct Dir {
