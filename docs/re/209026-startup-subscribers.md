@@ -128,6 +128,99 @@ All observations are static; no quest messages or runtime calls were run.
 | `ev_2c944a8412f66fc4db91641a5af4ae58b35593e8b01990de018853e1097b1856` | Ordinary character interface +0 entry. |
 | `ev_7057d962e2d5e1e81c940db3c2e4c4627cf9783bc7d2e7f4e2ad09edb300c51b` | Direct character field getter. |
 
+## Final quest callback: built-in content and category gates
+
+The service getters above use a **thread-local service context**, not a
+single process-global object: `0x1409b1fb0` reads the TLS index at
+`0x1428155c0`, the TLS block from `gs:[0x58]`, then its +0x10 pointer.
+`0x1409b1fd0` sets that pointer. The context builder `0x1409b1c00`
+allocates 0x318 bytes and, unless input flag 2 is set, walks 0x62 factory
+slots at `0x142680f60`, storing each returned pointer at the corresponding
+8-byte context offset. It temporarily installs the new context while
+calling those factories, then restores the previous context.
+
+Registration `0x141466b80` supplies factory thunk `0x141466bb0` at slot
+**0x45**, giving context offset **0x228**. The thunk reaches
+`0x141466630`, which allocates 0x48 bytes and installs vtable
+`0x1422eadf8`. Its first method is `0x141466980`, the method called by the
+quest startup callback. This is a static registration/construction chain;
+actual registration execution and allocation success were not observed.
+The earlier direct-displacement store scans did not establish an installer
+because this builder writes through a moving slot pointer.
+
+That first method tests built-in descriptor **398 (0x18e)** with
+`0x1412ddbb0`, then resolves expected content type **68 (0x44)** using
+`0x1412dde50`. If the resolver reports an indirect variant, it reads the
+variant at returned record +0x30 through `0x1412e3dc0`; that getter returns
+variant +8 only for type 68. Missing content returns null. See
+[descriptor resolution](209026-skill-slot-levels.md) for the shared
+existence/cache machinery; 398 is a descriptor index, not a packet ID.
+
+The descriptor initializer at `0x14021363f` writes type 68 and GUID
+Dwords `224d61df 4c271210 ae8fefaa 5eabe662` into descriptor
+`0x1425ed970`. A hash-checked census of all 32 frozen base containers finds
+exactly one matching record:
+
+| Item | Archive file | Content offset | Result |
+| --- | ---: | ---: | --- |
+| Setting | 1282832 | 0x37d10 | Type 150; declared and embedded variant types both 68. |
+| Variant target | 1282852 | 0x139e40 | Type 68, data key 156. |
+| Target +0x38 reference | 1282850 | 0x126540 | Type 389; Dword +0x28 mask **0x20**. |
+| Target +0x60 reference | — | — | Null. |
+
+Source SHA-256 values:
+
+- 1282832: `63bd50638f1386c9d92ecdecf9c9260e02500d1d9ac616e33883577033c387de`
+- 1282852: `54de38b4b7c4fdf69c18154fb254a3f5f346c1b031b68a8416153c4f751ac5d3`
+- 1282850: `7c4267d7cba4fc5878a66512f207b53f4abb69f86e3a49102d9339475b79e4e4`
+
+Quest primary +0x88 is wrapper `0x1411ffe80`, which supplies R8=0 and
+forwards to +0x80 (`0x1411ffe90`). For category indices 0 through 5, the
+latter calls `0x1411c8e80` on the supplied definition. That helper maps the
+index through the table rooted at `0x1428a7ef8`, then tests the mapped mask
+against the referenced definition's +0x28. A matching category requires
+`0x1410f5310(index)` to return true; otherwise the quest predicate returns
+false immediately. The mask mapping has not yet been traced, so mask
+0x20 alone does not identify the category index or its gameplay name.
+
+After all six category checks pass, the predicate checks definition
++0x60. For this frozen target that reference is null, so it returns true
+without the player progress-manager lookup. If any category check fails,
+the outer startup callback instead subscribes quest +0x20 through service
+context **+0xc8**, sets quest +0xf0 mask 0x10, queries that service's
+virtual +0x48 with the definition, and passes its result to another
+service. These downstream concrete methods remain untraced.
+
+`0x1410f5310` bounds-checks index <6 and forwards to `0x1410f71b0`.
+The inspected body obtains context **+0x68**, enumerates values through
+`0x1412dffd0`, searches a 12-byte-entry collection at service +0x10/count
++0x1c, and calls `0x14023ceb0` when the key is missing. That fallback and
+mapping need further reads. No runtime account state, preferences or
+credential caches were accessed. The archived definition is present;
+neither its presence nor an empty quest object proves that this callback
+will skip the category-dependent subscription branch.
+
+Private bundle: `~/re/gw2/notes/209026-quest-startup-constant-1.json`.
+Two initial helper calls omitted the required `0x` argument prefixes and
+failed before disassembly; corrected calls supply the evidence below.
+Unaligned edge bytes in the broad initializer read are not used.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_5c3ebd515e150bfdfcd7dc58fb24dd63c3dd1edcacd892d3a465dc784bc22744` | TLS context getter and setter. |
+| `ev_4a8d022161ce8746a1f6c2164bc6ba4824ae0e59d92c60e0bcd74bbf7eed3a8a` | Context builder, registration arrays, slot-0x45 registration and descriptor-398 query. |
+| `ev_8ef686c491c1ff87d1d05d29cfb0d6ca54978fe4693e46cb0d1a771201bfc47f` | Factory allocation and installed vtable. |
+| `ev_07c446227011d94b628827c64e3638da096b98f54a364f685c412df3666693a1` | Service first-method entry. |
+| `ev_107fd1c4f4244a08a0d1b346b98e9807bac9da2b7426c111e238f79daa12459b` | Initializer store candidates. |
+| `ev_187dabde7b99585640a29bbbc59314cdeb3c0cc9ad8b2273ee4e75be6e9a0adf` | Descriptor initializer and type-68 variant getter. |
+| `ev_5c4af74b3f60094c2ffdb1448e73535d2b3e0d4afcd99f6799e1576f754ed428` | Full base-container GUID census and resolved target. |
+| `ev_a8fbadef7da544b32291919af1ba5888042955baab29f33fa10590c6991b716f` / `ev_e55fc4fdf1b909e96252c2d72bca154a74208ee4e65dc35018e78742abd575a7` | Quest +0x88/+0x80 method entries. |
+| `ev_9cf778cb8069f14ba30d6ebe313a78babeba178d83eaa733150ff8a13a694597` | Predicate wrapper, initial category checks and outer callback branch. |
+| `ev_c9b7f128121d6d8fa68b59a278db31daa4663e8a133cfca6c6105c41e1eed0a9` | Remaining category checks, progress guard and mapping helper. |
+| `ev_65977a2d110a879bf30e68b05f0644114d440dc5bebf0e1fd7a5fc1520076466` | Frozen guard references and mask 0x20. |
+| `ev_e16d84d750da0556c62c36c6b1ea4ca580ef01181056a3e9e7cb927f8bc86631` | Mapping-mask test and category-value wrapper. |
+| `ev_be3b2a713b446dd2bfec745fb7dcad4c6beefc0a86b8e412d7ea88ce10f92929` | Bounded category-value search and missing-entry fallback. |
+
 ## Coverage and evidence
 
 A raw whole-text displacement scan found candidate indirect +0x1b8 calls;
