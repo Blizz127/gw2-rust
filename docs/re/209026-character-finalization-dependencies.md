@@ -197,7 +197,10 @@ the stored state directly, not a health-component pointer. This is not an
 exhaustive proof of listener behavior or of all component requirements;
 the context event dispatch remains a runtime-dependent boundary. A subsequent
 [AvContext subscription trace](209026-character-view-finalization.md) resolves
-one listener to ordinary view creation, gated by player state 3.
+one listener to ordinary view creation, gated by player state 3. Its
+[ordinary player-model helper](209026-character-model-inputs.md) also
+asserts wardrobe, so that candidate path needs wardrobe prepared before
+model creation during finalization, earlier than the direct 431 use.
 
 Private bundle: `~/re/gw2/notes/209026-finalization-tail-1.json`
 (1,069 records, 23,621,602 bytes).

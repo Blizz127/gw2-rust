@@ -71,17 +71,66 @@ conditionally adding attachment data. Missing individual item results
 are checked; this does not establish that every empty inventory is valid.
 
 A separate getter, character +0x08 virtual +0xf8 (`0x1411d88e0`), returns
-whole-character +0xb00. The builder explicitly checks this pointer for
-null and uses zero for its queried value when absent. Its component name
-is not established here. It is therefore not an unconditional allocation
-requirement of this inspected builder.
+whole-character +0xb00. The builder's initial loop explicitly checks this
+pointer for null and uses zero for its queried value when absent. The
+follow-up below identifies it as the wardrobe manager and finds a later
+player-only assertion: the local null guard must not be generalized to
+the complete builder's callees.
 
 This connects the known **coreStats and inventory before finalization**
-requirements to actual model construction. It adds no new required
-packet for this path and does not establish valid appearance defaults,
-all attachment dependencies, priority policy, asynchronous completion or
-rendering readiness. The builder's later `0x141165d60` call and other
-initialization branches remain follow-up work.
+requirements to actual model construction. It does not establish valid
+appearance defaults, all attachment dependencies, priority policy,
+asynchronous completion or rendering readiness. The follow-up resolves
+the later `0x141165d60` call; other initialization branches remain open.
+
+## Follow-up: wardrobe is required by the later player helper
+
+When the builder's optional final input is null, its tail at
+`0x141166a10` calls `0x141165d60` with model +0xe0 and the character.
+The ordinary `0x141169cf0` caller supplies whole-view +0xba8 as that
+optional input; `0x141159290` initializes +0xba8 to null.
+
+The helper spans `0x141165d60..0x141165f49`; the PE unwind entry at
+`0x141165d60` ends at `0x141165e41`, inside the function, so inspecting
+only that unwind range would omit live branches and its return.
+
+For a player identity, it obtains character primary virtual +0xd8
+(`0x1411d88c0`), asserts **transformationMgr**, and queries its virtual
++0x10 with `(0, 0)`. The getter returns the embedded character +0x548
+object, not a new allocation requirement. The returned optional record
+is checked for pointers at +0x58/+0x28.
+
+It then obtains character +0x08 virtual +0xf8 and asserts
+**wardrobeMgr** (`0x141adb358`) nonnull **before** testing that optional
+transformation result. This is whole-character +0xb00. Thus the earlier
+loop's null tolerance does not make wardrobe optional for this player
+branch. If the transformation result is absent and wardrobe virtual
++0xc0 is nonzero, the helper returns; otherwise it uses inventory
+entries 5 and 1, coreStats sex/race, and conditional model virtual
++0x70 calls. Individual missing inventory entries are handled here.
+
+The [wardrobe allocation trace](209026-wardrobe-startup.md) already
+establishes server 247/248 lazy allocation. A first all-zero 248 is a
+candidate allocation with no changed-value notification. For a candidate
+bootstrap that reaches ordinary player model creation during server 170,
+wardrobe should therefore be prepared before that model-building path,
+not deferred solely to the later server-431 prerequisite. This is a
+conditional ordering refinement: loading policy and earlier callbacks
+may select another path or allocate state, and no runtime sequence has
+been validated.
+
+Follow-up private bundle:
+`~/re/gw2/notes/209026-character-model-wardrobe-1.json`
+(1,574 records; 30,566,133 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_e3fe35d914e6ae8eefd395bda76dcf66ea6ce90b3d45d8caefda1d848859be64` | Player branch and unconditional wardrobe assertion before the transformation-result branch. |
+| `ev_014d1df8e44875405b3db118b572fecfe156a023276f4fb24fa4f32239adccec` | Remaining helper through final return, inventory and coreStats use. |
+| `ev_a8822f9ec1efcaf4b909daebaf4da18aa4fdc5c43fefef6d905c50376fb5a44e` | Exact wardrobeMgr assertion literal. |
+| `ev_92255413eeac20e93a09441b53e5b345cda62089f96b5df43d5fc613b6f5449f` | Primary-character +0xd8 entry. |
+| `ev_2b84ac6ca34cbb4af091d5ed93de5a6fdbbcff9363d1d1ad0f0ba54715e5d60d` | Embedded transformation getter and raw wardrobe pointer getter. |
+| `ev_889e51710c75fecca914bfa4aefc2a008970786314a9e0516a123790735543fd` | Exact transformationMgr assertion literal. |
 
 ## Evidence
 

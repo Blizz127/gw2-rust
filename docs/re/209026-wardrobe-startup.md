@@ -97,6 +97,13 @@ several later getters to embedded account/achievement/progress objects
 and identifies an explicitly optional pointer. Content evaluation and
 callbacks remain open.
 
+The later [ordinary model trace](209026-character-model-inputs.md) finds
+an earlier conditional requirement: finalization's view creation can
+reach a player-model helper that asserts the same wardrobe manager.
+For that candidate bootstrap path, prepare wardrobe before model creation
+during server 170 rather than relying only on the server-431 deadline.
+Loading-policy branches and earlier listener side effects remain open.
+
 ## Evidence
 
 `crates/gw2-proto/src/wardrobe.rs` implements transactional 247/248
