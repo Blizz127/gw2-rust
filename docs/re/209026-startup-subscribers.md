@@ -77,6 +77,9 @@ queries global-service +0x1b0 virtual +0x88 through getter
 `0x1413f6970`, then returns false if that query is false or quest +0x58
 is null. A null quest therefore avoids its later owned-character and
 quest-definition accesses, but does not avoid the global service query.
+The [navigation-guard follow-up](209026-quest-navigation-guard.md) resolves
+that query to a direct navigation-link count check. Its constructor-zero
+count can be populated from content; it is not assumed permanently zero.
 
 The caller invokes quest virtual +0x20 **even after the false predicate**.
 That slot is `0x1411ff8e0`, forwarding to +0x18 (`0x1411ff3b0`) with
