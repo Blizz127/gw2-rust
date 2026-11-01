@@ -189,3 +189,32 @@ change runtime fixtures or advance the held agreement screen.
 | `ev_2dea93800e503720dbae7d529dce66284ba223ccc074beb6deff31e214027891` | Home-shard getter consumers. |
 | `ev_56c9d0205b0c447dbbd4645b9585881f9513dfaf46814d5dac486b56fa7f0a00` | Time assertion names and billing dispatch. |
 | `ev_583635912adeebb12523ef94de3e9a53f4bc4875e9729ba17d7cf9b7379e782c` | Billing jump table and remaining enum labels. |
+
+## Array boundaries for the capture census
+
+Encoder table `0x140ff178c` maps kind 17 to `0x140ff0f26` and kind 18 to
+`0x140ff1058`. These write an unsigned one-byte or two-byte little-endian
+element count, respectively, reject counts above descriptor +0x10, and invoke
+`0x140ff04e0` on the nested descriptor (+0x18) once per element. There is no
+additional element byte-length prefix. This supports inspecting the ID-8 and
+ID-13 arrays of Word/Word/Dword/Dword/Dword records.
+
+The census extension is limited to one array level with explicit, nonempty
+primitive fields and an explicit maximum count. Unknown element encodings,
+implicit TypeName elements and nested arrays remain rejected. This keeps the
+inspection scope tied to the extracted protocol-3 definitions.
+
+Evidence: `ev_848e50853d8278467aa95ba0a17822e888eb6451990d0957e8eb9019b3bfd6b5`
+(count writes and element loops),
+`ev_924936cd56ca3cbe3850121dbb36a14ed2e4abb6cf32925ad0e5c0c983015994`
+(kind dispatch table). Runtime nonempty-array consumption is not yet tested.
+
+The census extension passes its two focused tests, build and clippy. Handwritten
+array frames exercise Word/Dword records with multi-byte varints and a Qword
+record with a u16 count; every nonempty truncation is rejected. Oversize counts,
+unverified fields, nested arrays, TypeName elements, missing maxima and
+zero-byte-only elements are rejected. The saved run-58 client capture still
+consumes all six messages/233 bytes. A locally reconstructed outgoing fixture
+using the saved account body parses IDs 8, 10 and 7 completely; this verifies
+fixture boundaries, not a captured server stream or client consumption of a
+nonempty array.

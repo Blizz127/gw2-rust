@@ -8,7 +8,7 @@ use std::{
 
 use gw2_proto::{
     dynamic::{self, CountPrefix, Rules, StringEncoding},
-    schema::{self, Message},
+    schema::{self, Field, Message},
 };
 
 fn invalid(message: impl Into<String>) -> io::Error {
@@ -26,6 +26,35 @@ fn bounded_file(path: &str, maximum: usize) -> io::Result<Vec<u8>> {
     Ok(bytes)
 }
 
+fn verified_primitive(field: &Field) -> bool {
+    field.fields.is_empty()
+        && field.type_name.is_none()
+        && matches!(
+            field.kind.as_str(),
+            "Byte"
+                | "Word"
+                | "Qword"
+                | "Dword"
+                | "Guid"
+                | "String"
+                | "BufferFixed"
+                | "BufferVarSmall"
+                | "BufferVarLarge"
+        )
+}
+
+fn verified_field(field: &Field) -> bool {
+    verified_primitive(field)
+        || (matches!(field.kind.as_str(), "ArrayVarSmall" | "ArrayVarLarge")
+            && field.type_name.is_none()
+            && field.size.is_some_and(|n| n <= dynamic::MAX_ELEMENTS as u32)
+            && !field.fields.is_empty()
+            && field.fields.iter().all(verified_primitive)
+            // Every element must consume input. Do not admit empty fixed buffers
+            // as the only fields in an array element.
+            && field.fields.iter().any(|f| f.kind != "BufferFixed" || f.size.is_some_and(|n| n > 0)))
+}
+
 fn census(messages: &[Message], bytes: &[u8], output: &mut impl Write) -> io::Result<usize> {
     let mut ids = HashSet::new();
     if messages.iter().any(|message| !ids.insert(message.id)) {
@@ -33,6 +62,8 @@ fn census(messages: &[Message], bytes: &[u8], output: &mut impl Write) -> io::Re
     }
     let rules = Rules {
         string: Some(StringEncoding::Utf16Terminated),
+        array_var_small: Some(CountPrefix::U8),
+        array_var_large: Some(CountPrefix::U16),
         buffer_var_small: Some(CountPrefix::U8),
         buffer_var_large: Some(CountPrefix::U16),
         buffer_fixed_is_size_bytes: true,
@@ -52,21 +83,7 @@ fn census(messages: &[Message], bytes: &[u8], output: &mut impl Write) -> io::Re
             .ok_or_else(|| invalid(format!("unknown ID {id} at offset {offset}")))?;
         // Restrict historical primitives too: a supported codec is not proof
         // that its encoding has been observed for this build.
-        if message.fields.iter().any(|field| {
-            !field.fields.is_empty()
-                || !matches!(
-                    field.kind.as_str(),
-                    "Byte"
-                        | "Word"
-                        | "Qword"
-                        | "Dword"
-                        | "Guid"
-                        | "String"
-                        | "BufferFixed"
-                        | "BufferVarSmall"
-                        | "BufferVarLarge"
-                )
-        }) {
+        if !message.fields.iter().all(verified_field) {
             return Err(invalid(format!(
                 "unverified field encoding for ID {id} at offset {offset}"
             )));
@@ -136,6 +153,52 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn arrays_keep_record_boundaries_and_reject_bad_counts_or_elements() {
+        let xml = r#"<Protocols BuildId="209026"><Protocol Name="3"><Messages Name="40"><Server><Message Id="13"><ArrayVarSmall Size="2"><Word/><Word/><Dword/><Dword/><Dword/></ArrayVarSmall></Message><Message Id="20"><ArrayVarLarge Size="2"><Qword/></ArrayVarLarge></Message></Server></Messages></Protocol></Protocols>"#;
+        let schema = schema::parse(xml).unwrap();
+        let messages = &schema.protocols[0].groups[0].server;
+        // Handwritten wire data: two records, including multi-byte varints.
+        let mut small = vec![13, 0, 2, 0x34, 0x12, 0x78, 0x56, 0x80, 1, 0, 1];
+        small.extend_from_slice(&[0, 0, 1, 0, 2, 0xff, 1, 3]);
+        let large = [20, 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8];
+        for frame in [small.as_slice(), large.as_slice()] {
+            for end in 1..frame.len() {
+                assert!(census(messages, &frame[..end], &mut Vec::new()).is_err());
+            }
+        }
+        let mut bytes = small.clone();
+        bytes.extend_from_slice(&large);
+        let mut output = Vec::new();
+        assert_eq!(census(messages, &bytes, &mut output).unwrap(), 2);
+        assert_eq!(
+            String::from_utf8(output).unwrap(),
+            "offset=0 id=13 bytes=19\noffset=19 id=20 bytes=12\nmessages=2 bytes=31 complete=true\n"
+        );
+        small[2] = 3;
+        assert!(census(messages, &small, &mut Vec::new()).is_err());
+        for field in [
+            r#"<ArrayVarSmall Size="2"><Float/></ArrayVarSmall>"#,
+            r#"<ArrayVarSmall Size="2"><ArrayVarSmall Size="2"><Byte/></ArrayVarSmall></ArrayVarSmall>"#,
+            r#"<ArrayVarSmall Size="2" TypeName="Word"/>"#,
+            r#"<ArrayVarSmall Size="2"><BufferFixed Size="0"/></ArrayVarSmall>"#,
+            r#"<ArrayVarSmall><Word/></ArrayVarSmall>"#,
+        ] {
+            let candidate = schema::parse(&xml.replace(
+                r#"<ArrayVarSmall Size="2"><Word/><Word/><Dword/><Dword/><Dword/></ArrayVarSmall>"#,
+                field,
+            ))
+            .unwrap();
+            let error = census(
+                &candidate.protocols[0].groups[0].server,
+                &[13, 0, 0],
+                &mut Vec::new(),
+            )
+            .unwrap_err();
+            assert!(error.to_string().contains("unverified field encoding"));
+        }
+    }
 
     #[test]
     fn reports_boundaries_without_values_and_stops_on_unverified_encoding() {
