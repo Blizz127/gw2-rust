@@ -195,6 +195,8 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     name transaction (client 22 → server 8 → server 3), whose completion then sends auth 29 with a game type derived from
     the summary map's type (18-pair table), the summary map key, a hash and a 16-byte context value (wire
     layout mapped). Queensdale's map type remains open.
+    Typed Play-path frames (`gw2_proto::play_route`: client 22/29, server 3/20) pass
+    three focused tests cross-checked against `auth.xml`; nothing was exchanged with the client.
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small
