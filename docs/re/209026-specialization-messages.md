@@ -84,6 +84,12 @@ this is the UID field at record +0x14, distinct from data key +0x28.
 The index builder skips zero. This does not establish a safe clearing
 operation, valid combinations, or arbitrary message order.
 
+The [progress-listener follow-up](209026-player-progress.md#specialization-refresh-after-progress)
+confirms that a matching progress update automatically recalculates an
+assigned slot through an inlined callback. It preserves selected traits.
+Resending 640 clears traits even for an unchanged specialization, while
+unchanged bulk pointers in 642 skip assignment-time recalculation.
+
 ## Neighboring player flags: 644
 
 Descriptor `0x1425dbb80`, handler `0x14125ca70`, has player-index Dword

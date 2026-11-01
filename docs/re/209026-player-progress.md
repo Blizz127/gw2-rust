@@ -93,6 +93,38 @@ key 103 and progress key 4894. This maps a possible local fixture field;
 it does not select or validate an unlock level. A framing-valid empty or
 four-value array is not automatically a valid content update.
 
+## Specialization refresh after progress
+
+Player construction calls specialization constructor `0x141224c70` at
+player +0x9cc0. It clears the selected specializations, progress bytes and
+trait pointers, then subscribes its secondary interface (+8, vtable
+`0x14216b378`) to player +0x9760 through progress virtual +0x30.
+Subscription `0x140320a90` only inserts the listener, ignoring duplicates;
+it does not immediately invoke it. Secondary virtual +0 is the no-op
+`0x140163990`; secondary +8 is `0x141225830`.
+
+Thus 511's final notification reaches the specialization listener once
+per message, after all supplied channel values have been assigned. For
+each nonnull selected specialization, `0x141225830` compares its
+track +0x40 progress definition pointer with the updated object's
+virtual +0 definition getter (`0x140273290`). Unmatched slots are skipped.
+For a match it clears/recomputes the corresponding byte using the same
+controlled-owned-character/reward-manager checks and threshold loop as
+assignment. This logic is inlined: looking only for direct calls to
+`0x141226390` misses it. A changed byte emits specialization-listener
+virtual +0x28 through `0x14026e8bc`. The callback itself neither clears
+traits nor directly calls the skill-bar rebuild; further listener effects
+remain open.
+
+This establishes automatic progress-byte refresh for an already assigned
+specialization with the required owned/control/manager state. It does not
+require another assignment message. Repeating 640 would clear that slot's
+three selected traits even when its specialization UID is unchanged.
+Repeating an unchanged 642 specialization pointer skips assignment-time
+progress recalculation. Neither operation should be used as a generic
+progress-refresh substitute. A missing owned character remains an
+unguarded dereference when the progress callback matches a nonnull slot.
+
 ## Typed framing and focused checks
 
 `gw2_proto::progress::CounterProgressFrame209026` covers server 511.
@@ -110,7 +142,8 @@ Guardian-shaped fixture is a framing example, not a selected live default.
 
 ## Evidence
 
-Private bundle: `~/re/gw2/notes/209026-player-progress-1.json`.
+Private bundles: `~/re/gw2/notes/209026-player-progress-1.json` and
+`~/re/gw2/notes/209026-player-progress-refresh-1.json` (listener follow-up).
 The private `inspect-guardian-progress.py` follows the earlier recorded
 track targets through REA and checks definition type and channel mask.
 
@@ -124,3 +157,8 @@ track targets through REA and checks definition type and channel mask.
 | `ev_1da3c650a7e2a3ac4d3d25096c1481365fb54f1f7ba6be965184dd31afb549fd` | Registration pairs, channel getter and event-slot dispatch. |
 | `ev_0ac0a299c0194246e9a66029ffe8af5bcb4c8129b0fcbdd5351fc36e58421cc0` | Hash-guarded descriptors, type-53 key adapter and constructor tail. |
 | `ev_1cef4dba324e334655dc3ebc52b1a203770f03e4a17ee68c4691aecc734a6081` | Reward-manager progress callbacks. |
+| `ev_e063b038165d1719acb0e0e36eb178076693c718375185c075e6f9570bbe1ebd` | Player constructor and assignment/bulk recalculation branches. |
+| `ev_c5e64eb9bd33e781ca4ef506e22236d12a6b048475a78f75a28c757261a97395` | Complete specialization constructor and progress subscription. |
+| `ev_602331a0afe151898bc2047646f359a05c1c1ec2d2ff4a9e645b5b3ad294853b` | Specialization secondary listener vtable. |
+| `ev_8ae72d407a004fd7b1e3c57a13b5d92c03b3375757077768556ad32372673a4e` | Complete final progress callback, three inlined recalculation branches. |
+| `ev_82408acafd8deee21310ba3a2eb5a977d2690877e593f74be8fac1e5672b7517` | Definition getter, specialization event slot and complete subscription helper. |

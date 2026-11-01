@@ -255,7 +255,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     511 as a controlled-player update with a type-53 data key and up to
     four values. Guardian definitions use counter channel 4. The bounded
     codec passes three focused tests and the library build; downstream
-    callbacks and initial progress choices remain separate work.
+    callbacks and initial progress choices remain separate work. The
+    specialization progress listener is now traced: final progress
+    notification refreshes matching slot bytes without clearing traits;
+    another 640 assignment would clear them. No replay was performed.
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message
