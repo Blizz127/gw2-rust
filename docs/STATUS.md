@@ -127,6 +127,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     remains untested. The observer now accepts an explicit `--mission-preamble`
     mode for the 84-byte prefix; three focused tests (including auth/mission
     loopback cipher exchanges), build and CLI fixture-conflict check pass.
+    Validated prefixes are retained in exclusive mode-0600 sidecars; the
+    loopback test verifies their exact bytes and no-overwrite behavior.
     See [re/209026-mission-join.md](re/209026-mission-join.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion

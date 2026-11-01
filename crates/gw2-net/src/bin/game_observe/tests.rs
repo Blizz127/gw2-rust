@@ -69,6 +69,8 @@ fn auth_and_mission_loopback_exchange_capture_only_plaintext() {
         client.shutdown(Shutdown::Both).unwrap();
         server.join().unwrap().unwrap();
         assert_eq!(fs::read(&path).unwrap(), [0x9a, 1]);
+        let prefix_path = path.with_extension("preamble.bin");
+        assert_eq!(fs::read(&prefix_path).unwrap(), preamble::fixture(mode));
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -76,7 +78,21 @@ fn auth_and_mission_loopback_exchange_capture_only_plaintext() {
                 fs::metadata(&path).unwrap().permissions().mode() & 0o777,
                 0o600
             );
+            assert_eq!(
+                fs::metadata(&prefix_path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
         }
+        // Reopening either path must fail rather than replacing evidence.
+        assert_eq!(
+            private_file(&path).unwrap_err().kind(),
+            io::ErrorKind::AlreadyExists
+        );
+        assert_eq!(
+            private_file(&prefix_path).unwrap_err().kind(),
+            io::ErrorKind::AlreadyExists
+        );
         fs::remove_file(path).unwrap();
+        fs::remove_file(prefix_path).unwrap();
     }
 }

@@ -93,6 +93,17 @@ fragmented auth-reply test also passes (three tests total), the observer builds,
 and the CLI fixture-conflict check rejects before identity loading/binding.
 These are local test peers, not a frozen-client mission replay.
 
+The observer retains the validated prefix for later inspection of
+the opaque fields, especially offset 20. It saves it next to each plaintext capture
+using `with_extension("preamble.bin")` (for example,
+`<epoch>-<index>.decrypted.preamble.bin`), exclusive creation and mode 0600.
+Keep the 16/84 bytes separate from the decrypted stream so census offsets remain
+unchanged. No prefix bytes or identity fields belong in console output. This
+sidecar is evidence only, not validation or interpretation of the opaque fields.
+The extended auth/mission loopback test verifies exact sidecar bytes, mode 0600
+on both files, and refusal to overwrite either file. All three observer tests
+and the build pass after this change; no frozen-client replay was run.
+
 REA evidence: `ev_5509884917cbe400b5ce9e7327858c44e7a105edaa5643ba53eb9d8513914105`
 (queued preamble and protocol-0 factory call),
 `ev_a13e50a1dd75cbeb1662c654e568c897886de17e5ca3e5461039782f916c5273`

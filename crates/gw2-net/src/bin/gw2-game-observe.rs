@@ -64,7 +64,7 @@ fn observe(
     let mut auth = auth_body.map(auth::AuthProbe::new);
     stream.set_read_timeout(Some(Duration::from_secs(30)))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
-    preamble.read(&mut stream)?;
+    let preamble = preamble.read(&mut stream)?;
     let mut header = [0u8; 2];
     stream.read_exact(&mut header)?;
     let len = usize::from(header[1]);
@@ -79,6 +79,9 @@ fn observe(
     let mut block = [0u8; 20];
     getrandom::fill(&mut block).map_err(io::Error::other)?;
     let mut codec = ServerCodec::new(&session_secret(&shared, &block));
+    let mut prefix_capture = private_file(&log.with_extension("preamble.bin"))?;
+    prefix_capture.write_all(&preamble)?;
+    prefix_capture.flush()?;
     let mut capture = private_file(log)?;
     stream.write_all(&[1, 22])?;
     stream.write_all(&block)?;

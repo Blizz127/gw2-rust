@@ -9,7 +9,7 @@ pub enum Preamble {
 }
 
 impl Preamble {
-    pub fn read(self, reader: &mut impl Read) -> io::Result<()> {
+    pub fn read(self, reader: &mut impl Read) -> io::Result<Vec<u8>> {
         let mut header = [0u8; 16];
         reader.read_exact(&mut header)?;
         if header[4..8] != 209026u32.to_le_bytes() {
@@ -29,9 +29,12 @@ impl Preamble {
                     "invalid build-209026 mission preamble",
                 ));
             }
-            reader.read_exact(&mut [0u8; 68])?;
+            let mut bytes = header.to_vec();
+            bytes.resize(84, 0);
+            reader.read_exact(&mut bytes[16..])?;
+            return Ok(bytes);
         }
-        Ok(())
+        Ok(header.to_vec())
     }
 }
 
@@ -63,7 +66,7 @@ mod tests {
             }
             input.extend_from_slice(&[0, 6, 0x44, 0x33, 0x22, 0x11]);
             let mut cursor = &input[..];
-            mode.read(&mut cursor).unwrap();
+            assert_eq!(mode.read(&mut cursor).unwrap(), fixture(mode));
             assert_eq!(cursor, &[0, 6, 0x44, 0x33, 0x22, 0x11]);
             input[4] ^= 1;
             assert_eq!(
