@@ -1,0 +1,94 @@
+# Build 209026 mission route and join
+
+Static REA analysis, 2026-11-01, of frozen `Gw2-64.new.exe`, SHA-256
+`99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`.
+No mission connection has been exercised at runtime. The existing User Agreement
+decision remains pending; this work does not advance the UI.
+
+## Route lookup and completion
+
+Transaction constructor `0x140239a00` sets type `0xc0000013` and vtable
+`0x141923720`. Its send method `0x14023e490` calls `0x140241f40`, which sends
+auth protocol-3 client ID 29: six Dword varints followed by a GUID. The first
+Dword is the transaction ID. The remaining request semantics are unresolved.
+
+Server ID 20 has descriptor `0x1425b1360` and handler `0x140240ac0` in the
+auth registration table. Its fields are four Dwords, Address, Dword. The handler
+passes these to `0x14023ae60`, which matches field 0 to transaction +0x30,
+requires low transaction type 0x13, copies the address to +0x78, final Dword to
++0x94, and fields 1–3 to +0x40/+0x44/+0x48, then sets state +0x20 to 1.
+This handler does not additionally check that the prior state is 3.
+
+The transaction completion method `0x14023e100` emits event 0x23 with its
+96-byte result. Consumer `0x141417e50`, branch `0x1414180ca`, tests the result's
+error Word and, on zero, calls `0x141417b80` with the returned address and
+parameters. That routine stores mission state and calls `0x14023c990`, which
+constructs a `0xc0000014` game-join transaction with vtable `0x141923748`.
+The exact triggering UI action and valid route values remain unverified.
+
+## Game join
+
+The join start method `0x14023e740` is named by the client string
+`Gc::GcTransGameJoin::OnStart`. It creates an 84-byte preamble, then calls
+`0x14023f1e0` with the transaction ID, destination address and that preamble.
+The preamble contains a first Dword `0x000c0500`, build 209026, product 101,
+and a Dword `0x48` at offset 12. It also copies transaction fields, two
+16-byte account globals and another 16-byte global; their precise wire roles
+are not all established. Offset 20 was not assigned in the inspected start
+routine, so this is not yet a complete reproducible preamble specification.
+
+Connection callback `0x14023f280`, case 1, creates the protocol-0 connection
+with factory `0x140fefb00`, a 20-byte parameter block and encryption callback
+`0x14023f130`. That callback is named `Gc::GameSrvEncryptCallback`. It calls
+`0x14023b5c0` with the join transaction ID: that helper requires a matching
+transaction in state 3, sets state 1, copies the eight-byte result and succeeds
+only when the error Word is zero. On success, the callback attaches the
+connection and sets the connected flags. Join completion emits event 0x25.
+
+This traces prerequisites for the separately documented
+[creation request](209026-character-creation.md); it does not prove a complete
+mission bootstrap or successful character creation.
+
+## Address wire byte order
+
+Schema kind 12 dispatches to encoder `0x140ff0b2f`. It copies all 28 bytes
+from the decoded address directly to the output, with no byte-order conversion
+or length prefix. The IPv4 constructor `0x1409c0080` zeroes 28 bytes, writes
+family 2, stores the network-order address at +4, and calls imported `htons`
+before storing the port at +2. The port setter `0x1409c0be0` does the same;
+its IPv6 branch reaches `0x1409ccbb0`, also calling `htons` at port +2.
+Predicate `0x1409ccc10` identifies IPv6 by family 23. The formatter reads the
+IPv4 port through imported `ntohs`.
+
+REA resolves IAT `0x141915270` to `WS2_32.dll!htons` and `0x141915258` to
+`ntohs`. Thus family is little-endian and port is **big-endian** for both
+families. IPv4 `127.1.0.2:6112` begins `02 00 17 e0 7f 01 00 02`, followed
+by 20 zero padding bytes. The existing Rust codec's little-endian port was a
+historical-reference assumption; round-trip tests could not detect that error.
+The corrected codec passes an exact-byte IPv4/IPv6 test, including every
+truncation and preservation of the following field. `gw2-game-observe` and
+`gw2-capture-census` build successfully. No runtime route reply has been sent.
+No claim is made here about
+independent verification of nonzero IPv6 flow-info or scope fields.
+
+## Evidence
+
+Private bundle: `~/re/gw2/notes/209026-mission-static-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_17ea319db572bb3fe9f12a6b2493e1a4eb185bbdae16a1531fce2f6aa4ba5ef5` | Route/join transaction vtables and construction. |
+| `ev_c7a18d00178716cf541c903e3a200cba374d80f0e47c72b1c017a5590d8c5c25` | Auth ID-29 sender. |
+| `ev_a6a6b01af93a755c24a3634c144fa0115570487bab833229444aca10cf77a1c3` | ID-20 handler arguments. |
+| `ev_3b783184ecda927779e9c6a1f911d09ea8e5f6b421d1f45c62f8dc71dce5c890` | Correlated route response and transaction storage. |
+| `ev_148fb9cd3408f4114e91ea6d71a6a305534b23077af8df567718d614a71cf26c` | Events 0x23–0x26 and route completion emitter. |
+| `ev_7561ef1a1fa28264ed87b3218e5d7e578df1cbd317bf44c64485438e2e4d14f8` | Route result consumption into join. |
+| `ev_3144f81e925f25f632c9cc77ea7c78c7ce7a21cea4437cecbb426fe395d0b81b` | Named join start and preamble construction. |
+| `ev_fabb68529af93d22ff3cfa9f1b08f28320be12b205c36e1c273e2c7de8eb00b9` | Build/product getters. |
+| `ev_d21d23aa0de3ca643915608267ac2406fc2f8d3228ae6bf93e2c6a659c6e453a` | Connection factory and callback registration. |
+| `ev_c8959237887fb37b2c01945c161050ba77e8143f54f408352063b46856a2c020` | Encryption callback and connection flags. |
+| `ev_778e29940fba81820e3f4f15d49d88350a47e16baf640fe9f81c57805d99d73d` | Transaction completion helper and named callback. |
+| `ev_b0a1737b7e2511e44eff92c3b2002576d9243cdacf35b96e1f219596916a93c9` | Raw Address encoder and auth handler registration. |
+| `ev_ff0c4ee8091b1c79401ef60aa1bb7c24008a5ac4502c7eee9a1ea3d76135c0db` | ID-20 descriptor. |
+| `ev_4b9c4e14e86efc123a2b8aa579ab2eb134a940aa6daf4bce040fb3c3b60355dc` | Address setter, parser and formatter. |
+| `ev_338869311dd5f4fa2738d0014b30d8ab8189db3083da986cdf5c00a31a068510` | htons/ntohs imports, IPv4 constructor and IPv6 port setter. |

@@ -104,6 +104,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     bounded string, fixed/variable arrays and scalar wire layout. Mission
     bootstrap, reply and runtime creation remain unverified. See
     [re/209026-character-creation.md](re/209026-character-creation.md).
+  - **Static mission join:** auth request 29 and reply 20 lead through a
+    correlated route transaction to the protocol-0 game join. Address encoding
+    copies 28 raw bytes with a big-endian port; the Rust port codec is corrected.
+    Exact-byte IPv4/IPv6 test and observer/census builds pass. Mission bootstrap
+    remains untested. See [re/209026-mission-join.md](re/209026-mission-join.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).

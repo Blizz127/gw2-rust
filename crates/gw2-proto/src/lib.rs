@@ -187,20 +187,21 @@ impl Decode for Guid {
 }
 
 /// Schema `Address`: a Windows `sockaddr_in` (family 2) or `sockaddr_in6`
-/// (family 23). The family is a u16 LE; the port is written LE as ascalon does.
-/// That differs from a raw sockaddr (big-endian port) and needs REA confirmation.
+/// (family 23), padded to 28 bytes. The family is a u16 LE; the port is BE.
+/// Build-209026 REA confirms the raw copy and htons port stores; see
+/// `docs/re/209026-mission-join.md`.
 impl Encode for SocketAddr {
     fn encode(&self, buf: &mut BytesMut) {
         match self {
             SocketAddr::V4(a) => {
                 buf.put_u16_le(2);
-                buf.put_u16_le(a.port());
+                buf.put_u16(a.port());
                 buf.put_slice(&a.ip().octets());
                 buf.put_bytes(0, 20);
             }
             SocketAddr::V6(a) => {
                 buf.put_u16_le(23);
-                buf.put_u16_le(a.port());
+                buf.put_u16(a.port());
                 buf.put_u32_le(a.flowinfo());
                 buf.put_slice(&a.ip().octets());
                 buf.put_u32_le(a.scope_id());
@@ -212,13 +213,13 @@ impl Decode for SocketAddr {
     fn decode(buf: &mut &[u8]) -> Result<Self> {
         match u16::decode(buf)? {
             2 => {
-                let port = u16::decode(buf)?;
+                let port = u16::from_be_bytes(take(buf)?);
                 let ip = Ipv4Addr::from(take::<4>(buf)?);
                 take::<20>(buf)?;
                 Ok(SocketAddr::V4(SocketAddrV4::new(ip, port)))
             }
             23 => {
-                let port = u16::decode(buf)?;
+                let port = u16::from_be_bytes(take(buf)?);
                 let flow = u32::from_le_bytes(take(buf)?);
                 let ip = Ipv6Addr::from(take::<16>(buf)?);
                 let scope = u32::from_le_bytes(take(buf)?);
@@ -276,5 +277,42 @@ mod tests {
     #[test]
     fn optional_rejects_bad_tag() {
         assert!(Option::<u8>::decode(&mut &[2, 0][..]).is_err());
+    }
+
+    #[test]
+    fn address_matches_build_209026_wire_bytes() {
+        // Exact bytes catch a shared encode/decode byte-order mistake that a
+        // round trip cannot. Port 6112 is 0x17e0 in network order.
+        let fixtures: [(&str, [u8; 28]); 2] = [
+            (
+                "127.1.0.2:6112",
+                [
+                    2, 0, 0x17, 0xe0, 127, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0,
+                ],
+            ),
+            (
+                "[2001:db8::1]:6112",
+                [
+                    23, 0, 0x17, 0xe0, 0, 0, 0, 0, 0x20, 1, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 1, 0, 0, 0, 0,
+                ],
+            ),
+        ];
+        for (text, wire) in fixtures {
+            let address: SocketAddr = text.parse().unwrap();
+            let mut encoded = BytesMut::new();
+            address.encode(&mut encoded);
+            assert_eq!(encoded.as_ref(), wire);
+
+            let mut with_next_field = wire.to_vec();
+            with_next_field.push(0xa5);
+            let mut input = with_next_field.as_slice();
+            assert_eq!(SocketAddr::decode(&mut input).unwrap(), address);
+            assert_eq!(input, [0xa5]);
+            for length in 0..wire.len() {
+                assert!(SocketAddr::decode(&mut &wire[..length]).is_err());
+            }
+        }
     }
 }
