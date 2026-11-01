@@ -65,12 +65,14 @@ Dword varints**:
 | 0 | Opcode byte. | Opcode byte. |
 | 1 | Raw u16 detail; dead passes all bits, downed passes bit 0 only to its event. | Raw byte detail passed to event. |
 | 3 | Raw byte detail passed to event. | — |
-| 4 | Raw u32 content key, resolved through content virtual +0x230. | — |
+| 4 | Raw u32 skill data key, resolved through content virtual +0x230. | — |
 | 8 | Raw u32 agent identifier, resolved through `0x141024060`. | — |
 | 12 | Raw byte normalized to nonzero/zero for event. | — |
 | 2 | Part of the u16 above. | Raw byte normalized to nonzero/zero for event. |
 
-No human names are assigned to the detail fields or content lookup result.
+The [availability trace](209026-skill-availability.md) establishes content
+virtual +0x230 as type-64 skill lookup by data key. The codec retains the
+field name `content_key`; no human skill or detail-field name is inferred.
 The two long payloads share layout, but have different state and event
 semantics. The raw nonzero bytes are preserved rather than restricted to 1.
 
