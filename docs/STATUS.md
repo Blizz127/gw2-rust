@@ -202,6 +202,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Their framing smoke consumed two frames/44 bytes and rejected a truncated
     float. Scalar meanings and live initialization remain partly unresolved;
     see [re/209026-character-health-endurance.md](re/209026-character-health-endurance.md).
+    The local observer now accepts one explicit `--auth-character-record` body
+    and correlates server 17 before login completion. Bounded structural checks,
+    focused auth tests, the toy-key transport smoke, build and six CLI startup
+    checks passed. This has not been replayed with the client; map/appearance
+    content validity and the Agreement decision remain pending.
     See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.

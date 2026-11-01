@@ -1,13 +1,57 @@
 use super::*;
 use gw2_net::ClientCodec;
+use gw2_proto::Encode;
 use std::net::Shutdown;
 
 #[test]
 fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
-    for (mode, payload) in [
-        (Preamble::Auth, vec![0x9a, 1]),
-        (Preamble::Mission, vec![0x9a, 1]),
-        (Preamble::Mission, vec![0xa5; CAPTURE_LIMIT + 23]),
+    let mut record = vec![0; 16]; // Synthetic character GUID.
+    record.push(0); // Opaque Dword.
+    record.extend_from_slice(&[0; 16]); // Opaque Qwords.
+    record.extend_from_slice(&[b'Z', 0, 0, 0]);
+    record.extend_from_slice(&159u16.to_le_bytes());
+    let mut summary = [0; 159];
+    summary[0] = 11;
+    summary[4] = 1;
+    summary[5] = 1;
+    record.extend_from_slice(&summary);
+    let fixture = auth::ReplyFixture::new(
+        Bytes::from_static(&[0x44; 2]),
+        Some(Bytes::from(record.clone())),
+    )
+    .unwrap();
+    let mut request = BytesMut::new();
+    10u16.encode(&mut request);
+    300u32.encode(&mut request);
+    request.extend_from_slice(&[0; 36]); // Two GUIDs and two empty strings.
+    let mut expected = BytesMut::new();
+    8u16.encode(&mut expected);
+    300u32.encode(&mut expected);
+    expected.extend_from_slice(&[0x44; 2]);
+    10u16.encode(&mut expected);
+    300u32.encode(&mut expected);
+    expected.extend_from_slice(&[0; 2]);
+    17u16.encode(&mut expected);
+    300u32.encode(&mut expected);
+    expected.extend_from_slice(&record);
+    7u16.encode(&mut expected);
+    300u32.encode(&mut expected);
+    expected.extend_from_slice(&[0; 6]);
+    for (mode, payload, auth_fixture, expected_auth) in [
+        (Preamble::Auth, vec![0x9a, 1], None, None),
+        (Preamble::Mission, vec![0x9a, 1], None, None),
+        (
+            Preamble::Mission,
+            vec![0xa5; CAPTURE_LIMIT + 23],
+            None,
+            None,
+        ),
+        (
+            Preamble::Auth,
+            request.to_vec(),
+            Some(fixture),
+            Some(expected.freeze()),
+        ),
     ] {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let address = listener.local_addr().unwrap();
@@ -31,7 +75,7 @@ fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
                 &key,
                 &server_path,
                 Some(&Bytes::from_static(&[0x19, 4])),
-                None,
+                auth_fixture,
                 mode,
             )
         });
@@ -81,6 +125,18 @@ fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
             client.write_all(&wire[1..]).unwrap();
         } else {
             client.write_all(&wire).unwrap();
+        }
+        if let Some(expected) = expected_auth {
+            let received = loop {
+                if let Some(frame) = codec.decode(&mut pending).unwrap() {
+                    break frame;
+                }
+                let mut chunk = [0u8; 32];
+                let n = client.read(&mut chunk).unwrap();
+                assert_ne!(n, 0);
+                pending.extend_from_slice(&chunk[..n]);
+            };
+            assert_eq!(received, expected);
         }
         client.shutdown(Shutdown::Both).unwrap();
         server.join().unwrap().unwrap();

@@ -60,7 +60,7 @@ fn observe(
     key: &ServerKey,
     log: &Path,
     reply: Option<&Bytes>,
-    auth_body: Option<Bytes>,
+    auth_body: Option<auth::ReplyFixture>,
     preamble: Preamble,
 ) -> io::Result<()> {
     let mut auth = auth_body.map(auth::AuthProbe::new);
@@ -138,10 +138,24 @@ fn main() -> io::Result<()> {
     let (mut params, mut private, mut logs) = (None, None, None);
     let mut reply = None;
     let mut auth_body = None;
+    let mut character = None;
     let mut preamble = Preamble::Auth;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "--auth-character-record" => {
+                if character.is_some() {
+                    return Err(invalid("only one character record fixture is supported"));
+                }
+                let path = args
+                    .next()
+                    .ok_or_else(|| invalid("missing character record file"))?;
+                let mut bytes = Vec::new();
+                File::open(path)?
+                    .take((auth::CHARACTER_BODY_LIMIT + 1) as u64)
+                    .read_to_end(&mut bytes)?;
+                character = Some(Bytes::from(bytes));
+            }
             "--mission-preamble" => preamble = Preamble::Mission,
             "--listen" => {
                 listen = args
@@ -171,7 +185,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE | --mission-preamble]",
+                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY] | --mission-preamble]",
                 ));
             }
         }
@@ -179,11 +193,19 @@ fn main() -> io::Result<()> {
     if !listen.ip().is_loopback() {
         return Err(invalid("offline observer requires loopback"));
     }
-    if preamble == Preamble::Mission && auth_body.is_some() {
+    if preamble == Preamble::Mission && (auth_body.is_some() || character.is_some()) {
         return Err(invalid(
             "mission connections cannot use auth reply fixtures",
         ));
     }
+    if character.is_some() && auth_body.is_none() {
+        return Err(invalid(
+            "character record fixture requires --auth-reply-body",
+        ));
+    }
+    let auth_body = auth_body
+        .map(|body| auth::ReplyFixture::new(body, character))
+        .transpose()?;
     let params = read_exact_file(&params.ok_or_else(|| invalid("missing --params"))?, 136)?;
     let params = ParamBlob::parse(&params, ByteOrder::Little)
         .ok_or_else(|| invalid("invalid parameters"))?;

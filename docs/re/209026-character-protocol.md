@@ -85,6 +85,37 @@ ID 17 therefore supplies records used by character selection. ID 18 uses the
 same record layout in a different list; its precise role remains unverified.
 Runtime list population is still untested and remains behind the UI gate.
 
+### Local login fixture preparation
+
+The observer's opt-in character-record extension uses the established login
+type-7 path: insert server 17 after account/configuration replies and before
+server 7 completes the same request. Its input is one record body starting
+with Guid (no message ID or request ID): Guid, opaque Dword, two opaque
+Qwords, terminated UTF-16 name, and a u16-counted summary. It preserves those
+bytes and prefixes the live request ID instead of guessing the opaque fields.
+
+Preparation is limited to one explicitly supplied record, a nonempty name of
+at most 19 UTF-16 units and a structurally valid 159-byte version-11 summary
+that passes the preview sex check. This bounds the body to 238 bytes. Invalid,
+truncated or trailing data must fail before identity loading or socket bind.
+The option requires the existing explicit auth reply body and is unavailable
+with mission preambles. No record is inferred from files or account caches.
+
+These are structural fixture checks; they do not validate the map lookup,
+appearance content, opaque fields or server policy. Live replay remains behind
+the existing User Agreement decision. Refresh handling is outside this change.
+
+Implemented as `--auth-character-record BODY` alongside `--auth-reply-body`.
+Three focused auth tests pass, including every request split, record truncation,
+UTF-16 length boundaries, summary/preview rejection and exact byte preservation.
+The toy-key Auth/Mission loopback test also passes with an additional character
+reply case through DH/RC4/LZ4; it retains the existing capture-limit, mode-0600
+and no-replacement checks. The observer builds. Six CLI startup checks verified
+missing auth mode, mission conflict, truncation, oversize, duplicate option and
+valid-input progression to the missing-identity check before any bind. No client
+or account identity was used in these checks, and live character selection
+remains untested.
+
 | REA evidence | Observation |
 | --- | --- |
 | `ev_7f3868eb38ac54988eb45c2846cd9e4d3d1eb5c7b65411a307c11c82a71f9c72` | Character-scene and widget source references. |
