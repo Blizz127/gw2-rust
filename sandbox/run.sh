@@ -11,6 +11,8 @@
 #                                         build-<build>; the frozen baseline is never
 #                                         mounted). CPUS=0-15 limits cores (default).
 #                                         Runs as the host user. Requires `prepare`.
+#                                         SANDBOX_LOG_DIR selects a separate run's
+#                                         log/fixture directory (default STATE/logs).
 #   sandbox/run.sh prepare <build>        after the working copy exists: verify it
 #                                         against the frozen baseline, then do the
 #                                         launcher's own swap (Gw2-64.new.exe ->
@@ -79,7 +81,9 @@ case "$mode" in
       prefix="$STATE/prefix-proton"
     fi
     mkdir -p "$prefix"
-    mkdir -p "$STATE/prefix" "$STATE/logs"
+    logs="${SANDBOX_LOG_DIR:-$STATE/logs}"
+    [[ "$logs" == /* ]] || { echo "SANDBOX_LOG_DIR must be absolute"; exit 2; }
+    mkdir -p "$STATE/prefix" "$logs"
     # ADD_HOSTS="name[=ip] ..." maps extra names via /etc/hosts (default ip 127.0.0.1; use with DNS_SINK=0).
     host_args=(); for h in ${ADD_HOSTS:-}; do
       ip=127.0.0.1; [[ $h == *=* ]] && { ip=${h#*=}; h=${h%%=*}; }
@@ -89,7 +93,7 @@ case "$mode" in
       --user "$(id -u):$(id -g)" -e HOME=/sandbox/home -v "$STATE/home:/sandbox/home" \
       --dns 127.0.0.1 --dns-search . -e DNS_SINK="${DNS_SINK:-1}" -e DNS_ANSWER="${DNS_ANSWER:-127.1.0.1}" -e WINEDEBUG="${WINEDEBUG:--all}" -e GDB_STACKDUMP="${GDB_STACKDUMP:-0}" -e GDB_SCRIPT="${GDB_SCRIPT:-}" -e UI_CMD="${UI_CMD:-}" -e UI_DELAY="${UI_DELAY:-60}" \
       --hostname gw2-sandbox --add-host gw2-sandbox:127.0.0.1 "${host_args[@]}" \
-      --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$prefix:/sandbox/prefix" "${runtime_args[@]}" -v "$STATE/logs:/sandbox/logs" \
+      --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$prefix:/sandbox/prefix" "${runtime_args[@]}" -v "$logs:/sandbox/logs" \
       -v "$HERE/../target/debug:/server:ro" -e SERVER="${SERVER:-}" \
       "$IMAGE" client "$@" ;;
   *) echo "usage: $0 build|preflight|selftest|prepare <build>|restore <build>|client <build> [args]"; exit 2 ;;

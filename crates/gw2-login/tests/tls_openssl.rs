@@ -57,7 +57,7 @@ fn gen_test_cert_output_loads_and_bad_shapes_are_rejected() {
         .filter_map(|l| l.trim().strip_prefix("Signature Algorithm: ")).collect();
     assert_eq!(algorithms, ["sha1WithRSAEncryption", "sha1WithRSAEncryption"]);
     assert!(cert_text.contains("X509v3 Subject Alternative Name:"), "missing DNS SAN extension");
-    assert!(cert_text.contains("DNS:cligate.101.ncplatform.net"), "wrong DNS SAN");
+    assert!(cert_text.lines().any(|line| line.trim() == "DNS:cligate.101.ncplatform.net."), "wrong DNS SAN");
     assert!(cert_text.contains("Key Encipherment"), "missing keyEncipherment usage");
     // The script refuses to overwrite an existing key without --force.
     let again = Command::new("bash").arg(gen_script()).arg(&a).output().unwrap();
@@ -118,7 +118,7 @@ fn openssl_s_client_completes_handshake_and_exchanges_data() {
     let mut child = Command::new("openssl")
         .args(["s_client", "-connect", &format!("127.0.0.1:{port}"), "-tls1_2"])
         .args(["-cipher", "AES128-SHA:@SECLEVEL=0", "-legacy_server_connect", "-ign_eof"])
-        .args(["-verify_return_error", "-verify_hostname", "cligate.101.ncplatform.net", "-CAfile"])
+        .args(["-verify_return_error", "-verify_hostname", "cligate.101.ncplatform.net.", "-CAfile"])
         .arg(&trusted_cert)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

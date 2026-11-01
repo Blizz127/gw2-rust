@@ -22,7 +22,9 @@ if [[ "${1:-}" == "--force" ]]; then force=1; shift; fi
 root="$(cd "$(dirname "$0")/.." && pwd)"
 out="${1:-$root/data/tls}"
 subj="${SUBJ:-/C=US/ST=Washington/L=Bellevue/CN=cligate.101.ncplatform.net}"
-dns_name="${DNS_NAME:-cligate.101.ncplatform.net}"
+# The runtime TLS hostname includes its DNS root dot; the issuer CN does not.
+# REA run 39 confirms exact dotted SAN acceptance (docs/re/209026-login-tls.md).
+dns_name="${DNS_NAME:-cligate.101.ncplatform.net.}"
 key="$out/cligate-101.key.pem"
 cert="$out/cligate-101.cert.der"
 

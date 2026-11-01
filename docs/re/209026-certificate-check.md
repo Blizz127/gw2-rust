@@ -3,7 +3,10 @@
 Investigation 2026-11-01, handoff step 3. **The RSA TLS path checks an issuer
 trust anchor and a certificate signature, not just equality with a pinned leaf
 key. It requires SHA-1/RSA certificate signatures and a matching DNS SAN.**
-These are static findings; a successful GW2 handshake is still untested.
+These are static findings. Subsequent runtime confirmation is recorded in
+[209026-login-tls.md](209026-login-tls.md): run 39 completes TLS with our local
+trust modulus and an exact dotted SAN. The initial static investigation below
+is retained with its original evidence boundary.
 
 ## Target and evidence boundary
 

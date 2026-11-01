@@ -1,4 +1,4 @@
-//! `gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY]`
+//! `gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER]`
 //!
 //! Capture listener for stage 3. It accepts TCP connections and, by default,
 //! **never sends a byte**. `--greet-hex` is an opt-in experiment: it sends those
@@ -8,17 +8,22 @@
 //! - everything after the first non-STS byte (e.g. TLS-style records after
 //!   `/Auth/StartTls`, or a binary game handshake) as a raw hex dump
 //!
+//! With an explicit TLS identity, StartTls defaults to `<Reply/>`, completes TLS,
+//! and captures decrypted STS messages to private files. Use synthetic accounts only.
+//!
 //! Defaults: listens on 127.0.0.1:6112 and 127.0.0.1:6600 (portal/game ports in the
 //! public notes, unverified). Logs to `./capture/`. Use it inside the
-//! `--network none` sandbox with the client pointed at 127.0.0.1.
+//! `--network none` sandbox. For build 209026, bind 127.1.0.1 and use the sandbox
+//! DNS sink; its resolver cannot use an answer in 127.0.0.0/24.
 
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use gw2_login::sts;
+use gw2_login::{sts, tls};
 
 static CONN_ID: AtomicU64 = AtomicU64::new(1);
 
@@ -27,6 +32,8 @@ fn main() {
     let mut log_dir = PathBuf::from("capture");
     let mut greet: Vec<u8> = Vec::new();
     let mut starttls: Option<String> = None;
+    let mut key = None;
+    let mut cert = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match (a.as_str(), args.next()) {
@@ -43,11 +50,21 @@ fn main() {
                     .unwrap_or_else(|| die("bad --greet-hex"))
             }
             // Opt-in: answer `/Auth/StartTls` with `STS/1.0 200 OK`, `s:<n>R` and this body
-            // (`-` = empty), then log the rest of the stream raw (the TLS handshake).
+            // (`-` = empty). Without a TLS identity, capture the following handshake raw.
             ("--answer-starttls", Some(v)) => starttls = Some(if v == "-" { String::new() } else { v }),
-            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY]"),
+            ("--tls-key", Some(v)) => key = Some(PathBuf::from(v)),
+            ("--tls-cert", Some(v)) => cert = Some(PathBuf::from(v)),
+            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER]"),
         }
     }
+    let tls_config = match (key, cert) {
+        (None, None) => None,
+        (Some(k), Some(c)) => {
+            starttls.get_or_insert_with(|| "<Reply/>".into());
+            Some(Arc::new(tls::ServerConfig::load(&k, &c).unwrap_or_else(|e| die(&e.to_string()))))
+        }
+        _ => die("--tls-key and --tls-cert must be supplied together"),
+    };
     if listen.is_empty() {
         listen = vec!["127.0.0.1:6112".parse().unwrap(), "127.0.0.1:6600".parse().unwrap()];
     }
@@ -61,10 +78,12 @@ fn main() {
             eprintln!("warning: {addr} is not loopback; make sure this runs in the offline sandbox");
         }
         let listener = TcpListener::bind(addr).unwrap_or_else(|e| die(&format!("bind {addr}: {e}")));
+        let addr = listener.local_addr().unwrap_or(addr);
         println!("observing {addr} -> {}", log_dir.display());
         let dir = log_dir.clone();
         let greet = greet.clone();
         let starttls = starttls.clone();
+        let tls_config = tls_config.clone();
         handles.push(std::thread::spawn(move || {
             for stream in listener.incoming() {
                 match stream {
@@ -72,7 +91,8 @@ fn main() {
                         let dir = dir.clone();
                         let greet = greet.clone();
                         let starttls = starttls.clone();
-                        std::thread::spawn(move || observe(s, addr, dir, greet, starttls));
+                        let tls_config = tls_config.clone();
+                        std::thread::spawn(move || observe(s, addr, dir, greet, starttls, tls_config));
                     }
                     Err(e) => eprintln!("{addr}: accept failed: {e}"),
                 }
@@ -93,11 +113,18 @@ fn unix_ms() -> u128 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis())
 }
 
-fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>, starttls: Option<String>) {
+fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>, starttls: Option<String>, tls_config: Option<Arc<tls::ServerConfig>>) {
     let id = CONN_ID.fetch_add(1, Ordering::Relaxed);
     let peer = stream.peer_addr().map_or("?".into(), |p| p.to_string());
     let path = dir.join(format!("{}-conn{id}-port{}.log", unix_ms(), local.port()));
-    let Ok(mut log) = std::fs::File::create(&path) else {
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let Ok(mut log) = options.open(&path) else {
         eprintln!("cannot create {}", path.display());
         return;
     };
@@ -144,6 +171,12 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
                         let r = stream.write_all(&reply);
                         let _ = writeln!(log, "## +{t}ms sent StartTls reply ({} bytes) -> {r:?}", reply.len());
                         let _ = log.write_all(&reply);
+                        if r.is_err() { return; }
+                        if let Some(cfg) = &tls_config {
+                            observe_tls(stream, cfg, buf, &mut log, start);
+                            println!("conn {id}: TLS capture closed");
+                            return;
+                        }
                         let _ = writeln!(log, "\n## switching to raw after StartTls");
                         let _ = log.write_all(hexdump(&buf).as_bytes());
                         total += buf.len();
@@ -170,6 +203,60 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
     }
     let _ = writeln!(log, "# closed after {}ms, {total} bytes logged", start.elapsed().as_millis());
     println!("conn {id}: closed");
+}
+
+fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut std::fs::File, start: Instant) {
+    // Preserve bytes read beyond the plaintext STS message (possibly a ClientHello).
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
+    let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
+    let mut secure = match tls::accept(stream, cfg, pre) {
+        Ok(s) => s,
+        Err(e) => {
+            let _ = writeln!(log, "\n# TLS handshake failed: {e}");
+            return;
+        }
+    };
+    let _ = writeln!(log, "\n# TLS established: TLS1.2 AES128-SHA");
+    let mut pending = Vec::new();
+    let mut raw = false;
+    loop {
+        let bytes = match secure.read_app() {
+            Ok(b) if b.is_empty() => break,
+            Ok(b) => b,
+            Err(e) => {
+                let _ = writeln!(log, "# TLS read ended: {e}");
+                break;
+            }
+        };
+        if raw {
+            let _ = writeln!(log, "## decrypted raw {} bytes\n{}", bytes.len(), hexdump(&bytes));
+            continue;
+        }
+        pending.extend(bytes);
+        loop {
+            match sts::decode(&pending) {
+                Ok(Some((msg, used))) => {
+                    let _ = writeln!(log, "## +{}ms decrypted STS {used} bytes", start.elapsed().as_millis());
+                    let _ = log.write_all(&pending[..used]);
+                    let _ = writeln!(log);
+                    println!("TLS STS: {} ({} body bytes)", msg.path().unwrap_or("response"), msg.body.len());
+                    pending.drain(..used);
+                }
+                Ok(None) => break,
+                Err(_) => {
+                    let _ = writeln!(log, "## decrypted non-STS {} bytes\n{}", pending.len(), hexdump(&pending));
+                    pending.clear();
+                    raw = true;
+                    break;
+                }
+            }
+        }
+    }
+    if !pending.is_empty() {
+        let _ = writeln!(log, "## trailing decrypted {} bytes\n{}", pending.len(), hexdump(&pending));
+    }
+    let _ = secure.close_notify();
+    let _ = writeln!(log, "# TLS capture closed after {}ms", start.elapsed().as_millis());
 }
 
 fn hexdump(bytes: &[u8]) -> String {
