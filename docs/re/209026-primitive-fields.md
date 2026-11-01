@@ -26,10 +26,44 @@ with `movss` and passes them to `0x14023b110`, which stores single-precision
 values in globals. Vector coordinate meanings remain unassigned.
 
 This evidence admits Float, Float2 and Float3 as capture-census primitives,
-including in the already supported one-level arrays. Float4 remains outside
-that tool's whitelist. Point3 was subsequently verified and admitted; see
+including in the already supported one-level arrays. Float4 was subsequently
+verified below. Point3 was subsequently verified and admitted; see
 [agent creation](209026-agent-creation.md). This is boundary
 decoding: arbitrary float bit patterns do not establish valid game values.
+
+## Kind 9: four raw float words
+
+The encoder entry at `0x140ff17b0` selects **`0x140ff096a`** for kind 9.
+Its streaming path copies four 32-bit words; its buffer path allocates and
+copies exactly **16 bytes**, then advances source and written count by 16.
+The receiver's kind-minus-one entry at `0x140ff239c` selects
+**`0x140ff1da3`**, which copies 16 bytes and advances source/destination
+by 16. Kind-9 metadata at **`0x142110908`** contains size **16** and
+fixed-width flag **1**. The shared receiver precheck at `0x140ff1ce9`
+therefore verifies those 16 available input bytes before the copy.
+
+There is no count or varint within this field. This establishes the existing
+dynamic `Float4` codec's four little-endian f32 words for build 209026,
+including bit-preserving nonfinite values as framing data. It supports
+admitting Float4 to the capture census and its existing one-level array
+rules. It does not imply a quaternion or a fourth spatial coordinate.
+[Server 87](209026-agent-position-state.md) supplies an actual descriptor
+using three such fields, separated by a Dword and followed by two bytes.
+
+The capture census now admits Float4. All seven focused census tests and
+the binary build pass. The new test uses server 87's actual layout and an
+array fixture, checks float-bit preservation and following-field/frame
+boundaries, and rejects every truncated prefix. Two older rejection fixtures
+now use still-unverified Optional fields instead of Float4; the first focused
+run exposed the old array fixture before that correction. The offline CLI
+smoke consumes two 59-byte server-87 framing fixtures (118 bytes total)
+using the extracted descriptor; neither was sent to the client.
+
+Private bundle: `~/re/gw2/notes/209026-float4-position-state-1.json`.
+Dispatch entries: `ev_1f03cf2af0b84f5df909dad03265a76520cd11d9b33f55669c812353d551fced`;
+copy branches: `ev_3f9ed3b7d7bd2e0b5df80e0bf2a58496686d5704b948577875e11905a529d6f8`;
+receiver precheck: `ev_8d489f6a83c78d41ba68be93c960268d2a1803377cc792e5187c191faa2c35f9`;
+metadata: `ev_3ab8ce13bf9de58046ced2f5efc9e24dca2be59f5fba575f7eece3d6b65fd94a`.
 
 ## Kind 14: terminated raw bytes
 

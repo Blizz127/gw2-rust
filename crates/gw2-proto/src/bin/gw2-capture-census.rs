@@ -40,6 +40,7 @@ fn verified_primitive(field: &Field) -> bool {
                 | "Float"
                 | "Float2"
                 | "Float3"
+                | "Float4"
                 | "Point3"
                 | "Guid"
                 | "Address"
@@ -239,7 +240,7 @@ mod tests {
         small[2] = 3;
         assert!(census(messages, &small, &mut Vec::new()).is_err());
         for field in [
-            r#"<ArrayVarSmall Size="2"><Float4/></ArrayVarSmall>"#,
+            r#"<ArrayVarSmall Size="2"><Optional TypeName="Byte"/></ArrayVarSmall>"#,
             r#"<ArrayVarSmall Size="2"><ArrayVarSmall Size="2"><Byte/></ArrayVarSmall></ArrayVarSmall>"#,
             r#"<ArrayVarSmall Size="2" TypeName="Word"/>"#,
             r#"<ArrayVarSmall Size="2"><BufferFixed Size="0"/></ArrayVarSmall>"#,
@@ -340,8 +341,58 @@ mod tests {
     }
 
     #[test]
+    fn float4_preserves_position_state_and_array_boundaries() {
+        use gw2_proto::{dynamic::Value, Encode};
+
+        // Real server-87 descriptor; ID 88 is an array fixture only.
+        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="0"><Messages Name="0"><Server><Message Id="87"><Word/><Dword/><Byte/><Float4/><Dword/><Float4/><Float4/><Byte/><Byte/></Message><Message Id="88"><ArrayFixed Size="1"><Float4/></ArrayFixed></Message></Server></Messages></Protocol></Protocols>"#).unwrap();
+        let messages = &schema.protocols[0].groups[0].server;
+        let bits = [0x80000000u32, 0x7f800000, 0x7fc12345, 0x3f800000];
+        let raw: Vec<u8> = bits.iter().flat_map(|v| v.to_le_bytes()).collect();
+        let mut frame = vec![87, 0, 0x34, 0x12, 0xac, 2, 0xa5];
+        frame.extend_from_slice(&raw);
+        frame.extend_from_slice(&[0x80, 1]); // Tag 128 is a varint.
+        frame.extend_from_slice(&raw);
+        frame.extend_from_slice(&raw);
+        frame.extend_from_slice(&[0xfe, 0xdc]);
+        assert_eq!(frame.len(), 59);
+
+        let mut input = frame.as_slice();
+        let (message, value) = dynamic::decode_frame(messages, &Rules::default(), &mut input).unwrap();
+        assert!(input.is_empty());
+        let Value::Struct(fields) = &value else {
+            panic!("expected fields")
+        };
+        for index in [3, 5, 6] {
+            let Value::Floats(values) = &fields[index].1 else {
+                panic!("expected Float4")
+            };
+            assert_eq!(values.iter().map(|v| v.to_bits()).collect::<Vec<_>>(), bits);
+        }
+        assert_eq!(fields[4].1, Value::U32(128));
+        assert_eq!(fields[7].1, Value::U8(0xfe));
+        assert_eq!(fields[8].1, Value::U8(0xdc));
+        let mut encoded = bytes::BytesMut::new();
+        87u16.encode(&mut encoded);
+        dynamic::encode_message(message, &Rules::default(), &value, &mut encoded).unwrap();
+        assert_eq!(encoded.as_ref(), frame.as_slice());
+
+        let mut array = vec![88, 0];
+        array.extend_from_slice(&raw);
+        for bytes in [&frame, &array] {
+            for cut in 1..bytes.len() {
+                assert!(census(messages, &bytes[..cut], &mut Vec::new()).is_err());
+            }
+        }
+        frame.extend_from_slice(&array);
+        let mut output = Vec::new();
+        assert_eq!(census(messages, &frame, &mut output).unwrap(), 2);
+        assert_eq!(String::from_utf8(output).unwrap(), "offset=0 id=87 bytes=59\noffset=59 id=88 bytes=18\nmessages=2 bytes=77 complete=true\n");
+    }
+
+    #[test]
     fn reports_boundaries_without_values_and_stops_on_unverified_encoding() {
-        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="3"><Messages Name="40"><Client><Message Id="2"><String Size="32"/></Message><Message Id="3"><Float4/></Message></Client></Messages></Protocol></Protocols>"#).unwrap();
+        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="3"><Messages Name="40"><Client><Message Id="2"><String Size="32"/></Message><Message Id="3"><Optional TypeName="Byte"/></Message></Client></Messages></Protocol></Protocols>"#).unwrap();
         let messages = &schema.protocols[0].groups[0].client;
         let mut bytes = vec![2, 0];
         for unit in "private-test-value".encode_utf16().chain([0]) {
