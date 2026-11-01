@@ -21,6 +21,26 @@ This verifies index framing, not complete record or relocation semantics.
 Evidence: `ev_209d8f8c9838c51beeda293358f5a73c13e59625b6a55df5e694178278c859ae`,
 private bundle `~/re/gw2/notes/209026-content-index-rust-check-1.json`.
 
+`ContentIndex::reference` follows only the already traced local,
+external-container and string-index fixup tables. It reports external
+references as a container index plus content offset; the caller must select
+and bound the target container. File references and unclassified nonzero
+slots remain unsupported. String reads have an explicit UTF-16 unit limit.
+
+Six focused content-reader tests and the library build pass. The reference
+smoke reads all 32 frozen base containers through Rust: 78 palette names,
+50 matching encoded palette queries, 90 distinct race/sex/profession default
+strings accepted by the appearance reader, and 180 external equipment-template
+references whose offsets lie inside their selected target containers. It
+checks target bounds, not the complete target record semantics. Zero values
+in classified reference slots are handled as offsets/indexes; unclassified
+zero is null. Duplicate/conflicting fixups, unclassified nonzero references,
+file references, bad local/string targets, invalid UTF-16 and string-limit
+violations are rejected.
+
+Evidence: `ev_c204d52a0a7b9366e52cf6a4a934520ad3db1f670fcbf76085d0db4159d6e5a5`,
+private bundle `~/re/gw2/notes/209026-content-reference-rust-check-1.json`.
+
 ## Constant keys resolve through GUIDs
 
 The [appearance keys](209026-appearance-validation.md) 50–59 select entries

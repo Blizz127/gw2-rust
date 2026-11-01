@@ -24,11 +24,32 @@ pub struct TypeInfo {
     pub track_references: u8,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ContentReference {
+    Local {
+        offset: usize,
+    },
+    /// Target bounds must be checked against the selected container by the caller.
+    External {
+        container_index: u32,
+        offset: u64,
+    },
+    String {
+        index: usize,
+    },
+}
+
 pub struct ContentIndex<'a> {
+    main: &'a [u8],
     flags: u32,
     types: &'a [u8],
     entries: &'a [u8],
     content: &'a [u8],
+    local_fixups: &'a [u8],
+    external_fixups: &'a [u8],
+    file_fixups: &'a [u8],
+    string_fixups: &'a [u8],
+    strings: &'a [u8],
 }
 
 fn invalid(message: &'static str) -> Error {
@@ -93,10 +114,16 @@ impl<'a> ContentIndex<'a> {
             ));
         }
         let result = Self {
+            main: data,
             flags,
             types: array(data, 4, 17)?,
             entries: array(data, 0x28, 16)?,
             content: array(data, 0x7c, 1)?,
+            local_fixups: array(data, 0x34, 4)?,
+            external_fixups: array(data, 0x40, 8)?,
+            file_fixups: array(data, 0x4c, 4)?,
+            string_fixups: array(data, 0x58, 4)?,
+            strings: array(data, 0x70, 8)?,
         };
         for entry in result.entries() {
             if entry.offset as usize >= result.content.len() {
@@ -143,6 +170,103 @@ impl<'a> ContentIndex<'a> {
             track_references: b[16],
         })
     }
+
+    /// Interpret one content-relative pointer slot using its fixup classification.
+    /// Duplicate or conflicting classifications are rejected, even for zero values.
+    /// A zero value in a classified slot is an offset/index, not a null pointer.
+    pub fn reference(&self, slot: u32) -> Result<Option<ContentReference>> {
+        let start = slot as usize;
+        let bytes = start
+            .checked_add(8)
+            .and_then(|end| self.content.get(start..end))
+            .ok_or_else(|| invalid("content pointer slot outside content array"))?;
+        let value = u64::from_le_bytes(bytes.try_into().unwrap());
+        if self
+            .file_fixups
+            .chunks_exact(4)
+            .any(|field| dword(field, 0) == slot)
+        {
+            return Err(Error::new(ErrorKind::Unsupported, "content file reference"));
+        }
+        let mut result = None;
+        let mut record = |reference| -> Result<()> {
+            if result.replace(reference).is_some() {
+                return Err(invalid("duplicate content pointer fixup"));
+            }
+            Ok(())
+        };
+        for field in self.local_fixups.chunks_exact(4) {
+            if dword(field, 0) == slot {
+                let offset = usize::try_from(value)
+                    .ok()
+                    .filter(|&p| p < self.content.len())
+                    .ok_or_else(|| invalid("local reference outside content array"))?;
+                record(ContentReference::Local { offset })?;
+            }
+        }
+        for field in self.external_fixups.chunks_exact(8) {
+            if dword(field, 0) == slot {
+                record(ContentReference::External {
+                    container_index: dword(field, 4),
+                    offset: value,
+                })?;
+            }
+        }
+        for field in self.string_fixups.chunks_exact(4) {
+            if dword(field, 0) == slot {
+                let index = usize::try_from(value)
+                    .ok()
+                    .filter(|&p| p < self.string_count())
+                    .ok_or_else(|| invalid("content string index outside string table"))?;
+                record(ContentReference::String { index })?;
+            }
+        }
+        match result {
+            Some(reference) => Ok(Some(reference)),
+            None if value == 0 => Ok(None),
+            None => Err(invalid("unclassified nonzero content reference")),
+        }
+    }
+
+    pub fn string_count(&self) -> usize {
+        self.strings.len() / 8
+    }
+
+    /// Read one indexed UTF-16 string, rejecting invalid UTF-16 or a missing
+    /// terminator within `max_units`. The returned text is not logged here.
+    pub fn string(&self, index: usize, max_units: usize) -> Result<String> {
+        let start = index
+            .checked_mul(8)
+            .ok_or_else(|| invalid("string index overflow"))?;
+        let field = start
+            .checked_add(8)
+            .and_then(|end| self.strings.get(start..end))
+            .ok_or_else(|| invalid("string index outside string table"))?;
+        // A nonempty `strings` slice was borrowed from this same Main payload.
+        let slot = self.strings.as_ptr().addr() - self.main.as_ptr().addr() + start;
+        let relative = i64::from_le_bytes(field.try_into().unwrap());
+        if relative == 0 {
+            return Err(invalid("null indexed content string"));
+        }
+        let target = i64::try_from(slot)
+            .ok()
+            .and_then(|p| p.checked_add(relative))
+            .and_then(|p| usize::try_from(p).ok())
+            .filter(|&p| p < self.main.len())
+            .ok_or_else(|| invalid("content string outside chunk"))?;
+        let mut units = Vec::with_capacity(max_units.min(256));
+        for pair in self.main[target..].chunks_exact(2) {
+            let unit = u16::from_le_bytes(pair.try_into().unwrap());
+            if unit == 0 {
+                return String::from_utf16(&units).map_err(|_| invalid("invalid content UTF-16"));
+            }
+            if units.len() == max_units {
+                return Err(invalid("content string limit exceeded"));
+            }
+            units.push(unit);
+        }
+        Err(invalid("unterminated content string"))
+    }
 }
 
 #[cfg(test)]
@@ -174,6 +298,102 @@ mod tests {
             &[(*b"Main", 0, b, vec![])],
         ))
         .unwrap()
+    }
+
+    fn append_table(b: &mut Vec<u8>, field: usize, bytes: &[u8], stride: usize) -> usize {
+        let target = b.len();
+        b[field..field + 4].copy_from_slice(&((bytes.len() / stride) as u32).to_le_bytes());
+        b[field + 4..field + 12]
+            .copy_from_slice(&(target as i64 - (field + 4) as i64).to_le_bytes());
+        b.extend_from_slice(bytes);
+        target
+    }
+
+    fn references_payload() -> (Vec<u8>, usize) {
+        let mut b = payload();
+        b[0xa9..].fill(0);
+        b[0xb1..0xb9].copy_from_slice(&31u64.to_le_bytes());
+        append_table(&mut b, 0x34, &0u32.to_le_bytes(), 4);
+        append_table(&mut b, 0x40, &[8, 0, 0, 0, 2, 0, 0, 0], 8);
+        append_table(&mut b, 0x58, &16u32.to_le_bytes(), 4);
+        let string_slot = append_table(&mut b, 0x70, &[0; 8], 8);
+        b[string_slot..string_slot + 8].copy_from_slice(&8i64.to_le_bytes());
+        for unit in "Hé😀".encode_utf16().chain([0]) {
+            b.extend_from_slice(&unit.to_le_bytes());
+        }
+        (b, string_slot)
+    }
+
+    #[test]
+    fn resolves_classified_zero_offsets_and_bounded_strings() {
+        let (b, _) = references_payload();
+        let pf = pack(b);
+        let index = ContentIndex::parse(&pf).unwrap();
+        assert_eq!(
+            index.reference(0).unwrap(),
+            Some(ContentReference::Local { offset: 0 })
+        );
+        assert_eq!(
+            index.reference(8).unwrap(),
+            Some(ContentReference::External {
+                container_index: 2,
+                offset: 31
+            })
+        );
+        assert_eq!(
+            index.reference(16).unwrap(),
+            Some(ContentReference::String { index: 0 })
+        );
+        assert_eq!(index.reference(24).unwrap(), None);
+        assert_eq!(index.string_count(), 1);
+        assert_eq!(index.string(0, 4).unwrap(), "Hé😀");
+        assert!(index.string(0, 3).is_err());
+        assert!(index.string(1, 4).is_err());
+        assert!(index.string(usize::MAX, 4).is_err());
+        assert!(index.reference(25).is_err());
+        assert!(index.reference(u32::MAX).is_err());
+    }
+
+    #[test]
+    fn rejects_conflicting_unknown_and_out_of_range_references() {
+        for (slot, value) in [(0, 32u64), (16, 1), (24, 1)] {
+            let (mut b, _) = references_payload();
+            b[0xa9 + slot..0xa9 + slot + 8].copy_from_slice(&value.to_le_bytes());
+            let pf = pack(b);
+            assert!(
+                ContentIndex::parse(&pf)
+                    .unwrap()
+                    .reference(slot as u32)
+                    .is_err()
+            );
+        }
+        for field in [0x34, 0x58, 0x4c] {
+            let (mut b, _) = references_payload();
+            let entries = if field == 0x34 {
+                vec![0; 8]
+            } else {
+                vec![0; 4]
+            };
+            append_table(&mut b, field, &entries, 4);
+            let pf = pack(b);
+            assert!(ContentIndex::parse(&pf).unwrap().reference(0).is_err());
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_string_pointers_encoding_and_termination() {
+        for delta in [0, i64::MAX, i64::MIN, -500] {
+            let (mut b, slot) = references_payload();
+            b[slot..slot + 8].copy_from_slice(&delta.to_le_bytes());
+            let pf = pack(b);
+            assert!(ContentIndex::parse(&pf).unwrap().string(0, 4).is_err());
+        }
+        let (mut b, _) = references_payload();
+        b.truncate(b.len() - 2);
+        assert!(ContentIndex::parse(&pack(b)).unwrap().string(0, 4).is_err());
+        let (mut b, slot) = references_payload();
+        b[slot + 8..slot + 10].copy_from_slice(&0xd800u16.to_le_bytes());
+        assert!(ContentIndex::parse(&pack(b)).unwrap().string(0, 4).is_err());
     }
 
     #[test]
