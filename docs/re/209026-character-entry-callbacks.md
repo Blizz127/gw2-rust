@@ -61,6 +61,52 @@ virtual +0x450/+0x448 calls. Actual listener registrations, implementations
 and their rendering dependencies require further tracing. Agent REVEALED
 is already changed before these notifications execute.
 
+## Listener registration and two resolved subscribers
+
+Character primary virtual **+0x558** resolves to `0x1411db7f0` (table entry
+`0x142161138`). Its complete body asserts a nonnull, previously absent
+listener and appends it to the collection at character +0x1e0. It does not
+immediately invoke reveal or any other listener callback. Primary +0x560
+(`0x1411dbce0`) removes the matching listener and asserts membership.
+Character construction initializes the collection's head/tail to null.
+
+Two actual subscribers have resolved reveal/conceal slots:
+
+| Subscriber | Registration | Listener vtable | Reveal/conceal |
+| --- | --- | --- | --- |
+| Embedded chatter, character +0x330 | `0x141276660` passes chatter +0x08 to character +0x558 at `0x1412766c3`, on its player branch | `0x142177dd0`, installed by `0x141276170` | +0x448 and +0x450 both `0x140163990`, no-op |
+| Player embedded object at player +0x618 | `0x1411e8110` passes object +0x50 at `0x1411e82ad`, guarded by registration flag 0x80 and a context-player match | `0x142162670`, installed by `0x1411e4f90` | +0x448 and +0x450 both `0x140163990`, no-op |
+
+For the second path, the registration function recovers player by
+subtracting 0x618, compares it with context virtual +0x70, and takes the
+character from player +0x20. These address relationships identify the
+registered interface without assuming it is a whole-object vtable.
+
+Neither subscriber adds work on these two notifications. This does not
+remove chatter's existing profession/coreStats/inventory prerequisites,
+or imply that all character listeners are inert. A bounded FF /2 search
+for virtual +0x558 in `0x1411b0000..0x141400000` found eight candidate sites,
+including one that actually calls the agent interface and must be excluded.
+Several remaining subscribers are unresolved; loaded function-pointer calls,
+tail calls and sites outside that range are not covered by this census.
+No new bootstrap default or ordering guarantee follows from that search.
+
+Additional private bundle:
+`~/re/gw2/notes/209026-character-entry-listeners-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_76b8b523c95e2d9c414eaec1b76d5e55ea5ec5955071f9a87cf35e8cd76d5325` | Listener insertion body through its first return, complete removal body. |
+| `ev_b70588f003aa09e06549df4cac5bed03f7c4dd0d6392e54008c852bb33a31d14` | Remaining insertion branches; chatter and player-object subscription calls. |
+| `ev_7ebf50dc413ede39df9fb98e41624f0298abdd7ff7fb1165e724b2f4f22f66e6` | Primary vtable resolves registration/removal to +0x558/+0x560. |
+| `ev_d347c2161a82c4296ee430e92a278c4056d67c3995a826a57d816e438febe07f` | Constructor initializes the listener collection head/tail to null. |
+| `ev_307958f3cba33a44f8b4374c59b8c59717bd312a4493c1e408c9833bf67cf640` | Complete chatter constructor and player-object registration entry/gate. |
+| `ev_d62469383ecf1d77d7cf17d69370281d41381613d33879206aef4442c2125c12` | Player-object constructor installs its +0x50 listener vtable. |
+| `ev_e0badb093760d885aaf758aa587ca95795bf713b7976a93ea02ddd244f2f5b59` | Chatter reveal/conceal slots are no-ops. |
+| `ev_0f2bd8def7df886d4296813073471fa7e90fe6c46675ed767410bb5120633604` | Player-object reveal/conceal slots are no-ops. |
+| `ev_d1de48a73450d0b7c1a310786c4fe2e92b5ffc922c50da7ae594b0d0926f2f64` | Bounded virtual-call candidate census. |
+| `ev_f01eb7a35bf31fd44878f8597ccb45514116c1d9e02e254c8d693f0ebef5ec91` | Call-site contexts, including the unrelated agent-interface call. |
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-character-entry-callbacks-1.json`,
