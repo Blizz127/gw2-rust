@@ -262,6 +262,10 @@ pending; no UI acceptance, creation fixture or runtime continuation was added.
 
 ## Private schema preparation
 
+The [creation-answer analysis](209026-creation-answers.md) traces the bounded
+byte array to content answer values, question replacement and applicability
+filters. It does not establish valid content combinations or server rules.
+
 REA extraction from the frozen artifact generated ignored
 `data/protocol/209026/mission.xml`: protocol 0 groups 39 and 40, 43 client
 and 54 server definitions, 12,104 bytes, SHA-256

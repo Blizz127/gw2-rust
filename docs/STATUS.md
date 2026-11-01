@@ -131,6 +131,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     before completion by ID 3. Private partial mission-schema boundary fixtures
     parse correctly. Runtime startup and creation remain unverified. See
     [re/209026-character-creation.md](re/209026-character-creation.md).
+    The bounded answer array is now traced to sorted content answer bytes,
+    with separate question-bitset bookkeeping and race/profession filters;
+    valid content combinations remain unverified. See
+    [re/209026-creation-answers.md](re/209026-creation-answers.md).
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small
