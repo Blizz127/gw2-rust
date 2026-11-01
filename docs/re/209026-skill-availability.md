@@ -57,6 +57,20 @@ a usable skill. The full predicate also checks slot, level, locale and
 other context. Initial palette selection 612 remains a separate update
 with its own immediate-rebuild dependency.
 
+## Typed frames and focused checks
+
+`gw2_proto::skill_availability::SkillAvailabilityFrame209026` represents
+605/606/609/613 as initial-set, reset, remove and set-and-notify operations.
+Player index is encoded after operation fields. The codec preserves all
+raw flags and key values; it does not validate content or player lifetime.
+
+Three focused tests and `cargo build -p gw2-proto --lib` pass. Independent
+hex fixtures cover all four layouts, different key/index widths, u32
+maxima, zero keys and high flag bits. Checks cover output prefixes,
+concatenated-frame boundaries, every truncated fixture, IDs adjacent to
+or between the supported set, and overflowing/overlong varints in every
+Dword position. These are framing checks, not runtime validation.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-skill-availability-1.json`.

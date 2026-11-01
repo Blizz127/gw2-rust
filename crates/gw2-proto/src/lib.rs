@@ -22,6 +22,7 @@ pub mod guardian;
 pub mod health;
 pub mod player_creation;
 pub mod schema;
+pub mod skill_availability;
 pub mod skill_palette;
 pub mod skillbar;
 
