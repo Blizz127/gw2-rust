@@ -22,7 +22,8 @@ This establishes how the player table used by server 444 can be populated.
 The [player-field trace](209026-player-creation-fields.md) identifies the
 string as the stored literal player name and the GUID as `m_portalUserId`.
 The final Dword's low bit selects initial state 2 versus 3 and conditionally
-inserts input-binding selector 4; its full gameplay meaning remains open.
+inserts input-binding selector 4. A [direct consumer](209026-player-spectating.md)
+connects this machinery to spectating; individual state values remain unnamed.
 The GUID has not been equated with a particular STS response field.
 
 ## Character factory

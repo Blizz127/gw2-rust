@@ -57,9 +57,10 @@ presence and removes it. Both recompute bindings around the mutation.
 This is a selector set, not a reference counter. Constructor bit 0 set
 therefore has an input-binding side effect involving selector 4.
 
-The state's complete gameplay name and selector 4's binding membership
-remain unresolved. Calling it a cosmetic flag, a proven cinematic flag,
-or an unconditional global input lock would exceed this evidence.
+The [direct consumer trace](209026-player-spectating.md) now connects this
+state machinery to spectating. Individual numeric state names and selector
+4's binding membership remain unresolved. Calling it a cosmetic flag, a
+cinematic flag or an unconditional global input lock would exceed this evidence.
 Clearing bit 0 specifically avoids the constructor's selector insertion;
 it does not independently prove a ready or valid player bootstrap.
 
@@ -82,8 +83,9 @@ These handlers and the player destructor demonstrate why choosing
 initial bit 0 blindly can add a dependency on later messages. They do
 not establish a need to send 459/460 during ordinary map entry, nor a
 reason to send a removal message when the selector was never inserted.
-The content type's name, other state values and full transition conditions
-remain open.
+The direct consumer identifies content type 334 as the spectate camera
+and the agent reference as the spectate target; both must not resolve
+simultaneously. Other state values and full transition conditions remain open.
 
 ## Evidence
 
