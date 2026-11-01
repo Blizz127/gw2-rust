@@ -75,8 +75,8 @@ The helper sets/clears mask **0x8**, stores 1/0 at character +0x4f0,
 stores its player-index override at +0x220, and calls `0x14127c130` on
 embedded character +0x400. That last helper only clears its +0x38 low
 three bits when disabling. It then dispatches character +0x1e0 listeners
-through virtual +0x60 followed by +0x68. These listener bodies are not
-exhaustively traced here.
+through virtual +0x60 followed by +0x68. The [ordinary-view callback](209026-character-control-view.md) requires a
+skill bar when enabling control; other listener bodies remain incomplete.
 
 The context setter supplies a nonzero player-index override only when
 context +0xa0 already has a player and the new character differs from

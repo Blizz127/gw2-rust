@@ -174,7 +174,7 @@ ordering of event listeners and content setup.
 | Server 609/613: live skill availability change | Player entry, owned character and skill bar exist; type-64 skill key resolves. |
 | Server 640/642: specialization update | Player entry; changed non-null specialization requires owned character during progress recalculation and conditionally reward-track manager. Any existing skill bar is rebuilt; see [specialization trace](209026-specialization-messages.md). |
 | Server 170: fresh owned-player finalization | Player association, attitude, owned-character pointer, owned coreStats, inventory and a profession component. |
-| Server 444: equal-ID controlled assignment | Player entry and finalized character exist; owned-character branch also directly dereferences coreStats. Local-player subscriptions use embedded objects; control-change listener dependencies remain open. See [control branches](209026-character-control.md). |
+| Server 444: equal-ID controlled assignment | Player entry and finalized character exist; owned-character branch also directly dereferences coreStats. With the ordinary view subscribed, its enable-control listener also requires a skill bar (618 before 444). Local-player subscriptions use embedded objects; other control-change listeners remain open. See [control branches](209026-character-control.md). |
 | Server 431: payload-free startup callback | Direct body requires controlled player character, associated controlled player, skill bar, wardrobe manager, coreStats and reward-track manager. Rebuild, content and later listener/progress dependencies remain incomplete; this is not a replay-ready sequence. |
 
 Appearance/content validity and further component dependencies remain open.

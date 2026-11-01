@@ -67,9 +67,11 @@ profession-state update therefore cannot rely on the finalizer's null
 guard to make skill-bar absence safe.
 
 Controlled-character assignment itself calls `0x1411e0a40`, which changes
-flags, updates an embedded object and emits events. This trace does not
-claim that the direct setter alone unconditionally dereferences the skill
-bar; the event-listener graph remains incomplete.
+flags, updates an embedded object and emits events. The subsequent
+[ordinary-view listener trace](209026-character-control-view.md) finds an
+unguarded skill-bar dereference when control is enabled. With that view
+subscribed, create 618 before equal-ID 444, retaining the dependencies
+above. Other listeners remain incomplete.
 
 ## Slot updates and auto-attack selection
 
