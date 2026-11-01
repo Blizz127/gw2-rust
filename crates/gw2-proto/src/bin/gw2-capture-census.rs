@@ -77,7 +77,6 @@ fn census(messages: &[Message], bytes: &[u8], output: &mut impl Write) -> io::Re
         buffer_var_small: Some(CountPrefix::U8),
         buffer_var_large: Some(CountPrefix::U16),
         buffer_fixed_is_size_bytes: true,
-        ..Rules::default()
     };
     let mut remaining = bytes;
     let mut count = 0;
