@@ -8,4 +8,11 @@ publish.workspace = true
 description = "GW2 portal/login: STS/1.0 message codec and an observe-only capture listener"
 
 [dependencies]
+aes = "0.8"
+cbc = "0.1"
 gw2-dat.workspace = true
+hmac = "0.12"
+rand = "0.8"
+rsa = "0.9"
+sha1 = "0.10"
+sha2 = "0.10"

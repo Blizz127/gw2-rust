@@ -8,3 +8,4 @@
 pub mod assetcdn;
 pub mod dns;
 pub mod sts;
+pub mod tls;

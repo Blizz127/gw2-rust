@@ -1,6 +1,6 @@
 # Status
 
-Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
+Lead: Claude session `gw2-rust` (Devbox tasks f7f99ff037fe, ce075451d399). Updated 2026-11-01.
 
 ## Blocker
 
@@ -34,7 +34,7 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
     - After our `200 OK` the client sends a TLS 1.2 ClientHello: static-RSA AES-CBC
       suites only, no extensions.
   - **Next:**
-    1. A minimal TLS 1.2 RSA server in `gw2-login`.
+    1. ~~A minimal TLS 1.2 RSA server in `gw2-login`.~~ Done 2026-11-01 (`gw2_login::tls`, interop-tested).
     2. REA on the certificate check, then swap in our key in memory.
     3. Capture the login messages inside TLS.
   - Scope and ordering for the time-locked progression, plus the core-game completion
@@ -52,14 +52,14 @@ Lead: Claude session `gw2-rust` (Devbox task f7f99ff037fe). Updated 2026-10-31.
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
-## Crates (workspace tests: 57 pass, clippy clean)
+## Crates (workspace tests: 74 pass, clippy clean)
 
 | Crate | State |
 | --- | --- |
 | `gw2-net` | RC4 key derivation, LZ4 server frames, DH module (own server key, 136-byte param blob). Byte order and the secret/block combination are provisional. |
 | `gw2-proto` | Primitive encodings (varint Dword, Guid, Point3, Address, Optional…), the `protocols.xml` loader, and `dynamic`: a schema-driven decoder/encoder. Unconfirmed kinds (String, ArrayVar*, Buffer*, CString) are rejected until `Rules` are set from REA. `gw2-schema-census <xml>`: 1440 of 1770 messages in the 208039 reference decode with confirmed kinds only. |
 | `gw2-dat` | AN/MFT archive, Huffman/LZ decompressor, PF chunks. Also `pfschema`, a loader for the 208039 reference `packfiles.xml` (6 packfile types, 52 chunks, 372 versions, vendored and labeled), and `pfread`, a safe schema-driven chunk decoder (packed structs, slot-relative 4/8-byte pointers, bounded depth and elements). Arrival tools: `gw2-dat-ls --sample`, then `gw2-dat-pf <Gw2.dat> <ids>` to decode real packfiles. `gw2-dat-pf` tries each schema candidate for names the reference lists twice (`mapc`/`nm15`). `mapc::MapCollide` is a typed view of `havk` collision: triangle meshes, geometry→animation→mesh links, prop/zone placements, validated cross-references. It is the basis for ground height and mob pathing. Placement transform conventions are unknown. The navmesh (`nm15`) payload is opaque Havok bytes. |
-| `gw2-login` | STS/1.0 codec (from public notes, **unverified**) + `gw2-login-observe`: logs STS messages, then hex-dumps once the stream leaves STS. Never replies. Stage 3 starts by pointing the sandboxed client at it. |
+| `gw2-login` | STS/1.0 codec (from public notes, **unverified**) + `gw2-login-observe`: logs STS messages, then hex-dumps once the stream leaves STS. `tls`: minimal TLS 1.2 server, `TLS_RSA_WITH_AES_128_CBC_SHA` only, no extensions. Verified against `openssl s_client` (`tests/tls_openssl.rs`: handshake, both Finished messages, app data both ways) and an OpenSSL TLS1-PRF vector. Not yet wired to the client. |
 | `gw2-api` | `gw2-api-import build / fetch <ep>... / fetch-map <id>`. Cache in gitignored `data/api/<build>/`. |
 
 ## On arrival checklist (client copy)
