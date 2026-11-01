@@ -165,12 +165,71 @@ at whole-character +0x3d0 and allocates 0x68 bytes through `0x141222b40`.
 That constructor stores the four values at component +0x10/+0x14/+0x18/+0x1c
 in wire order, copies the first to +0x20, and retains the owner at +0x28.
 It also consults the named `CharEnableEnduranceDeficitTracking` setting.
-Units and individual scalar meanings remain unresolved; they are Dword
-varints on the wire, not four raw little-endian floats or a fixed 16-byte block.
+They are Dword varints on the wire, not four raw little-endian floats or a
+fixed 16-byte block. The follow-up below establishes their storage and uses.
 
 These traces establish message roles and component lifetime behavior. They
 do not establish all required initialization messages, valid gameplay
 values, or a completed controlled-character/map startup.
+
+### Endurance values and updates
+
+Vtable `0x14216adc8`, direct setters and named assertions establish:
+
+| Creation field after index | Offset | Established role |
+| --- | --- | --- |
+| 1 | +0x10 | Current points. Setter `0x141223250` asserts `points <= m_effectiveMaximum`. |
+| 2 | +0x14 | Maximum used by fraction getter `0x141222d40` and percentage adjustment `0x141222ca0`. Its relationship to the effective maximum is not yet fully named. |
+| 3 | +0x18 | Effective maximum, named by the points assertion at `0x14216af38`. Fraction getter `0x141222d60` uses this denominator. |
+| 4 | +0x1c | Segment divisor: `0x141222d80` returns unsigned effectiveMaximum / this value, or 1 when it is zero. A dodge-cost name remains unproven. |
+
+The corresponding raw getters occupy virtual offsets +0x20/+0x10/+0x18/
++0x28 respectively. Virtual +0x38 (`0x141222da0`) returns the segment
+divisor / effective maximum as floats, with special cases 1 for a zero
+divisor and 0 for a zero effective maximum with a nonzero divisor.
+Both fraction getters return zero for a zero denominator.
+
+The percentage condition consumer `0x141306fa0` is identified by
+`CONTENT_FUNCTION_CONDITIONAL_TYPE_HAS_ENDURANCE_PERCENT`. It compares
+current / effectiveMaximum against a content float multiplied by f32
+0.01 (`0x141934804`, bits `0x3c23d70a`); zero effective maximum fails.
+The absolute condition at `0x141306e30` compares current points converted
+to float with its content threshold. Neither establishes useful initial
+point counts or the fourth field's gameplay name.
+
+The creation constructor copies values directly; it does not perform the
+points setter's maximum assertion. The maximum-pair setter `0x141223200`
+stores +0x14/+0x18 and clamps current points down to the new effective
+maximum using an unsigned comparison. The delta adjuster `0x141222ce0`
+instead adds a 32-bit delta and clamps with signed comparisons; it must
+not be conflated with the direct wire points update.
+
+All following messages begin with a Dword character index and require an
+existing endurance component. Registration pairs follow `0x14216f300`.
+
+| ID | Descriptor | Handler | Fields after index / effect |
+| --- | --- | --- | --- |
+| 218 | `0x1425e0240` | `0x14124ed00` | None. Calls `0x1411d6840`, destroys/frees the 0x68-byte component and clears character +0x3d0. |
+| 219 | `0x1425e0310` | `0x14124ee80` | Dword points, passed to `0x141223250`. |
+| 220 | `0x1425e0450` | `0x14124edf0` | Dword maximum, Dword effective maximum, passed to `0x141223200`. |
+| 221 | `0x1425e05c0` | `0x14124ed60` | Dword segment divisor, passed to `0x1412231e0`. |
+
+The three update setters reset the deficit-tracking fields +0x20 to
+current points and +0x24 to zero. The tracking algorithm's complete
+semantics remain open. No update above creates a missing component.
+
+Private REA bundle: `~/re/gw2/notes/209026-endurance-fields-1.json`
+(987 records, 22,252,022 bytes, mode 0600). Static analysis only.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_a6cdfca8f5dc0bc1b2bf6b66c62bc083e9e4f60ee454be9dffadf67a4eee8071` | Constructor, wire argument order and fraction adjuster. |
+| `ev_6bfd24f5d5df6a7f7090cf0e0f503c4b8d8be23616a623742a3f775a22e67ee1` | Vtable, ratios, segment division and delta adjuster. |
+| `ev_426a98c525aa74b56a350e5b5d0365b64f8928c181a71b4602202a7bcd1b745b` | Direct setters and named effective-maximum assertion. |
+| `ev_c06a81dffeeaadce85cb28e85cb718aa6eaffad8548e961b97da436ba6be878e` | Setter call sites and named content conditions. |
+| `ev_0ab3479ce8b6dae11e164dd1116a3f711ffeb459a6f7f96909ab22d3ceabaf8f` | Absolute-points condition consumers. |
+| `ev_e58a6001b883c04a9358e4cc25f063fbeb41a2722689ee26584713c25265de31` | Registration pairs and full percentage condition. |
+| `ev_c3fb04bc894a5168c4c9b8bbf4cefcb443978e4d58f3c65815224631acfc8850` | Hash-guarded descriptors, update handlers, removal and percentage constant. |
 
 ## Offline framing check
 
