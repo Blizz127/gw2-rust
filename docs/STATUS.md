@@ -164,6 +164,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Route preparation supplies the loader's map definition before joining;
     ordinary readiness sends text/audio languages in client 423. Server 1036
     requires loader READY, while the default-view ID-1061 callback is empty.
+    Client 420 is sent before model/asset/agent streaming finishes; the later
+    client 412 (AgentsLoaded) follows READY and connection/view guards.
+    This provides a static candidate for sequencing server 1036, still untested.
+    See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion

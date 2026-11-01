@@ -69,6 +69,10 @@ from the empty ID-1061 message alone.
 
 ## Load command and result callbacks
 
+The later [map-readiness analysis](209026-map-ready.md) establishes that
+MapLoaded precedes READY and identifies the separate client ID-412
+AgentsLoaded signal. Do not infer readiness for BeginPlaying from ID 420 alone.
+
 For a nonzero redirect type, the shared join helper `0x141417b80` first
 calls view slot +0x188 with the route's map-definition key, before constructing
 the binary game-join transaction. That slot resolves to `0x14094e620`, which
@@ -96,7 +100,7 @@ vector and Qword remain unresolved.
 
 Before accepting these parameters, the loader asserts its state is one of
 `STATE_LOAD_CONTENT`, `STATE_LOAD_MANIFEST`, or `STATE_SERVER_WAIT`
-(numeric states 1–3, individual name mapping not yet established), and
+(numeric states 1, 2 and 3 respectively, mapped in the later readiness notes), and
 `m_mapDef == mapDef`. Thus this command expects a matching prepared load;
 it is not established as a standalone map-bootstrap message.
 
