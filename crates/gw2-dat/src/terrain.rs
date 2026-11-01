@@ -140,6 +140,115 @@ impl TerrainHeights209026 {
     }
 }
 
+/// Packed cell surface selectors and per-chunk metadata from resident `trn` v15.
+/// Cell coordinates increase rightward and downward. These are metadata lookups,
+/// not world-coordinate height, physics-contact or walkability queries.
+#[derive(Debug, Clone)]
+pub struct TerrainTiles209026 {
+    dims: [usize; 2],
+    cells: usize,
+    chunks_x: usize,
+    selectors: Vec<u32>,
+    chunks: Vec<TerrainChunk209026>,
+}
+
+#[derive(Debug, Clone, Default)]
+struct TerrainChunk209026 {
+    flags: u32,
+    surfaces: [u16; 4],
+}
+
+impl TerrainTiles209026 {
+    pub fn from_value(trn: &PfValue) -> Result<Self> {
+        let dims = match trn.get("dims") {
+            Some(PfValue::Dwords(v)) if v.len() == 2 => [v[0] as usize, v[1] as usize],
+            _ => return Err(bad("missing Dword2 dimensions")),
+        };
+        let cells = match trn.get("verticesPerChunkSide") {
+            Some(PfValue::U32(0)) => 32,
+            Some(PfValue::U32(v)) => *v as usize,
+            _ => return Err(bad("missing cells per chunk")),
+        };
+        if cells > 3072
+            || dims
+                .iter()
+                .any(|&n| n == 0 || n > 4_194_303 || n % cells != 0)
+        {
+            return Err(bad("invalid tile grid dimensions"));
+        }
+        let tiles = dims[0]
+            .checked_mul(dims[1])
+            .ok_or_else(|| bad("tile count overflow"))?;
+        let selectors = match trn.get("tileFlagArray") {
+            Some(PfValue::Array(v)) if tiles % 16 == 0 && v.len() == tiles / 16 => v
+                .iter()
+                .map(|v| match v {
+                    PfValue::U32(v) => Ok(*v),
+                    _ => Err(bad("surface selector word is not a Dword")),
+                })
+                .collect::<Result<Vec<_>>>()?,
+            _ => return Err(bad("invalid surface selector word count")),
+        };
+        let chunks_x = dims[0] / cells;
+        let count = chunks_x * (dims[1] / cells);
+        let raw_chunks = match trn.get("chunkArray") {
+            Some(PfValue::Array(v)) if v.is_empty() || v.len() == count => v,
+            _ => return Err(bad("invalid chunk metadata count")),
+        };
+        let mut chunks = Vec::with_capacity(count);
+        for raw in raw_chunks {
+            let flags = match raw.get("chunkFlags") {
+                Some(PfValue::U32(v)) => *v,
+                _ => return Err(bad("missing chunk flags")),
+            };
+            let mut surfaces = [0; 4];
+            match raw.get("surfaceIndexArray") {
+                Some(PfValue::Array(v)) if v.is_empty() || v.len() == 4 => {
+                    for (out, v) in surfaces.iter_mut().zip(v) {
+                        *out = match v {
+                            PfValue::U16(id) => *id,
+                            _ => return Err(bad("surface index is not a Word")),
+                        };
+                    }
+                }
+                _ => return Err(bad("surface table must contain zero or four entries")),
+            }
+            chunks.push(TerrainChunk209026 { flags, surfaces });
+        }
+        chunks.resize_with(count, TerrainChunk209026::default);
+        Ok(Self {
+            dims,
+            cells,
+            chunks_x,
+            selectors,
+            chunks,
+        })
+    }
+
+    /// Resolve a zero-based grid cell's two-bit selector to its surface ID.
+    /// Out-of-grid cells return `None`; absent chunk tables resolve to zero.
+    pub fn surface_index(&self, [x, y]: [u32; 2]) -> Option<u16> {
+        let [x, y] = [x as usize, y as usize];
+        if x >= self.dims[0] || y >= self.dims[1] {
+            return None;
+        }
+        let i = y * self.dims[0] + x;
+        let selector = ((self.selectors[i / 16] >> (2 * (i % 16))) & 3) as usize;
+        Some(self.chunks[(y / self.cells) * self.chunks_x + x / self.cells].surfaces[selector])
+    }
+
+    /// Whether raw bit 4 excludes this zero-based chunk from terrain-body creation.
+    /// `false` does not establish walkability or prove that a body was created;
+    /// the client also checks intersection with its collision-scene rectangle.
+    pub fn chunk_excluded_from_collision(&self, [x, y]: [u32; 2]) -> Option<bool> {
+        let [x, y] = [x as usize, y as usize];
+        if x >= self.chunks_x || y >= self.dims[1] / self.cells {
+            return None;
+        }
+        Some(self.chunks[y * self.chunks_x + x].flags & 4 != 0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -231,5 +340,78 @@ mod tests {
         fields[2].1 = PfValue::Array(vec![PfValue::U32(42); 25]);
         assert!(TerrainHeights209026::from_values(&parm, &trn).is_err());
         assert!(TerrainHeights209026::from_values(&PfValue::Null, &trn).is_err());
+    }
+}
+
+#[cfg(test)]
+mod tile_tests {
+    use super::*;
+
+    fn fixture() -> PfValue {
+        let chunk = |flags, base| {
+            PfValue::Struct(vec![
+                ("chunkFlags".into(), PfValue::U32(flags)),
+                (
+                    "surfaceIndexArray".into(),
+                    PfValue::Array((base..base + 4).map(PfValue::U16).collect()),
+                ),
+            ])
+        };
+        PfValue::Struct(vec![
+            ("dims".into(), PfValue::Dwords(vec![8, 4])),
+            ("verticesPerChunkSide".into(), PfValue::U32(4)),
+            (
+                "tileFlagArray".into(),
+                PfValue::Array(vec![PfValue::U32(0xe4e4e4e4), PfValue::U32(0x1b1b1b1b)]),
+            ),
+            (
+                "chunkArray".into(),
+                PfValue::Array(vec![chunk(1, 10), chunk(4, 20)]),
+            ),
+        ])
+    }
+
+    #[test]
+    fn resolves_surface_words_and_separate_chunk_exclusion() {
+        let t = TerrainTiles209026::from_value(&fixture()).unwrap();
+        assert_eq!(t.surface_index([0, 0]), Some(10));
+        assert_eq!(t.surface_index([3, 1]), Some(13));
+        assert_eq!(t.surface_index([4, 0]), Some(20));
+        assert_eq!(t.surface_index([7, 1]), Some(23));
+        assert_eq!(t.surface_index([0, 2]), Some(13));
+        assert_eq!(t.surface_index([7, 3]), Some(20));
+        assert_eq!(t.surface_index([8, 0]), None);
+        assert_eq!(t.surface_index([0, 4]), None);
+        assert_eq!(t.chunk_excluded_from_collision([0, 0]), Some(false));
+        assert_eq!(t.chunk_excluded_from_collision([1, 0]), Some(true));
+        assert_eq!(t.chunk_excluded_from_collision([2, 0]), None);
+        assert_eq!(t.chunk_excluded_from_collision([0, 1]), None);
+    }
+
+    #[test]
+    fn rejects_bad_tables_and_defaults_absent_metadata() {
+        let PfValue::Struct(mut fields) = fixture() else {
+            unreachable!()
+        };
+        fields[3].1 = PfValue::Array(vec![]);
+        let t = TerrainTiles209026::from_value(&PfValue::Struct(fields.clone())).unwrap();
+        assert_eq!(t.surface_index([7, 3]), Some(0));
+        assert_eq!(t.chunk_excluded_from_collision([1, 0]), Some(false));
+        fields[3].1 = PfValue::Array(vec![PfValue::Null]);
+        assert!(TerrainTiles209026::from_value(&PfValue::Struct(fields.clone())).is_err());
+        fields[3].1 = PfValue::Array(vec![]);
+        fields[2].1 = PfValue::Array(vec![]);
+        assert!(TerrainTiles209026::from_value(&PfValue::Struct(fields)).is_err());
+        let PfValue::Struct(mut fields) = fixture() else {
+            unreachable!()
+        };
+        let PfValue::Array(chunks) = &mut fields[3].1 else {
+            unreachable!()
+        };
+        let PfValue::Struct(chunk) = &mut chunks[0] else {
+            unreachable!()
+        };
+        chunk[1].1 = PfValue::Array(vec![PfValue::U16(1); 3]);
+        assert!(TerrainTiles209026::from_value(&PfValue::Struct(fields)).is_err());
     }
 }

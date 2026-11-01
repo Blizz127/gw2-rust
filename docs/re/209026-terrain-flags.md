@@ -85,3 +85,17 @@ Private bundle `~/re/gw2/notes/209026-terrain-flags-1.json` and private helper
   `ev_82036e3a46541ba1860797484941761cd7dad64f1331d098be683d65eb2a8bc6`.
 - Archive counts:
   `ev_64b1bd2569ab5a772026cd847391fbb6e0b06a4a290f9250b8574b6ea3e08e4f`.
+
+## Typed implementation
+
+`terrain::TerrainTiles209026` decodes the packed surface selectors and chunk
+metadata separately from the height sampler. Integer cell surface lookup
+rejects out-of-grid coordinates; chunk exclusion reports only the traced bit-4
+rule. Absent chunk/surface tables default to zero as in the client. Counts and
+types are validated before indexing, and unknown raw flag bits are retained.
+
+All six focused terrain tests and the library/inspector build pass. A REA run
+of private `check-terrain-flags-rust.rs` compared all 544,768 cell surface IDs
+and all 532 chunk exclusions against decoded archive fields, with exact matches.
+Evidence `ev_990c3c1243ce91181fa53a755d6c0b80e8442630e65120b4d420d1d584afdf2f`
+is saved in private bundle `209026-terrain-flags-rust-1.json`.
