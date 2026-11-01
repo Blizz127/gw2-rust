@@ -81,7 +81,8 @@ For example, both tables store
 placement. This is equality of decoded float values, without a scale,
 translation or axis flip. Instance-array transforms and unmatched props
 were not included. The runtime prop translation conversion is traced below;
-mesh-local vertex units and rotation conventions remain unresolved.
+the subsequent [rotation and mesh trace](209026-collision-rotation.md)
+establishes local prop quaternions and unchanged cached collision vertices.
 
 The nine `msn` interest points also have coordinates on the larger scale;
 their descriptive labels do not establish exact correspondence to cached
@@ -115,8 +116,8 @@ to prop constructor `0x1410be5e0`; model scale is passed separately.
 Consequently the prop's own scale does not multiply its placement origin.
 This is a traced conversion for **prop translations**, not permission to
 apply the same operation indiscriminately to all `havk` fields. The stored
-bounds are already in the collision scene's smaller units. Rotations and
-mesh-local vertex conversion still require their own traces.
+bounds are already in the collision scene's smaller units. See the separate
+[rotation and mesh trace](209026-collision-rotation.md) for those fields.
 
 `ModelPlacement::prop_physics_translation_209026` accepts the map matrix
 explicitly and implements only this translation operation. Its focused

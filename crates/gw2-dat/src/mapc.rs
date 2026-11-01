@@ -7,9 +7,10 @@
 //! index checks pass. Its collision bounds and prop translations use different
 //! coordinate scales. 4,113 matched prop translations equal render positions
 //! exactly. Prop translations apply the map matrix, then divide XYZ by 32
-//! and negate Z for the collision scene. Mesh units and rotation order remain
-//! unknown.
-//! See `docs/re/209026-map-coordinate-spaces.md`.
+//! and negate Z for the collision scene. Cached mesh vertices are already in
+//! collision units; local prop rotation is `qy(ry) * qx(rx) * qz(-rz)`.
+//! See `docs/re/209026-map-coordinate-spaces.md` and
+//! `docs/re/209026-collision-rotation.md` for scope and remaining limitations.
 //!
 //! Server use: collision triangles give ground height, line-of-sight and
 //! blocked areas for NPC/mob movement in a zone (stage 5–6).
@@ -78,6 +79,25 @@ impl ModelPlacement {
             row[0] * x + row[1] * y + row[2] * z + row[3]
         });
         [tx * 0.03125, ty * 0.03125, -tz * 0.03125]
+    }
+
+    /// Local collision quaternion `[x, y, z, w]` for a build-209026 prop.
+    ///
+    /// Stored angles are radians. The Hamilton product is
+    /// `qy(ry) * qx(rx) * qz(-rz)`. This is the final rotation for an identity
+    /// map; a nonidentity map needs additional rotation composition. Computed
+    /// in double precision as in the client, without a bit-exact CRT guarantee.
+    pub fn prop_local_physics_rotation_209026(&self) -> [f32; 4] {
+        let [rx, ry, rz] = self.rotate;
+        let (sa, ca) = (f64::from(rx) * 0.5).sin_cos();
+        let (sb, cb) = (f64::from(ry) * 0.5).sin_cos();
+        let (sc, cc) = (f64::from(rz) * -0.5).sin_cos();
+        [
+            cc * cb * sa + sc * sb * ca,
+            cc * sb * ca - sc * cb * sa,
+            sc * cb * ca - cc * sb * sa,
+            sc * sb * sa + cc * cb * ca,
+        ].map(|v| v as f32)
     }
 }
 
@@ -329,6 +349,26 @@ mod tests {
         // Rotate XY, scale Z and translate in map units. Model scale is separate.
         let affine = [[0.0, -1.0, 0.0, 32.0], [1.0, 0.0, 0.0, 64.0], [0.0, 0.0, 2.0, 96.0]];
         assert_eq!(prop.prop_physics_translation_209026(affine), [-1.0, 3.0, 3.0]);
+    }
+
+    #[test]
+    fn prop_rotation_axis_signs_and_noncommuting_order() {
+        let h = std::f32::consts::FRAC_PI_2;
+        let s = std::f32::consts::FRAC_1_SQRT_2;
+        for (angles, expected) in [
+            ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]),
+            ([h, 0.0, 0.0], [s, 0.0, 0.0, s]),
+            ([0.0, h, 0.0], [0.0, s, 0.0, s]),
+            ([0.0, 0.0, h], [0.0, 0.0, -s, s]),
+            ([h, h, 0.0], [0.5, 0.5, -0.5, 0.5]),
+            ([h, h, h], [0.0, s, -s, 0.0]),
+        ] {
+            let prop = ModelPlacement { rotate: angles, ..Default::default() };
+            let actual = prop.prop_local_physics_rotation_209026();
+            for (a, e) in actual.into_iter().zip(expected) {
+                assert!((a - e).abs() < 2e-7, "angles={angles:?}, actual={actual:?}");
+            }
+        }
     }
 
     #[test]
