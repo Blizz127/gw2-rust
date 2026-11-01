@@ -70,10 +70,11 @@ Consequently mesh vertices and prop translations have different stored
 conventions: apply model scale to collision vertices, but convert the
 stored prop origin through the map matrix and `[x/32,y/32,-z/32]`.
 
-This does not resolve animation selection for every prop, shape fallback
-behavior, dynamic movement, blockers, terrain sampling, or mission packet
-positions. The existing `geometry_meshes` first-animation choice remains
-an explicit assumption.
+This does not resolve shape fallback behavior, dynamic movement, blockers,
+terrain sampling, or mission packet positions. Subsequent
+[sequence-selection work](209026-collision-animation-selection.md) adds
+an explicit prop lookup; `geometry_meshes` still means the first animation
+and should not substitute for that lookup.
 
 ## Evidence
 

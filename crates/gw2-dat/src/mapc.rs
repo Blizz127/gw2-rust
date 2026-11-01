@@ -57,6 +57,8 @@ pub struct CollideGeometry {
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ModelPlacement {
     pub token: Option<u64>,
+    /// Animation sequence token for a prop; absent from zone placements.
+    pub sequence: Option<u64>,
     pub scale: f32,
     pub translate: [f32; 3],
     pub rotate: [f32; 3],
@@ -168,6 +170,7 @@ fn f3s(v: &PfValue, name: &str) -> Result<Vec<[f32; 3]>> {
 fn placement(v: &PfValue) -> Result<ModelPlacement> {
     Ok(ModelPlacement {
         token: field_u64(v, "token"),
+        sequence: field_u64(v, "sequence"),
         scale: field_f32(v, "scale").unwrap_or(1.0),
         translate: field_f3(v, "translate")?,
         rotate: field_f3(v, "rotate")?,
@@ -246,8 +249,9 @@ impl MapCollide {
         Ok(())
     }
 
-    /// Collision meshes used by a geometry (through its first animation, i.e. the
-    /// rest pose; using the first one is an assumption).
+    /// Collision meshes from a geometry's first animation. This is a convenience
+    /// view, not the client's prop-selection rule; use [`Self::prop_animation_209026`]
+    /// to select a prop's stored sequence instead.
     pub fn geometry_meshes(&self, geometry: u32) -> impl Iterator<Item = &CollisionMesh> {
         self.geometries
             .get(geometry as usize)
@@ -256,6 +260,22 @@ impl MapCollide {
             .into_iter()
             .flat_map(|a| a.collision_indices.iter())
             .filter_map(|&c| self.collisions.get(c as usize))
+    }
+
+    /// Select a prop's collision animation using the frozen client's token rule.
+    ///
+    /// A stored zero becomes `zeropose`; otherwise use the stored token. The
+    /// first exact match in this geometry's ordered list wins. Missing sequence
+    /// data, geometry or token returns None. This does not model the client's
+    /// separate missing-shape fallback or later dynamic animation changes.
+    pub fn prop_animation_209026(&self, prop: &ModelPlacement) -> Option<&CollideAnimation> {
+        let sequence = match prop.sequence? {
+            0 => 0x2cdf07c8ba, // packed "zeropose"
+            sequence => sequence,
+        };
+        self.geometries.get(prop.geometry_index as usize)?.animations.iter()
+            .filter_map(|&i| self.animations.get(i as usize))
+            .find(|a| a.sequence == sequence)
     }
 
     pub fn triangle_count(&self) -> usize {
@@ -327,6 +347,7 @@ mod tests {
         assert_eq!(m.triangle_count(), 2);
         assert_eq!(m.water_surface_z, Some(-0.5));
         assert_eq!(m.prop_models[0].token, Some(99));
+        assert_eq!(m.prop_models[0].sequence, Some(0));
         assert_eq!(m.prop_models[0].scale, 2.0);
         assert_eq!(m.geometries[0].nav_mesh_index, Some(3));
         let meshes: Vec<_> = m.geometry_meshes(0).collect();
@@ -334,6 +355,38 @@ mod tests {
         let tris: Vec<_> = meshes[0].triangles().collect();
         assert_eq!(tris[1], [[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]);
         assert_eq!(m.geometry_meshes(5).count(), 0);
+    }
+
+    #[test]
+    fn prop_animation_uses_sequence_instead_of_first_entry() {
+        let mut m = MapCollide::from_value(&sample()).unwrap();
+        m.animations[0].sequence = 7;
+        m.animations.push(CollideAnimation {
+            sequence: 0x2cdf07c8ba,
+            collision_indices: vec![0],
+            ..Default::default()
+        });
+        m.animations.push(CollideAnimation {
+            sequence: 0x2cdf07c8ba,
+            ..Default::default()
+        });
+        m.geometries[0].animations = vec![0, 1, 2];
+        let mut prop = m.prop_models[0].clone();
+        // Stored zero normalizes to zeropose, and the first matching token wins.
+        assert!(std::ptr::eq(m.prop_animation_209026(&prop).unwrap(), &m.animations[1]));
+        prop.sequence = Some(0x2cdf07c8ba);
+        assert!(std::ptr::eq(m.prop_animation_209026(&prop).unwrap(), &m.animations[1]));
+        prop.sequence = Some(7);
+        assert!(std::ptr::eq(m.prop_animation_209026(&prop).unwrap(), &m.animations[0]));
+        prop.sequence = Some(99);
+        assert!(m.prop_animation_209026(&prop).is_none());
+        prop.sequence = None;
+        assert!(m.prop_animation_209026(&prop).is_none());
+        prop.sequence = Some(7);
+        prop.geometry_index = 99;
+        assert!(m.prop_animation_209026(&prop).is_none());
+        let zone = placement(&s(vec![("geometryIndex", PfValue::U32(0))])).unwrap();
+        assert_eq!(zone.sequence, None);
     }
 
     #[test]
