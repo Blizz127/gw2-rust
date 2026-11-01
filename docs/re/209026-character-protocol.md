@@ -93,6 +93,45 @@ Runtime list population is still untested and remains behind the UI gate.
 | `ev_ae068f97653fc0143eb6ff829dabccc178df12df177cc137eb7b3b15afb6aee6` | Character item copies the record. |
 | `ev_007a08c64d1a850ed19c20215c1c28d6fca0c8479ba865441081868b4e1eae72` | Blob-decoder thunk and descriptor. |
 
+## Explicit character-list refresh
+
+`0x14023cdb0` frees/clears the existing character-list storage at
+`0x14266bf98` and its size/count at `0x14266bfa0`, then constructs auth
+transaction type `0x80000018` with vtable `0x1419237e8`. Its send slot
++0x10 resolves to `0x14023e4d0`, which passes the request ID to
+`0x140241bd0`: **auth client ID 25, one Dword request ID**.
+
+The ID-17 consumer `0x14023aa50` accepts records only for a matching request
+in state 3 with low-Word transaction type 7 (login) or 0x18 (refresh).
+Refresh therefore repopulates the same list used by character selection.
+Records must precede transaction completion; later records fail that state
+guard. The generic server-ID-4 path, `0x1402407f0` → `0x14023b5c0`, can
+complete a matching pending transaction by copying the four low-Word result
+fields and moving state 3 to 1. This establishes a completion-capable path,
+not which completion message a real service sends for refresh.
+
+The refresh completion slot +0x18 is `0x14023e130`. It emits event **0x65**
+with an eight-byte result. In dispatcher `0x140950d40`, index
+`0x65 - 0x16 = 0x4f` maps through byte `0x140950fc7` (8) and target table
+`0x140950f50` to `0x140950f10`, then `0x14094edb0`. Unless view flag
++0x60 bit 1 is set, a zero first result Word calls view slot +0xc0 with
+state **4 (char_select)**; a nonzero result takes the error-display path.
+The only direct constructor caller found by this scan is `0x14094e595`,
+within conditional view-result handling. This does not establish a UI refresh
+button or an initial-login refresh request, and no runtime refresh was tried.
+
+Private bundle: `~/re/gw2/notes/209026-character-refresh-static-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_38cafb4098bb18364946562178c92823e1e465cc7d8aa5c0eeeb920f7b34528b` | List clearing, refresh constructor and vtable. |
+| `ev_53c5689691e819d2de6ff2db340346f21a22fed4834aef9a8836dc9da543e6e6` | Storage free, send thunk and event-0x65 completion. |
+| `ev_4ae780424fd54a56a936735f0f6ffeb771d281207f975ed04bf41948b8678d31` | ID-25 sender and direct constructor caller scan. |
+| `ev_7f2b4f824e854db5b0a299207c02835fa069819794fb0f259f133cf2700a344a` | ID-17 request/state/type guards and record writes. |
+| `ev_32114887e991bd8479ffdcf1685f6623421bf9657e525fb94cb9d67a8b014199` | ID-4 result unpacking into generic completion. |
+| `ev_5415f19d9d36c73e20401042e388bd6bd87c4b032dc6a86330333d8f9e6712da` | Conditional caller and generic pending-transaction completion. |
+| `ev_7426ce5b01659c8f95815cdeafed579649b53fc3455a95c9b623b79efa48baeb` | Event-0x65 dispatch and success/error view handling. |
+
 ## Summary blob version and checks
 
 `0x1417f4ae0` clears a 159-byte output structure, marks its version byte 255,

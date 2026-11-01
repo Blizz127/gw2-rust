@@ -105,6 +105,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     map-definition key. The new `gw2-summary-check` checks version-11 structure
     without printing values or claiming content/preview validity; two focused
     tests, checker/census builds and six CLI smoke cases pass.
+    Static refresh mapping identifies client ID 25, pending ID-17 list records,
+    and completion event 0x65 returning to char_select on success; runtime
+    ordering remains untested.
     The dynamic codec also now enforces variable-buffer `Size` maxima in both
     directions, matching the client; two focused tests and observer/census
     builds pass, and saved capture boundaries remain unchanged.
