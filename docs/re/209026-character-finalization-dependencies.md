@@ -98,6 +98,13 @@ a separate **profession component** prerequisite for player finalization.
 This is character +0x510, distinct from the profession scalar in coreStats.
 Nine alternative creation handlers are mapped in that follow-up.
 
+The [skill-bar follow-up](209026-character-skillbar.md) maps creation 618,
+notification 619 and removal 620. Skill-bar registration can occur during
+character finalization or during creation on an already-finalized character.
+Its normal rebuild needs profession, coreStats and inventory. A controlled
+character's profession-state update requires a skill bar; the current trace
+does not make skill-bar creation a strict prerequisite of server 170 itself.
+
 These are dependencies, not a complete playable bootstrap or an exhaustive
 ordering of event listeners and content setup.
 
