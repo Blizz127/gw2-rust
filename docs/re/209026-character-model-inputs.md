@@ -186,6 +186,70 @@ Private policy bundle: `~/re/gw2/notes/209026-character-model-policy-1.json`
 | `ev_eadcccabc0268ad697574ab9ab6f708a41838bdec8ced8277d012e0fff648fab` | Agent +0x678 getter entry. |
 | `ev_10b2ffc7131db18508110256625604f1e48b363497c81d96e8fad67663f90ccf` | Agent bit-6 getter and bounded later sorting path. |
 
+## Threshold construction and fallback loading
+
+Priority-manager constructor `0x1411595b0` initializes selectors +0x30
+and +0x34 to 2, then calls `0x14115a2e0`. That setter uses these literal
+arrays, indexed by the indicated selector:
+
+| Array | Values at indices 0–4 | Consumer |
+| --- | --- | --- |
+| A | 30, 60, 100, 200, 300 | Selector +0x30 |
+| B | 0, 30, 60, 100, 300 | Selector +0x34 |
+| C | 10, 15, 30, 30, 30 | Selector +0x30 |
+
+It writes manager +0x20 = C, +0x24 = min(B, A), +0x28 = A − +0x24,
+and +0x2c = 0xffffffff. Thus the constructor produces +0x20 = 30,
++0x24 = 60 and +0x28 = 40. The initial insertion helper compares the
+index directly against +0x24 and then +0x28; these are not cumulative
+comparisons. With those constructor values, insertion indices 0–59
+select mode 0 and later indices select mode 2 before the character and
+context overrides. This is a conditional calculation, not a claim about
+the settings present when a character arrives.
+
+Setters `0x141159d80` and `0x141159d90` replace the respective selectors
+and recalculate only when changed. Wrappers `0x141111920` and
+`0x141111930` reach them at AvContext +0xc8. No index bounds checks occur
+in these small setters; their upstream callers and the settings' names
+remain unresolved. Later priority updates can change assigned modes.
+
+The no-record loading helper's remaining body distinguishes a usable
+current model from a replacement attempt. A nonnull model +0x40 whose
+virtual +0x540(0) returns nonzero bypasses replacement. Otherwise a
+nonnull supplied old-model pointer is restored, retaining the attempted
+model at +0x48. With no old model, mode 3 skips the fallback call; other
+modes reach `0x141168b00`.
+
+That complete fallback helper (`0x141168b00`–`0x141168d29`) returns
+immediately when AvContext +0x478 bit 1 is clear. It also returns when
+the current model passes the same virtual +0x540 check. Otherwise it
+obtains a view scale and transform, then tests model +0xe8. Only a
+nonnull +0xe8 record reaches loading call `0x140cf7000`, using record
++0x28. A nonnull result becomes model +0x40, with the previous current
+model retained at +0x48, and sets whole-view +0xb78 mask 0x80. Both an
+absent record and a null load result instead reach model virtual +0x120
+without installing a replacement here. That callback and the record's
+population are separate dependencies; this helper alone does not ensure
+that a view has a loaded model.
+
+The no-record helper later repeats the wardrobe/inventory helper
+`0x141165d60` when model +0xe0 is nonnull and view +0x08 virtual +0x1f0
+returns zero. This is an additional conditional call site, consistent
+with the earlier wardrobe prerequisite; it does not establish that the
+initial builder is the only consumer.
+
+Private bundle: `~/re/gw2/notes/209026-character-model-fallback-1.json`
+(1,592 records; 30,739,795 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_55fb738f0a38a53ccbf3221776680e1db3c32edb5a12622715a818b46e2e3d19` | Three threshold-setter relative-transfer candidates, validated in the following bodies. |
+| `ev_729528fab12fb16d497aad6c956bf2fb53821556e166e5dad876c9404e76bd50` | Constructor defaults, selector setters, fallback gates and load call. |
+| `ev_35bc7aaf55cb9fce51f70fae3e15ac5be109d15c16ac9834d01031931fdaf5fa` | Complete threshold calculation and remaining fallback body. |
+| `ev_e974eee90406425c15be91aa42268d91edac27099d41aecbaeddf84d05337c8c` | Relative-transfer candidates for the selector setters. |
+| `ev_2ab5a4b7ef9d105049ba95763f6398f8f40ff996a554e14bc845ef8f317ceed7` | AvContext wrappers and no-record helper's replacement decisions. |
+| `ev_504ed77c77d67fc1111b7fade9c26e22a607077b9f6f13d0e3fdced34933b6f6` | Remaining no-record helper, including second wardrobe/inventory call. |
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-character-model-inputs-1.json`
