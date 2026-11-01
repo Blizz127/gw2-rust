@@ -138,6 +138,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     The final 24 Dwords map to item-color selections for six equipment slots;
     content validity and runtime creation remain unverified. See
     [re/209026-creation-colors.md](re/209026-creation-colors.md).
+    New `gw2-creation-check` inspects a complete ID-415 frame with a 250-byte
+    bound and no field-value output. Two focused parser tests, checker/census
+    builds and six CLI smoke cases pass; this does not validate game content.
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small

@@ -33,7 +33,7 @@ After the two-byte little-endian message ID, the descriptor encodes:
 | 4 | Byte | Level from context data +0x30; context validates 1–80, sender asserts below 255. |
 | 5 | Dword varint | Flags: context supplies 0 or 8 according to a virtual predicate. |
 | 6 | One-byte count, then Byte elements; maximum 32 | Context data +0x38 array; sender assertion names `madLibAnswerIdsBytes`. |
-| 7 | Fixed array of 24 Dword varints; no count prefix | A 96-byte decoded block copied from context object +0x480; element meanings unresolved. |
+| 7 | Fixed array of 24 Dword varints; no count prefix | Four item-color selections each for equipment slots 2–7, copied from context object +0x480; see the item-color analysis below. |
 
 Descriptor kind 16 is a fixed array; kind 17 has a one-byte element count.
 Both recurse through the nested element descriptor. The Byte element descriptor
@@ -265,6 +265,39 @@ These paths are static findings only. The User Agreement decision remains
 pending; no UI acceptance, creation fixture or runtime continuation was added.
 
 ## Private schema preparation
+
+### Offline parser contract
+
+The mapped layout permits an offline parser for one complete client ID-415
+frame, bounded by **250 bytes**: ID 2, terminated name at most 40, appearance
+48, profession/level 2, flags at most 5, answer count 1 plus at most 32 bytes,
+and 24 Dwords at most 120 bytes. It must reject wrong IDs, truncation, trailing
+bytes, missing name terminators, excessive answer counts and invalid Dword
+encodings. It must retain raw UTF-16 units and every appearance byte, including
+45–47; answer sorting and valid content values are not framing requirements.
+
+Known context scalar checks are a separate result: nonempty name, level 1–80,
+profession below 11, race below 5, sex 0/1 and the nine appearance bytes not
+equal to 0xff. This limited predicate admits profession 0/10, unlike the
+named profession getter; passing it cannot establish a usable character.
+The offline checker must print only bounds/check metadata, never names,
+appearance, answer or color values. It does not send traffic or persist a
+character. Content validation remains unverified.
+
+Implemented as `gw2_proto::character_creation::CreationRequest209026` and
+`gw2-creation-check RAW_FRAME`. The parser uses fixed arrays and has no
+Debug implementation. It returns raw name units, all appearance bytes,
+scalars, answers in wire order and a six-by-four color matrix. The CLI reads
+at most 251 bytes to detect oversize input. It exits successfully for valid
+framing even if its separately printed `context_scalar_checks` result fails;
+this is an inspection tool, not a character-creation validator.
+
+Focused verification: both `character_creation::tests` pass, covering every
+truncation of a handwritten frame, exact 250-byte maximum, trailing data,
+wrong ID, unterminated name, excessive answer count, invalid Dwords, opaque
+byte preservation, and scalar checks separate from framing. Checker/census
+builds and six CLI smoke cases (structure, scalar-only failure, truncation,
+oversize, wrong ID and usage) pass. These tests use synthetic inputs only.
 
 The [creation-answer analysis](209026-creation-answers.md) traces the bounded
 byte array to content answer values, question replacement and applicability
