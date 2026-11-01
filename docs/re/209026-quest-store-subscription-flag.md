@@ -47,13 +47,15 @@ when it is set does it call the store service's virtual +0xe0 with the
    immediates 0x10, 0xef, 0xffffffef and 0xffef on displacements 0xf0, 0xe8,
    0xe0, 0xd8 and 0xd0. It returns 21 hits. Only three lie in quest-class
    code: the setter, the item-callback clear and the destructor clear. The
-   other 18 have containing functions that are not quest table targets.
-   They are at `0x1402c2c40`, `0x1402cda10`, `0x1402d0b10`, `0x1403e4090`
-   (two hits), `0x140878ca0`, `0x1408f8290`, `0x14096c380`, `0x140abad50`,
-   `0x140affbf0`, `0x140d4d400`, `0x140f705d0`, `0x141027340`,
-   `0x141076930` (a stack operand), `0x141121e9f`, `0x1413aa4e0`,
-   `0x1414daa70` and `0x1414dac70`. They lie far outside the quest code
-   region.
+   other 18 were mapped through the PE `.pdata` table to their primary
+   functions, following chained unwind info out of split fragments. None of
+   these is a quest table target. The primaries are `0x1402c2c40`,
+   `0x1402cda10`, `0x1402d0b10`, `0x1403e4090` (two hits), `0x140878ca0`,
+   `0x1408f8290`, `0x14096c380`, `0x140abad50`, `0x140affbf0`,
+   `0x140d4d400`, `0x140f705d0`, `0x141076930` (a stack operand),
+   `0x141121d80`, `0x1413aa4e0`, `0x1414daa70` and `0x1414dac70`, plus
+   the leaf `0x141027340`, which has no `.pdata` entry. The same mapping
+   resolves the destructor's clear fragment to `0x1411fd8a0`.
 2. **Class-bounded scan.** Every one of the 33 table targets was
    disassembled to its end. Each was checked for the interface-adjusted
    displacement and for whole +0xf0. Field-address `lea` uses were
@@ -75,8 +77,11 @@ the emulator never answers the asynchronous GemStoreSearch:
 - the quest's store subscription stays registered until destruction
 - no Purchase is built
 
-None of these pieces has an identified reader that blocks startup. **Not
-answering the store request is statically supported under these bounds.**
+None of these pieces has an identified reader that blocks startup. **No static wait on a store answer was identified under these bounds.**
+At runtime, a never-answered request probably ends as a timeout error.
+That error would take the 0x50 error branch, whose request-specific retry
+path is still untraced. A store fixture may therefore prefer an explicit
+error or empty reply over silence.
 No emulator response policy is changed by this note.
 
 The claim does not cover:
@@ -87,13 +92,13 @@ The claim does not cover:
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-quest-store-subscription-flag-1.json`
-(24 Rizin records, including the tracker and Purchase sweeps). Frozen
+(26 Rizin records, including the tracker and Purchase sweeps). Frozen
 executable SHA-256
 `99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`,
 unchanged after each call.
 
 Helper scripts are in `~/re/gw2/notes/`: `flag-sweep.py`,
-`quest-flag-class.py` and `region-field-scan.py`.
+`quest-flag-class.py`, `region-field-scan.py` and `pdata-func.py`.
 
 | REA evidence | Observation |
 | --- | --- |
@@ -104,3 +109,4 @@ Helper scripts are in `~/re/gw2/notes/`: `flag-sweep.py`,
 | `ev_5a84e6dcb489935d9d5670e0f3a09a04917163ed70b87e185f8e7022fe259496` | Startup callback, bit-0x4 method, destructor bit-0x10 test and unsubscription. |
 | `ev_bdcf6eefb31b5995840db95cf2d603549efa0c8bf9654d3c315d3ae48eda4f74` | Code-region +0xf0 scan. |
 | `ev_0398065ff9080cb0b9d80f706a3c25062abee635235adbfe2b8a0ec12f2f20fd` | Activation (bits 0x1/0x2/0x8), bit-0x4 helper, destructor bit checks. |
+| `ev_da5c3e5cb3a7d458d2e767babdda9671421ca7ba83c43aeeb3016ee05a0b88d9` | `.pdata` primary-function mapping of all masked hits, with chained unwind followed. |
