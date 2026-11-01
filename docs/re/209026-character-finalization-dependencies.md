@@ -163,6 +163,7 @@ ordering of event listeners and content setup.
 | Server 282: inventory component | Character exists through server 37. |
 | Server 182 or 183: coreStats | Character exists; component not already created. Player path also needs associated player and owned coreStats; for a fresh owned character, 443 precedes this creation, which stores its component before the level callback. |
 | Server 443: owned-character assignment | Player entry and character exist. |
+| Server 477: fresh Guardian component | Character exists and profession component is absent. Its inspected initialization adds no coreStats/inventory/skill-bar dependency. |
 | Server 151: attitude | Character exists; an earlier update would be ignored. |
 | Server 605: initial skill availability | Player entry exists and type-64 skill key resolves; direct path does not require an owned character. |
 | Server 612: palette selection | Player entry, owned character and skill bar exist; immediate rebuild has profession/coreStats/inventory dependencies. |

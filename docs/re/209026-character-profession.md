@@ -157,6 +157,37 @@ Private bundle: `~/re/gw2/notes/209026-guardian-meter-1.json`.
 | `ev_cf4a421cf1d4d3c282942d5fd292d206107f44f0cd0ce3aff9541b61d69fd2be` | timeGetTime import, update/removal handlers, five-float 479 descriptor and raw-byte getters. |
 | `ev_cd25a14fbd23545b97767a6fc979e04256188b2c2d71ea706dbc62213f5407ea` | 480 descriptor, 0.001 constant, removal body and bounded clock-reference search. |
 
+### Guardian creation callback boundary
+
+The complete 477 handler constructs the component, stores it through
+`0x1411e21a0`, sets the meter, then sets the two bytes. The pointer setter
+only checks `!m_profession` and stores +0x510; it dispatches no creation
+event. Base constructor `0x141240720` stores the character and initializes
+its own state without retrieving another character component. Guardian
+constructor `0x141294780` initializes a separate listener collection at
++0x50, with its head +0x58 initially null.
+
+Byte setter `0x141294f70` dispatches that collection through `0x14026dce0`
+and trampoline `0x140255568` (listener virtual 0). The dispatcher inserts
+an iteration marker, but with an initially empty head it skips the listener
+call loop and removes the marker. No registration occurs between construction
+and this setter in the inspected handler. The meter setter only accesses
+its meter state and the previously traced clock/evaluator.
+
+Thus this fresh Guardian creation path does not introduce a coreStats,
+inventory or skill-bar prerequisite. This does not describe later 479/480
+updates after listeners register, other derived professions, allocator or
+clock callbacks, or establish valid initial meter/byte values.
+
+Private bundle: `~/re/gw2/notes/209026-guardian-initialization-1.json`
+(1,083 records, 23,816,598 bytes). No client replay.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_dfa4e8e908df3419f44c258790f397202cf2584eeaf555fcac4f35bf72a24ade` | Full Guardian creation handler, constructor, pointer setter and initial field setters. |
+| `ev_a5a151e011fc961fea08895c31218add8bc8e7ece2c4c319af48da64e688f4f9` | Base constructor, empty-list dispatch branch and virtual-0 trampoline. |
+| `ev_79bb4ff4e657cfa66d56ff40f14a83fca38c8ba090f78b7701b6fdf585f3d297` | Dispatcher cleanup and return. |
+
 ## Typed Guardian framing check
 
 `gw2_proto::guardian::GuardianFrame209026` covers 477–480 with an explicit
