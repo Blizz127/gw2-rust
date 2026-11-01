@@ -33,8 +33,8 @@ This method allocates 0x150 bytes, calls constructor `0x1411683b0`, and
 stores the result at whole +0x820 (`0x14115931c`). Thus the ordinary
 factory performs the required allocation synchronously after construction;
 it is not a separate network component-creation operation on this path.
-The factory's event caller and ordering relative to agent entry still
-require tracing. This does not prove that reveal cannot arrive too early.
+The subsequent [finalization trace](209026-character-view-finalization.md)
+resolves a caller and its player-state gate. This does not prove that reveal cannot arrive too early.
 
 A second initialization method, `0x141167e20`, allocates 0xe8 bytes,
 calls `0x14116c7c0` with view +0xbf8, and stores the result at whole +0x820
