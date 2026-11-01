@@ -77,8 +77,8 @@ The latter tests a bit indexed by the type-64 skill key (+0x28) in a
 bitset at skill-object +0x28, bounded by its Dword count at +0x34. It also
 has mode/player/transformation alternatives. The constructor initializes
 that bitset empty. Message 612 writes palette arrays at +0x60/+0x88;
-its inspected body does not populate this separate bitset. The messages
-that initialize or change the bits remain to be traced. Thus a 612 update
+its inspected body does not populate this separate bitset. The [availability-message follow-up](209026-skill-availability.md)
+identifies 605/606 for initial set/reset and 609/613 for live mutations. Thus a 612 update
 alone does not prove the selected skill will pass availability checks.
 
 Character skill-slot eligibility is also checked through primary virtual
