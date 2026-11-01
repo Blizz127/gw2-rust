@@ -21,6 +21,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
   32-container smoke pass: 78 palette names, 50 matching queries, 90 parsed
   defaults and bounds for 180 external template references. See
   [re/209026-content-registry.md](re/209026-content-registry.md).
+  `gw2-content-check` exposes metadata-only index/type counts; its build,
+  single-container and full-base smokes, and twelve CLI rejection cases pass.
 - The client runs offline in the sandbox (Wine 10 and GE-Proton 11).
   - **Silent-connection blocker solved (2026-10-31, run 21)**:
     - Cause: the client's StsLib address lookup recurses forever when the host's only

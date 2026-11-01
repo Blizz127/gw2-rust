@@ -41,6 +41,21 @@ violations are rejected.
 Evidence: `ev_c204d52a0a7b9366e52cf6a4a934520ad3db1f670fcbf76085d0db4159d6e5a5`,
 private bundle `~/re/gw2/notes/209026-content-reference-rust-check-1.json`.
 
+`gw2-content-check <Gw2.dat> <file_id>... [--type N]` exposes index checks
+and type counts without printing record payloads. Alternatively,
+`gw2-content-check <Gw2.dat> --base-209026 --type 147` reads the exact
+32-entry frozen base list. Explicit IDs and the base-list option are mutually
+exclusive; at most 32 distinct explicit IDs are accepted. A type filter
+selects counts, not which index entries receive structural checks.
+
+The CLI build, twelve argument-rejection cases, single-container appearance
+check (ten type-137 records), and full-base palette check (78 type-147
+records across 982,772 entries) pass. This CLI does not validate individual
+record payloads or recursively resolve their references. Evidence:
+`ev_3baf451bc12cbecb5151a9e140e8be8ab59277e36c6ecc0479a15cee58321290`
+and `ev_b968eb662fceafe90fb52c1f1acbe3a61616f02ffeebd8c033a6d79a17a8f375`,
+private bundle `~/re/gw2/notes/209026-content-check-cli-1.json`.
+
 ## Constant keys resolve through GUIDs
 
 The [appearance keys](209026-appearance-validation.md) 50–59 select entries
