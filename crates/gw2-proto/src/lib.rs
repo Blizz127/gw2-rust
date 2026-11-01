@@ -156,8 +156,10 @@ impl<T: Decode> Decode for Option<T> {
     }
 }
 
-/// Schema `Point3`: three f32s, then a varint `u32`. The u32 is probably a
-/// map/plane id, but that is not established.
+/// Schema `Point3`: three f32s, then a varint `u32`.
+/// Build 209026 server 37 uses map-unit XYZ and a transform tag (zero is
+/// untransformed); see `docs/re/209026-agent-position.md`. Other message
+/// semantics are not established by this wire codec.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Point3(pub [f32; 3], pub u32);
 

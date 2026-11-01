@@ -87,7 +87,9 @@ separate controlled-character assignment.
 
 Descriptor kind **10** is three raw 32-bit float words followed by one
 unsigned variable-length Dword. It is not just a Float3 or four fixed
-floats. The last Dword's game meaning is not assigned here.
+floats. The follow-up [position trace](209026-agent-position.md) establishes
+map-unit XYZ and a transform tag for server 37; zero selects no additional
+transform before character bounds handling.
 
 - Decoder switch `0x140ff237c` is indexed by kind minus one. Kind 10
   enters `0x140ff1dc1`, requires and copies 12 bytes, then falls through

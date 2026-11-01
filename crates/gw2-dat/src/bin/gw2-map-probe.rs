@@ -263,7 +263,15 @@ fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
     for (name, hit) in ["terrain", "props", "zones"].into_iter().zip(best) {
         match hit {
             Some((h, source)) => {
-                println!("{name}: z={} normal={:?} source={source}", h.z, h.normal)
+                println!("{name}: z={} normal={:?} source={source}", h.z, h.normal);
+                // Server 37, build 209026, before character bounds handling.
+                // This is the surface point, not a validated character origin.
+                let point = [xy[0] * 32., xy[1] * 32., -h.z * 32.];
+                if point.iter().all(|v| v.is_finite()) {
+                    println!("  server37_surface_point_xyz={point:?} transform_tag=0");
+                } else {
+                    println!("  server37_surface_point_xyz=unrepresentable transform_tag=0");
+                }
             }
             None => println!("{name}: no triangle hit in interval"),
         }
