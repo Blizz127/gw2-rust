@@ -3,8 +3,11 @@
 //!
 //! Field names follow the 208039 reference schema (PackMapCollideV16 family).
 //! Lookups are by name, so other versions that share the names also work, and
-//! missing arrays read as empty. **Unverified on our build**, and the placement
-//! transform conventions (rotation order and units) are unknown.
+//! missing arrays read as empty. Version 16 decodes on build 209026 Queensdale;
+//! index checks pass. Its collision bounds and prop translations use different
+//! coordinate scales. 4,113 matched prop translations equal render positions
+//! exactly; mesh units, rotation order and runtime transforms remain unknown.
+//! See `docs/re/209026-map-coordinate-spaces.md`.
 //!
 //! Server use: collision triangles give ground height, line-of-sight and
 //! blocked areas for NPC/mob movement in a zone (stage 5–6).

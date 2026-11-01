@@ -283,7 +283,7 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 | 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
 | 3 | Login stub: redirect, secure login, our own key | offline synthetic fixtures reach logged-in launcher with active Play button; credential validation and account persistence remain unimplemented |
 | 4 | Character select / creation | static protocol investigation underway; Play UI waits on explicit User Agreement decision; no character-select screen yet |
-| 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
+| 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. Archive rectangle matches API; 4,113 collision prop translations exactly equal render positions. Bounds use a different scale; runtime map/world conversion remains unknown. See [coordinate evidence](re/209026-map-coordinate-spaces.md). |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
