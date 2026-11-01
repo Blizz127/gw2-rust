@@ -141,3 +141,100 @@ the artifact, not the external helper source. No client replay occurred.
 | `ev_881e2c382aad4647f0dc24100bfd28f321e5fe114a60f39b3dc30062b1e56b94` | Terminated 538 descriptor. |
 | `ev_eae37e1e711ba8aabf66cfd5c0e4597817093545843e2e1b3667cb3e8330c486` | Complete handler and initializer, quest subscription tail. |
 | `ev_30112db1af59c6f0ce5b2e72d65ac5463a15cfc7c6999f9d38fbd60ce4a95997` / `ev_7b7c34c1f18db7baf8b4883679673eb0d446af544b8e23ae7f14932e097150f2` | Constructor clears cached quest, player notification wrapper/trampoline and dispatch entry. |
+
+## Configuration follow-up: fallback and override guards
+
+Additional static REA work resolves the fallback and the base-content
+alternatives. It does not identify which override record is visible in
+Queensdale's runtime registry.
+
+The built-in table at `0x1425e6980` has 72-byte entries. Descriptor 108
+is at **`0x1425e87e0`**; initialization at `0x14020df25` stores expected
+type 159 and GUID Dwords:
+
+`eca465a4 42b29591 47ff568c 5b755c0e`
+
+All 32 hash-checked base containers contain exactly one matching setting:
+file **1282855**, content offset **0x224b8**, type 150 with declared and
+variant type 159. Its target is file **1282836**, offset **0x2fe50**, type
+159. Target +0x38 is **null**, and Float32 +0x28 is **0.699999988079071**.
+The type-159 variant converter `0x1412e3910` returns the +8 pointer only
+when its tag equals 159. The source hashes are respectively
+`9f9226f71e3871066237d560e95b62ef33c847818a7bd78cea586507f492cfa6`
+and `ac503e07b02c76ca0b1bbac4181e598c4a4a30260f49759db51b6ef1972b3f80`.
+
+Validation helper **`0x141269d90` returns true immediately for a null
+filter**, before its character lookup. Thus this specific fallback's
+validation avoids the character/coreStats accesses. Its Float32 can fill
+whole +0x164 when the caller's preceding value remains zero. This value
+has not been assigned a timing or gameplay name.
+
+The preceding content-service query is also resolved. Slot 0x1c
+registration at `0x14021b4d0` binds factory `0x1412e19e0`, which constructs
+through `0x1412e1110` with primary vtable **`0x14220e160`**. Virtual
++0x1b0, entry `0x14220e310`, is **`0x1412e1d00`**. It asks
+`0x1412e6360` for type **268 (0x10c)** with cursor zero. The iterator
+searches two registry pointers in order, returning the next type-array
+entry and updating the cursor; it returns null when neither has an entry.
+The getter's first available record need not be the first record in an
+all-container offline census.
+
+The census finds **16 type-268 records** in 13 base containers:
+
+| Default pointer | Override count | Flags +0x40 | Records |
+| --- | --- | --- | --- |
+| Null | 0 | 0 | 10 |
+| Null | 1 | 2 | 4 |
+| Null | 1 | 0 | 1 |
+| Nonnull | 0 | 0 | 1 |
+
+All sixteen have zero Float32 +0x48. The sole nonnull default points to
+type 159 in file 1282859 at 0x3acc30, also with a null filter. Each of the
+five overrides points to a type-159 definition with Float32 +0x28 about
+0.7 and a nonnull +0x38 filter containing four signed Dwords
+**`[5, 0, 9, 0]`**. Their parent/target/filter offsets are:
+
+| File | Type-268 parent | Type-159 target | Filter |
+| --- | --- | --- | --- |
+| 1282833 | 0x664fa0 | 0x664ab0 | 0x664f70 |
+| 1282843 | 0x7c4dc0 | 0x7c4e58 | 0x7c5390 |
+| 1282852 | 0x9a1e60 | 0x9a1ef8 | 0x9a2430 |
+| 1282857 | 0x8842c8 | 0x883ce8 | 0x884298 |
+| 1282861 | 0x8d95b8 | 0x8d9650 | 0x8d9b10 |
+
+The startup refresh passes null as the validator's optional third
+argument. With one of these nonnull filters, validation obtains context
+virtual +0x98 (`0x1411b51b0`), which uses current player +0xa0 and its
+virtual +0x80 (`0x1411bada0`). That getter returns player +0x20 only when
+the owned character exists and its +0x178 mask 0x10 is set (finalized).
+The validator asserts the returned character, then obtains/asserts
+coreStats through character +8 virtual +0xb0 (`0x1411d75f0`, whole
++0x388). It calls coreStats virtual 0 with argument zero: the previously
+identified [earned-level getter](209026-character-core-stats.md#earned-level-consumer),
+whose player-state override can return 80.
+
+For filter selector 5, jump-table entry at `0x14126a06c` is RVA 0x1269fe4.
+The supplied nonnegative margin is zero, so the reached comparison accepts
+an earned-level getter result **at most 9**. A stored wire level alone
+does not prove this result because the getter can override it. The
+character and coreStats are required before the comparison even when it
+ultimately fails. This reinforces existing finalized-owned-character and
+coreStats dependencies for the selected override path; it does not add a
+new message ID or validate a complete fixture.
+
+Private follow-up bundle:
+`~/re/gw2/notes/209026-content-direction-config-1.json` (1,850 records).
+All configuration and census reads are static; no additional source tests
+or build were needed for this documentation-only follow-up.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_cd89dff601a79e3e30e2c85356017e77b0c4561f3b106dfe1a0f7e7964d23d0b` / `ev_8a8ecb569e46f5e7dbb8830b0868551c5a21a881e64ce58a046eb86837a74e62` | Validator null/nonnull branches, complete comparison/return and descriptor stride. |
+| `ev_c0e8567ad7db1cb3daabf8901264b27303d4dd84d7529061552166c4fca4757a` / `ev_c8c8e3b2c7897b7bfd1d793ea134da5702adbfe70339a9fcd12bca83acad9c56` / `ev_5eed69ef3cf93fd10c2f050eefb00ef071117cc92c16969d66f219ad1d1d4593` | Descriptor-108 initialization candidate, validated GUID/type and variant converter. |
+| `ev_658e61b64f73f766aabe04248156dbd823e28f9c92bc496c8710197b30b0b9a7` | Unique fallback setting/target and null filter in all 32 containers. |
+| `ev_1476d33ce1409e64cbc5fba6152e0b842d35f9aceed2ce84db084fdaab6d3d3b` / `ev_80600df2b056f15ad58c83796557ac6a31cecdde8331f055a2119c673a3efbff` / `ev_e3eec06b36b7de86e2ebb97f0bbf43cf5198a32d7ee27b1c5bf2d545a0ae4f70` | Content-service registration/factory. |
+| `ev_f21ca86b3dbeb7505b3f651aed142bbf047a9d40be49695fe1ac4e54a89f51b6` / `ev_d9863211aa860260cabd5b63a1ba545659e43e563329fabe4382a04737b7a825` / `ev_4700ed41fea1467e362a60c1794a61e1e03de6b5d0c19daae81d520c4b9b9533` | Content-service vtable and type-268 getter. |
+| `ev_167b612959d17f4003e073cb024dbd9f19e0b0b50ebf3c6e6f208ae37aca6cf0` | Complete two-registry iterator. |
+| `ev_ee7fc4e91d623875b50b557359ddcb21f75609e73b5fe16dbec243a72f520162` / `ev_24deeeb6645f95384cc807533e6b6028b3488a7dd35a437275242812193348f1` | All-32 type-268 census and all five override targets/filters. |
+| `ev_6435b8a171f264bd8382413dbe768a0cf9d0d9da97c15ee23b307ca6d33ba529` / `ev_cc3bc4e87b8480267bd86706266028b972d53569648fe0c28ff00aeeeb01e037` | Context/coreStats slots, selector-5 jump target and getter bodies. |
+| `ev_374c0c14fc5ca0cacc38d32198b6509434b262b6f0c58866b0f3a19741e216f5` / `ev_cd6f50a8778bdcb673fdd322e5f9a06ace788ea47c8080873aebfefedaaeb4db` | Player +0x80 slot, finalized-owned-character guard and coreStats return. |
