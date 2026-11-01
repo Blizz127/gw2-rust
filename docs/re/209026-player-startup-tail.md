@@ -288,7 +288,7 @@ no player-component getter or allocation call. These are observed reset
 values, not proof that this branch was taken in a live startup.
 
 The independent clear method **`0x1411b4520`**, at context primary
-virtual +0x118 (`0x14215e118`), writes zero to +0x278 and tail-calls the
+virtual +0x150 (`0x14215e118`, relative to table `0x14215dfc8`), writes zero to +0x278 and tail-calls the
 shared preferences scheduler with `(0, 0)`. It does not dispatch a
 character listener in its body. Direct-call candidates for packing and
 restoration were validated at `0x1411b6eed` and `0x1411b7031`; their
