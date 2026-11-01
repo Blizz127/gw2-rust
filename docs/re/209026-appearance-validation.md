@@ -72,6 +72,42 @@ bytes beyond the 45-byte appearance remain opaque.
 
 ## Evidence
 
+### Shipped-default generic-bound audit
+
+An offline reconstruction followed the selected type-137 record's +0x68
+array (count +0x70, stride 48), each entry's +0x18 pointer, its +8 array
+(count +0x10, stride 48), and each group's +8 property array (count +0x10,
+stride 24). Property +0 supplies the enum mapped by `0x1411bf740`; +8 is
+the kind and +0x10 points to the bound data for kind 2. The audit retains
+the **first** matching property, matching the client's early return.
+
+All 90 shipped defaults were checked after the known Sylvari adjustments.
+Of their 4,050 appearance bytes, 795 take the validator's immediate zero
+success path, 1,916 nonzero bytes pass an explicit generic-property bound,
+and 495 nonzero bytes take the generic helper's missing-property success
+path. **844 nonzero bytes use specialized branches and were not checked by
+this audit.** No generic bound failed. Missing-property success is not a
+content validity check, and these counts do not establish full validation
+or rendering. The existing public checkers retain their limited claims.
+
+The ten race/sex definitions contain 30–39 property records. Several map
+more than one property to the same appearance offset, making first-match
+behavior relevant. Relocation checks and source-container hashes are
+retained in the private result
+`~/re/gw2/notes/appearance-generic-bounds-209026.json` (39,942 bytes, mode
+0600, SHA-256
+`0b5c521640bd2fe90ddcf8af0614cb405d1ccad38df3808d0ff8c8b95a55632e`).
+
+Evidence bundle: `~/re/gw2/notes/209026-appearance-generic-bounds-1.json`.
+`ev_37a55782693ea0d86c7cd2372c1f1e6dd0b8350241603a7a4c5d2e564b87ca55`
+records the nested traversal and enum mapper;
+`ev_83589b2cb9b16d45ce92caec2957686b0d728b5cc21c61713e56fe5271774a7a`
+records first-match kind/pointer checks and the inclusive bound; and
+`ev_cdb7cf86c028e567cef9c37ec32f80ac7d56897e17add59803bb613ea5b25d46`
+records the hash-guarded archive audit.
+
+### Original branch mapping
+
 Private bundle: `~/re/gw2/notes/209026-appearance-validation-static-1.json`.
 
 | REA evidence | Observation |

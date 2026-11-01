@@ -231,6 +231,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     content keys (type 137). All 90 shipped defaults have since been extracted
     and parsed; full content-dependent validation remains unresolved. See
     [re/209026-appearance-validation.md](re/209026-appearance-validation.md).
+    An offline generic-property audit passes 1,916 explicit byte bounds
+    across those defaults, with 795 zero shortcuts and 495 missing-property
+    success paths. It leaves 844 specialized nonzero bytes unchecked and
+    makes no full-validation or rendering claim.
     Server 256 creates or updates health; server 217 creates endurance.
     Their framing smoke consumed two frames/44 bytes and rejected a truncated
     float. Scalar meanings and live initialization remain partly unresolved;
