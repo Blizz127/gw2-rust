@@ -91,6 +91,26 @@ using literal level constants. The table maps slots 0/1/2/3/4 to setting
 IDs 0x271/0x27c/0x27d/0x27e/0x270. Their configured values are not read in
 this note. These fallback settings are distinct from entry +0x1c.
 
+## Bounded reader scope
+
+`gw2_dat::skill_palette_content` exposes type-65 UID/key/flags/kind, its 0x18-byte
+rows (profession/category), each row's 0x70-byte entries (skill reference,
+minimum level and raw context-mode selector), and type-64 UID/key/flags.
+Array resolution retains the source container and checks caller-supplied
+limits before returning the target bytes. Classified zero-offset references are
+valid targets; only unclassified zero pointers are null. The skill view requires type 64 before interpreting its flags. These views
+do not implement an eligibility predicate.
+
+Three focused reader tests pass: cross-container definition/row/entry/skill
+chains, unequal UID/key values, every truncated record extent, wrong types,
+array limits, missing containers, conflicting fixups and classified zero.
+The optimized `gw2-skill-palette-check` build and four CLI rejection cases
+pass. A REA archive smoke independently matches all earlier counts:
+7,769 palettes, 20,990 rows, 27,320 entries and resolved type-64 references,
+and 185 Guardian rows. All six printed candidate records match the Python
+helper. The checker uses an explicit 100,000-element limit per array;
+no initial palette assignment or runtime fixture was added.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-guardian-palette-eligibility-1.json`.
@@ -111,3 +131,4 @@ Private helper: `inspect-guardian-palette-entries.py`.
 | `ev_628062962eaee3d792c2a86ae6ba2ee41b1c6ba7ed77dfdd2595b9a6fc1c6c8f` | IsPlayer/GetPlayer/downed virtual targets and player vtable installation. |
 | `ev_4d2bea3355be3b7a350b5109f6127af04c2c51fab4fbe0b6ae1996a794510edf` | Downed predicate, owned getter target and availability result conditions. |
 | `ev_ad5d42273f0782fdb37f49551e6d5e134e4f5b6e2dea3c3e6ba5f966259462d4` | Complete finalized-owned-character getter. |
+| `ev_0c6fe34dc426da3c5ac7d5d8e276d587eb1749bbe6b070a07f9077e461223f95` | Optimized Rust archive check matches the complete palette census and six candidate records. |

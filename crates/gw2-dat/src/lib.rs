@@ -21,6 +21,7 @@ pub mod pfschema;
 pub mod pfwrite;
 pub mod profession_content;
 pub mod progress_content;
+pub mod skill_palette_content;
 pub mod scene_bounds;
 pub mod terrain;
 pub mod surface;

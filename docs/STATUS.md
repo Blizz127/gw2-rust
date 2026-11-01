@@ -283,7 +283,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     palette rows and identifies nonrecursive standard-slot membership.
     Palette 127 / skill 9083 is a conditional static slot-0 candidate,
     requiring level, locale, availability and component prerequisites;
-    no rendered skill bar or usable action is claimed.
+    no rendered skill bar or usable action is claimed. Bounded Rust
+    palette/row/entry/skill views pass three focused tests and the checker
+    build. Its REA archive smoke matches all 7,769 palettes, 20,990 rows,
+    27,320 skill references and six independently inspected candidates.
     [Slot follow-up](re/209026-reward-track-slots.md) identifies 565/569
     pin values, 568 active-track selection and 566 map-specific selection.
     Pin value domains and 567 keyed-state meaning remain unresolved.
