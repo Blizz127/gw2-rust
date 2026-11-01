@@ -66,7 +66,9 @@ required, that all errors use this branch, or that no other listener has
 side effects. Missing `Items`/`Packages` in a successful response still
 has no identified explicit completion emission in the inspected callback.
 Any cleanup on that separate success path and any readiness dependency
-remain open. No emulator response policy changed.
+remain open. No emulator response policy changed. The
+[reader sweep](209026-quest-store-tracker-readers.md) finds no pending-state
+reader in this object.
 
 ## Selected request release path
 
