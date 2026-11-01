@@ -135,6 +135,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     with separate question-bitset bookkeeping and race/profession filters;
     valid content combinations remain unverified. See
     [re/209026-creation-answers.md](re/209026-creation-answers.md).
+    The final 24 Dwords map to item-color selections for six equipment slots;
+    content validity and runtime creation remain unverified. See
+    [re/209026-creation-colors.md](re/209026-creation-colors.md).
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small

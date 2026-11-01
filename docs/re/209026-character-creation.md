@@ -265,6 +265,8 @@ pending; no UI acceptance, creation fixture or runtime continuation was added.
 The [creation-answer analysis](209026-creation-answers.md) traces the bounded
 byte array to content answer values, question replacement and applicability
 filters. It does not establish valid content combinations or server rules.
+The [item-color analysis](209026-creation-colors.md) identifies the final
+24 Dwords as four color selections each for equipment slots 2–7.
 
 REA extraction from the frozen artifact generated ignored
 `data/protocol/209026/mission.xml`: protocol 0 groups 39 and 40, 43 client
