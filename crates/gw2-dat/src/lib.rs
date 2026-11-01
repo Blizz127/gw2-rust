@@ -20,6 +20,7 @@ pub mod pfread;
 pub mod pfschema;
 pub mod pfwrite;
 pub mod terrain;
+pub mod surface;
 
 #[cfg(test)]
 mod synthetic;
