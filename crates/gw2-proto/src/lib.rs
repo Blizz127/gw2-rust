@@ -16,6 +16,7 @@ pub mod agent_creation;
 pub mod character_creation;
 pub mod character_summary;
 pub mod dynamic;
+pub mod player_creation;
 pub mod schema;
 
 use std::io::{Error, ErrorKind, Result};

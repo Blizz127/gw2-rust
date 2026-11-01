@@ -87,6 +87,30 @@ The direct consumer identifies content type 334 as the spectate camera
 and the agent reference as the spectate target; both must not resolve
 simultaneously. Other state values and full transition conditions remain open.
 
+## Typed frame scope
+
+The server-428 frame codec uses the established Dword / String(32) / Guid /
+Dword order and a little-endian message ID. The name is retained as raw
+UTF-16 units, without its zero terminator, so framing can be inspected
+without silently repairing unpaired surrogates. Encoding rejects embedded
+zero units and more than 31 name units before appending any bytes. Decoding
+requires the terminator within 32 units and advances the caller's input
+only after the complete frame succeeds. All GUID bytes and final-Dword
+bits remain explicit. No text-policy, account-identity or bootstrap-state
+validation is implied by accepting a frame.
+
+The maximum frame size is 92 bytes: 2 for the ID, 5 for each Dword, 64
+for the terminated name and 16 for the GUID. This is an offline framing
+helper; adding it does not send a player record to the client.
+
+Implemented as `gw2_proto::player_creation::PlayerCreation209026`.
+Three focused tests pass: a hand-authored wire fixture preserves GUID byte
+order, supplementary/unpaired UTF-16 units and all flag bits; every fixture
+truncation and malformed ID/varint/name bound leaves the input unchanged;
+empty/maximum names preserve a following frame. Invalid output names leave
+an existing output prefix unchanged. `cargo build -p gw2-proto --lib` also
+passes. This is local codec validation, not a client bootstrap replay.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-player-creation-fields-1.json`
