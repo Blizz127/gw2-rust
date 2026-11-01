@@ -104,7 +104,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     builds pass, and saved capture boundaries remain unchanged.
     REA also confirms raw 4/8/12-byte Float/Float2/Float3 encodings in both
     directions. The census admits them; four focused tests, build and private
-    mission-control fixture smoke pass. See
+    mission-control fixture smoke pass. An explicit terminated CString rule
+    now handles raw bytes with inclusive size bounds; its focused codec test,
+    five census tests, observer/census builds and real-descriptor fixture pass.
+    Text encoding and gameplay meanings remain unknown. See
     [re/209026-primitive-fields.md](re/209026-primitive-fields.md).
   - **Static character-creation path:** creation context sends ID 415 through
     mission protocol 0, group 39. Registration and descriptor establish its

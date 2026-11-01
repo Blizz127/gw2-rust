@@ -1,6 +1,7 @@
 //! Metadata-only inspection of decrypted build-209026 captures.
 //! Wire evidence and limits: docs/re/209026-character-protocol.md,
-//! docs/re/209026-character-creation.md, docs/re/209026-mission-join.md.
+//! docs/re/209026-character-creation.md, docs/re/209026-mission-join.md,
+//! docs/re/209026-primitive-fields.md.
 use std::{
     collections::HashSet,
     fs::File,
@@ -8,7 +9,7 @@ use std::{
 };
 
 use gw2_proto::{
-    dynamic::{self, CountPrefix, Rules, StringEncoding},
+    dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     schema::{self, Field, Message},
 };
 
@@ -42,6 +43,7 @@ fn verified_primitive(field: &Field) -> bool {
                 | "Guid"
                 | "Address"
                 | "String"
+                | "CString"
                 | "BufferFixed"
                 | "BufferVarSmall"
                 | "BufferVarLarge"
@@ -67,6 +69,7 @@ fn census(messages: &[Message], bytes: &[u8], output: &mut impl Write) -> io::Re
     }
     let rules = Rules {
         string: Some(StringEncoding::Utf16Terminated),
+        cstring: Some(CStringEncoding::Terminated),
         array_var_small: Some(CountPrefix::U8),
         array_var_large: Some(CountPrefix::U16),
         buffer_var_small: Some(CountPrefix::U8),
@@ -254,6 +257,25 @@ mod tests {
             .unwrap_err();
             assert!(error.to_string().contains("unverified field encoding"));
         }
+    }
+
+    #[test]
+    fn terminated_byte_strings_keep_float_and_next_message_boundaries() {
+        // Build-209026 mission descriptors 1041 and 1043.
+        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="0"><Messages Name="39"><Server><Message Id="1041"><CString Size="128"/><Float/></Message><Message Id="1043"><CString Size="128"/><CString Size="256"/></Message></Server></Messages></Protocol></Protocols>"#).unwrap();
+        let messages = &schema.protocols[0].groups[0].server;
+        let first = [0x11, 4, 0xff, 0x80, 0, 0, 0, 0x80, 0x3f];
+        let second = [0x13, 4, 0, b'x', 0];
+        for frame in [first.as_slice(), second.as_slice()] {
+            for cut in 1..frame.len() {
+                assert!(census(messages, &frame[..cut], &mut Vec::new()).is_err());
+            }
+        }
+        let mut input = first.to_vec();
+        input.extend_from_slice(&second);
+        let mut output = Vec::new();
+        assert_eq!(census(messages, &input, &mut output).unwrap(), 2);
+        assert_eq!(String::from_utf8(output).unwrap(), "offset=0 id=1041 bytes=9\noffset=9 id=1043 bytes=5\nmessages=2 bytes=14 complete=true\n");
     }
 
     #[test]

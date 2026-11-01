@@ -39,12 +39,19 @@ pub enum StringEncoding {
     Utf16Terminated,
 }
 
+/// Framing for a CString's raw bytes; no text encoding is assumed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CStringEncoding {
+    Counted(CountPrefix),
+    /// Build 209026: bytes followed by zero; Size includes the terminator.
+    Terminated,
+}
+
 /// Encodings that are not yet confirmed. `None` means "reject this field kind".
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Rules {
     pub string: Option<StringEncoding>,
-    /// `CString`: count-prefixed bytes (no terminator on the wire).
-    pub cstring: Option<CountPrefix>,
+    pub cstring: Option<CStringEncoding>,
     pub array_var_small: Option<CountPrefix>,
     pub array_var_large: Option<CountPrefix>,
     pub buffer_var_small: Option<CountPrefix>,
@@ -221,11 +228,26 @@ pub fn decode_field(f: &Field, rules: &Rules, buf: &mut &[u8]) -> Result<Value> 
             }
             None => return Err(unsupported("String")),
         },
-        "CString" => {
-            let p = rules.cstring.ok_or_else(|| unsupported("CString"))?;
-            let n = read_count(p, buf)?;
-            Value::Bytes(take_bytes(buf, n)?)
-        }
+        "CString" => match rules.cstring {
+            Some(CStringEncoding::Counted(p)) => {
+                let n = read_count(p, buf)?;
+                Value::Bytes(take_bytes(buf, n)?)
+            }
+            Some(CStringEncoding::Terminated) => {
+                let max = size.unwrap_or(MAX_ELEMENTS).min(MAX_ELEMENTS);
+                let n = buf.iter().take(max).position(|b| *b == 0).ok_or_else(|| {
+                    if buf.len() < max {
+                        Error::new(ErrorKind::UnexpectedEof, "incomplete terminated CString")
+                    } else {
+                        invalid("CString exceeds Size without a terminator")
+                    }
+                })?;
+                let bytes = take_bytes(buf, n)?;
+                *buf = &buf[1..];
+                Value::Bytes(bytes)
+            }
+            None => return Err(unsupported("CString")),
+        },
         other => return Err(unsupported(other)),
     })
 }
@@ -333,10 +355,21 @@ pub fn encode_field(f: &Field, rules: &Rules, v: &Value, out: &mut BytesMut) -> 
             }
             None => return Err(unsupported("String")),
         },
-        ("CString", Value::Bytes(b)) => {
-            write_count(rules.cstring.ok_or_else(|| unsupported("CString"))?, b.len(), out)?;
-            out.extend_from_slice(b);
-        }
+        ("CString", Value::Bytes(b)) => match rules.cstring {
+            Some(CStringEncoding::Counted(p)) => {
+                write_count(p, b.len(), out)?;
+                out.extend_from_slice(b);
+            }
+            Some(CStringEncoding::Terminated) => {
+                let max = size.unwrap_or(MAX_ELEMENTS).min(MAX_ELEMENTS);
+                if b.len() >= max || b.contains(&0) {
+                    return Err(invalid("CString exceeds Size or contains a zero byte"));
+                }
+                out.extend_from_slice(b);
+                out.extend_from_slice(&[0]);
+            }
+            None => return Err(unsupported("CString")),
+        },
         (k, _) if !KNOWN_KINDS.contains(&k) => return Err(unsupported(k)),
         _ => return Err(mismatch()),
     }
@@ -529,6 +562,43 @@ mod tests {
             assert_eq!(decode_field(&field, &rules, &mut empty.as_slice()).unwrap(), Value::Bytes(vec![]));
             assert!(encode_field(&field, &rules, &Value::Bytes(vec![1]), &mut BytesMut::new()).is_err());
         }
+    }
+
+    #[test]
+    fn terminated_cstring_preserves_raw_bytes_and_inclusive_size() {
+        let mut field = Field { kind: "CString".into(), name: String::new(), size: Some(3), type_name: None, fields: vec![] };
+        let rules = Rules { cstring: Some(CStringEncoding::Terminated), ..Rules::default() };
+        let wire = [0xff, 0x80, 0, 0x55];
+        let value = Value::Bytes(vec![0xff, 0x80]);
+        let mut cursor = &wire[..];
+        assert_eq!(decode_field(&field, &rules, &mut cursor).unwrap(), value);
+        assert_eq!(cursor, &[0x55]);
+        let mut output = BytesMut::new();
+        encode_field(&field, &rules, &value, &mut output).unwrap();
+        assert_eq!(output.as_ref(), &wire[..3]);
+        for cut in 0..3 {
+            assert_eq!(decode_field(&field, &rules, &mut &wire[..cut]).unwrap_err().kind(), ErrorKind::UnexpectedEof);
+        }
+        assert_eq!(decode_field(&field, &rules, &mut &[1, 2, 3, 0][..]).unwrap_err().kind(), ErrorKind::InvalidData);
+        for bad in [vec![1, 2, 3], vec![1, 0]] {
+            let mut output = BytesMut::from(&[0x55][..]);
+            assert!(encode_field(&field, &rules, &Value::Bytes(bad), &mut output).is_err());
+            assert_eq!(output.as_ref(), &[0x55]);
+        }
+        field.size = Some(0);
+        assert!(decode_field(&field, &rules, &mut &[0][..]).is_err());
+        assert!(encode_field(&field, &rules, &Value::Bytes(vec![]), &mut BytesMut::new()).is_err());
+        field.size = Some(1);
+        assert_eq!(decode_field(&field, &rules, &mut &[0][..]).unwrap(), Value::Bytes(vec![]));
+        let mut output = BytesMut::new();
+        encode_field(&field, &rules, &Value::Bytes(vec![]), &mut output).unwrap();
+        assert_eq!(output.as_ref(), &[0]);
+        assert_eq!(decode_field(&field, &Rules::default(), &mut &[0][..]).unwrap_err().kind(), ErrorKind::Unsupported);
+        field.size = Some(3);
+        let counted = Rules { cstring: Some(CStringEncoding::Counted(CountPrefix::U8)), ..Rules::default() };
+        let mut cursor = &[2, 0xff, 0, 0x55][..];
+        assert_eq!(decode_field(&field, &counted, &mut cursor).unwrap(), Value::Bytes(vec![0xff, 0]));
+        assert_eq!(cursor, &[0x55]);
     }
 
     #[test]

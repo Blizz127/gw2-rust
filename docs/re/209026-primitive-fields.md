@@ -30,15 +30,30 @@ including in the already supported one-level arrays. Float4 and Point3 remain
 outside that tool's whitelist until separately checked. This is boundary
 decoding: arbitrary float bit patterns do not establish valid game values.
 
-## Kind 14 remains excluded
+## Kind 14: terminated raw bytes
 
 Encoder `0x140ff0cf5` calculates byte-string length plus NUL and compares the
 total against descriptor +0x10, then copies that many bytes. Receiver
 `0x140ff1e97` scans one byte at a time for NUL and enforces the same inclusive
-maximum. It is not count-prefixed. The dynamic codec's current CString rule
-selects a count prefix and cannot represent this verified terminator convention;
-the text encoding is also unresolved. The private mission schema therefore
-retains `UnverifiedKind14` and the capture census rejects it.
+maximum. It is not count-prefixed. The original dynamic CString rule selected
+a count prefix and could not represent this terminator convention. Its values
+are already raw byte vectors, so an explicit `CStringEncoding::Terminated`
+rule can retain that representation without assigning a text encoding. Size
+includes the NUL; decoding must stop at the first NUL within that limit, and
+encoding must reject embedded NULs or data that leaves no room for the terminator.
+The existing counted rule remains explicit for reference layouts. Default rules
+continue to reject CString. The metadata-only census can enable the verified
+terminated rule and admit kind 14 after those boundary checks.
+
+Implemented with `Value::Bytes` and explicit `CStringEncoding::{Counted,
+Terminated}`. The focused codec test covers non-UTF-8 bytes, all truncations,
+inclusive bounds, empty strings, zero-size rejection, embedded-NUL rejection,
+preservation of following fields, and output unchanged on invalid encoding.
+Default rules still reject the field and the explicit counted mode still works.
+All five census tests and observer/census builds pass. A private handwritten
+fixture for the actual mission descriptors 1041 (CString128, Float) and 1043
+(CString128, CString256) parses as 9 and 5 bytes respectively. It was never sent
+to the client; field meanings and text encoding remain unknown.
 
 ## Evidence
 
@@ -47,17 +62,22 @@ census tests and the build pass. A handwritten private mission-control fixture
 parses ID 5 as 18 bytes followed by empty ID 3 (2 bytes); it was not sent to
 the client. The saved run-58 auth capture still parses all six messages/233 bytes.
 
-The ignored mission schema was re-extracted with kinds 6–8 named accordingly:
+The ignored mission schema was first re-extracted with kinds 6–8 named accordingly:
 12,018 bytes, SHA-256
 `3615ec142b5896ec15a001a619d7035344aef715c4954fb1e644ed04c1db2e41`.
 The previous schema is retained privately as `mission-before-float-kinds.xml`.
-Kind 14 remains explicit and unsupported; message counts remain 43 client/54
-server across protocol-0 groups 39/40.
+The subsequent kind-14 update preserves descriptor sizes and produces 12,034
+bytes, SHA-256
+`8814edf4ef309fdac0e1b60b165d93a2e03529dff7c878336ff81f9ffec121b3`.
+The prior float-only schema remains private as `mission-before-cstring.xml`.
+Message counts remain 43 client/54 server across protocol-0 groups 39/40.
 
-Private bundle: `~/re/gw2/notes/209026-primitive-static-2.json`.
+Private bundle: `~/re/gw2/notes/209026-primitive-static-3.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_7ddd0cb187281d3a55ed1b53475719f29e906971223ec1b5cb917cc11bb2659b` | Complete CString receiver and descriptors using kind 14. |
+| `ev_fba106612650eae93ea495187e26df0d9e54d2c19fd74d17fa0e0c488963c3e6` | Kind-14 schema extraction and real-descriptor fixture census. |
 | `ev_2a54bcca7b1a1c73613775ed64f12e649bd678733336c28833513cab62fa9f16` | Updated private schema extraction metadata. |
 | `ev_a6ec7b66340428fec1de107a2f7896a93e9552d003eee2c75acf0cb29280c87e` | Mission-control fixture and saved auth-capture census. |
 | `ev_5f947d3d5429eaea23bde02dfdd8813c95d0db4cb57f7e021ebeee285d10dfa4` | Encoder kind-indexed dispatch. |

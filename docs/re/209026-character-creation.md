@@ -172,8 +172,8 @@ and 54 server definitions, 12,104 bytes, SHA-256
 The extractor checks the executable hash and writes exclusively with mode 0600.
 That initial extraction retained explicit `UnverifiedKind` tags for kinds 6,
 7, 8 and 14. The [subsequent primitive check](209026-primitive-fields.md)
-establishes kinds 6–8 and records the updated schema hash; kind 14 remains
-unsupported. This is a partial extraction, not the full mission message registry.
+establishes kinds 6–8 and terminated-byte kind 14 and records the updated schema
+hashes. This is a partial extraction, not the full mission message registry.
 
 The schema parser accepts all 97 definitions. With the capture census, local
 handwritten fixtures parse server IDs 1049/1050 as two 2-byte frames, client
