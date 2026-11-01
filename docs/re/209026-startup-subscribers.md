@@ -189,7 +189,7 @@ without the player progress-manager lookup. If any category check fails,
 the outer startup callback instead subscribes quest +0x20 through service
 context **+0xc8**, sets quest +0xf0 mask 0x10, queries that service's
 virtual +0x48 with the definition, and passes its result to another
-service. These downstream concrete methods remain untraced.
+service. The downstream methods are traced further below.
 
 `0x1410f5310` bounds-checks index <6 and forwards to `0x1410f71b0`.
 The inspected body obtains context **+0x68**, enumerates values through
@@ -260,8 +260,8 @@ Thus, after the empty refresh paths and successful content resolution,
 this callback skips its final subscription when the category-4 value is
 true. A false value enters the service +0xc8 subscription/query branch.
 Neither the stored collection nor the fallback array's runtime contents
-were read or changed. Their initialization/population and the downstream
-subscription methods remain separate questions; this trace does not
+were read or changed. Their initialization/population remains a separate question; the downstream
+subscription methods are traced below. This trace does not
 choose or manufacture account state.
 
 Private bundle: `~/re/gw2/notes/209026-quest-startup-category-1.json`.
@@ -277,6 +277,65 @@ No runtime replay or source change was made.
 | `ev_c4d9175cec4782366dcfc28e2efd5e47a08f56cf0e99f1858a83453353f79273` | ID-78 converter jump-table entry. |
 | `ev_78e14ab34d52c014d5a12a7a7a10c0ef606713e868bda1e8e8f9b5867067d484` | Key-59 return and pair-map constructor input. |
 | `ev_5b2f8218c00afc891517ff8e882354c6d395ec75955b47393c642d3cdca41bae` | Pair-to-map key/value copies and exhausted iterator return. |
+
+## Category-failure subscription and query
+
+Context service +0xc8 is factory slot **0x19**, registered by
+`0x14020b7a0` with thunk `0x1412cfbc0` to `0x1412cf970`. The factory
+allocates 0xc8 bytes and installs primary vtable `0x1421857a8`. It clears
+listener head/tail at +0x20/+0x28, several lookup collections, and flags
++0xa8. Its tail calls `0x14110e8f0` with a callback fixture; that additional
+constructor behavior has not been traced. Initial field writes alone do
+not prove the later runtime state.
+
+The quest callback uses these primary methods:
+
+| Slot | Method | Inspected behavior |
+| --- | --- | --- |
+| +0xd8 | `0x1402efc70` | Search listener pointers; add a list node only when absent. |
+| +0x48 | `0x1412d04a0` | Resolve supplied GUID and query another service for a numeric result. |
+| +0x30 | `0x1412cfd10` | Return `(~flags_at_a8) & 1`; used as the query gate. |
+
+The subscription method's complete body only searches and inserts into
+the listener list, using node allocator `0x14025b0b0`. It does not invoke
+the newly registered listener. The outer quest callback then sets quest
++0xf0 bit 0x10 before making its query.
+
+The query returns zero when its +0x30 gate is false, or when content
+service +0xe0 virtual +0x68 cannot resolve the supplied GUID. With the
+constructor's zero +0xa8 flags, the gate is **true**, so constructor state
+does not itself select that zero return. For resolved type **35 or 68**,
+the method directly copies the input GUID; other types have a separate
+collection lookup not needed for the established type-68 target. A GUID
+unequal to the sentinel at `0x141b91390` is passed to context service
+**+0x1f8**, obtained through `0x140266200`, virtual **+0x1a0**. That concrete
+service method remains unresolved. The query's returned Dword becomes
+the next call's input; it should not be assumed to be zero merely because
+the +0xc8 service's collections began empty.
+
+The final consumer getter `0x1402eea80` returns static object
+`0x14255a8f0`, whose image vtable is `0x14193fd30`. Virtual +0x18 is
+`0x1402effc0`. Its first branch returns false immediately for input zero.
+For a nonzero input it searches its +0x48 collection, skips an existing
+non-null associated entry, or calls `0x1402ee5a0` and returns true. The
+latter helper and any later processing remain untraced. This proves a
+zero-input no-op at this consumer, not a zero result from the preceding
+query or absence of the already completed listener registration.
+
+Private bundle: `~/re/gw2/notes/209026-quest-startup-subscription-1.json`.
+All reads were static; no client launch, service execution or state edits.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_eaedb6016d9ff85d07990fa4b4d0baf05f94be6a8b4477931eca2274525397f2` | Service factory fields and vtable installation. |
+| `ev_b2d518d2a4d09424a316f5a6b1a316256eac6862c700142fa5818374b0d25ef3` | Factory tail callback setup and thunk. |
+| `ev_e33fabcddcca9347e29d2a5d015ce2fd9cae230a0c7eb1acf6bb67f14223961a` | Registration address candidate. |
+| `ev_1f3b4ec28ba9d89957eb98fb8868eed708b169d5eb42f0c9341ae220b78f316c` | Subscription/query method entries. |
+| `ev_ac33452cbbbee3434b4cbb7b74cba3012eb9d5de3dd7448e9654cf6f70fa55f4` | Slot-0x19 registration, complete subscription and query branches. |
+| `ev_711a5a9e3ed0f64249f4f05f451def5e7f176fa00f323881cc7c09ac4ab26207` | Query-gate method entry. |
+| `ev_314ef5a2b6e396abc8f2a3581541a93612badf9613d38579754aca88aa17ff80` | Gate body, final consumer getter and query epilogue. |
+| `ev_8f401128e3c626840b3ca3d9f45a6577a70d840f4287a29db6c3cfe31ae7fd4d` / `ev_6eafe5919b8ab8ee434e323e4f972ef6216fe2f2ab0e5b1cff515ed00262446e` | Static consumer object/table and +0x18 entry. |
+| `ev_475b92744bf365097668ef04d6a13d8476d6b31cac1ae4c16a964c4f124853db` | Complete consumer zero/nonzero paths and context +0x1f8 getter. |
 
 ## Coverage and evidence
 
