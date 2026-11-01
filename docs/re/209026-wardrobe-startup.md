@@ -104,6 +104,74 @@ For that candidate bootstrap path, prepare wardrobe before model creation
 during server 170 rather than relying only on the server-431 deadline.
 Loading-policy branches and earlier listener side effects remain open.
 
+## Bounded startup event and wardrobe refresh
+
+AvContext's character-context listener virtual +0x80 resolves through
+entry `0x142142558` to `0x1411109a0`. Its complete body applies
+`& 0xffffaff7` to listener +0x468 (whole-context +0x478) and returns.
+It clears masks 0x8, 0x1000 and 0x4000; it allocates no character
+component. Other subscribers to 431's initial event remain unexhausted.
+
+The complete wardrobe refresh `0x14121a710`–`0x14121aae6` reads owner
+coreStats profession/race/sex, maps profession to an armor weight class,
+and rebuilds three groups of local record lists:
+
+| Content-service getter | Iteration | Wardrobe destination |
+| --- | --- | --- |
+| +0x88, `0x1412e29a0` | Eight armor types for the profession's weight class | Eight arrays starting at +0x258, stride 0x20 |
+| +0x90, `0x1412e2a20` | One shared list | Array +0x358 |
+| +0x98, `0x1412e2f10` | 24 weapon types | 24 arrays starting at +0x378, stride 0x20 |
+
+The getters return embedded content-service arrays: +0x5130 indexed by
+`weightClass * 8 + armorType`, +0x5530, and +0x5550 indexed by weapon
+type, respectively. They do not allocate another character component.
+The first getter asserts weight class <4 and armor type <8; the last
+asserts weapon type <24. Assertion strings explicitly name these ranges.
+
+Profession mapper `0x1411c5d40` and its nine-entry jump table return:
+
+| Profession values | Weight class result |
+| --- | --- |
+| 1, 2, 9 | 3 |
+| 3, 4, 5 | 2 |
+| 6, 7, 8 | 1 |
+| Any other u32 value | 4 |
+
+Consequently an invalid profession reaches the weight-class assertion
+when refresh queries its first armor list, even if wardrobe membership
+is empty. Guardian profession 1 maps to the accepted value 3.
+
+Every enumerated record first passes wardrobe virtual +0,
+`0x14121e230`: it asserts a nonnull record, reads its data key at +0x28,
+and checks the corresponding bit in the manager's +0x28/+0x34 bitset.
+An out-of-range word index returns false before reading the bitset data.
+The constructor clears +0x28 and the Qword at +0x30, including count
++0x34. **If that count is still zero at refresh, every record is skipped**;
+the later eligibility helper `0x1411cb1f0` is not called and no records
+are appended. This conditional result does not assume that earlier
+messages/listeners left membership unchanged or establish usable wardrobe
+contents. When membership permits a record, the refresh calls that helper
+with profession/race/sex and appends only if its output status is zero;
+the helper's full behavior remains open.
+
+The complete refresh body does not dispatch wardrobe listeners after
+building these lists. CoreStats validity, initialized global content
+arrays and the remaining startup callbacks remain separate requirements.
+
+Private bundle: `~/re/gw2/notes/209026-wardrobe-refresh-1.json`
+(1,640 records; 31,278,347 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_153876ea4a9134fc3c7ea2db31765689b2c616fb3f0d28b36c4474a9c3178eba` | AvContext startup-event entry. |
+| `ev_a84762b5c1be960f86bf5967fc67e9e35926fe6d450652b774b053ade81a3fdf` | Complete flag-clearing callback. |
+| `ev_c97bc0ef383f6b26c23cff4282cf053c4ef774a736911c7358f6e7555b4d3f34` | Complete wardrobe list refresh. |
+| `ev_5d29cd8e6ea3da7c0a87047d451cca5620106b3c2571e1aab75571e4924936d4` | Membership and content-list virtual entries. |
+| `ev_036af192b904d1b8968e301a29bac6fe17c6d95144abc76a245b9ffdd3bed983` | Complete bit predicate, embedded list getters and profession mapper. |
+| `ev_449ec0b6c566a84d101185eb7adb430d59b35fdd573cf0f8ec043f757ab62048` | Constructor clears bitset pointer and count. |
+| `ev_badb61256640977dc37b435c72f1e20100359d439a77afa0d6a89fca7d55942d` | Raw mapper jump-table entries. |
+| `ev_ca5e8323f036739acd0c95dbdfc22bf6404e3c285fc1bf4377939a45920ed037` | Named weight-class, armor-type and weapon-type assertions. |
+
 ## Evidence
 
 `crates/gw2-proto/src/wardrobe.rs` implements transactional 247/248
