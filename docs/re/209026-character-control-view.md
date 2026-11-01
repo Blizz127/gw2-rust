@@ -64,6 +64,73 @@ context notifications. These observations reinforce the coreStats
 requirement and distinguish selecting an existing view from creating one;
 they do not establish all downstream appearance or notification effects.
 
+## Effect preparation after control enable
+
+The next unconditional helper, `0x14112dc80` on whole-view +0x2b8,
+is identified by assertion source **AvCharEffect.cpp** at `0x142146af0`.
+Its enable branch first calls `0x141134420`. That helper obtains the
+character through the component's parent view, checks IsControlled and
+component +0x3e0 bit 4, then sets that bit for first preparation. It
+retrieves the skill bar through the same character primary +0xc8 and
+immediately dereferences it. Thus this is a second skill-bar consumer in
+the control-enable chain.
+
+It visits **23 slots (0–22)** through skill-bar virtual +0xe8. Null slot
+results are skipped. Each nonnull record goes to `0x141134530`, which
+iterates its +0x40/+0x48 array in 32-byte strides and passes each entry's
+first pointer to global-service virtual +0x58. No network skill-availability
+mutation occurs in these inspected bodies.
+
+After the slots, it requires constant-registry key **504 / type 64**.
+The assertion at `0x142146db8` names **levelUpSkillDef**. Initializer
+`0x1402155ee` writes key 504, type 64 and the four GUID words
+`1f04abf0 440556f6 ab85d1b1 e11c3bb9` into the registry entry at
+`0x1425ef740`. A hash-checked base-content census found exactly one
+matching type-150 indirection record: file 1282848, offset 0x2cc60.
+Its declared type is 64; following its +0x38 reference reaches type-64
+data key **1080** in file 1282842 at offset **0x434a88**. The target has
+one effect-list entry pointing to type 183, file 1282860, offset 0x86628.
+This establishes the recorded reference and content presence; runtime
+indirection selection and the global effect loader are not exhausted.
+
+The outer helper then reads the current map definition without a null
+guard and compares its +0x28 against five table entries. Matching
+GUID-selected records are prepared only when lookup returns nonnull.
+The executable's initial comparison values are 226, 212, 212, 212, 212;
+this read does not prove that no other initialization can change them.
+Finally it lazily obtains three global resource handles. These are
+client content/service dependencies, not newly identified component
+creation packets. Disabling control tail-calls `0x141137210`, which is
+outside this enable-path follow-up.
+
+The scheduled callback `0x141106bb0` from `0x141108e30` obtains the view's
+agent interface, asserts nonnull and forwards the supplied output through
+agent virtual +0x1d0. The callback body has no character-component lookup.
+
+The optional whole-view +0x728 helper `0x14113c160` visits 12 internal
+entries, toggles their flag bit 0, and calls virtual +0x6f0 only for
+nonnull per-entry objects. The tail helper on whole-view +0x9d0,
+`0x14114e760`, registers with a static service on enable and calls
+`0x14114de30`. That complete refresh body has early guards for its
+view-derived model and local +0x68 resource, and conditional lookups of
+another character/view. Its nested virtual methods and global service
+callbacks remain open; no overall control-readiness claim follows from
+these bounded bodies.
+
+Follow-up bundle: `~/re/gw2/notes/209026-control-effect-dependencies-1.json`
+(1,630 records; 31,153,581 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_d67bae50ae13526e603cf8464d0393359232948282c18da937a70f555c77e5d2` | Complete effect enable, optional-entry update, tail wrapper and scheduled callback. |
+| `ev_7d970e4ebfedfae21fe9a6ffd6b048132e6a8c4c2e0d3f08dffec41828ea9611` | Complete skill-slot preparation and refresh opening. |
+| `ev_b11d4e5c293e8c2f4eaacab39cf67bb79cf9f38e2d5a14e32966a5e7ef224b7b` | AvCharEffect.cpp assertion source. |
+| `ev_8734a9b59be2970c799685c5b2523dc1b4d565f74fcca9351e11ae67461f1cf8` | Refresh remainder and complete effect-list preparation. |
+| `ev_795c4a70c97859153cf6e0ec5aed0388129ebd17e69fc865a27483d2359f01fa` | levelUpSkillDef assertion literal. |
+| `ev_b1cf46614df9b2124aaad1816f90dfa50f70da365d851df6bfbca04ece6ae786` | Constant 504 registry initializer. |
+| `ev_0c914cc9d917dc8ae5d7c26c4e0795c1e194d613c97a4831796b75fe38cf06e7` | Hash-checked GUID census and referenced type-64/effect records. |
+| `ev_edd8b329fb4b42afa28bd2b3b3246186577d360afcf364c02263575f7bac190d` | Initial map-comparison Dwords (low halves of displayed Qwords). |
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-character-control-view-1.json`
