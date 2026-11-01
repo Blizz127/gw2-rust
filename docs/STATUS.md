@@ -224,6 +224,12 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     immediately call listeners; subsequent notification dependencies remain
     open. Owned-character control also directly requires coreStats. No replay
     or User Agreement interaction was performed for this static follow-up.
+    Server 565 now has a traced reward-track creation path and typed codec:
+    player index, four type-353 IDs and four unnamed bytes. Three focused
+    tests and the library build pass. Payload-free server 431 is a further
+    manager consumer with unresolved startup callbacks; valid track IDs,
+    slot bytes and its exact sequencing remain open. See
+    [reward-track messages](re/209026-reward-track-messages.md).
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message

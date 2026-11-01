@@ -168,6 +168,7 @@ ordering of event listeners and content setup.
 | Server 256: fresh health creation | Character exists. Direct constructor adds no other character-component requirement, but the health event precedes the state-byte store and its listeners remain untraced. |
 | Server 151: attitude | Character exists; an earlier update would be ignored. |
 | Server 605: initial skill availability | Player entry exists and type-64 skill key resolves; direct path does not require an owned character. |
+| Server 565: reward-track manager creation | Player entry exists and manager is absent; four type-353 IDs and four raw slot bytes initialize it. Content validity and runtime listener effects remain open; see [reward tracks](209026-reward-track-messages.md). |
 | Server 612: palette selection | Player entry, owned character and skill bar exist; immediate rebuild has profession/coreStats/inventory dependencies. |
 | Server 609/613: live skill availability change | Player entry, owned character and skill bar exist; type-64 skill key resolves. |
 | Server 640/642: specialization update | Player entry; changed non-null specialization requires owned character during progress recalculation and conditionally reward-track manager. Any existing skill bar is rebuilt; see [specialization trace](209026-specialization-messages.md). |

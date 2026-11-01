@@ -46,7 +46,9 @@ requires player +0x9a60, explicitly asserted as **m_rewardTrackMgr**, and
 uses the specialization's +0x50 content reference to count passed
 progress thresholds. Thus the guarded skill-bar tail does not make a
 non-null specialization update safe before owned-character assignment.
-The flag and reward-track setup are not fully named or initialized here.
+The flag is now named IsControlled; [server 565](209026-reward-track-messages.md)
+creates the reward-track manager. Valid initial track IDs and slot bytes
+remain unresolved.
 
 641 calls `0x141225750`. Named assertions independently require
 `specializationSlot < CHAR_SPECIALIZATION_SLOTS` and
