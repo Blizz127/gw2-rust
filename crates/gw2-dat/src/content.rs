@@ -39,6 +39,14 @@ pub enum ContentReference {
     },
 }
 
+/// The encoded archive-ID form of a content file reference.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ContentFileReference {
+    pub file_id: u32,
+    /// Optional low byte emitted by the client's file-reference decoder.
+    pub suffix: u8,
+}
+
 /// A checked byte range in an explicitly supplied content-container set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ResolvedContent<'a> {
@@ -98,6 +106,7 @@ pub struct ContentIndex<'a> {
     file_fixups: &'a [u8],
     string_fixups: &'a [u8],
     strings: &'a [u8],
+    files: &'a [u8],
 }
 
 fn invalid(message: &'static str) -> Error {
@@ -172,6 +181,7 @@ impl<'a> ContentIndex<'a> {
             file_fixups: array(data, 0x4c, 4)?,
             string_fixups: array(data, 0x58, 4)?,
             strings: array(data, 0x70, 8)?,
+            files: array(data, 0x1c, 8)?,
         };
         for entry in result.entries() {
             if entry.offset as usize >= result.content.len() {
@@ -280,6 +290,79 @@ impl<'a> ContentIndex<'a> {
         self.strings.len() / 8
     }
 
+    /// Resolve a classified file slot through an explicitly selected table.
+    /// Build 209026's base loader uses container zero's table for every base
+    /// container. This method neither opens the archive file nor accepts names.
+    pub fn resolve_file_reference(
+        &self,
+        slot: u32,
+        table: &ContentIndex<'_>,
+    ) -> Result<ContentFileReference> {
+        let file_count = self
+            .file_fixups
+            .chunks_exact(4)
+            .filter(|field| dword(field, 0) == slot)
+            .count();
+        let conflicts = self
+            .local_fixups
+            .chunks_exact(4)
+            .chain(self.string_fixups.chunks_exact(4))
+            .any(|field| dword(field, 0) == slot)
+            || self
+                .external_fixups
+                .chunks_exact(8)
+                .any(|field| dword(field, 0) == slot);
+        if file_count != 1 || conflicts {
+            return Err(invalid("missing or conflicting content file fixup"));
+        }
+        let start = slot as usize;
+        let bytes = start
+            .checked_add(8)
+            .and_then(|end| self.content.get(start..end))
+            .ok_or_else(|| invalid("content file slot outside content array"))?;
+        let index = usize::try_from(u64::from_le_bytes(bytes.try_into().unwrap()))
+            .map_err(|_| invalid("content file index overflow"))?;
+        let start = index
+            .checked_mul(8)
+            .ok_or_else(|| invalid("content file index overflow"))?;
+        let field = start
+            .checked_add(8)
+            .and_then(|end| table.files.get(start..end))
+            .ok_or_else(|| invalid("content file index outside selected table"))?;
+        let pointer_slot = table.files.as_ptr().addr() - table.main.as_ptr().addr() + start;
+        let relative = i64::from_le_bytes(field.try_into().unwrap());
+        if relative == 0 {
+            return Err(invalid("null indexed content file reference"));
+        }
+        let target = i64::try_from(pointer_slot)
+            .ok()
+            .and_then(|p| p.checked_add(relative))
+            .and_then(|p| usize::try_from(p).ok())
+            .and_then(|p| table.main.get(p..))
+            .ok_or_else(|| invalid("content file reference outside chunk"))?;
+        let head = target
+            .get(..6)
+            .ok_or_else(|| invalid("short encoded content file reference"))?;
+        let word = |at| u16::from_le_bytes([head[at], head[at + 1]]);
+        let (low, high, suffix) = (word(0), word(2), word(4));
+        if low < 0x100
+            || high < 0x100
+            || (suffix != 0 && (suffix < 0x100 || target.get(6..8) != Some(&[0, 0])))
+        {
+            return Err(Error::new(
+                ErrorKind::Unsupported,
+                "content file reference is not an encoded archive ID",
+            ));
+        }
+        Ok(ContentFileReference {
+            file_id: u32::from(high)
+                .wrapping_mul(0xff00)
+                .wrapping_add(u32::from(low))
+                .wrapping_add(0xff00ff01),
+            suffix: suffix as u8,
+        })
+    }
+
     /// Read one indexed UTF-16 string, rejecting invalid UTF-16 or a missing
     /// terminator within `max_units`. The returned text is not logged here.
     pub fn string(&self, index: usize, max_units: usize) -> Result<String> {
@@ -370,6 +453,136 @@ mod tests {
             b.extend_from_slice(&unit.to_le_bytes());
         }
         (b, string_slot)
+    }
+
+    fn file_source() -> Vec<u8> {
+        let mut b = payload();
+        b[0xa9..].fill(0);
+        append_table(&mut b, 0x4c, &0u32.to_le_bytes(), 4);
+        b
+    }
+
+    fn file_table(words: &[u16]) -> (Vec<u8>, usize) {
+        let mut b = payload();
+        let slot = append_table(&mut b, 0x1c, &8i64.to_le_bytes(), 8);
+        for word in words {
+            b.extend_from_slice(&word.to_le_bytes());
+        }
+        (b, slot)
+    }
+
+    #[test]
+    fn content_file_reference_uses_selected_table_and_classified_zero_index() {
+        let source_pf = pack(file_source());
+        let source = ContentIndex::parse(&source_pf).unwrap();
+        for (words, expected) in [
+            (
+                vec![5155, 264, 0],
+                ContentFileReference {
+                    file_id: 527140,
+                    suffix: 0,
+                },
+            ),
+            (
+                vec![5155, 264, 0x123, 0],
+                ContentFileReference {
+                    file_id: 527140,
+                    suffix: 0x23,
+                },
+            ),
+            (
+                vec![0x100, 0x100, 0],
+                ContentFileReference {
+                    file_id: 1,
+                    suffix: 0,
+                },
+            ),
+        ] {
+            let table_pf = pack(file_table(&words).0);
+            let table = ContentIndex::parse(&table_pf).unwrap();
+            assert_eq!(source.resolve_file_reference(0, &table).unwrap(), expected);
+        }
+        assert!(source.resolve_file_reference(0, &source).is_err());
+        assert!(source.reference(0).is_err()); // File IDs are not content byte ranges.
+    }
+
+    #[test]
+    fn content_file_reference_rejects_bad_classification_indexes_and_slots() {
+        let table_pf = pack(file_table(&[5155, 264, 0]).0);
+        let table = ContentIndex::parse(&table_pf).unwrap();
+        for value in [1u64, u64::MAX] {
+            let mut b = file_source();
+            b[0xa9..0xb1].copy_from_slice(&value.to_le_bytes());
+            let pf = pack(b);
+            assert!(
+                ContentIndex::parse(&pf)
+                    .unwrap()
+                    .resolve_file_reference(0, &table)
+                    .is_err()
+            );
+        }
+        for field in [0x34, 0x40, 0x58, 0x4c] {
+            let mut b = file_source();
+            let stride = if field == 0x40 { 8 } else { 4 };
+            let len = if field == 0x4c { 8 } else { stride };
+            append_table(&mut b, field, &vec![0; len], stride);
+            let pf = pack(b);
+            assert!(
+                ContentIndex::parse(&pf)
+                    .unwrap()
+                    .resolve_file_reference(0, &table)
+                    .is_err()
+            );
+        }
+        for slot in [8u32, 25, u32::MAX] {
+            let mut b = file_source();
+            if slot != 8 {
+                append_table(&mut b, 0x4c, &slot.to_le_bytes(), 4);
+            }
+            let pf = pack(b);
+            assert!(
+                ContentIndex::parse(&pf)
+                    .unwrap()
+                    .resolve_file_reference(slot, &table)
+                    .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn content_file_reference_rejects_bad_pointers_and_encodings() {
+        let source_pf = pack(file_source());
+        let source = ContentIndex::parse(&source_pf).unwrap();
+        for delta in [0i64, i64::MIN, i64::MAX, -500] {
+            let (mut b, slot) = file_table(&[5155, 264, 0]);
+            b[slot..slot + 8].copy_from_slice(&delta.to_le_bytes());
+            let pf = pack(b);
+            assert!(
+                source
+                    .resolve_file_reference(0, &ContentIndex::parse(&pf).unwrap())
+                    .is_err()
+            );
+        }
+        for words in [
+            vec![],
+            vec![5155],
+            vec![5155, 264],
+            vec![0xff, 264, 0],
+            vec![5155, 0xff, 0],
+            vec![5155, 264, 1, 0],
+            vec![5155, 264, 0x123],
+            vec![5155, 264, 0x123, 1],
+        ] {
+            let pf = pack(file_table(&words).0);
+            assert!(
+                source
+                    .resolve_file_reference(0, &ContentIndex::parse(&pf).unwrap())
+                    .is_err()
+            );
+        }
+        let (mut b, _) = file_table(&[5155, 264, 0]);
+        b[0x1c..0x20].copy_from_slice(&u32::MAX.to_le_bytes());
+        assert!(ContentIndex::parse(&pack(b)).is_err());
     }
 
     #[test]

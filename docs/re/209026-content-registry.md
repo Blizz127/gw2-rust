@@ -24,8 +24,10 @@ private bundle `~/re/gw2/notes/209026-content-index-rust-check-1.json`.
 `ContentIndex::reference` follows only the already traced local,
 external-container and string-index fixup tables. It reports external
 references as a container index plus content offset; the caller must select
-and bound the target container. File references and unclassified nonzero
-slots remain unsupported. String reads have an explicit UTF-16 unit limit.
+and bound the target container. File references remain unsupported by this record/string API; the separate
+[checked file resolver](209026-content-file-references.md) accepts an explicitly
+selected shared table and preserves the encoded suffix byte. Unclassified
+nonzero slots remain unsupported. String reads have an explicit UTF-16 unit limit.
 
 Six focused content-reader tests and the library build pass. The reference
 smoke reads all 32 frozen base containers through Rust: 78 palette names,

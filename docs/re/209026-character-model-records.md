@@ -62,8 +62,9 @@ The +0x28 locations are present in the file-relocation-slot list. Their
 raw values above are **not resolved model file IDs**. An attempted decode
 against this content file's local file-reference array failed its index
 assertion; a bounded follow-up found that array empty. The reference's
-actual resolution source remains open. No guessed file ID was recorded
-or used.
+resolution source is now established by the [file-fixup follow-up](209026-content-file-references.md): the base loader selects the first
+container's shared table, yielding Human/Guardian model file 527140.
+The raw values in the table above remain relocation indexes, not file IDs.
 
 ## Callback when replacement loading produces no model
 
