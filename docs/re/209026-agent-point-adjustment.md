@@ -42,8 +42,8 @@ For a nonzero incoming final byte, it calls collision interface virtual
 +0x510 with the Point3 pointer and third argument 1. For zero, it calls
 virtual +0x430 with the same Point3 and third argument equal to active
 command flags bit 9. Both use the collision object at base-agent +0x50.
-The two collision method implementations and active-kind gameplay names
-remain untraced here; a teleport or ordinary locomotion name is not assigned.
+The collision implementations are traced below; active-kind gameplay names
+remain unresolved. A teleport or ordinary locomotion name is not assigned.
 
 This narrows future movement work: server 64 alone does not establish a
 position update on a newly created idle agent. No live movement fixture
@@ -62,3 +62,73 @@ Private bundle: `~/re/gw2/notes/209026-agent-point-adjustment-1.json`
 | `ev_484ab7528795fad69969cf0c1924dbffee7b12492760036b794a3c9207f56c65` | Complete point-adjustment method. |
 | `ev_52081fdeee75489466d79d686a5477445ff0fadc3f480fb3031818035e453b42` | Three active-command point-copy helpers. |
 | `ev_13cf6fd255b5de1cb4ebb69e08a1576ae7cf3f87de6a92a6cf4279d21fccf1c1` | Constructor clears active-command pointers. |
+
+## Collision-consumer follow-up
+
+The two collision classes choose different implementations. The active-command
+prerequisites above still apply before any of these calls.
+
+| Class / vtable | Virtual +0x430 (last byte zero) | Virtual +0x510 (last byte nonzero) |
+| --- | --- | --- |
+| Full, `0x14212c908` | `0x14109f6c0` | `0x1410a44f0` |
+| Simple, `0x14212d1c8` | `0x1410a70a0` | `0x1410a8810` |
+
+### Zero final byte: store a later movement destination
+
+The full implementation `0x14109f6c0` returns unless collision flags +0x58
+have bit 1 set and bit 27 clear. Its third argument is a mask: bit 0
+controls collision bit 11, bit 1 controls bits 12 and 58, and bit 2
+controls bit 18. Server 64 passes only active-command flag bit 9 as a
+zero/one value, so this route clears bits 12, 18 and 58 and sets/clears
+bit 11. It also calls `0x1410a2660`, which synchronizes collision flag
+bit 37 with a boolean update to the object at +0xf8 using other flags
+and the squared XYZ magnitude at +0x220; that boolean's gameplay meaning
+is not established here.
+
+The method sets collision bit 15 and converts the supplied Point3 to
+`[X/32, Y/32, -Z/32, 0]`, retaining its tag. It stores this tagged target
+at **+0x250/+0x260**, resolves it through `0x1410b7710`, subtracts the
+current resolved position +0x140, and writes a normalized direction at
+**+0x170**. If the resulting distance is below the float constant 0.01
+(`0x3c23d70a` at `0x141934804`), it substitutes the runtime global vector
+at `0x14289e750`; that global's live contents were not captured. The method
+then notifies the secondary interface +0x10 through virtual +0x48. This
+complete body does **not directly write the current resolved position**;
+helper/notification side effects are not exhaustively traced.
+
+The simple implementation `0x1410a70a0` requires collision flag bit 1,
+calls `0x1410a5a30(this + 0x10)`, and sets/clears bits 18 and 11 from
+third-argument bits 2 and 0. It makes the same coordinate conversion and
+**appends** the tagged target to the array at +0xf0 (32-byte stride,
+count +0xf8, masked capacity +0xfc). It then resolves the current and
+new tagged points into stack temporaries. The complete body does not
+replace the current tagged/resolved position or invoke the simple snap
+helper. Consuming this queue during subsequent updates remains untraced.
+
+### Nonzero final byte: invoke the position setter
+
+The full wrapper `0x1410a44f0` ORs **0x40100000** into collision flags
+(bits 20 and 30), calls its virtual +0x4a8 with the supplied Point3 and
+third argument 1, then notifies the secondary +0x10 interface via +0x48.
+Thus it reaches the full `0x1410a3240` position setter described in
+[server 86](209026-agent-position-update.md). Setting bit 30 bypasses
+that setter's distance-hook branch; its other gates and bounds fallback
+still apply. An early return can precede the setter's normal bit-30 clear.
+
+The simple wrapper `0x1410a8810` is a direct jump to `0x1410a7c30`, the
+same simple setter used by server 86. It therefore clears the queued
+points and follows the documented bounds clamp, ground adjustment and
+conditional snap/interpolation path. It does not set the full wrapper's
+bits 20/30. This selector changes the collision operation; it does not
+remove server 64's need for an eligible active command.
+
+Private follow-up bundle: `~/re/gw2/notes/209026-agent-point-adjustment-2.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_dde1e167d11e61bfb7a1cf0723d1d63c05474c97e8e7b14b4182d4b82db541a9` | Complete full +0x430 destination body and +0x510 wrapper. |
+| `ev_d99c0d737973b1e3bdc946b1cdafd25be5df169913b2b0c935d3deb78cefa27a` | Both vtable pairs, 1/32 conversion factor and 0.01 threshold bits. |
+| `ev_f916a2e1399ee69a03dcdc908b82ca7e9a057319df8ba7c7c01f2905e03eec6a` | Complete simple destination body, direct simple setter jump and full flag helper. |
+
+This remains a static trace. No client replay, movement fixture or inferred
+initial movement flags were added.
