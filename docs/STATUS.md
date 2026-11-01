@@ -262,6 +262,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     [Slot follow-up](re/209026-reward-track-slots.md) identifies 565/569
     pin values, 568 active-track selection and 566 map-specific selection.
     Pin value domains and 567 keyed-state meaning remain unresolved.
+    Queensdale map key 15 has zero map-specific reward-track entries,
+    so no 566 entry-selection message belongs in that map fixture.
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message

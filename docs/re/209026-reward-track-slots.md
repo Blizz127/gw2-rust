@@ -45,8 +45,12 @@ record, without a null guard. Assertion `0x1421714c0` names
 It selects the map's pointer array at +0x178/count +0x180 and inserts or
 replaces that pointer in manager +0x18's keyed table, keyed by the map
 input data key. This is distinct from the four active track slots. The
-inspected body does not emit a manager listener event. Map entry targets
-and valid initial selections have not been censused in this follow-up.
+inspected body does not emit a manager listener event. A bounded archive follow-up checked Queensdale's known type-45/data-key-15
+record (file 1282830, content offset 3754040): its reward-track count at
++0x180 is **zero**. Thus no Byte entry index can satisfy 566's count check
+for this map record. Do not fabricate a map-specific track-selection
+message for the Queensdale fixture. This does not exclude tracks obtained
+through other game systems or the separate four active slots.
 
 ## Per-track keyed state: 567
 
@@ -64,7 +68,9 @@ unit, epoch or gameplay meaning. No semantic name or default is assigned.
 
 ## Evidence and scope
 
-Private bundle: `~/re/gw2/notes/209026-reward-track-slots-1.json`.
+Private bundles: `~/re/gw2/notes/209026-reward-track-slots-1.json` and
+`~/re/gw2/notes/209026-queensdale-reward-tracks-1.json`. The latter includes
+private extraction `queensdale-reward-tracks-209026.json` and its source hash.
 Only documentation and the creation codec's field comment changed; wire
 behavior is unchanged. `git diff --check` passed. No new runtime or test
 result is claimed for these adjacent messages; they have no typed codecs.
@@ -76,3 +82,4 @@ result is claimed for these adjacent messages; they have no typed codecs.
 | `ev_b0d1afc191016f0ad12c101b5d49fad6ed79aaacf48099863578f04180f1e62d` | Keyed trailing-value getter, event slot and all four descriptors. |
 | `ev_b887b04d54285e95e3ee8dd9f74c1323861fa51dd702b19f08590d207fa87957` | Bounded field-consumer search and map/slot assertions. |
 | `ev_1b4d3553f8e62f51fc1f73aa8fd5f7205b8dc5dae1481034885e746c5f872fae` | Complete pin-value getter and m_pinnedTracks assertion. |
+| `ev_3203314fab7fb1a15a181644f53982eca73c2ce84c9ea9431df0bd7e9a351c7e` | Queensdale map record has zero map-specific reward-track entries. |

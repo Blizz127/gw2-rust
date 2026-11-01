@@ -53,6 +53,14 @@ Private extraction: `~/re/gw2/notes/map-definitions-209026.json`,
 `8d47da7f833ce2c536d2143ce051a7557baa609983c098f506d8398a36ad2cd5`.
 It records source-container hashes, record locations and the map-file link.
 
+## Map-specific reward-track selection
+
+The [reward-track slot follow-up](209026-reward-track-slots.md) checked
+this same key-15 record's array at +0x178/count +0x180: count is zero.
+Server 566 requires an entry index below that count, so no such message
+is valid for this base Queensdale record. This does not constrain the
+separate active reward-track slots or other progress systems.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-map-definition-content-static-1.json`.
