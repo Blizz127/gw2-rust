@@ -167,6 +167,35 @@ ordering of event listeners and content setup.
 
 Appearance/content validity and further component dependencies remain open.
 
+### Remaining direct finalizer callbacks
+
+The player branch of `0x1411da260` calls `0x14120e380` on player +0x9f58,
+which has the owned-coreStats dependency above. Its calls on embedded
+player +0x9cc0, +0x4f20 and conditionally +0x18c8 all target `0x140163990`,
+a `ret 0` stub in this frozen executable. Those three direct calls do not
+introduce additional component allocation requirements. The lookup before
+each call treats player index zero as absent; a player record at index zero
+does not satisfy this path or the already documented GetPlayer assertion.
+
+The finalizer then calls `0x1411b61f0`, which dispatches the character to
+context +0x230 listeners through virtual +8, and tail-calls `0x1411e3ab0`.
+The latter reads character flags, the stored health state and context
+services, and updates character +0x230. Its inspected health checks read
+the stored state directly, not a health-component pointer. This is not an
+exhaustive proof of listener behavior or of all component requirements;
+the context event dispatch remains a runtime-dependent boundary.
+
+Private bundle: `~/re/gw2/notes/209026-finalization-tail-1.json`
+(1,069 records, 23,621,602 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_dc9a7a3d716dae2c7dc8a58a72dfc2f0ed68ddb79f3c66bd9b1851116cc86c83` | Finalizer's full player branch and direct tail calls; runtime-function entries split this function. |
+| `ev_ff79b3a2fef83dc29107b8baf574d79b39d23d2d9d4cf2b7b6941931b137d413` | No-op target, context dispatcher and complete state-update tail. |
+| `ev_aac9e274019f8ab586de720520bb1ebce00eed4fc80a2e00a05a89f6585ab9dd` | Constructor-installed interfaces and tail getter targets. |
+| `ev_3aa34414d0c8b22199e0fc38a53f3f2d084858554437d4cc3680e344948e06e2` | Flag/stored-health getters and event virtual +8 trampoline. |
+| `ev_4f9012f2ebcbc00d02858f0d20ae0eb1c869fb04f1687f8aebb8ba9a443bab95` | Interface-relative health getter and event-dispatch setup. |
+
 ## Offline framing check
 
 The hash-guarded extractor wrote private mode-0600
