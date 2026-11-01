@@ -34,7 +34,7 @@ multiplied by 32. The stored offset table at `0x1425b99b0` is a center point
 and five surrounding points:
 
 ```
-(0,0), (1,0), (0.30901697,0.95106), (0.30901697,-0.95106),
+(0,0), (1,0), (0.309,0.951), (0.309,-0.951),
 (-0.809,0.588), (-0.809,-0.588)
 ```
 

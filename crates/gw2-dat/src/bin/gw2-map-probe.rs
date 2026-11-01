@@ -7,6 +7,7 @@ use gw2_dat::{
     pfschema::{find_all, parse},
     surface::{VerticalHit, vertical_segment_hit},
     terrain::{TerrainHeights209026, TerrainTiles209026},
+    water::MapWater209026,
 };
 use std::{
     io::{Error, ErrorKind, Result},
@@ -133,6 +134,7 @@ fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
     let terrain = TerrainHeights209026::from_values(get("parm")?, trn)?;
     let tiles = TerrainTiles209026::from_value(trn)?;
     let map = MapCollide::from_value(get("havk")?)?;
+    let water = MapWater209026::from_value(get("havk")?)?;
     let Some(PfValue::Dwords(dims)) = trn.get("dims") else {
         return Err(bad("missing dimensions"));
     };
@@ -244,6 +246,12 @@ fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
         return Err(bad("nonfinite transformed mesh vertices"));
     }
     println!("file={id} physics_xy={xy:?} z_interval={range:?} identity_primary_map=true");
+    println!(
+        "water global_surface_map_z={:?} global_surface_physics_z={:?} explicit_volumes={} (metadata only)",
+        water.global_surface_z(),
+        water.global_surface_z().map(|z| -z / 32.),
+        water.volumes.len(),
+    );
     println!(
         "triangles terrain={} props={} zones={} excluded_terrain_chunks={excluded}",
         counts[0], counts[1], counts[2]

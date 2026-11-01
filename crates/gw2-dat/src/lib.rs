@@ -21,6 +21,7 @@ pub mod pfschema;
 pub mod pfwrite;
 pub mod terrain;
 pub mod surface;
+pub mod water;
 
 #[cfg(test)]
 mod synthetic;
