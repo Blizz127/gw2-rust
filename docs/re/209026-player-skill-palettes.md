@@ -46,9 +46,9 @@ safe storage semantics for that exceptional slot or valid arbitrary bytes.
 The slot lookup during normal rebuild obtains the selector from
 character +0xd8 through primary virtual +0x1b0 (`0x1411a1dd0`). Character
 construction derives it from an agent state through `0x14122acc0`, whose
-switch diagnostic explicitly names **agentState**. The meanings of the
-resulting selector values remain unresolved; do not label these arrays
-land/water solely from the two-array shape.
+switch diagnostic explicitly names **agentState**. The [eligibility follow-up](209026-skill-palette-content.md) identifies
+this selector as charLocale. Numeric locale names remain unresolved;
+do not label these arrays land/water solely from the two-array shape.
 
 After storing a palette, the setter notifies listeners, then reads the
 **owned character** at player +0x20 and its skill bar at character +0x520.
