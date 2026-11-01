@@ -12,6 +12,8 @@
 //! and captures decrypted STS messages to private files. Use synthetic accounts only.
 //! `--answer-gethostname HOST` additionally answers GetHostname with that hostname
 //! and a Local marker, allowing an offline login experiment to advance.
+//! `--reply-xml /PATH=FILE` adds an explicit synthetic XML reply fixture inside TLS.
+//! These fixtures are protocol experiments, not account authentication.
 //!
 //! Defaults: listens on 127.0.0.1:6112 and 127.0.0.1:6600 (portal/game ports in the
 //! public notes, unverified). Logs to `./capture/`. Use it inside the
@@ -36,7 +38,7 @@ fn main() {
     let mut starttls: Option<String> = None;
     let mut key = None;
     let mut cert = None;
-    let mut hostname_reply = None;
+    let mut replies: Vec<(String, Vec<u8>)> = Vec::new();
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match (a.as_str(), args.next()) {
@@ -62,9 +64,22 @@ fn main() {
                     die("--answer-gethostname requires an ASCII DNS hostname");
                 }
                 // Build 209026's XML accessor rejects bodies without a final LF.
-                hostname_reply = Some(format!("<Reply><Hostname>{v}</Hostname><Local/></Reply>\n"));
+                replies.push(("/Auth/GetHostname".into(), format!("<Reply><Hostname>{v}</Hostname><Local/></Reply>\n").into_bytes()));
             }
-            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER] [--answer-gethostname HOST]"),
+            ("--reply-xml", Some(v)) => {
+                let (path, file) = v.split_once('=').unwrap_or_else(|| die("--reply-xml requires /PATH=FILE"));
+                if !path.starts_with('/') || !path.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'/' || c == b'_') {
+                    die("--reply-xml requires an ASCII STS request path");
+                }
+                let input = std::fs::File::open(file).unwrap_or_else(|e| die(&format!("open reply fixture: {e}")));
+                let mut body = Vec::new();
+                input.take((sts::MAX_BODY + 1) as u64).read_to_end(&mut body).unwrap_or_else(|e| die(&format!("read reply fixture: {e}")));
+                if body.len() > sts::MAX_BODY || !body.ends_with(b"\n") || std::str::from_utf8(&body).is_err() {
+                    die("XML reply fixture must be UTF-8, at most MAX_BODY, and end with LF");
+                }
+                replies.push((path.into(), body));
+            }
+            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER] [--answer-gethostname HOST] [--reply-xml /PATH=FILE]..."),
         }
     }
     let tls_config = match (key, cert) {
@@ -75,9 +90,15 @@ fn main() {
         }
         _ => die("--tls-key and --tls-cert must be supplied together"),
     };
-    if hostname_reply.is_some() && tls_config.is_none() {
-        die("--answer-gethostname requires --tls-key and --tls-cert");
+    if !replies.is_empty() && tls_config.is_none() {
+        die("TLS reply fixtures require --tls-key and --tls-cert");
     }
+    for (i, (path, _)) in replies.iter().enumerate() {
+        if replies[..i].iter().any(|(other, _)| other == path) {
+            die(&format!("duplicate reply fixture for {path}"));
+        }
+    }
+    let replies = Arc::new(replies);
     if listen.is_empty() {
         listen = vec!["127.0.0.1:6112".parse().unwrap(), "127.0.0.1:6600".parse().unwrap()];
     }
@@ -97,7 +118,7 @@ fn main() {
         let greet = greet.clone();
         let starttls = starttls.clone();
         let tls_config = tls_config.clone();
-        let hostname_reply = hostname_reply.clone();
+        let replies = replies.clone();
         handles.push(std::thread::spawn(move || {
             for stream in listener.incoming() {
                 match stream {
@@ -106,8 +127,8 @@ fn main() {
                         let greet = greet.clone();
                         let starttls = starttls.clone();
                         let tls_config = tls_config.clone();
-                        let hostname_reply = hostname_reply.clone();
-                        std::thread::spawn(move || observe(s, addr, dir, greet, starttls, tls_config, hostname_reply));
+                        let replies = replies.clone();
+                        std::thread::spawn(move || observe(s, addr, dir, greet, starttls, tls_config, replies));
                     }
                     Err(e) => eprintln!("{addr}: accept failed: {e}"),
                 }
@@ -128,7 +149,7 @@ fn unix_ms() -> u128 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis())
 }
 
-fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>, starttls: Option<String>, tls_config: Option<Arc<tls::ServerConfig>>, hostname_reply: Option<String>) {
+fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>, starttls: Option<String>, tls_config: Option<Arc<tls::ServerConfig>>, replies: Arc<Vec<(String, Vec<u8>)>>) {
     let id = CONN_ID.fetch_add(1, Ordering::Relaxed);
     let peer = stream.peer_addr().map_or("?".into(), |p| p.to_string());
     let path = dir.join(format!("{}-conn{id}-port{}.log", unix_ms(), local.port()));
@@ -188,7 +209,7 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
                         let _ = log.write_all(&reply);
                         if r.is_err() { return; }
                         if let Some(cfg) = &tls_config {
-                            observe_tls(stream, cfg, buf, &mut log, start, hostname_reply.as_deref());
+                            observe_tls(stream, cfg, buf, &mut log, start, &replies);
                             println!("conn {id}: TLS capture closed");
                             return;
                         }
@@ -220,7 +241,7 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
     println!("conn {id}: closed");
 }
 
-fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut std::fs::File, start: Instant, hostname_reply: Option<&str>) {
+fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut std::fs::File, start: Instant, replies: &[(String, Vec<u8>)]) {
     // Preserve bytes read beyond the plaintext STS message (possibly a ClientHello).
     let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
     let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
@@ -256,13 +277,14 @@ fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &m
                     let _ = writeln!(log);
                     println!("TLS STS: {} ({} body bytes)", msg.path().unwrap_or("response"), msg.body.len());
                     pending.drain(..used);
-                    if let (Some(body), Some("/Auth/GetHostname"), Some(seq)) = (hostname_reply, msg.path(), msg.seq()) {
-                        let reply = sts::Message::reply(200, "OK", seq, body.as_bytes()).encode();
+                    let fixture = replies.iter().find(|(path, _)| Some(path.as_str()) == msg.path());
+                    if let (Some((path, body)), Some(seq)) = (fixture, msg.seq()) {
+                        let reply = sts::Message::reply(200, "OK", seq, body.clone()).encode();
                         if let Err(e) = secure.write_app(&reply) {
-                            let _ = writeln!(log, "# TLS GetHostname reply failed: {e}");
+                            let _ = writeln!(log, "# TLS {path} reply failed: {e}");
                             return;
                         }
-                        let _ = writeln!(log, "## sent TLS GetHostname reply ({} bytes)", reply.len());
+                        let _ = writeln!(log, "## sent TLS {path} reply ({} bytes)", reply.len());
                         let _ = log.write_all(&reply);
                     }
                 }

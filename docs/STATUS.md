@@ -49,8 +49,13 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Local. The client requires a final LF before parsing XML. After that correction,
     it sends `/Auth/StartSsoLogin` on the same TLS connection. See
     [re/209026-gethostname.md](re/209026-gethostname.md).
-  - **Next:** map the StartSsoLogin reply and complete local authentication before
-    character selection. TLS success is not yet a connectable game.
+  - **Synthetic SSO continuation passed (run 45):** an explicit local reply fixture
+    supplies a test UserId, LoginName and Provider. The client reaches its completion
+    callback and sends `/Account/ListMyGameAccounts`. This is a protocol fixture,
+    not credential validation or an account database. See
+    [re/209026-startsso.md](re/209026-startsso.md).
+  - **Next:** map ListMyGameAccounts and continue with a synthetic local game account.
+    The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
 
@@ -60,7 +65,7 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 | --- | --- | --- |
 | 1 | Freeze client, capture traffic, message list for our build | client frozen; REA observations and offline patch/STS captures recorded; complete message list pending |
 | 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
-| 3 | Login stub: redirect, secure login, our own key | TLS and GetHostname passed with local identity; StartSsoLogin captured; authentication reply flow pending |
+| 3 | Login stub: redirect, secure login, our own key | TLS/GetHostname and synthetic SSO continuation passed; ListMyGameAccounts captured; game-account/ticket flow pending |
 | 4 | Character select / creation | not started |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
@@ -68,7 +73,7 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 
 ## Crates (last full workspace check: 75 pass, clippy clean, commit `31772d8`)
 
-Latest runtime check: run 44 completes TLS/GetHostname and captures StartSsoLogin; container
+Latest runtime check: run 45 completes synthetic SSO and captures ListMyGameAccounts; container
 cleanup, executable hashes and archive index count verified. Focused checks cover
 OpenSSL interop and the observer's pipelined StartTls / split-STS / GetHostname reply path.
 The full workspace suite was not rerun for this change.

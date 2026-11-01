@@ -26,11 +26,15 @@ def main():
         trusted = work / "trusted.pem"
         subprocess.run(["openssl", "x509", "-inform", "DER", "-in", str(cert),
                         "-out", str(trusted)], check=True)
+        fixture_body = b"<Reply><Fixture>ok</Fixture></Reply>\n"
+        fixture = work / "fixture.xml"
+        fixture.write_bytes(fixture_body)
         observer = subprocess.Popen([
             str(ROOT / "target/debug/gw2-login-observe"), "--listen", "127.0.0.1:0",
             "--log", str(work / "capture"), "--tls-key", str(work / "cligate-101.key.pem"),
             "--tls-cert", str(cert),
             "--answer-gethostname", "cligate.101.ncplatform.net.",
+            "--reply-xml", f"/Smoke/Fixture={fixture}",
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         try:
             assert select.select([observer.stdout], [], [], 10)[0], "observer startup timeout"
@@ -91,6 +95,19 @@ def main():
                         assert packet, "server closed before GetHostname reply"
                         incoming.write(packet)
                 assert response.startswith(b"STS/1.0 200 OK\r\n") and b"s:45R\r\n" in response
+                peer.write(b"P /Smoke/Fixture STS/1.0\r\ns:46\r\nl:0\r\n\r\n")
+                sock.sendall(outgoing.read())
+                response = b""
+                while not response.endswith(fixture_body):
+                    try:
+                        packet = peer.read(65536)
+                        assert packet, "server closed before fixture reply"
+                        response += packet
+                    except ssl.SSLWantReadError:
+                        packet = sock.recv(65536)
+                        assert packet, "server closed before fixture reply"
+                        incoming.write(packet)
+                assert b"s:46R\r\n" in response
                 try:
                     peer.unwrap()
                 except ssl.SSLWantReadError:
@@ -106,10 +123,10 @@ def main():
                 assert time.monotonic() < deadline, "capture did not finish"
                 time.sleep(0.05)
             assert "# TLS established: TLS1.2 AES128-SHA" in text
-            assert text.count("decrypted STS") == 3
+            assert text.count("decrypted STS") == 4
             assert "/Smoke/Split" in text and "/Smoke/Next" in text and "<Probe/>" in text
             assert all(p.stat().st_mode & 0o777 == 0o600 for p in logs)
-            print("StartTls smoke: trusted TLS1.2, pipelined ClientHello, split/coalesced STS, GetHostname reply, private logs: PASS")
+            print("StartTls smoke: trusted TLS1.2, pipelined ClientHello, split/coalesced STS, GetHostname and XML fixture replies, private logs: PASS")
         finally:
             observer.terminate()
             try:
