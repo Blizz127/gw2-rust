@@ -191,10 +191,10 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
   - **Candidate bootstrap sequence:** [re/209026-bootstrap-sequence.md](re/209026-bootstrap-sequence.md)
     consolidates the static notes into one ordered candidate path from route to
     BeginPlaying. Each edge is marked stated, inferred or open. No new REA was done
-    and nothing was replayed. The [Play route](re/209026-play-route.md) is now traced statically. Selecting a
-    character with no mission connection sends auth 29 with a game type derived from
-    the summary map's type (18-pair table), the summary map key, and the selected
-    character's 16-byte value and 20-byte string. Queensdale's map type remains open.
+    and nothing was replayed. The [Play route](re/209026-play-route.md) is now traced statically. Play runs the
+    name transaction (client 22 → server 8 → server 3), whose completion then sends auth 29 with a game type derived from
+    the summary map's type (18-pair table), the summary map key, a hash and a 16-byte context value (wire
+    layout mapped). Queensdale's map type remains open.
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small

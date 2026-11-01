@@ -5,6 +5,30 @@ Static REA, 2026-11-01. This fills the main gap listed in the
 a game route when an existing character is played, rather than created.
 The client was not run; the Run59 agreement hold stays in place.
 
+## How Play reaches the selection callback
+
+Character-select UI handlers call view slot +0x60 (table `0x141b7e818`,
+entry `0x141b7e878` = `0x14094b180`) with the selected character's name:
+- `0x1402a12c0` calls it from its selected-character branch, unless
+  `0x1410f6a10()` and a flag bit 0x2 are set. In that case it first shows a
+  text-`0xc27b` dialog and re-dispatches UI event 0x1c.
+- `0x1402a07c0` calls it on UI event 0x1c after reading a non-empty name.
+  The same handler sends event 0x1b to the creation slot +0x38.
+
+`0x14094b180` is the name transaction already documented in
+[character creation](209026-character-creation.md): auth **client 22**
+(request ID + name). Its completion follows:
+
+1. Server **8**: the type-0x15 branch writes the character's 16-byte value
+   while the transaction is pending in state 3.
+2. Server **3**: address/scalar/result; sets state 1.
+3. Completion event **0x5d** (`0x140950d40` → `0x140950eba`): looks up the
+   character record by name, then calls `0x14094db50`.
+
+The dialog plus 0x1c re-dispatch is a **candidate** for the Run59
+User Agreement step, which sits before client 22. That is not confirmed;
+the panel was not exercised.
+
 ## Selection callback and branch
 
 `0x14094db50`, called from `0x140950f09`, receives a selection result
@@ -82,11 +106,23 @@ Transaction payload, at offsets in the new object:
 | +0x64 | Hash |
 | +0x68 | 16 bytes from ctx +0xdd |
 
-The creation builder zeroes the same 0x60-byte area and sets only +0x40 = 1.
-The two calls share the transaction layout. The wire order of these fields
-follows the ID-29 descriptor recorded in the mission-join note
-(`[request, game type, …]` plus GUID). That mapping is consistent with this
-layout but is not re-derived here.
+Send method `0x14023e490` serializes the transaction through sender
+`0x140241f40` (message Word `0x1d`):
+
+| Wire field | Transaction source | Play value |
+| --- | --- | --- |
+| Dword 0 | +0x30 | Request ID |
+| Dword 1 | +0x40 | Game type |
+| Dword 2 | +0x44 | 0 |
+| Dword 3 | +0x48 | Map key |
+| Dword 4 | +0x4c | 0 |
+| Dword 5 | +0x64 | Hash |
+| 16 bytes | +0x68 | ctx +0xdd value |
+
+The selected character's 16-byte value (+0x54, from ctx +0x20) and its
+20-byte name are **not** serialized; the builder copies them only to client
+globals `0x14266c050`/`0x14266c060`. This matches the six-Dword + 16-byte
+descriptor and the creation fixture `[req, 1, 0, 0, 0, 0]` + zero.
 
 The table, as `mapType → gameType`:
 
@@ -100,25 +136,25 @@ The table, as `mapType → gameType`:
 
 ## Consequences for the emulator
 
-On this static evidence, playing a character from select sends auth **29**
-with:
-- a non-creation game type derived from the summary map's type
-- the summary map key (15 for the Queensdale fixture)
-- the selected character's 16-byte value and 20-byte string
+Statically, Play from character select requires this exchange before the
+game route:
 
-The server answers with **20** (route result). The route then continues as
-the existing join path. No server message is needed between the Play click
-and ID 29 beyond the selection result that reaches `0x14094db50`.
+client 22 (name) → server 8 (type-0x15 character value, while pending) →
+server 3 (completion) → client 29 → server 20 → game join.
+
+Client 29 carries a non-creation game type derived from the summary map's
+type, the summary map key (15 for the Queensdale fixture), the hash and
+the ctx +0xdd value. A server parser should follow the wire table above.
 
 Still open:
 - Queensdale's map type, and therefore its game-type value; the content field read by `0x1412e2cd0` is not decoded.
 - The source of ctx +0xdd and of the hashed string.
-- Which transaction result reaches `0x14094db50` (its caller is `0x140950f09`) and how that relates to the Run59 User Agreement panel.
+- Whether the `0xc27b` dialog branch is the User Agreement panel.
 - The meaning of the override settings (0x31 gate, bits 0x13–0x15).
 
 ## Evidence
 
-Private bundle: `~/re/gw2/notes/209026-play-route-1.json` (41 Rizin
+Private bundle: `~/re/gw2/notes/209026-play-route-1.json` (53 Rizin
 records, including the session's earlier sweeps). Frozen executable SHA-256
 `99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`,
 unchanged after each call.
@@ -134,3 +170,7 @@ unchanged after each call.
 | `ev_c9a944a00ed969f26de024061abb41ae91eb2ccf7b1a68844fe80b5513996e4d` | Summary getter (+0x58), +0x20/+0x30 setters, hash helper. |
 | `ev_82c0745192c1db55c424084d537f8f48b5b8e8d5cf0b2452a5ac12c52ba7100a` | Selection callback `0x14094db50` and its branch. |
 | `ev_5bfca4ecf8951b0d51f405810834b9a50559a7f785f3539b79c5145b7eabfde4` | Summary store into +0x58; ctx +0x228 bit 0x2 predicate. |
+| `ev_a555955567d4056480ad2ecdcc3e272a66b97b6e6633e22df84dbc4d54645b3a` | View-getter call sites dispatching slot +0x60. |
+| `ev_16310fd81ad8446c5f9e647bafe0c1606de973264731304abb8534cef935efad` | Character-select handlers `0x1402a07c0` / `0x1402a12c0` calling slot +0x60. |
+| `ev_731e01e18d7cdd33c9227df995f0b072275a7d63f912022286ad4c1879d09bb8` | Table entry `0x141b7e878` → `0x14094b180`. |
+| `ev_10a09a2bb61bdf1105a7022805252c0b4c89e47f938529ffa322f5271d8f1780` / `ev_e2aa249f485cacf733f328dfc185a93d0cd868dd898c98597ff3e1fe7747bd66` | ID-29 sender layout and transaction-to-wire mapping. |
