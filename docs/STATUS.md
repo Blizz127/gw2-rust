@@ -245,6 +245,12 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     that inventory component; its framing check passed (two frames, seven bytes;
     truncated varint rejected). See
     [re/209026-character-finalization-dependencies.md](re/209026-character-finalization-dependencies.md).
+    Specialization/major-trait messages 640–643 now have typed framing
+    codecs: single-slot assignments, fixed 3+9-key replacement and slot swap.
+    Three focused tests and the library build pass. Non-null specialization
+    recalculation needs the owned character and conditionally its reward-track
+    manager; initial content selections remain unresolved. See
+    [re/209026-specialization-messages.md](re/209026-specialization-messages.md).
     Appearance validation now has a 45-byte branch map and ten race/sex
     content keys (type 137). All 90 shipped defaults have since been extracted
     and parsed; full content-dependent validation remains unresolved. See

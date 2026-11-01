@@ -89,12 +89,21 @@ message is distinct from the four specialization/trait layouts above.
 
 ## Typed framing scope
 
-The planned codec covers 640–643 only, preserving raw slots, keys and the
-642 notification byte. It uses fixed arrays for the three specializations
-and three-by-three trait keys, with transactional one-frame decoding. It
-will not validate content combinations, choose defaults, update server
-state or send messages. Out-of-range slots are useful framing inputs but
-are not valid client state transitions.
+`gw2_proto::specialization::SpecializationFrame209026` covers 640–643 only,
+preserving raw slots, keys and the 642 notification byte. It uses fixed
+arrays for the three specializations and three-by-three trait keys, with
+transactional one-frame decoding. It does not validate content combinations,
+choose defaults, update server state or send messages. Out-of-range slots
+are useful framing inputs but are not valid client state transitions.
+
+Three focused tests and the library build pass. Four hand-authored fixtures
+cover the layouts with distinct varint widths, zero/MAX keys, a raw slot
+255 and notification 254. The bulk fixture distinguishes every trait
+position and verifies specialization-slot-major ordering without array
+length prefixes. Output prefixes and consecutive frame boundaries are
+preserved. Every truncation, neighboring unsupported ID, and overflowing
+or overlong varint at every Dword position is rejected without consuming
+input. No runtime or content-validity claim follows from these checks.
 
 ## Evidence
 

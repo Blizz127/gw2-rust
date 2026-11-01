@@ -168,6 +168,7 @@ ordering of event listeners and content setup.
 | Server 605: initial skill availability | Player entry exists and type-64 skill key resolves; direct path does not require an owned character. |
 | Server 612: palette selection | Player entry, owned character and skill bar exist; immediate rebuild has profession/coreStats/inventory dependencies. |
 | Server 609/613: live skill availability change | Player entry, owned character and skill bar exist; type-64 skill key resolves. |
+| Server 640/642: specialization update | Player entry; changed non-null specialization requires owned character during progress recalculation and conditionally reward-track manager. Any existing skill bar is rebuilt; see [specialization trace](209026-specialization-messages.md). |
 | Server 170: fresh owned-player finalization | Player association, attitude, owned-character pointer, owned coreStats, inventory and a profession component. |
 | Server 444: equal-ID controlled assignment | Player entry and finalized character exist. |
 
