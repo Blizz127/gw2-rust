@@ -2,6 +2,13 @@
 
 Target: `Gw2-64.new.exe`, sha256 `99342078…8d621`.
 
+**Follow-up 2026-11-01:** [209026-certificate-check.md](209026-certificate-check.md)
+maps the RSA Certificate handler. These Name/key pairs act as issuer trust anchors:
+the last certificate's issuer Name selects a key for signature verification.
+The older leaf-pinning interpretation below is superseded. Our local certificate
+also needs SHA-1/RSA signing and DNS SAN; a modulus change alone is not sufficient
+with the original fixture. No runtime trust change or accepted handshake is claimed.
+
 **REA evidence:**
 - `read_bytes` 0x14230b1c0 (1792 bytes): `ev_5e942e1c11c0fad8a2860a67ba01d8b9e7525811ed764838c0399043a4c46b03`.
 - The cligate strings come from `search_strings` (`ev_d635d76e…`).
@@ -63,10 +70,12 @@ A table of pinned server identities in `.rdata`. Each entry is a DER X.509 Name
   `P /Sts/Connect STS/1.0`. Each gets this trust store (CA roots plus pinned cligate RSA keys)
   for its secure (`StartTls`) phase. Our existing `gw2-login::sts` codec is on the right track.
 
-## Unknown
+## Historical unknowns (superseded in part)
 
-- The portal record format on TCP 80. The 2012–13 notes describe STS/1.0 with
+- At the time of these observations, the portal record format on TCP 80 was unknown. The 2012–13 notes describe STS/1.0 with
   `/Auth/StartTls` and then TLS-like records with SRP. Whether the client speaks first is
   still unsettled: at runtime it sent 0 bytes in 10 s under both Wine 10.0 and GE-Proton 11.
-- Which code consumes this table (no direct xrefs). Next: search for the table base,
-  0x14230b1c0 or earlier, as a pointer, or find TLS code that references the GeoTrust entry.
+- The runtime connection and STS framing were subsequently observed on TCP 6112:
+  [209026-login.md](209026-login.md).
+- The RSA Certificate handler at `0x14158b740` directly consumes entries
+  `0x14261ff30..0x142620050`; see the certificate-check follow-up above.

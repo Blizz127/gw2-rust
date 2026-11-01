@@ -1,12 +1,12 @@
 # Status
 
-Lead: Claude session `gw2-rust` (Devbox tasks f7f99ff037fe, ce075451d399). Updated 2026-11-01.
+Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61fdc2310). Updated 2026-11-01.
 
 ## Blocker
 
 - **Client frozen** 2026-10-31 19:03Z as `/home/blizz/gw2-client/build-209026` (see
   [client-build.md](client-build.md)). The REA target is `Gw2-64.new.exe` (sha256 `99342078…`).
-  The REA import is running.
+  REA confirms that target identity; current certificate-check analysis is described below.
 - `Gw2.dat` reader is verified on real data (see client-build.md). Queensdale = map file 192711.
 - The client runs offline in the sandbox (Wine 10 and GE-Proton 11).
   - **Silent-connection blocker solved (2026-10-31, run 21)**:
@@ -20,7 +20,11 @@ Lead: Claude session `gw2-rust` (Devbox tasks f7f99ff037fe, ce075451d399). Updat
     - cligate (`cligate.101.ncplatform.net`, **TCP 6112**): plaintext
       `P /Sts/Connect STS/1.0` (ConnType 400, ProductName Gw2-64, Program 101,
       Build 1004), then `/Sts/Ping` every 30 s.
-  - The portal is authenticated against pinned RSA-1024 keys (docs/re/209026-portal-pins.md).
+  - **Certificate check mapped statically (2026-11-01):** the RSA client requires
+    SHA-1/RSA signatures, a matching DNS SAN, valid dates and a chain signature
+    verified against an embedded issuer Name/key entry. The existing local test
+    certificate uses SHA-256 and lacks SAN; it needs correction before the runtime
+    experiment ([re/209026-certificate-check.md](re/209026-certificate-check.md)).
   - `-authsrv host[:6112]` sets the later AuthSrv hop (docs/re/209026-cmdline-and-hosts.md).
   - **Patch step solved (2026-11-01, run 35,
     [re/209026-patcher.md](re/209026-patcher.md)):**
@@ -38,7 +42,9 @@ Lead: Claude session `gw2-rust` (Devbox tasks f7f99ff037fe, ce075451d399). Updat
     1b. ~~Our own test key/cert.~~ Done 2026-11-01: `tools/gen-test-cert.sh` writes an RSA-1024
        (e = 65537) key and a self-signed cert to gitignored `data/tls/`. The subject is byte-identical
        to the Name pinned beside the cligate.101 key. `ServerConfig::load` enforces that shape.
-    2. REA on the certificate check, then swap in our key in memory.
+    2. ~~REA on the certificate check.~~ Static findings documented. Next: correct the
+       local test certificate, then verify the hostname and local trust configuration
+       inside the sandbox. No GW2 TLS handshake has passed yet.
     3. Capture the login messages inside TLS.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
@@ -47,9 +53,9 @@ Lead: Claude session `gw2-rust` (Devbox tasks f7f99ff037fe, ce075451d399). Updat
 
 | # | Stage | State |
 | --- | --- | --- |
-| 1 | Freeze client, capture traffic, message list for our build | client frozen; REA import running; capture not started |
+| 1 | Freeze client, capture traffic, message list for our build | client frozen; REA observations and offline patch/STS captures recorded; complete message list pending |
 | 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
-| 3 | Login stub: redirect, secure login, our own key | next: REA probes on Gw2-64.new.exe |
+| 3 | Login stub: redirect, secure login, our own key | StartTls reached; local TLS server implemented; certificate acceptance mapped statically; fixture correction and sandbox handshake pending |
 | 4 | Character select / creation | not started |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
@@ -80,8 +86,9 @@ Lead: Claude session `gw2-rust` (Devbox tasks f7f99ff037fe, ce075451d399). Updat
 
 ## Known facts and their sources
 
-Keep observed, inferred and unknown separate. No REA observations exist yet, because
-there is no binary.
+Keep observed, inferred and unknown separate. Build-209026 REA observations and
+offline runtime findings are recorded in `docs/re/`; reference-source guesses below
+remain provisional unless a build-specific finding confirms them.
 
 **Observed (outside the client):**
 - Live build 209026 on 2026-10-31 (`GET https://api.guildwars2.com/v2/build`).
@@ -104,7 +111,8 @@ there is no binary.
 - Network ints: `u32` varint (7-bit groups), `u16`/`u64`/`f32` little-endian.
 
 **Unknown:**
-- Whether `-authsrv <ip>` still works on the current client.
+- How the later AuthSrv connection completes (`-authsrv` handling itself is documented
+  in [re/209026-cmdline-and-hosts.md](re/209026-cmdline-and-hosts.md)).
 - The current login flow (portal/SRP via launcher), and where the session key comes from.
 - Where runtime-key-encrypted text keys come from.
 
