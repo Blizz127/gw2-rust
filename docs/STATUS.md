@@ -251,6 +251,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     all 529 tracks to type-53 progress definitions and maps Guardian
     thresholds. Missing progress yields zero passed Guardian thresholds;
     active-track selection alone does not grant progress. No replay occurred.
+    [Progress messages](re/209026-player-progress.md) now identify server
+    511 as a controlled-player update with a type-53 data key and up to
+    four values. Guardian definitions use counter channel 4. The bounded
+    codec passes three focused tests and the library build; downstream
+    callbacks and initial progress choices remain separate work.
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message

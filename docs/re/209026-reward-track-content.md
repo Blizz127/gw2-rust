@@ -27,8 +27,8 @@ object supplies virtual +0x30; missing progress returns zero.
 
 This lookup does not read the four selected track slots in the reward
 manager. Assigning tracks with server 565 therefore does not itself grant
-specialization progress. Progress creation/update messages and their
-value representation remain to be traced.
+specialization progress. The [progress-message follow-up](209026-player-progress.md) maps server
+511 to counter/maximum channel updates and confirms Guardian channel 4.
 
 ## Complete base census
 

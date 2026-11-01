@@ -22,6 +22,7 @@ pub mod endurance;
 pub mod guardian;
 pub mod health;
 pub mod player_creation;
+pub mod progress;
 pub mod reward_track;
 pub mod schema;
 pub mod skill_availability;
