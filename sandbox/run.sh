@@ -54,6 +54,15 @@ case "$mode" in
     mv "$src/Gw2-64.new.exe" "$src/Gw2-64.exe"
     sha256sum "$src/Gw2-64.exe" | tee "$src/.prepared"
     ;;
+  restore)
+    # Replace the working copy's Gw2.dat with the frozen baseline. Needed after the client
+    # trims or rewrites its archive (e.g. MultiArchiveTrim drops assets no manifest lists).
+    build="${1:?build id required}"
+    src="$STATE/client-work-$build"; base="/home/blizz/gw2-client/build-$build"
+    docker ps --format '{{.Names}}' | grep -qx "gw2-sandbox-$build" && { echo "client container still running"; exit 2; }
+    cp "$base/Gw2.dat" "$src/Gw2.dat.restore" && chmod 644 "$src/Gw2.dat.restore" && mv -f "$src/Gw2.dat.restore" "$src/Gw2.dat"
+    cmp -n 1048576 "$src/Gw2.dat" "$base/Gw2.dat" && echo "restored $src/Gw2.dat from $base"
+    ;;
   client)
     build="${1:?client build id required}"; shift
     src="$STATE/client-work-$build"
@@ -83,5 +92,5 @@ case "$mode" in
       --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$prefix:/sandbox/prefix" "${runtime_args[@]}" -v "$STATE/logs:/sandbox/logs" \
       -v "$HERE/../target/debug:/server:ro" -e SERVER="${SERVER:-}" \
       "$IMAGE" client "$@" ;;
-  *) echo "usage: $0 build|preflight|selftest|prepare <build>|client <build> [args]"; exit 2 ;;
+  *) echo "usage: $0 build|preflight|selftest|prepare <build>|restore <build>|client <build> [args]"; exit 2 ;;
 esac

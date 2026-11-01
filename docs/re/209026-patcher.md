@@ -53,12 +53,32 @@ loads without an assert. The launcher then queues every record for download in o
 (ids 8192, 8193, …), and the UI shows "Downloading 0KB". Switching `size` from stored to
 decoded size (run 31) did not change this.
 
+**10. Why everything was queued for download** (REA, sub-investigation;
+`FUN_140d94910` ev_4c62e3d0…, `FUN_140d92980` ev_bb6a2f49…, `FUN_140d943b0`
+ev_90256eab…, `FUN_140d95270` ev_cab3e33c…). The client keeps an install table keyed by
+`baseId`: `{baseId, targetFileId, installedFileId, size}`.
+- It fills the table from its archive's file table, 6-dword entries `{…, stream (byte),
+  baseId, fileId}`. Entries with `stream != 0` log "unexpected stream" and are skipped.
+  When an entry's actual size doesn't match the cached size, it logs a size mismatch and
+  deletes the file.
+- A record needs download when `installedFileId != record.fileId`. A missing table entry
+  counts as installed = 0.
+- Finishing a download sets target = installed = fileId.
+- Record and root `flags` are not read on that path.
+
+**11. The archive trimmer** emptied the working copy, while the frozen baseline stayed
+untouched. After run 27, which used a root manifest with no manifests, MFT entry 1 (the
+file index) of the working copy's `Gw2.dat` was all zeros. So runs 30–33 tested against
+an empty archive, and their "everything missing" result is explained by that, not by the
+record format. Recovery: `sandbox/run.sh restore 209026`.
+
 ## Inferred / open
 
 - **Base and file ids:** of the 819,347 MFT entries the index references, 304,885 have
   two ids and 514,462 have one. We record `base = smaller`, `file = larger`. Not
   confirmed.
-- **Open question:** what makes the launcher treat a locally present record as needing
-  download (record or root `flags`, a CRC manifest, or another check). Being traced in REA.
+- **Next run:** restored `Gw2.dat` plus a full-archive `Launcher64` manifest. Expect no
+  downloads if `base = smaller id` matches the archive's file table. Check the index
+  afterwards (no trim).
 - **Exe self-update:** the latest-reply exe fields (1, 2) are 0. No exe download has been
   observed so far.

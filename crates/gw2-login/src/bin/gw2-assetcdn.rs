@@ -1,10 +1,12 @@
-//! `gw2-assetcdn [--listen ADDR]... [--latest "B E ES M MS"] [--files DIR] [--log FILE]`
+//! `gw2-assetcdn [--listen ADDR]... [--latest "B E ES M MS"] [--files DIR] [--dat Gw2.dat] [--log FILE]`
 //!
 //! Offline asset-CDN stand-in for the sandbox (see `gw2_login::assetcdn`). It answers
 //! `/latest64/<program>` and `/latest/<program>` with the configured five numbers, and
 //! serves `/program/<program>/<x>/<y>/<fileId>` from `DIR/<fileId>` (raw bytes; the
 //! `/compressed` variant gets 404 so the client falls back to raw), and answers every
-//! other path with 404. Every request line is logged so the next requests
+//! other path with 404. With `--dat`, a file id missing from `DIR` is served as the
+//! decoded bytes of that id from the archive (offline stand-in for the real CDN; the
+//! client marks a downloaded record installed in its `Local.dat`). Every request line is logged so the next requests
 //! the client makes (manifests, files) show up.
 //!
 //! Default listen address: 127.1.0.1:80. Use 127.1.0.x, never 127.0.0.x
@@ -33,6 +35,7 @@ fn main() {
     let mut latest = Latest { build: 209026, ..Latest::default() };
     let mut log_path = None;
     let mut files: Option<String> = None;
+    let mut dat: Option<Arc<gw2_dat::archive::Archive>> = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         let v = args.next().unwrap_or_else(|| usage());
@@ -42,6 +45,12 @@ fn main() {
             "--latest" => latest = Latest::parse(&v.replace(['_', ','], " ")).unwrap_or_else(|| usage()),
             "--log" => log_path = Some(v),
             "--files" => files = Some(v),
+            "--dat" => {
+                dat = Some(Arc::new(gw2_dat::archive::Archive::open(&v).unwrap_or_else(|e| {
+                    eprintln!("open {v}: {e}");
+                    std::process::exit(1)
+                })))
+            }
             _ => usage(),
         }
     }
@@ -66,11 +75,13 @@ fn main() {
         println!("asset cdn on {addr}, latest = {}", latest.body().trim_end());
         let log = log.clone();
         let files = files.clone();
+        let dat = dat.clone();
         handles.push(std::thread::spawn(move || {
             for s in l.incoming().flatten() {
                 let log = log.clone();
                 let files = files.clone();
-                std::thread::spawn(move || serve(s, latest, files.as_deref(), &log));
+                let dat = dat.clone();
+                std::thread::spawn(move || serve(s, latest, files.as_deref(), dat.as_deref(), &log));
             }
         }));
     }
@@ -79,7 +90,7 @@ fn main() {
     }
 }
 
-fn serve(mut s: TcpStream, latest: Latest, files: Option<&str>, log: &Log) {
+fn serve(mut s: TcpStream, latest: Latest, files: Option<&str>, dat: Option<&gw2_dat::archive::Archive>, log: &Log) {
     let peer = s.peer_addr().map(|a| a.to_string()).unwrap_or_default();
     let line = |msg: String| {
         if let Ok(mut w) = log.lock() {
@@ -102,15 +113,19 @@ fn serve(mut s: TcpStream, latest: Latest, files: Option<&str>, log: &Log) {
                         line(format!("{} {} -> latest(program {program}, 64bit {bits64}) {}", req.method, req.path, latest.body().trim_end()));
                         response(200, "OK", "text/plain", latest.body().as_bytes())
                     }
-                    Route::File { file_id, compressed: false } if files.is_some() => {
-                        let p = format!("{}/{file_id}", files.unwrap_or_default());
-                        match std::fs::read(&p) {
-                            Ok(b) => {
-                                line(format!("{} {} -> file {file_id} ({} bytes)", req.method, req.path, b.len()));
+                    Route::File { file_id, compressed: false } if files.is_some() || dat.is_some() => {
+                        let from_dir = files.and_then(|d| std::fs::read(format!("{d}/{file_id}")).ok());
+                        let found = match from_dir {
+                            Some(b) => Some((b, "dir")),
+                            None => dat.and_then(|a| a.read(file_id).ok()).map(|b| (b, "dat")),
+                        };
+                        match found {
+                            Some((b, src)) => {
+                                line(format!("{} {} -> {src} {file_id} ({} bytes)", req.method, req.path, b.len()));
                                 response(200, "OK", "application/octet-stream", &b)
                             }
-                            Err(_) => {
-                                line(format!("{} {} -> 404 (no {p})", req.method, req.path));
+                            None => {
+                                line(format!("{} {} -> 404 (not found)", req.method, req.path));
                                 response(404, "Not Found", "text/plain", b"")
                             }
                         }

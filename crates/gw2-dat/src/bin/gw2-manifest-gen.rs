@@ -1,4 +1,4 @@
-//! `gw2-manifest-gen --out DIR [--build N] [--root-id N] [--manifest NAME]... [--from-dat Gw2.dat]`
+//! `gw2-manifest-gen --out DIR [--build N] [--root-id N] [--manifest NAME]... [--from-dat Gw2.dat] [--record-flags N] [--manifest-flags N] [--limit N]`
 //!
 //! Writes patcher manifests for the offline asset CDN into `DIR/<fileId>`:
 //! - an `ARMF` root manifest at `--root-id`;
@@ -27,6 +27,8 @@ fn main() -> ExitCode {
     let (mut out, mut build, mut root_id) = (None, 209026u32, 0x7f00_0001u32);
     let mut names = Vec::new();
     let mut dat = None;
+    let (mut record_flags, mut manifest_flags) = (0u32, 0u32);
+    let mut limit: Option<usize> = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         let Some(v) = args.next() else { return usage() };
@@ -36,6 +38,11 @@ fn main() -> ExitCode {
             "--root-id" => root_id = v.parse().unwrap_or(root_id),
             "--manifest" => names.push(v),
             "--from-dat" => dat = Some(v),
+            // Experiment knobs: flags written into every record / every root manifest entry.
+            "--record-flags" => record_flags = v.parse().unwrap_or(0),
+            "--manifest-flags" => manifest_flags = v.parse().unwrap_or(0),
+            // Keep only the first N records of the --from-dat list.
+            "--limit" => limit = v.parse().ok(),
             _ => return usage(),
         }
     }
@@ -48,7 +55,11 @@ fn main() -> ExitCode {
     let all: Vec<Record> = match &dat {
         None => Vec::new(),
         Some(p) => match Archive::open(p) {
-            Ok(a) => records_from_archive(&a),
+            Ok(a) => records_from_archive(&a)
+                .into_iter()
+                .take(limit.unwrap_or(usize::MAX))
+                .map(|r| Record { flags: record_flags, ..r })
+                .collect(),
             Err(e) => {
                 eprintln!("{p}: {e}");
                 return ExitCode::FAILURE;
@@ -63,7 +74,7 @@ fn main() -> ExitCode {
             eprintln!("write {out}/{id}: {e}");
             return ExitCode::FAILURE;
         }
-        files.push(ManifestFile { base_id: id, file_id: id, size: m.len() as u32, flags: 0, name: name.clone() });
+        files.push(ManifestFile { base_id: id, file_id: id, size: m.len() as u32, flags: manifest_flags, name: name.clone() });
         eprintln!("manifest {name:?}: id {id}, {} bytes", m.len());
     }
     let root = root_manifest(build, &files, &[]);

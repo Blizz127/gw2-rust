@@ -104,6 +104,16 @@ DXVK goes into the prefix on first client run (`.dxvk-installed` marker).
   `ADD_HOSTS="cligate.101.ncplatform.net=127.1.0.1 cligate.101.ncplatform.net.=127.1.0.1 assetcdn.101.arenanetworks.com=127.1.0.2"`.
   The trailing-dot form is needed: the client looks up `cligate.101.ncplatform.net.`.
 - The container gets a fixed hostname (`gw2-sandbox`) that resolves to 127.0.0.1.
+- **The client trims its archive.** `MultiArchiveTrim` drops every asset that no
+  manifest it loaded references. A root manifest that lists nothing (run 27) emptied the
+  working copy's `Gw2.dat` index: entry 1 became 8.99 MB of zeros. Every later run then
+  saw all assets as missing. `sandbox/run.sh restore <build>` copies the frozen baseline
+  back (89 GB, a few minutes on ext4). After an experimental run, check the index with
+  `gw2-dat-ls <working Gw2.dat> 1` (entries must stay 1,124,232). Serve manifests that
+  reference every local asset.
+- `GDB_SCRIPT=/sandbox/logs/x.gdb` runs the client under a custom gdb script. Arm address
+  breakpoints from a one-shot `tbreak connect if *(unsigned short *)$rsi == 2` (the first
+  AF_INET connect), since the PE image isn't mapped at start.
 - `GDB_STACKDUMP=1` runs the client under gdb (in the image now). It dumps the PE stack
   (`STACK_LO`..`STACK_HI`, default `0x7c0000`..`0x8c0000`) into
   `logs/stack-dump.bin` when Wine reports a fatal stack overflow.

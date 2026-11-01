@@ -8,3 +8,4 @@ publish.workspace = true
 description = "GW2 portal/login: STS/1.0 message codec and an observe-only capture listener"
 
 [dependencies]
+gw2-dat.workspace = true
