@@ -60,8 +60,9 @@ slot membership and index bounds for all nine type-146 records:
 | 0x3cdbb8 | 4722 | 533055 |
 
 Human/Guardian's matching record therefore references file **527140**.
-The archive payloads themselves were not loaded in this check; model
-validity and rendering success remain unverified.
+A [subsequent archive check](209026-character-model-records.md#archive-presence-and-fallback-scale)
+confirms that all nine are present as MODL containers with bounded chunk
+framing. Model validity and rendering success remain unverified.
 
 Source hashes: table file 1282830
 `e5d11e4fae8627d3efced749e7ab599b26abac59e502716aaf7d63ef509bb81f`;

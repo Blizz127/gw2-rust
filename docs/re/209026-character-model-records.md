@@ -26,7 +26,7 @@ three tests succeed:
 
 An empty list or no match returns null. The model stores that result at
 +0xe8. It also derives scale +0xf0 through `0x1411674c0` using race;
-that helper's scale table is not part of this trace. The ordinary
+the follow-up below resolves that helper's constants. The ordinary
 classification branch uses the existing coreStats values. Alternate
 classification values and mode overrides remain as described in the
 model-input note.
@@ -65,6 +65,37 @@ assertion; a bounded follow-up found that array empty. The reference's
 resolution source is now established by the [file-fixup follow-up](209026-content-file-references.md): the base loader selects the first
 container's shared table, yielding Human/Guardian model file 527140.
 The raw values in the table above remain relocation indexes, not file IDs.
+
+## Archive presence and fallback scale
+
+A read-only REA archive check found all nine resolved model files. Each
+is a `MODL` packfile with flags 1 (32-bit pointers), containing these
+bounded chunks: MODL version 65, SKEL version 1, PRPS version 0, ANIM
+version 25, GEOM version 1 and ROOT version 1. This checks archive reads
+and chunk framing, not model payload semantics, dependencies or renderer
+acceptance.
+
+Human/Guardian file **527140** is 327,688 bytes, SHA-256
+`882eed54b107d9f98e096408caf8f4e2782a11f765b427bd287a9dd5721b4baf`.
+Its chunk payload lengths in the order above are 434, 8,129, 112, 9,290,
+308,710 and 8 bytes. The private evidence records sizes and hashes for
+all nine files.
+
+Complete scale helper `0x1411674c0` returns the float at `0x141933f5c`
+only for race 3: bits **0x3fb33333**, approximately 1.4. Every other
+input returns the float at `0x141924c5c`: bits **0x3f800000**, exactly 1.
+Thus Human race 2 contributes no additional scale factor through model
++0xf0. The fallback loader multiplies its view-derived scale by +0xf0
+only when model +0x48 is nonnull or mode +0x38 is 1; the view-derived
+scale and renderer transforms remain separate inputs.
+
+Evidence: `ev_9551c1790d3cb418d095c8373367c83a2f30f31c821dabad2b7f5b835a0fa51e`
+(archive/chunk census),
+`ev_4fd4e15df21310196c36fe8b5d92e46ae9992f90fca433a1206ed49011d79455`
+(scale helper), and
+`ev_9e65a48b974531d60d562253a9840075a9153a17b4ab3e101607920ebc49d9d1`
+(scale constants). Private bundle:
+`~/re/gw2/notes/209026-fallback-model-assets-1.json`.
 
 ## Callback when replacement loading produces no model
 
