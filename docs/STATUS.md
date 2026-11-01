@@ -108,6 +108,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     The new `gw2-summary-check` checks version-11 structure
     without printing values or claiming content/preview validity; two focused
     tests, checker/census builds and six CLI smoke cases pass.
+    The six preview records now map to type-66 skin data IDs and four type-9
+    Word color IDs each. `SummaryV11::preview_equipment()` exposes them with
+    the observed negative/zero skip rules; three summary tests and checker
+    build pass. Named slot mapping and runtime rendering remain unverified.
     Static refresh mapping identifies client ID 25, pending ID-17 list records,
     and completion event 0x65 returning to char_select on success; runtime
     ordering remains untested.

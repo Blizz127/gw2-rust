@@ -234,7 +234,8 @@ The converter also copies six 12-byte records from summary offsets
 0x3d, 0x49, 0x55, 0x61, 0x6d and 0x79 to preview-description offsets
 0, 0x0c, 0x18, 0x24, 0x30 and 0x3c. If a record's first signed Dword is
 negative it clears that entire output record; otherwise it copies the Dword
-and following eight bytes. Their content meaning is not yet established.
+and following eight bytes. The subsequent equipment trace below establishes
+skin and color data IDs for these fields.
 It clears 12 bytes at output +0x78. The copied appearance region ends at
 +0x74; the inspected converter does not write the intervening +0x75–0x77.
 
@@ -253,6 +254,49 @@ the literal **profession** key at `0x141ad0478`. It then reads +4 at
 Both belong to an object published under **character**. Thus summary +4 is
 level and +5 is profession; the enum labels match the creation request.
 The summary-level check admits zero, unlike creation's 1–80 check.
+
+### Preview equipment keys
+
+The later builder trace resolves the six 12-byte records. `0x14147da90`
+passes the preview description to `0x14147cd50`, which loops over exactly
+six entries. Entry +0 is a skin data ID; entries +4/+6/+8/+10 are four
+unsigned 16-bit color data IDs, all little-endian in the summary.
+
+The builder skips a zero skin key. A nonzero key goes through content-service
+slot +0x240 (`0x1412e1ec0`) to type **66 (0x42)**. Both that dispatch and
+color slot +0x100 (`0x1412e1ba0`, type **9**) use virtual +0x70, which resolves
+through `0x1412e1be0` to the same **data-ID index** mapped for map definitions.
+These are not the content records' separate UID fields.
+
+After skin lookup, an optional substitution helper `0x14140ef10` can replace
+the result. A nonzero skin +0x80 causes this equipment record to be skipped;
+otherwise +0x88 must be nonnull, with the explicit assertion `skinArmor`.
+The armor record's model pointer and type-9 color parameter records supply
+the preview material setup. The substitution policy, +0x80 enum labels and
+the six records' named equipment-slot mapping remain unresolved.
+
+Combining this with the converter: a **negative signed skin Dword** clears
+the preview record; zero is skipped by the builder. Positive skin IDs retain
+the four color keys. Missing skin lookup also skips the record in the inspected
+loop. These branches do not prove that a complete empty-equipment character
+will render correctly.
+
+`SummaryV11::preview_equipment()` now exposes six optional skin/color views
+with those skip rules, preserving the original bytes. It does not resolve
+the content IDs. The three focused summary tests and summary-check build pass;
+the new test checks positive/zero/negative skin keys, Word byte order and the
+last color's boundary before the scene GUID at +0x85. No raw field values are
+added to checker output.
+
+Evidence bundle: `~/re/gw2/notes/209026-summary-equipment-static-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_8ea61bd53ba222bb1d7f981afe94ddc57809386e657ca54b0debe297ff270c1e` | Preview builder forwards description to equipment helper. |
+| `ev_dc932b4b34eecb864feaddeee976ca572ed3c2b47ce67393680b5010ed3ad9b2` | Six-entry loop, skin key, four Word colors and skip/material paths. |
+| `ev_9faebd90722c276b130de4919d4f167db942f6f743d44d86e2310499eef02427` | Vtable targets, `skinArmor` assertion and substitution helper entry. |
+| `ev_c2e2556d9c982b3de8807fe4aba3ac631560b1d5916c7dc8aaf88618288f8b2c` | Type-66 skin and type-9 color dispatch. |
+| `ev_078f9d37467f04f288d17d05edde5084c348a6c22e2e2cdda2b857e06fb7e254` | Shared data-ID lookup implementation. |
 
 Private REA bundle: `~/re/gw2/notes/209026-summary-preview-static-1.json`.
 

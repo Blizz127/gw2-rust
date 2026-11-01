@@ -15,6 +15,13 @@ pub struct SummaryV11<'a> {
     bytes: &'a [u8; V11_SIZE],
 }
 
+/// One equipment record after the summary-to-preview skip rules.
+/// Content IDs are not resolved or validated by this view.
+pub struct PreviewEquipment {
+    pub skin_data_id: u32,
+    pub color_data_ids: [u16; 4],
+}
+
 impl<'a> SummaryV11<'a> {
     pub fn parse(bytes: &'a [u8]) -> Result<Self> {
         let bytes: &[u8; V11_SIZE] = bytes.try_into().map_err(|_| {
@@ -66,6 +73,23 @@ impl<'a> SummaryV11<'a> {
     /// The 45-byte block copied by the client's preview converter.
     pub fn appearance(&self) -> &'a [u8] {
         &self.bytes[6..51]
+    }
+
+    /// Six skin/color records in summary order (named slots remain unresolved).
+    /// Negative skin IDs are cleared by the converter; zero is skipped by the
+    /// builder. Neither branch changes the original summary bytes.
+    pub fn preview_equipment(&self) -> [Option<PreviewEquipment>; 6] {
+        std::array::from_fn(|i| {
+            let offset = 0x3d + i * 12;
+            let skin = i32::from_le_bytes(self.bytes[offset..offset + 4].try_into().unwrap());
+            (skin > 0).then(|| PreviewEquipment {
+                skin_data_id: skin as u32,
+                color_data_ids: std::array::from_fn(|color| {
+                    let start = offset + 4 + color * 2;
+                    u16::from_le_bytes([self.bytes[start], self.bytes[start + 1]])
+                }),
+            })
+        })
     }
 
     pub fn race(&self) -> u8 {
@@ -149,5 +173,41 @@ mod tests {
                 .unwrap()
                 .passes_preview_sex_check()
         );
+    }
+
+    #[test]
+    fn summary_equipment_decodes_all_six_records_and_preview_skip_rules() {
+        let mut bytes = boundary_fixture();
+        let skins = [1i32, 300, i32::MAX, 0, -1, i32::MIN];
+        for (i, skin) in skins.into_iter().enumerate() {
+            let offset = 0x3d + 12 * i;
+            bytes[offset..offset + 4].copy_from_slice(&skin.to_le_bytes());
+            for (j, color) in [0u16, 300, 0x1234, u16::MAX].into_iter().enumerate() {
+                let start = offset + 4 + 2 * j;
+                bytes[start..start + 2].copy_from_slice(&color.to_le_bytes());
+            }
+        }
+        let summary = SummaryV11::parse(&bytes).unwrap();
+        let records = summary.preview_equipment();
+        for i in 0..3 {
+            let record = records[i].as_ref().unwrap();
+            assert_eq!(record.skin_data_id, skins[i] as u32);
+            assert_eq!(record.color_data_ids, [0, 300, 0x1234, u16::MAX]);
+        }
+        assert!(records[3..].iter().all(Option::is_none));
+        assert_eq!(summary.as_bytes(), &bytes);
+        // The last color must end immediately before the scene's +0x85 GUID.
+        bytes[0x79..0x7d].copy_from_slice(&7i32.to_le_bytes());
+        bytes[0x83..0x85].copy_from_slice(&0x5678u16.to_le_bytes());
+        bytes[0x85] = 0xef;
+        let summary = SummaryV11::parse(&bytes).unwrap();
+        assert_eq!(
+            summary.preview_equipment()[5]
+                .as_ref()
+                .unwrap()
+                .color_data_ids[3],
+            0x5678
+        );
+        assert_eq!(summary.as_bytes()[0x85], 0xef);
     }
 }
