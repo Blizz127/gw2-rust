@@ -77,7 +77,10 @@ The direct caller `0x1411bc8e0` resolves its integer argument through
 `0x1411b4500`, stores the returned character at its own +0x18, asserts that
 it exists, then calls the setter. This establishes an existing-character
 lookup before assignment. The incoming message and creation/finalization
-sequence are still unresolved; no speculative population packet was sent.
+sequence are not yet sufficient for bootstrap; no speculative population
+packet was sent. Follow-up [character-control analysis](209026-character-control.md)
+identifies server 444's equal-index branch as one path into this setter,
+and confirms that the loader's getter itself rejects unfinalized characters.
 
 ## Evidence
 
