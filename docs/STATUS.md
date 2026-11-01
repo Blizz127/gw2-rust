@@ -101,8 +101,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     [re/209026-character-protocol.md](re/209026-character-protocol.md).
   - **Static character-creation path:** creation context sends ID 415 through
     mission protocol 0, group 39. Registration and descriptor establish its
-    bounded string, fixed/variable arrays and scalar wire layout. Mission
-    bootstrap, reply and runtime creation remain unverified. See
+    bounded string, fixed/variable arrays and scalar wire layout. The static
+    creation-scene exchange maps server 1049/client 410 and server 1050/client
+    411, plus the view readiness flags. Runtime startup and creation remain
+    unverified. See
     [re/209026-character-creation.md](re/209026-character-creation.md).
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
