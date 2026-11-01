@@ -174,6 +174,27 @@ values, or a completed controlled-character/map startup.
 
 ## Offline framing check
 
+### Typed health-frame scope
+
+The typed health codec covers IDs 256–260 with an explicit character index
+and operation variant. Creation includes a raw state byte, rate and the five
+other floats; existing-value updates omit state/rate, current-only updates
+have two floats, rate-only updates have one and removal has no further
+fields. It preserves float bit patterns and unknown state bytes for bounded
+framing inspection. It does not mutate game state, choose health defaults
+or validate a component's existence. Decoding advances the input only after
+one complete frame succeeds; all variant payloads have fixed size.
+
+Implemented as `gw2_proto::health::HealthFrame209026` with an operation
+enum. Three focused tests and `cargo build -p gw2-proto --lib` pass.
+Hand-authored fixtures cover all five message IDs, raw state preservation,
+negative zero/NaN/infinity bit patterns, distinct creation/update field
+orders and an output prefix. A concatenated stream checks every boundary;
+all truncations plus invalid IDs and an overflowing index leave the input
+unchanged. These are local framing checks; no health message was sent.
+
+### Descriptor/census validation
+
 The hash-guarded extractor wrote private mode-0600
 `data/protocol/209026/character-health-endurance.xml` (733 bytes, SHA-256
 `d37b82b7e323ece6dbdc9bdd1d8e76b9a51659504f57aa9fe22ed6c73e99e915`).
