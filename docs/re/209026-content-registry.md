@@ -4,6 +4,23 @@ Static REA analysis and a read-only archive check, 2026-11-01. Target identity
 is recorded in [client-build.md](../client-build.md). No client UI progression
 or character replay occurred.
 
+`gw2_dat::content::ContentIndex` exposes a borrowed view of the verified
+64-bit `cntc` / `Main` version-0 header, type metadata, 16-byte index entries
+and raw content bytes. It accepts the observed uncompressed-content mode
+(flags bit 0 clear), checks relative array bounds and record offsets, and
+does not claim to relocate content references or resolve GUID/name indexes.
+Type metadata may be absent outside the first base container, as the client
+uses the first container's shared type table.
+
+Three focused tests and the library build pass. An offline REA smoke reads
+all 32 base containers through the Rust view: **982,772 index entries**,
+with the expected 1,554 type-45, ten type-137, 78 type-147 and one type-260
+records. The first container has 483 type metadata entries; the other 31
+have none. Selected record type fields agree with their index entries.
+This verifies index framing, not complete record or relocation semantics.
+Evidence: `ev_209d8f8c9838c51beeda293358f5a73c13e59625b6a55df5e694178278c859ae`,
+private bundle `~/re/gw2/notes/209026-content-index-rust-check-1.json`.
+
 ## Constant keys resolve through GUIDs
 
 The [appearance keys](209026-appearance-validation.md) 50–59 select entries

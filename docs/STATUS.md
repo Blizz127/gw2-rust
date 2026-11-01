@@ -13,6 +13,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
   Queensdale's 20 chunks decode with explicit `--max-elements 16000000`;
   its occlusion chunk exceeds the unchanged four-million default. See
   [re/209026-packfile-reader-bounds.md](re/209026-packfile-reader-bounds.md).
+  A borrowed `ContentIndex` now reads the verified base-container layout.
+  Three focused tests/build and all 32 frozen containers pass, enumerating
+  982,772 records with the independently established map/appearance/palette/
+  answer counts. Content relocation remains outside this view; see
+  [re/209026-content-registry.md](re/209026-content-registry.md).
 - The client runs offline in the sandbox (Wine 10 and GE-Proton 11).
   - **Silent-connection blocker solved (2026-10-31, run 21)**:
     - Cause: the client's StsLib address lookup recurses forever when the host's only
