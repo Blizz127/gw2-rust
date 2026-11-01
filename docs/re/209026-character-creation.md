@@ -91,7 +91,7 @@ at `0x141b7db70` explicitly names state 0 **char_create**, state 3
 **char_create_load**, and state 4 **char_select**. This establishes the scene
 transition's target, not that its rendering/assets have worked at runtime.
 
-## Later result candidates
+## Result handlers and next request
 
 Server ID 1048 has two GUIDs, String(20), Word, two Qwords, and a u16-counted
 Byte array with descriptor maximum 1024. Handler `0x141412840` passes the name,
@@ -102,10 +102,36 @@ does not pass the second GUID or Word to that callee. Its blob destination is
 the existing record's 512-byte area; the descriptor maximum must not be treated
 as evidence that a 1024-byte fixture is valid for this consumer.
 
+The view slot resolves to `0x14094b090`. It returns without further action in
+states 1/2 (char_create_cinema and char_create_cinema_load); otherwise it calls
+slot +0x48, `0x14094b030`. That routine obtains the creation-context name and
+passes it with view +0x7a0 to slot +0x60, `0x14094b180`, then clears +0x7a0.
+The latter emits event `0x10000007`, chooses a scalar from the supplied value,
+setting 0xbb or `0x14023b9c0`, calls `0x14023d7e0` with it, then starts the
+name-based transaction at `0x14023c5f0`. The scalar's meaning is unresolved.
+
+The name transaction has type `0x80000015`, vtable `0x141923798`, and a
+20-unit name buffer at +0x40. Its send method `0x14023e460` calls
+`0x140241b10`, which sends **auth client ID 22**: request-ID Dword followed
+by the name string. Completion `0x14023e070` copies its GUID/name to globals
+on zero error and emits event 0x5d with a 96-byte result. This is evidence of
+a further auth transaction after the character-list update, not a direct
+return to character select or a completed world entry. The reply and following
+route still need tracing.
+
 Server ID 1051 has four Dwords; handler `0x1414128f0` takes their low Words
-and emits event `0x10000002`. These are useful candidates for later capture,
-but their ordering relative to request 415 and their success/error semantics
-have not been established by runtime evidence.
+and emits event `0x10000002`. The creation scene subscribes to that event and
+`0x10000001` at `0x14029d7da`. Event 1 disables form controls; event 2 reaches
+`0x14029bae5`, passes the four-Word result and current name to `0x1402eeac0`,
+then reenables controls 0xe/0xf. The callee chooses localized error text
+(special handling for first-Word codes 0x19/0x1d/0x1f), formats the result
+through `0x1402ee890`, and constructs a dialog via `0x1410708c0`.
+Thus ID 1051 feeds the **creation error UI**; it is not a demonstrated success
+acknowledgement. Exact localized meanings, runtime ordering relative to request
+415, and successful creation remain unverified.
+
+These paths are static findings only. The User Agreement decision remains
+pending; no UI acceptance, creation fixture or runtime continuation was added.
 
 ## Private schema preparation
 
@@ -133,10 +159,18 @@ Evidence: `ev_327f5b54412d9d00b8209f927420c279eaeab8de5fc4c054b8933f5a5d8e4473`
 ## Evidence
 
 Private REA bundles: `~/re/gw2/notes/209026-character-static-6.json` and
-`~/re/gw2/notes/209026-mission-static-4.json`.
+`~/re/gw2/notes/209026-mission-static-6.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_9a473d0cbded76ac95369395f9c77b8df6fbec7b1976ad0b569f1d5867b4ef5b` | Creation scene event subscription and control branches. |
+| `ev_e0e5e4f17e05a938f9a4289384799face8a139e3407067af8ce16dd2057f98d3` | Error event feeds localized error dialog and restores controls. |
+| `ev_4e0a0e9362b2c28403e750448ec283347e7e4a459d9f057533bf26d2931cdd12` | ID-1048 view callback and name handoff; error dialog formatter. |
+| `ev_d9c7619b92b694a5e30d1fac6c2093c9d03574c26c68544698b82945df86958d` | View slot +0x60 starts scalar and name transactions. |
+| `ev_1bed53de7a1f8755fceb6c700c7ee7700011983c9b36c2872054ee6a68a62bfe` | Name transaction constructor and type/vtable. |
+| `ev_4816c87a4f94140aa735cef266456512d790d982f1dfe22444a0712b37f996ba` | Transaction vtable and shared state machine. |
+| `ev_c3310a4510db035a33f2fb45050401a1a0862c95a683dfdcb504a405dd59cf78` | Send/completion methods, selected GUID/name globals, event 0x5d. |
+| `ev_e0837fc840535bd064a4c28aa1fec7fd589569ebbdcac9ec7c4b77702bc932c4` | Auth ID-22 serialization. |
 | `ev_b79b1e42d90496e1944a1f9123b4a3fc27dad888d1cf8968db1ceef1e52744ea` | All group-39 descriptor IDs, fields and handlers. |
 | `ev_bf7245d05b6961418c418309211243fac4c67d2c4ce852b208a3c6b2289f7ea9` | Post-join readiness test and server registration table. |
 | `ev_08a08823c58ceb53c8dd62c2b9b89cfc8dc8c3bffe6dd90c26967cc6ee6534e3` | Empty client 410/411 senders. |
