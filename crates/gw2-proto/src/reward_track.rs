@@ -12,7 +12,7 @@ pub struct RewardTrackCreationFrame209026 {
     pub player_index: u32,
     /// Numeric IDs passed to content-service virtual +0x70 for type 353.
     pub track_ids: [u32; 4],
-    /// One raw byte per track slot; gameplay meaning is unresolved.
+    /// Raw pin value per slot (`m_pinnedTracks`); accepted values unresolved.
     pub slot_bytes: [u8; 4],
 }
 

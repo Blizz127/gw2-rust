@@ -11,6 +11,10 @@ virtual +0x70, distinct from specialization wire UIDs at +0x14.
 
 ## Server 565
 
+The final four raw Bytes are now identified as **pin values** by the
+[m_pinnedTracks getter assertion](209026-reward-track-slots.md). Their
+accepted value domain remains unverified.
+
 Protocol 0/group 0 pair `0x142170670` associates descriptor `0x1425d4370`
 with handler `0x141259d00`. The wire fields after the little-endian ID are:
 
@@ -78,9 +82,10 @@ remain unresolved.
 
 ## Adjacent messages and later initialization
 
-These descriptors/handlers are mapped, but their setter semantics have
-not yet been fully traced. All begin with a player-index Dword and require
-the existing manager:
+The [slot follow-up](209026-reward-track-slots.md) now maps 568 to active
+track selection, 569 to pin values, 566 to map-specific track selection
+and 567 to separate keyed state. All begin with a player-index Dword and
+require the existing manager:
 
 | ID | Descriptor | Handler | Remaining wire fields | Callee |
 | --- | --- | --- | --- | --- |

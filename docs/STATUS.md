@@ -259,6 +259,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     specialization progress listener is now traced: final progress
     notification refreshes matching slot bytes without clearing traits;
     another 640 assignment would clear them. No replay was performed.
+    [Slot follow-up](re/209026-reward-track-slots.md) identifies 565/569
+    pin values, 568 active-track selection and 566 map-specific selection.
+    Pin value domains and 567 keyed-state meaning remain unresolved.
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message
