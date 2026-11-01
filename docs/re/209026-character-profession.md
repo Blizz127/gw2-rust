@@ -157,6 +157,64 @@ Private bundle: `~/re/gw2/notes/209026-guardian-meter-1.json`.
 | `ev_cf4a421cf1d4d3c282942d5fd292d206107f44f0cd0ce3aff9541b61d69fd2be` | timeGetTime import, update/removal handlers, five-float 479 descriptor and raw-byte getters. |
 | `ev_cd25a14fbd23545b97767a6fc979e04256188b2c2d71ea706dbc62213f5407ea` | 480 descriptor, 0.001 constant, removal body and bounded clock-reference search. |
 
+### Specialization-dependent byte check
+
+Guardian requirement predicate `0x141294870` requires evaluated meter
+current >= its first integer argument. It additionally compares the second
+integer argument (signed <=) with stored first byte +0x90 only when
+`0x14122aa20(character +8)` returns **3**. The second byte +0x94 is not
+read by this predicate. Secondary-interface getters `0x1403481d0` and
+`0x14038be00` return the two stored values; this does not name them.
+
+The condition is now traced to specialization state:
+
+1. Character +8 virtual +0xe0 (`0x1411d84a0`) returns its associated player,
+   treating player index zero as absent.
+2. Player virtual +0x30 (`0x1411bb3f0`) returns embedded player +0x9cc0.
+   Its constructor `0x141224c70` installs vtable `0x14216b2f0`; diagnostics
+   identify **ChCliSpecialization.cpp**.
+3. Specialization virtual 0 (`0x141225360`) gets slot 2 through virtual
+   +0x30 (`0x141225440`), reading the pointer at component +0x68. If present,
+   it returns the content Dword at +0xc8.
+4. If slot 2 is empty, it reads the player's owned character, obtains its
+   profession through primary +0xa0 (`0x1411d8610`, assertion **m_profession**),
+   and calls profession virtual +0x18. Guardian's entry is `0x1402406f0`,
+   returning **1**. Missing player/owned character yields zero along the
+   inspected guards; an owned character with missing profession is not guarded.
+
+Construction clears all three specialization pointers at +0x58. Therefore
+an unconfigured player with an owned Guardian reaches discriminator 1,
+not the first-byte comparison branch for 3. This does not establish
+playable defaults for either byte or the meter, nor name the discriminator
+values. Profession virtual +0x18 is distinct from the profession enum
+getter at +0x40, even though Guardian returns 1 from both.
+
+The separate primary Guardian predicate `0x141294920` accepts its argument
+values 12..14, and accepts 15 only when this same discriminator is 5.
+Its argument's complete meaning and callers are not resolved here.
+
+Private bundle: `~/re/gw2/notes/209026-guardian-specialization-state-1.json`
+(1,097 records, 23,946,681 bytes). A broad disassembly caller search timed
+out; its only retained useful output was a vtable pointer. A hash-bound
+E8/E9 candidate scanner subsequently located direct references, but those
+unconfirmed candidate boundaries are not used to assign gameplay names.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_ef9fda63d669459d236a44fc746aa84e9e87b026fb36e021020ddb24ab1cc05a` | Guardian requirement predicate and primary/secondary vtables. |
+| `ev_9f22c9fa9292ad0741a9f5a76fb2818c35bd6b1d192cf59e161a3c3c148fdf8f` | Null-checked specialization wrapper and secondary methods. |
+| `ev_f55a30d294b8db9a80cc9d7934a5b810815afc461367fccfed7c6541da8e00f2` | Character associated-player getter. |
+| `ev_3d89ccbccce7b98ff62195f695e179bc9cbc34844b5c120081c21d380daa9584` | Getter tail and player vtable installation. |
+| `ev_593f297b683d36518cd7882541898b7b24f97c0d6ced560a72f67fd672fa1b15` | Player getter slots and both byte getters. |
+| `ev_a6d2ad574b1c3142a88b7d4d53ea661306d824018f00dcdf21267b04a1314567` | Embedded player getters and specialization construction call. |
+| `ev_670d9c210b55cf17f5e078915912881d6a64db4797f55d8c3e0c341213e67974` | Specialization constructor and zeroed arrays. |
+| `ev_4920ed379241834e9c480b4313c2767ba18f32aa62caf0235e83edd8cbdad870` | Specialization vtable and named source/assertions. |
+| `ev_7723cbb7f98d156a6ccce2a75961b23d7ee56f5c7d3875badf7ed1bfa0ebe8a2` | Slot-2 discriminator and owned-profession fallback. |
+| `ev_4053d0234749734fa812e23f7fc75309abbc7e6b843e460cb4d78e7920b8f048` | Specialization slot getter and profession getter target. |
+| `ev_3d8b2de1f4e2ed4306837ef2c17c237cb71cdd3a03ac2838fb1cd54d98b9aaf4` | Profession fallback dereference and assertion. |
+| `ev_c607878594c0a4cde2be0faa2f54b6645b8357ef174cb8423abef7531f982248` | Constant-one getter, m_profession literal and candidate references. |
+| `ev_a73d3cd0baa3e42e14ef0ef70db09e43b4d8fe3126f4c97246480abca7419273` | Guardian primary predicate using discriminator 5. |
+
 ### Guardian creation callback boundary
 
 The complete 477 handler constructs the component, stores it through
