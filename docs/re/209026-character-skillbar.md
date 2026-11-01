@@ -118,6 +118,21 @@ Private bundle: `~/re/gw2/notes/209026-skillbar-slot-updates-1.json`
 | `ev_5ba7fd4244aa28d5add7bd6070300563912745959e9a2c2007e74dfdd32c4bdb` | Single/multiple-slot consumer, setting lookup, 624 setter and mask iterator. |
 | `ev_71f25d63585fccaa1ab88f65c9362673fa3477eab3847905ed422b8a85428b0a` | Setting literal, bit-index helper, corrected consumer entry boundary and 626/627 setters. |
 
+## Typed lifecycle and selection frames
+
+`gw2_proto::skillbar::SkillbarFrame209026` covers IDs 618–623 with an
+explicit character index and operation enum. It preserves the raw slot
+byte (including 255) and all mask bits. It does not choose skill contents,
+enforce slot ranges or component lifetime, or interpret 619 as character
+finalization. IDs 624 onward remain outside this typed subset.
+
+Three focused tests and `cargo build -p gw2-proto --lib` pass. Hand-authored
+fixtures cover six layouts, the byte sentinel, a zero mask, the full u32
+mask, raw out-of-gameplay-range slot retention, output prefixes and exact
+boundaries in a concatenated stream. All truncations, invalid neighboring
+IDs and overflowing/overlong Dwords fail without advancing input. These
+are offline framing checks; no messages were sent.
+
 ## Limits and evidence
 
 These findings add component lifetime and rebuild constraints, not valid

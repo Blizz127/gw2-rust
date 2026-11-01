@@ -22,6 +22,7 @@ pub mod guardian;
 pub mod health;
 pub mod player_creation;
 pub mod schema;
+pub mod skillbar;
 
 use std::io::{Error, ErrorKind, Result};
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
