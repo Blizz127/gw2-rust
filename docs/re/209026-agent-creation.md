@@ -36,8 +36,10 @@ value to find the registered factory. Its virtual call at `0x141024ef6`
 reaches the type-0 character factory mapped in
 [character population](209026-character-population.md).
 
-This uses the command/queue path. Required auxiliary data, content
-parameters and subsequent component initialization remain open.
+This uses the command/queue path. The [behavior-data trace](209026-agent-behavior-data.md)
+supports a zero field 3 and empty field 4 on first type-0 creation because
+that branch does not interpret the payload. Content parameters and
+subsequent component initialization remain open.
 The path alone does not establish a working map-entry sequence.
 
 ## Immediate creation through the command path
