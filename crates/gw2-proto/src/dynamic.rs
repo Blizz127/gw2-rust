@@ -183,6 +183,11 @@ pub fn decode_field(f: &Field, rules: &Rules, buf: &mut &[u8]) -> Result<Value> 
             let rule = if f.kind == "BufferVarSmall" { rules.buffer_var_small } else { rules.buffer_var_large };
             let p = rule.ok_or_else(|| unsupported(&f.kind))?;
             let n = read_count(p, buf)?;
+            if let Some(max) = size
+                && n > max
+            {
+                return Err(invalid(format!("{} count {n} over Size {max}", f.kind)));
+            }
             Value::Bytes(take_bytes(buf, n)?)
         }
         "BufferFixed" if rules.buffer_fixed_is_size_bytes => {
@@ -288,7 +293,13 @@ pub fn encode_field(f: &Field, rules: &Rules, v: &Value, out: &mut BytesMut) -> 
         }
         ("BufferVarSmall" | "BufferVarLarge", Value::Bytes(b)) => {
             let rule = if f.kind == "BufferVarSmall" { rules.buffer_var_small } else { rules.buffer_var_large };
-            write_count(rule.ok_or_else(|| unsupported(&f.kind))?, b.len(), out)?;
+            let p = rule.ok_or_else(|| unsupported(&f.kind))?;
+            if let Some(max) = size
+                && b.len() > max
+            {
+                return Err(invalid(format!("{} has {} bytes, Size {max}", f.kind, b.len())));
+            }
+            write_count(p, b.len(), out)?;
             out.extend_from_slice(b);
         }
         ("BufferFixed", Value::Bytes(b)) if rules.buffer_fixed_is_size_bytes => {
@@ -481,6 +492,43 @@ mod tests {
         }
         assert!(decode_frame(msgs, &rules, &mut &[99u8, 0][..]).is_err());
         assert!(encode_message(&msgs[0], &rules, &Value::U8(1), &mut BytesMut::new()).is_err());
+    }
+
+    #[test]
+    fn variable_buffers_enforce_size_before_copying_or_writing() {
+        let rules = Rules {
+            buffer_var_small: Some(CountPrefix::U8),
+            buffer_var_large: Some(CountPrefix::U16),
+            ..Rules::default()
+        };
+        for (kind, prefix) in [("BufferVarSmall", vec![3]), ("BufferVarLarge", vec![3, 0])] {
+            let mut field = Field { kind: kind.into(), name: String::new(), size: Some(3), type_name: None, fields: vec![] };
+            let mut wire = prefix.clone();
+            wire.extend_from_slice(&[0x81, 0, 0xfe]);
+            let mut cursor = wire.as_slice();
+            let value = Value::Bytes(vec![0x81, 0, 0xfe]);
+            assert_eq!(decode_field(&field, &rules, &mut cursor).unwrap(), value);
+            assert!(cursor.is_empty());
+            let mut output = BytesMut::new();
+            encode_field(&field, &rules, &value, &mut output).unwrap();
+            assert_eq!(output.as_ref(), wire);
+
+            for end in 0..wire.len() {
+                assert_eq!(decode_field(&field, &rules, &mut &wire[..end]).unwrap_err().kind(), ErrorKind::UnexpectedEof);
+            }
+            // Reject the count before trying to read a missing oversized body.
+            let mut over = prefix.clone();
+            over[0] = 4;
+            assert_eq!(decode_field(&field, &rules, &mut over.as_slice()).unwrap_err().kind(), ErrorKind::InvalidData);
+            let mut output = BytesMut::from(&[0x55][..]);
+            assert!(encode_field(&field, &rules, &Value::Bytes(vec![0; 4]), &mut output).is_err());
+            assert_eq!(output.as_ref(), [0x55]);
+
+            field.size = Some(0);
+            let empty = vec![0; prefix.len()];
+            assert_eq!(decode_field(&field, &rules, &mut empty.as_slice()).unwrap(), Value::Bytes(vec![]));
+            assert!(encode_field(&field, &rules, &Value::Bytes(vec![1]), &mut BytesMut::new()).is_err());
+        }
     }
 
     #[test]

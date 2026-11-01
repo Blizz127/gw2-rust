@@ -99,6 +99,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     `gw2-capture-census` reports IDs/boundaries without field values; focused
     tests/build/clippy pass and the run-58 capture parses completely. See
     [re/209026-character-protocol.md](re/209026-character-protocol.md).
+    The dynamic codec also now enforces variable-buffer `Size` maxima in both
+    directions, matching the client; two focused tests and observer/census
+    builds pass, and saved capture boundaries remain unchanged.
   - **Static character-creation path:** creation context sends ID 415 through
     mission protocol 0, group 39. Registration and descriptor establish its
     bounded string, fixed/variable arrays and scalar wire layout. The static

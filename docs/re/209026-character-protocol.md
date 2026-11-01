@@ -220,6 +220,24 @@ using the saved account body parses IDs 8, 10 and 7 completely; this verifies
 fixture boundaries, not a captured server stream or client consumption of a
 nonempty array.
 
+## Variable-buffer maximum lengths
+
+REA evidence `ev_5af038444e903f75301152125a4498c201ddca2c8848b55fc907ea794d83bc06`
+shows encoder kind 20 at `0x140ff11f9` reading a one-byte count and rejecting
+it above the descriptor's low 16-bit maximum. Kind 21 at `0x140ff1298` does the
+same with a two-byte count. Both checks precede copying the payload; upper
+descriptor bits serve separate flags. For the extracted schemas' explicit
+`Size` maxima, the Rust dynamic codec must enforce this limit on both input
+and output. Previously it read/wrote the count but ignored `Size` for variable
+buffers, unlike variable arrays. Raw evidence is retained privately in
+`~/re/gw2/notes/209026-buffer-bounds.json`.
+
+The correction passes the focused buffer-bound test and the existing
+variable-field test. Coverage includes exact maximum, zero maximum, every
+truncation, an oversized count without a body, and unchanged output on encode
+rejection. Observer and census builds pass; the saved run-58 capture retains
+its six messages/233 bytes. No live client was launched for this change.
+
 ## Character-slot capacity uses the account array
 
 The character-select scene calls `0x140311c80` before comparing the current
