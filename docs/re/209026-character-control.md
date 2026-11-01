@@ -51,6 +51,10 @@ and later streaming checks must still pass. Their creation messages and
 required ordering remain unresolved. Equality of A and B is an observed
 branch condition, not proof of the fields' account/ownership semantics.
 
+Follow-up [population analysis](209026-character-population.md) identifies
+server 428's player insertion, the type-0 character factory and server 170's
+finalization call. Initial agent creation and component setup remain open.
+
 ## Offline validation
 
 The hash-guarded private extraction script found exactly one server 444

@@ -171,6 +171,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     equal-index branch assigns an existing character; an offline fixture
     parsed two frames completely (16 bytes). Population ordering remains open.
     See [re/209026-character-control.md](re/209026-character-control.md).
+    Server 428 populates player entries; server 170 finalizes an existing
+    character with player/monster and association checks. A three-message
+    framing fixture parsed completely (34 bytes), without client replay.
+    Engine-agent creation and initialization remain unresolved; see
+    [re/209026-character-population.md](re/209026-character-population.md).
     See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.
