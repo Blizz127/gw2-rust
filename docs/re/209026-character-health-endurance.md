@@ -337,3 +337,55 @@ Private bundle: `~/re/gw2/notes/209026-character-health-endurance-static-1.json`
 | `ev_3aedb5b10a834e84b42a900032b957825320972c009eb314540f5e9f98516d77` | Health descriptor, float setters and meter operations. |
 | `ev_38375ed008e6945ca241fcefe66736e0c1c56484c2aa35478741bc9481c7f97d` | Health vtable/getters and named meter maximum assertions. |
 | `ev_d8c53bac43bb3003a4d2be082894a8c2c2aa1eb46fd4436e68ee2bbaed299c1a` | Hash-guarded two-message schema extraction. |
+
+## Health setter notifications: values differ from stored meter state
+
+A further static trace identifies the six setter notifications without naming
+F5. All use the listener list at health +0x48 through `0x1411cffa0`.
+That dispatcher supplies the listener as RCX, the owner stored at health
++0x78 as RDX, and the float addressed by its fourth argument as XMM2.
+The small trampolines select these listener virtual methods:
+
+| Setter input | Listener virtual offset | Float passed to listener |
+| --- | --- | --- |
+| F0, first current | +0x08 | Original setter input. |
+| F1, first maximum | +0x10 | Original setter input. |
+| F2, first rate | +0x18 | Original setter input. |
+| F3, second current | +0x20 | Original setter input. |
+| F4, second maximum | +0x28 | Original setter input. |
+| F5, unnamed field | +0x10 | First meter maximum, read from health +0x10. |
+
+For F0–F4, the setter saves the incoming float in its caller-provided stack
+space before calling the meter operation, then passes that saved float to
+the dispatcher. It does not re-read the meter's post-operation value. Thus,
+for example, a finite current input above the maximum can be clamped in
+storage while the callback still receives the original larger input.
+This is a distinction for future replay/state models, not permission to
+choose out-of-range initialization values.
+
+F5 setter `0x141207730` reads the first maximum, stores its own incoming
+float at health +0x40, then dispatches the saved maximum through
+`0x140255570` (listener +0x10). It does not pass F5 as that callback's float.
+There is no equality test in these setters before dispatch, so unchanged
+inputs still reach the listener-dispatch operation. Individual listeners
+can impose their own behavior; their bodies are not exhausted here.
+
+The shared callback with maximum health is not enough to give F5 a gameplay
+name or derive a valid initial value. It remains a separate raw float in
+the wire codec. A bounded getter-consumer search found no direct E8/E9 calls
+to `0x141207490` or `0x1411d7cb0`; byte-pattern searches for nearby virtual
++0x68/+0x40 calls produced unrelated-interface candidates in the inspected
+windows. These searches are incomplete and do not establish that the
+getter is unused. No client was started or packet replayed.
+
+Private bundle: `~/re/gw2/notes/209026-health-listener-values-1.json`
+(1,267 records, 26,590,115 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_a9913ba0fca47861506f7770e2aa5dfbd29ceeed9ca3ff2e652a36b75a3a2ed7` | F5 getter and complete setter; listener registration/removal implementation. |
+| `ev_950d235ec6c71807e17ee9e56b7e3e7557bcb463a708db991e12f949b9872b42` | Complete F0–F4 setters and dispatcher argument retention. |
+| `ev_73b4c59a63f0bb9ba368b192cd76eb88826d9f3c096c4a4b466d370588aca3eb` | Float/owner dispatch and all five virtual-method trampolines. |
+| `ev_9f98aa7d35e4d810c259ab6424e289f6ad5353a3b6791261499eb51eeb9e5262` | Aligned callback boundary confirms listener RCX and argument dereferences. |
+| `ev_73ec2a03fd4a4af8b89d207e7f659b504e529641a099a1018c3adb87e3c3d4e8` | No direct getter calls; two F5 setter call candidates match previously traced creation/update paths. |
+| `ev_d57dcf9e757e85fcc66686f3984f39a2f89b057947bf0cdc8d6304b3ff70edf8` | No direct calls to the character health-component getter. |
