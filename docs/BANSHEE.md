@@ -5,8 +5,8 @@ system". Tracked as Devbox task 088310d27083. The launcher lead prepares a hidde
 entry now. The GW2 lead tells them the moment the server is connectable, and what the
 client needs.
 
-**Status: NOT connectable yet.** The login and game handshake are still being reverse
-engineered (stage 3).
+**Status: NOT connectable yet.** The current endpoint/argv/readiness contract, which
+supersedes the "Unknown" rows below, is in [LAUNCHER-CONTRACT.md](LAUNCHER-CONTRACT.md).
 
 ## Intended flow (mirrors lotro-rust `docs/BANSHEE.md`)
 
