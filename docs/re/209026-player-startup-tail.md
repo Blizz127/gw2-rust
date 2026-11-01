@@ -75,6 +75,73 @@ notifications and final global callback are not exhausted by this note.
 The evidence narrows allocation requirements; it does not establish an
 empty player object as a complete usable startup state.
 
+## Forced threshold refresh and the zero-point candidate
+
+The tail passes 1 to `0x1411b8ba0` when its second argument is null,
+as in 431. The achievement sum is stored at context +0x260. If the sum
+matches the old value, the helper skips its first refresh block only
+when that second argument is zero. Thus constructor-zero counters alone
+do not bypass the forced startup work.
+
+Context primary virtual +0x38 resolves through `0x14215e000` to
+`0x1411b4b00`. When its cache count +0x4c is zero, it enumerates content
+**type 3** and inserts the records into context +0x38, sorted ascending
+by their unsigned Dword +0x2c. It copies those pointers to the caller's
+array. No character component is allocated by this helper.
+
+The refresh scans that sorted list for the first record whose +0x2c is
+strictly greater than the current achievement sum. It uses that record's
+optional +0x38 object; a null object skips the nested progress work.
+Otherwise it visits at most 32 entries from object +0x28/+0x30, then
+conditionally looks up progress using another referenced record's data
+key and queries its virtual +0x38 with argument 8. This computes a mask
+stored at context +0x2b8. These are bounded pointer/branch observations;
+the gameplay meaning of every nested record is not inferred.
+
+A hash-checked census of all 32 frozen base containers found **121 type-3
+records**, 121 distinct thresholds and no zero thresholds. At a sum of
+zero, the unique first record is data key **101**, threshold **100**, in
+file 1282840 at content offset **0xe048**, SHA-256
+`40368ecc24ac813b0c2f33ab00a1f800be915cac1f9456343052b6dd7b284d1a`.
+Its +0x38 pointer is null. Consequently, for this content and zero sum,
+the nested per-item progress-query loop is skipped and its computed mask
+is zero. The largest nonnull sublist among the 121 records has 19 entries.
+This does not skip the later category enumeration or prove the complete
+startup tail ready.
+
+## Shared preferences callback
+
+Both `0x1411b8ba0` and `0x1411b9680` can finish with
+`0x14027e6d0()->virtual +0x60(0, 0)`. The getter returns static object
+`0x142558400`, whose initial primary vtable is `0x141929860`; +0x60
+resolves to `0x14027e7e0`. Its assertion source names
+**Game/Pref/PrContext.cpp**, and its selector assertion names
+**EPrefLocation**.
+
+The complete callback checks object +0x90 bit 4, then the selected
+location's enable condition. For argument 0, that is +0x90 bit 1. When
+admitted, it compares the existing timestamp against the selected delay
+(argument 0 selects literal 15000), cancels/schedules a callback through
+`0x141069f40`/`0x141069fa0`, updates the timestamp and tracks a pending
+bit at +0x94. It does not dereference another character component.
+The eventual scheduled callback and persistence behavior remain outside
+this trace; no preferences or cache files were read or written here.
+
+Private bundle: `~/re/gw2/notes/209026-player-startup-thresholds-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_c3d7b099a0d106027ea0fdb2484d787b736d9af5f451a74131af3b526bb20b75` | Bounded call census used to select reads, not a complete control-flow proof. |
+| `ev_240e92779abd4a1d09f1443546d44f4b1fadab690b7d8c3ff8378342f1f5c496` | Tail callback arguments and conditional dispatch. |
+| `ev_bb8c11bc81b016416333a585abc0f23ee211dae2185ec23c7a6e733acab449fd` | Forced-refresh argument/branch and static preferences getter. |
+| `ev_62ca150f7db338bb1b0a8c9461dea6e87c88a08f1b24a40c455de5c7bbeaaf0c` | Static object's initial vtable. |
+| `ev_0170be5e828a48bf2e601f76945db3a717733c008bcb2a696599a6e552ac3501` | Preferences +0x60 entry. |
+| `ev_6f790a3b2e613fb4cc381813d2a6d25df68bd62c4f3e7c388e419e1f256ddfb9` | Complete scheduling callback and threshold selection/progress branches. |
+| `ev_27ac1b9f549595bc9ea6d979bb4cb33921b321115f5b2a1d52bd898e4de8d70d` | Preferences subsystem and selector assertion literals. |
+| `ev_1c3d047b12d3bd469194d3c59ec9478b4bfc977ddd3b48fbadece70e0b67cb66` | Context +0x38 entry. |
+| `ev_51ad9eabe5fe13f1ed7a4752ffce8798f230cb5116f6a984c7fbd56ff8bdd131` | Complete type-3 list construction, sorting and copy. |
+| `ev_9cb216855bb3227d1979ee9fba2d632aa290b18313309a8ba795f5f49b791c17` | Hash-checked threshold census and zero-point record. |
+
 ## Evidence
 
 Private cumulative bundle:
