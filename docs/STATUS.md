@@ -123,7 +123,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     creation-scene exchange maps server 1049/client 410 and server 1050/client
     411, plus the view readiness flags. Server 1051 feeds the creation error
     dialog; server 1048 updates the list and, outside cinema states, starts
-    name-based auth request 22. Private partial mission-schema boundary fixtures
+    name-based auth request 22. Auth server ID 8 also supplies that pending
+    name transaction's character GUID through a separate type-0x15 branch,
+    before completion by ID 3. Private partial mission-schema boundary fixtures
     parse correctly. Runtime startup and creation remain unverified. See
     [re/209026-character-creation.md](re/209026-character-creation.md).
   - **Static mission join:** auth request 29 and reply 20 lead through a

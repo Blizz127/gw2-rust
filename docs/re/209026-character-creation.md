@@ -175,9 +175,28 @@ at transaction +0x30 and requires state 3 at +0x20. It invokes virtual slot
 to +0x24. For the name transaction, slot +0x20 is `0x14023e2d0`: it copies
 the 28-byte address to +0x78 and scalar to +0x94. Unlike the generic completion
 reply, this path populates the destination before completion event 0x5d.
-The inspected constructor zeroes the GUID at +0x68, and this callback does not
-fill it; the meaning/use of that zero GUID in subsequent code remains unresolved.
-No additional reply or completed world join is claimed here.
+The constructor zeroes the GUID at +0x68, and this callback does not fill it.
+The separate ID-8 branch below establishes where that GUID comes from.
+No completed world join is claimed here.
+
+Auth server **ID 8 is reused for name selection**, despite its account-data
+role during login. Handler `0x140240850` passes field 0 (request ID) in ECX,
+field 1's GUID in RDX and field 2's GUID in R8 to `0x14023a770`.
+That consumer first matches transaction +0x30 and requires state 3. Its
+type-7 branch fills the login account data, but its **type-0x15 branch** at
+`0x14023a8d0` copies the second GUID directly to transaction +0x68.
+It does not complete the transaction. Thus ID 8 can supply the character
+GUID for request 22 before the ID-3 address/result reply changes state to 1.
+The full ID-8 descriptor is still required for decoding; this branch does
+not turn it into a smaller GUID-only message. The handler also retains its
+connection-flag behavior, separate from the transaction-specific branch.
+
+This establishes a static ordering constraint: the GUID write requires the
+transaction still to be pending in state 3. A late ID 8 after completion
+cannot populate it through this branch. Actual server ordering and client
+continuation remain untested. Server ID 16's GUID is not an alternative on
+the inspected path: its handler only forwards two scalar fields to the
+type-7 account helper and does not forward its GUID.
 
 Completion event 0x5d is dispatched by `0x140950d40`: the byte table at
 `0x140950f78` maps index `0x5d - 0x16` to 6, whose target is `0x140950eba`.
@@ -195,7 +214,7 @@ through `0x1414188d0`. Otherwise `0x14094f4d0` chooses content/map parameters
 and calls `0x141410e80`, the general auth route-request path already mapped in
 the mission-join notes. The ID-3 destination address is not directly consumed
 by these inspected branches. Their exact runtime selection after creation,
-including how the GUID becomes nonzero, remains unresolved.
+remains unresolved; the ID-8 write now explains how its GUID can become nonzero.
 
 Server ID 1051 has four Dwords; handler `0x1414128f0` takes their low Words
 and emits event `0x10000002`. The creation scene subscribes to that event and
@@ -240,10 +259,14 @@ Evidence: `ev_327f5b54412d9d00b8209f927420c279eaeab8de5fc4c054b8933f5a5d8e4473`
 
 Private REA bundles: `~/re/gw2/notes/209026-character-static-6.json` and
 `~/re/gw2/notes/209026-mission-static-9.json`, plus
-`~/re/gw2/notes/209026-appearance-static-1.json`.
+`~/re/gw2/notes/209026-appearance-static-1.json` and
+`~/re/gw2/notes/209026-name-selection-static-1.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_66f8259cc4422b6c5efb30d630cfd82135756e1559367ef4c6316d7139b8a6a5` | ID-8 second-GUID forwarding and pending type-0x15 GUID write. |
+| `ev_2f192fa339e56db90dcbad4b7e5606d820c9b8b20c907cc3d8ff6a22e1e8a80b` | Constructor zeroing, completion GUID copy and address callback. |
+| `ev_e8459273784bbc037aa2641c666a4e75036234928c9bd34db577ca582f2d9ccc` | ID-16 handler forwards scalars, not its GUID. |
 | `ev_58dce70adbe120cf3386545939466e4581f3f2773c4c1cee3330b2091b9e1dc5` | Context appearance, level, name and profession validation. |
 | `ev_b622d260a5d4df02ced8de7c696f8b1e23061fdf863a7e8a2064b5a5d78c15cf` | Appearance byte/branch tables and named assertions. |
 | `ev_79f54260ecfce38afefe516ad1e724811962c04c71adbfbb8ee1be7d6cac2ee9` | Content validation, zero-byte shortcut and sex labels. |
