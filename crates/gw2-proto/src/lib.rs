@@ -22,6 +22,7 @@ pub mod guardian;
 pub mod health;
 pub mod player_creation;
 pub mod schema;
+pub mod skill_palette;
 pub mod skillbar;
 
 use std::io::{Error, ErrorKind, Result};

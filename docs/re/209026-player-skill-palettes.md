@@ -77,6 +77,20 @@ slot eligibility and conditional context flags. Its full gameplay field
 mapping remains unfinished. A matching profession/row alone does not
 establish a usable skill or a valid initial palette key.
 
+## Typed frame and focused checks
+
+`gw2_proto::skill_palette::SkillPaletteFrame209026` encodes and
+transactionally decodes server 612 with the exact field order above.
+It preserves raw bytes and all u32 values without choosing a palette,
+validating gameplay slots or emitting messages automatically.
+
+Three focused tests and `cargo build -p gw2-proto --lib` pass. Independent
+hex fixtures cover distinct key/index varint widths, null selection,
+u32 maxima and raw byte retention. Tests also check append prefixes,
+concatenated frame boundaries, every truncated fixture and invalid IDs,
+overflowing or overlong varints in either Dword position. No client
+messages were sent; these results establish framing only.
+
 ## Evidence and limits
 
 Private bundle: `~/re/gw2/notes/209026-player-skill-palettes-1.json`
