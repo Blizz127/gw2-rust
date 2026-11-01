@@ -54,7 +54,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     callback and sends `/Account/ListMyGameAccounts`. This is a protocol fixture,
     not credential validation or an account database. See
     [re/209026-startsso.md](re/209026-startsso.md).
-  - **Next:** map ListMyGameAccounts and continue with a synthetic local game account.
+  - **Game-account alias passed (run 46):** a one-entry alias fixture is accepted,
+    and the client sends `/Auth/RequestGameToken` with GameCode and AccountAlias.
+    See [re/209026-game-accounts.md](re/209026-game-accounts.md).
+  - **Next:** map RequestGameToken and the ensuing game connection.
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
@@ -65,7 +68,7 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 | --- | --- | --- |
 | 1 | Freeze client, capture traffic, message list for our build | client frozen; REA observations and offline patch/STS captures recorded; complete message list pending |
 | 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
-| 3 | Login stub: redirect, secure login, our own key | TLS/GetHostname and synthetic SSO continuation passed; ListMyGameAccounts captured; game-account/ticket flow pending |
+| 3 | Login stub: redirect, secure login, our own key | TLS/GetHostname, synthetic SSO and game-account alias passed; RequestGameToken captured; token/game connection pending |
 | 4 | Character select / creation | not started |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
@@ -73,7 +76,7 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 
 ## Crates (last full workspace check: 75 pass, clippy clean, commit `31772d8`)
 
-Latest runtime check: run 45 completes synthetic SSO and captures ListMyGameAccounts; container
+Latest runtime check: run 46 accepts the game-account alias and requests a game token; container
 cleanup, executable hashes and archive index count verified. Focused checks cover
 OpenSSL interop and the observer's pipelined StartTls / split-STS / GetHostname reply path.
 The full workspace suite was not rerun for this change.

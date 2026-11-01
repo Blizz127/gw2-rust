@@ -43,3 +43,29 @@ callers, then bounded windows establish behavior. Executable hashes unchanged.
 | `ev_2ad31fe22cdeda5615f8e37d62d8893e0158eb74c5ea60feeb17585244af1955` | Callback object/interface construction. |
 | `ev_98fc20219cd04bcf0a85168dcff6c091b1b1ddc1f643d9f6c72ddfa791980595` | Interface vtable and Alias literal. |
 | `ev_f47da86e4279e60e6570d08db42950b4087babc4bac98cb229acfdcc4411b3f6` | Complete success handler and alias-list construction. |
+
+## Run 46: alias accepted, game token requested
+
+The private reply fixture is
+`<Reply><GameAccount><Alias>BansheeRealm</Alias></GameAccount></Reply>` followed
+by LF. The client reaches the nonempty-alias branch and the list completion
+callback. Its next request, on the same TLS connection, is:
+
+```text
+P /Auth/RequestGameToken STS/1.0
+l:88
+s:5;timeout=29000
+```
+
+The Request contains GameCode (3 characters) and AccountAlias (12 characters).
+No token reply has been sent yet; game connection and character selection remain
+unverified. No Rust change was needed for this experiment: it uses the already
+checked `--reply-xml` fixture path.
+
+REA Evidence
+`ev_86aa828a5425bf65454c678ca75f6a0738b5499e67b99793238defc1aa0cf106`
+is exported in `~/re/gw2/notes/209026-game-accounts-run46.json`. Raw run files:
+`~/gw2-sandbox/runs/run46-codex-game-accounts/`. The wrapper exits 0, removes
+its exact container, confirms unchanged executable hashes and 1,124,232 archive
+entries. REA verifies owned-group cleanup with the previously documented host
+process-survey limitation.
