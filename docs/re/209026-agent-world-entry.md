@@ -102,6 +102,20 @@ entry operations. It does not establish a complete packet sequence or
 valid initial flags, nor exhaust every nested constructor or context
 callback. No additional runtime fixture or inferred defaults are added.
 
+## Typed framing scope
+
+An explicit server-46 frame type can carry index, tick, command flags,
+collision flags, entry options, Point3 and the two raw facing Words. It
+should retain every float bit, raw tag, option and sentinel facing word,
+append encoding and decode one frame transactionally. It supplies no
+initial option defaults and performs no lifecycle validation or sending.
+
+`AgentWorldEntry209026` now implements this scope. Three focused tests and
+the library build pass: literal 27/33-byte goldens and the 25-byte minimum,
+all explicit fields, sentinel and signed-facing bit patterns, raw float
+bits, unsigned maxima, adjacent frames, every truncated golden and
+transactional wrong-ID/overflow rejection. No frame was sent to the client.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-agent-world-entry-1.json`.
