@@ -35,10 +35,11 @@ Both then invoke:
 
 - `0x141208c70` with the 45 bytes: copies them to coreStats +0x18,
   compares against the prior bytes at +0x140, and notifies on change.
-- `0x141208f50` with the first scalar byte: stores a level at +0xac.
+- `0x141208f50` with the first scalar byte: stores earned level at +0xac
+  (named-consumer evidence below).
 - `0x141209100` with the second scalar byte: stores another level at +0xe0.
   Both setters assert level >= 1 and level <= 80 for players, <= 100 for
-  nonplayers. Their exact base/effective-level naming is not established here.
+  nonplayers. The second level's gameplay name remains unresolved.
 - `0x141209440` with the third scalar byte: stores +0x12c and updates
   derived component state. Named consumers establish this as **profession**
   (see the getter trace below).
@@ -84,10 +85,48 @@ This establishes the field's meaning without assigning names to individual
 profession numbers. The component setter itself does not establish a valid
 content definition for every byte value.
 
-The two level fields remain separately identified by storage and getters:
+The two level fields are separately identified by storage and getters:
 virtual 0 (`0x141207eb0`) and +8 (`0x141207f20`) normally return +0xac but
 can return 80 under player-state conditions; virtual +0x10 (`0x140282470`)
-reads +0xe0 directly. Base/effective-level names still need a named consumer.
+reads +0xe0 directly. The first getter is used as earned level by the
+named consumer below; an equally direct name for the second remains open.
+
+### Earned-level consumer
+
+At `0x1406e5331`, the leaderboard-reward path gets coreStats through the
+character +8 interface's virtual +0xa8, calls coreStats virtual 0 with
+argument zero, and passes the result as the first argument to
+`0x1411c29a0`. This wrapper forwards to `0x1411c29c0`, whose first-argument
+bound assertion explicitly names
+`playerEarnedLevel <= CHAR_MAX_LEVEL_PLAYER` (`0x14215fbf0`).
+
+The interface chain is resolved: character constructor `0x1411d2810`
+installs `0x142161250` at +8; its +0xa8 entry is `0x1411d7640`. This getter
+asserts `m_coreStats` and returns interface +0x380, equivalent to whole
+character +0x388. CoreStats virtual 0 is `0x141207eb0`, whose usual result
+is +0xac. This establishes earned-level usage without relying on which
+of two otherwise unnamed level bytes appears first in the message.
+
+The getter's override is material: with its argument zero, a player and
+the checked player-state predicate can cause it to return 80 instead.
+A nonzero argument bypasses that override. Virtual +8 has a separate
+additional context predicate for returning 80. These conditions have not
+been fully named; the wire byte is stored unchanged at +0xac after its
+level-range checks. The second byte is separately stored at +0xe0 and is
+not assigned a base/effective-level label by this trace.
+
+Private bundle: `~/re/gw2/notes/209026-core-earned-level-1.json`
+(956 records, 21,817,044 bytes), static REA only.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_746ada4d530eea3bdc97392df5220f02329236e88da27c88564dfe137b4e3cfb` | Named first-argument assertion and both level getter override paths. |
+| `ev_a95cab6946dbdfa033f2f8fc8a0110741e563bd8e11e051088df179e2e44f450` | Forwarding wrapper. |
+| `ev_f8bee6de0126db5826f2c7a3d6169143afd0824436618bb7ea0a3752c47fed84` | Reward consumer gets the first level and supplies both calculation arguments. |
+| `ev_ea3a8c48e2f723a33ffffa0f30d678978fa13c0382c1d34d8d7f56d24e3af60e` | Character +8 interface installation. |
+| `ev_cbec641779bc4fde4a24d2676885d21b8ab8a1fe23599191b565362dc91c4aca` | Interface getter pointer and direct second-level getter. |
+| `ev_685304f56d4dd1556c6ffa56c265e007c61d780f9b33dc413605f550dbac269e` | CoreStats getter and complete level setters. |
+| `ev_d81bd2559bad547831312b58160451d6b4115c72693d1302cf0ba7f2068dced1` | Exact named assertions and subsequent update loops. |
 
 ## Appearance and extended-record follow-up
 
