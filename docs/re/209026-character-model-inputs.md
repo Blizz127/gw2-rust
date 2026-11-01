@@ -132,6 +132,60 @@ Follow-up private bundle:
 | `ev_2b84ac6ca34cbb4af091d5ed93de5a6fdbbcff9363d1d1ad0f0ba54715e5d60d` | Embedded transformation getter and raw wardrobe pointer getter. |
 | `ev_889e51710c75fecca914bfa4aefc2a008970786314a9e0516a123790735543fd` | Exact transformationMgr assertion literal. |
 
+## Initial model mode and Queensdale policy
+
+The complete priority insertion helper `0x141159620` appends a model
+record and assigns its initial mode from its pre-insertion index:
+index below manager +0x24 gets 0; otherwise index below +0x28 gets 1;
+otherwise it gets 2. A nonnull character whose primary +0x358 predicate
+returns false overrides this to 0. The helper stores and returns the mode.
+
+For player identities, that predicate (`0x1411d9220`) returns the inverse
+of mission predicate `0x14140f290`. The latter asserts a prepared map
+definition and tests **mapDef +0x98 & 0x02000801 != 0**. It obtains the
+definition through `0x141411100`, global context +0x1c8, mission +0x1e8,
+the map-definition field already traced in mission transfer.
+
+A hash-checked content read of Queensdale's type-45 record, data key 15,
+found flags **0x50000200**, so the mask result is zero and the player
+predicate is true. Queensdale therefore does **not** force mode 0 through
+this override; the initial priority thresholds remain relevant.
+The record is in archive file 1282830 at content offset 0x394838, source
+SHA-256 `e5d11e4fae8627d3efced749e7ab599b26abac59e502716aaf7d63ef509bb81f`.
+
+Model virtual +0x1a0 (`0x1411696d0`) then reads AvContext +0x478 bit 1
+through `0x141110150`. If clear, it returns mode 0. If set, it retains
+the requested mode except that mode 1 with no +0xe8 record becomes 0.
+This resolves the initial transform of the priority result without
+assuming a runtime setting or threshold value.
+
+The initializer's priority insertion itself is conditional: mode must
+be 3 and agent primary virtual +0x678 must return zero. That getter is
+`0x141027720`, reading whole-agent +0xe8 bit 6, which comes from server
+37 field 8. When that bit is set, this initializer skips priority insertion
+and leaves the existing mode for its later branch tests. This is an
+observed input consequence, not a recommended flag or proof that its
+other consumers permit a desired bootstrap configuration.
+
+The priority manager also has a later update/sort path at `0x141159720`
+and `0x141159da0`. Only its opening was inspected here; the initial mode
+is not a promise that a model keeps that mode. No live graphics settings,
+priority limits or model-load success were read or changed.
+
+Private policy bundle: `~/re/gw2/notes/209026-character-model-policy-1.json`
+(1,584 records; 30,646,119 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_d7f60381f7b62e76488148db9bcac8be265c4dd045542930e1b429e6537d0cc0` | Complete initial priority insertion and context bit getter. |
+| `ev_2597a807034d6ea04f2dcd2cf79f4d34f43bc18cf3f6e09195ba316b5a42d608` | Model-parent and character-policy virtual entries. |
+| `ev_75881778c3ea21888f7c16911616a746eac4aa9f35fdd5ff7adece0b26209695` | Parent getter and complete character predicate. |
+| `ev_7a4ef421d96e7c2609e54036a778034dad129ed805a725965f6d8a9e8be3f75d` | Complete map-flag predicate. |
+| `ev_0885cdb7ea511b139f71106dcb63481a0d304c6cf9a317967f3b65c111aa0395` | Current map-definition accessor. |
+| `ev_495dc8d228b2c42d5e24f0b248a0748c7aba70af471f2d51ee81c54738f6dfd2` | Hash-checked Queensdale record and mask evaluation. |
+| `ev_eadcccabc0268ad697574ab9ab6f708a41838bdec8ced8277d012e0fff648fab` | Agent +0x678 getter entry. |
+| `ev_10b2ffc7131db18508110256625604f1e48b363497c81d96e8fad67663f90ccf` | Agent bit-6 getter and bounded later sorting path. |
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-character-model-inputs-1.json`
