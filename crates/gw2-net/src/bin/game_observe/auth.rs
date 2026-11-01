@@ -108,6 +108,11 @@ impl AuthProbe {
                 8u16.encode(&mut reply);
                 request.encode(&mut reply);
                 reply.extend_from_slice(&self.body);
+                // Configuration must arrive while this request is still pending.
+                // Explicit empty fixture; no recovered account configuration yet.
+                10u16.encode(&mut reply);
+                request.encode(&mut reply);
+                reply.extend_from_slice(&0u16.to_le_bytes());
                 7u16.encode(&mut reply);
                 request.encode(&mut reply);
                 reply.extend_from_slice(&[0; 6]); // Two result fields, four status fields.
@@ -148,6 +153,10 @@ mod tests {
             assert_eq!(u16::decode(&mut cursor).unwrap(), 8);
             assert_eq!(u32::decode(&mut cursor).unwrap(), 123456);
             assert_eq!(&cursor[..2], &[0x44; 2]);
+            cursor = &cursor[2..];
+            assert_eq!(u16::decode(&mut cursor).unwrap(), 10);
+            assert_eq!(u32::decode(&mut cursor).unwrap(), 123456);
+            assert_eq!(&cursor[..2], &[0, 0]);
             cursor = &cursor[2..];
             assert_eq!(u16::decode(&mut cursor).unwrap(), 7);
             assert_eq!(u32::decode(&mut cursor).unwrap(), 123456);

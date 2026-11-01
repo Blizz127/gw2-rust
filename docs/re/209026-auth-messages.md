@@ -189,3 +189,72 @@ observer build and clippy pass. An initial clippy style warning was corrected.
 Evidence: `ev_498df340b729b9de04a714b433e05c1f58af7a941e05d6c843d5a24b03e1ad92`,
 private export `~/re/gw2/notes/209026-auth-success-run53.json`. Isolation, container
 cleanup, executable hashes and archive count remain verified.
+
+## Post-authentication crash: run 54
+
+The repeated fixture again produces the same 230 bytes and matching plaintext,
+but three screenshots taken after request completion show the client's serious
+error dialog over the launcher. This is not a successful UI transition. The
+isolated Wine prefix's local `ArenaNet.log` reports
+`s_configDataError != NET_PENDING`, `GcApi.cpp(2621)`, build 209026. This suggests
+configuration data remains pending when the synthetic account request completes;
+the responsible state and protocol exchange still need tracing. No crash report
+was submitted. Old crash files beside the executable predate these runs and
+describe a different thread-creation assertion; they are not evidence for this
+failure.
+
+Client ID 34's sender (`0x140241850`) takes a Dword. Its caller at `0x14023bc80`
+uses the first byte of a local buffer filled by `0x140e4a500`. The value's meaning
+is still unknown. A private schema extraction now parses all 28 client and 21
+server definitions in this protocol group; that does not establish all wire
+encodings or field meanings.
+
+Run evidence: `ev_1c567277e77777feafb7eaa3f8a803ef21ddb78de08593216d5eff39a015c8b6`,
+private export `~/re/gw2/notes/209026-auth-post-ui-run54.json`. Crash-log evidence:
+`ev_45ac7b4923bd0e2c01988a6e0856dfa562d076cb68ae9742c4799d7e37a4d99d`.
+Network isolation, container cleanup, both executable hashes and archive count
+remain verified. Next: trace configuration-data initialization and completion.
+
+## Configuration reply must precede completion
+
+The assertion at `0x14023b907` tests global `0x142554524` against -1. Reset
+`0x14023b7d0` assigns -1. Server ID 10, definition Dword + BufferVarLarge(4096),
+handler `0x140240990`, calls `0x14023a630` with the request ID, byte count and
+buffer pointer. That function requires the matching request to remain in state
+3 and type 7, copies the buffer into the configuration-data global, and sets
+the error/state global to zero at `0x14023a74c`. Sending this after ID 7 would
+be too late. An empty buffer before ID 7 is the next explicit fixture experiment;
+its acceptance by downstream configuration consumers is not yet established.
+
+The variable-buffer serializer branches at `0x140ff11f9` and `0x140ff1298`
+write u8 and u16 byte counts, respectively, followed by raw bytes. An empty
+large buffer therefore has two zero count bytes.
+
+REA evidence: assertion references
+`ev_f0909835dfd259d315e4a45de8be9b95d0827562ee4675d5af11ac9b0b998f39`,
+state references `ev_97ba32c2af86be86ce6b07faef76b7f01aafcc44161e03c6e20cf7c6bb4b0b49`,
+handler `ev_495037a325a63fd5ca5600ee9fbb5659cbed3f3492519386c8926b54fb1e8991`,
+request guard `ev_abb35bed9a53df41210cd8edd3495a8fdf84f32f53168581d8cac28ef017f210`,
+buffer encoding `ev_9f39f34c2eec4476967954973dd59f5d7e6674d674bcb4489b98d1b3cb13bcdb`.
+
+## Empty configuration accepted: run 55
+
+The opt-in auth fixture now sends correlated ID 10 with an empty buffer between
+IDs 8 and 7. The runtime probe sees configuration state zero and byte count zero
+before request completion. Client ID 34 now reaches the wire (three bytes), and
+the client sends new TLS requests `/Auth2f/Check` (empty body) and
+`/Auth/GetUserInfo` (`Request` with no children). Post-completion screenshots
+show the launcher login spinner without the previous crash dialog. No assertion
+probe fired during this observation window. Character selection is not reached.
+
+The first binary connection captures 233 bytes; after the observer's idle timeout
+a second token request and binary connection capture another 230 bytes. The
+plaintext comparison helper explicitly reports unavailable because it only
+supports one capture file; do not extend the earlier exact-equality claim to
+this run. The first connection's pre-encryption probe records 233 bytes.
+
+Focused auth-parser test, observer build and clippy pass. Network isolation,
+container cleanup, executable hashes and archive count are verified. Evidence:
+`ev_2c4930ed3d642d86a78301b346d54ecfdc818ef33742a6c538ba1dd63b37033c`,
+private export `~/re/gw2/notes/209026-auth-config-run55.json`.
+Next: map the two newly observed portal reply formats.

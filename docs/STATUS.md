@@ -73,8 +73,13 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
   - **Correlated binary auth fixture passed (run 53):** the client matches ID 8
     account data to its request and ID 7 marks it complete. Client ID 4 follows;
     ID 34 is then observed at serialization. All 230 captured bytes match plaintext.
-    Post-result UI and character selection remain to verify.
-  - **Next:** trace client ID 34 and capture the post-authentication UI.
+    Run 54 repeats this result but shows a crash dialog after completion:
+    `s_configDataError != NET_PENDING`, `GcApi.cpp(2621)`.
+  - **Configuration reply passed (run 55):** correlated server ID 10 with an empty
+    buffer, before completion, clears the pending flag. No crash dialog or assertion
+    is observed; the launcher remains on its login spinner. The client sends
+    `/Auth2f/Check` and `/Auth/GetUserInfo` next.
+  - **Next:** map and supply explicit fixtures for those portal replies.
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
@@ -85,7 +90,7 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 | --- | --- | --- |
 | 1 | Freeze client, capture traffic, message list for our build | client frozen; REA observations and offline patch/STS captures recorded; complete message list pending |
 | 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
-| 3 | Login stub: redirect, secure login, our own key | TLS/GetHostname and synthetic SSO/account/token replies passed; binary DH/cipher and correlated synthetic auth completion verified; UI transition pending |
+| 3 | Login stub: redirect, secure login, our own key | TLS and synthetic portal/binary auth fixtures verified; configuration assertion resolved by ordered reply; Auth2f/Check and GetUserInfo pending |
 | 4 | Character select / creation | not started |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
@@ -93,7 +98,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 
 ## Crates (last full workspace check: 75 pass, clippy clean, commit `31772d8`)
 
-Latest runtime check: run 53 verifies correlated synthetic auth completion and exact client plaintext; container
+Latest runtime check: run 55 clears pending configuration and reaches two more portal requests;
+the launcher remains on its login spinner. Container
 cleanup, executable hashes and archive index count verified. Focused checks cover
 OpenSSL interop and the observer's pipelined StartTls, split STS, GetHostname and explicit XML replies.
 The full workspace suite was not rerun for this change.

@@ -1,9 +1,10 @@
 //! GW2 portal / login server pieces.
 //!
-//! **UNVERIFIED.** Everything here comes from public descriptions of the NCsoft
-//! STS protocol and the 2012–13 GW2 notes (`docs/re/public-protocol-notes.md`).
-//! None of it is REA-confirmed for our client build. The observer
-//! (`gw2-login-observe`) exists to capture what the real client actually sends.
+//! The offline build-209026 observer has exercised patch manifests, StartTls,
+//! TLS and explicit synthetic portal replies; see `docs/re/209026-login-tls.md`
+//! and the subsequent portal-message notes. This remains an observation harness,
+//! without credential validation or a persistent account service. Older protocol
+//! assumptions still require verification against this frozen client.
 
 pub mod assetcdn;
 pub mod dns;
