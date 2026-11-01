@@ -38,6 +38,18 @@ assertion about configured live limits. Scene virtual **+0x2c0**,
 it also writes the square of input +0x28 to scene +0x4bc. The source and
 live value of that configuration input remain open.
 
+A later bounded caller search found the setter's vtable reference but no
+direct E8/E9 call. Searches for virtual-slot +0x2c0 calls and nearby
+register-loaded calls produced candidates in other interfaces; the inspected
+subset did not establish a scene-setter invocation. This is not evidence that
+the setter is unused or that the constructor threshold survives initialization.
+Private search bundle: `~/re/gw2/notes/209026-scene-limit-caller-search-1.json`
+(1,374 records, 27,818,263 bytes); primary records
+`ev_83004221211b4be4982b5c1631d7f92039f69a25a884ce6d88bdab15588da036`,
+`ev_f612c9dfcea8a965291262f64b176ac481da46c06b722c71ec873ff4d4e506e7`,
+`ev_e2868b3fd44e54219c2317f85c5bef74a48adc7c57555fa155c7f0302f078d48`
+and `ev_743f68988631c49243a918d046474277c0c4f41db7feed57fd49b2fc50f7f8b2`.
+
 Server 86 adds **command flags +0x50 mask 0x40000** when this predicate
 returns false. The incoming flag byte cannot directly supply this bit.
 The codec intentionally preserves raw floats without imposing the scene's
