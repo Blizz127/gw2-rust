@@ -120,6 +120,28 @@ completely: 68 and 318 bytes, total 386 bytes. The CLI rejected a truncated
 frame and a 251-byte buffer. The content/float choices are framing fixtures,
 not valid world state; none was sent to the client.
 
+## Typed offline framing API
+
+The established layout supports a build-specific server-37 frame type with
+explicit inputs for every field. Its decoder can preserve all float words,
+flags and auxiliary bytes without treating them as validated world state.
+The buffer uses a one-byte length and must remain at most 250 bytes; the
+eight parameter floats have no count prefix. Encoding should fail before
+writing any output when the behavior buffer exceeds the descriptor bound.
+Decoding should consume exactly one complete frame, leaving a following
+frame intact, and leave its input slice unchanged on an error. Sentinel
+facing and nonfinite dimensions are framing-valid values; the separate
+facing helpers and future fixture checks determine their creation meaning.
+This API supplies no player defaults and does not send messages.
+
+`gw2-proto::agent_creation::AgentCreation209026` now implements the type
+and transactional frame methods. Three focused framing tests pass against
+hand-authored bytes: all field/float-bit preservation, every truncation and
+invalid ID/buffer length/overflowing Point3 varint, and empty/250-byte buffers
+followed by another frame. The encoder rejects a 251-byte buffer without
+changing its output. Together with the five facing tests, all eight focused
+agent-creation tests pass, and the library builds. No frame was transmitted.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-agent-creation-static-1.json`.
