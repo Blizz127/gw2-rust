@@ -129,8 +129,12 @@ Private bundle `~/re/gw2/notes/209026-appearance-init-static-1.json` retains
 
 ## Limits and next dependency
 
-The nearby context path `0x14129ec50` ends at `0x140163990`, a return-zero
-stub, and is not evidence of another active network request. Likewise, an
+The nearby context path `0x14129ec50` ends at `0x140163990`, a bare-return
+stub, and is not evidence of another active network request. It does not
+explicitly set a zero return value; the earlier description of it as a
+return-zero stub was incorrect. The later
+[map-preparation evidence](209026-mission-transfer.md) confirms `ret 0` at
+this address (zero stack adjustment, not a returned scalar). Likewise, an
 auth-protocol message containing a name and buffer must not be labeled character
 creation solely from that shape. The creation-context path above provides the
 connection and registration evidence.
@@ -338,7 +342,7 @@ Private REA bundles: `~/re/gw2/notes/209026-character-static-6.json` and
 | `ev_c177189d6bc09ec157d2163bd97075a7d6b490fe4acfa8921a514cccb0f0cdb9` | Enum string/value table. |
 | `ev_d090da527c3aad87aa4d50c70b89ef3afded301471ac0135c7bcd7cbefc464e3` | Explicit scene names and distinct map-data readiness path. |
 | `ev_6b3c558f0b94bfe8166fd339428bc4001646f3a7febe9c966dd11f4ef88be529` | Creation-context arguments and alternate stub path. |
-| `ev_238f010d582ba3cdbad82fa10e17ccabcc9efa032c53a1e207ab116b23356d97` | Event bridge and return-zero stub. |
+| `ev_238f010d582ba3cdbad82fa10e17ccabcc9efa032c53a1e207ab116b23356d97` | Event bridge and bare-return stub. |
 | `ev_228de915174f9a0fab1358fd0915c8b365efb705c6038f51e5ead2e8d6f19e8b` | Message 415 sender, mission getter, named assertions. |
 | `ev_dab94c2ec2c7d0d2cd218526e65ac2a71a19049e4b4ef9ffebf4c7d4efeef7c8` | Mission connection constructed with protocol 0. |
 | `ev_fff247464838a7d71fb2b5f3362139c24c97f8b1e12ca74e59dd55ea3de25a33` | Nested descriptors and protocol-group registration callers. |
