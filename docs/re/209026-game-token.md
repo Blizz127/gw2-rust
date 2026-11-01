@@ -23,10 +23,29 @@ Token is an element, not an attribute. Shared field getters using this method
 also read child text; their mere presence does not establish which request uses
 them.
 
-**Next local experiment:** reply with a fresh synthetic Token GUID in
-`<Reply><Token>…</Token></Reply>` followed by LF. Keep the token value private.
-Record GUID-parse success and the completion callback, then observe the ensuing
-connection or UI state. This fixture is not a production session-token system.
+## Offline runtime: run 47
+
+A fresh synthetic Token GUID in `<Reply><Token>…</Token></Reply>` followed by LF
+passed GUID parsing at `0x140ff761f` and reached the completion call at
+`0x140ff7634`. The client then opened a second TCP connection to the local
+observer on port 6112. It sent 16 initial binary bytes followed by 66 bytes;
+the observer switched this connection from STS parsing to raw capture. The
+original TLS portal connection remained open and sent `/Sts/Ping`.
+
+This establishes the transition from the synthetic portal replies into the
+binary game connection. It does not establish a completed game handshake,
+credential validation, a session-token database, or character selection.
+The next step is to identify and answer the binary handshake from build-specific
+evidence. The attempted libc connect probe emitted no markers, so it does not
+provide complete destination-call tracing; the observer establishes the local
+accepted connection.
+
+The run used Docker `--network none`, synthetic credentials and private fixtures.
+Container cleanup and unchanged frozen/working executable hashes were verified;
+the archive still contains 1,124,232 entries. REA verified cleanup of its owned
+process group; its broader host survey remains incomplete because unrelated
+process metadata was inaccessible. Raw capture bytes and token values remain
+outside the repository.
 
 ## Evidence
 
@@ -43,3 +62,7 @@ the target hash remains unchanged.
 | `ev_752fda0957b3b22e37147c91d0fd26fe8e821c6e9c8bf6838309c5d00501d83e` | XML parse return path and node vtable slots. |
 | `ev_4994d0f9f126618afc41ad369c03bf3a1e4f4b16878849eadb7f75fcacd6c32a` | Node wrapper installs vtable `0x1420b91e0`. |
 | `ev_ef32021c1c80c214aaec948fb2411a74e5a64a811ce7bd574f4ff41eaced24b9` | Token lookup resolves child text. |
+
+Runtime evidence: `ev_99e9cd82d4286f823e6bf2c469c655482837612a4b4b01969284674a2358532b`,
+exported privately to `~/re/gw2/notes/209026-game-token-run47.json`. Run files:
+`~/gw2-sandbox/runs/run47-codex-game-token/`.
