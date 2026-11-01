@@ -265,6 +265,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     archive smoke resolves all 81 specialization completion limits. An
     independent pointer join corrected four Guardian rows in the earlier
     reward-track table (key 13 / UID 15 uses track 24, progress 4858).
+    [Bit-progress setters](re/209026-bit-progress.md) now establish 509
+    mask replacement and 510 channel-block splitting with final-only
+    notifications. Both bounded raw codecs pass three focused tests and
+    the library build, including the 255-word array boundary.
     [Slot follow-up](re/209026-reward-track-slots.md) identifies 565/569
     pin values, 568 active-track selection and 566 map-specific selection.
     Pin value domains and 567 keyed-state meaning remain unresolved.

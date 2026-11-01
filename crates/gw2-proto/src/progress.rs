@@ -1,4 +1,4 @@
-//! Build-209026 server 511: assign controlled-player counter progress.
+//! Build-209026 servers 509–511: assign controlled-player progress.
 //! Content data key +0x28 selects type 53. There is no player-index field.
 //! See `docs/re/209026-player-progress.md` for channel and lifetime constraints.
 
@@ -7,6 +7,86 @@ use std::io::{Error, ErrorKind, Result};
 use bytes::BytesMut;
 
 use crate::{Decode, Encode};
+
+/// Server 509: replace the BIT representation's channel mask.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BitProgressFrame209026 {
+    pub progress_key: u32,
+    pub channel_mask: u16,
+}
+
+impl BitProgressFrame209026 {
+    pub fn encode_frame(&self, output: &mut BytesMut) {
+        509u16.encode(output);
+        self.progress_key.encode(output);
+        self.channel_mask.encode(output);
+    }
+
+    pub fn decode_frame(input: &mut &[u8]) -> Result<Self> {
+        let mut cursor = *input;
+        if u16::decode(&mut cursor)? != 509 {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "expected progress message 509",
+            ));
+        }
+        let progress_key = u32::decode(&mut cursor)?;
+        let channel_mask = u16::decode(&mut cursor)?;
+        *input = cursor;
+        Ok(Self {
+            progress_key,
+            channel_mask,
+        })
+    }
+}
+
+/// Server 510: raw BIT_MASK blocks; content determines each channel's width.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BitMaskProgressFrame209026 {
+    pub progress_key: u32,
+    pub words: Vec<u32>,
+}
+
+impl BitMaskProgressFrame209026 {
+    /// Append one frame, leaving output unchanged if the array is too long.
+    pub fn encode_frame(&self, output: &mut BytesMut) -> Result<()> {
+        let count = u8::try_from(self.words.len()).map_err(|_| {
+            Error::new(
+                ErrorKind::InvalidInput,
+                "bit-mask progress exceeds 255 words",
+            )
+        })?;
+        510u16.encode(output);
+        self.progress_key.encode(output);
+        count.encode(output);
+        for word in &self.words {
+            word.encode(output);
+        }
+        Ok(())
+    }
+
+    /// Parse raw words without inferring block widths or channel assignments.
+    pub fn decode_frame(input: &mut &[u8]) -> Result<Self> {
+        let mut cursor = *input;
+        if u16::decode(&mut cursor)? != 510 {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "expected progress message 510",
+            ));
+        }
+        let progress_key = u32::decode(&mut cursor)?;
+        let count = u8::decode(&mut cursor)?;
+        let mut words = Vec::with_capacity(usize::from(count));
+        for _ in 0..count {
+            words.push(u32::decode(&mut cursor)?);
+        }
+        *input = cursor;
+        Ok(Self {
+            progress_key,
+            words,
+        })
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CounterProgressFrame209026 {
@@ -170,6 +250,162 @@ mod tests {
                 ErrorKind::InvalidInput
             );
             assert_eq!(&output[..], b"prefix");
+        }
+    }
+}
+
+#[cfg(test)]
+mod bit_tests {
+    use super::*;
+
+    #[test]
+    fn bit_progress_fixed_word_and_stream_boundaries() {
+        let golden = [0xfd, 0x01, 0x80, 0x01, 0x34, 0x80];
+        let frame = BitProgressFrame209026 {
+            progress_key: 128,
+            channel_mask: 0x8034,
+        };
+        let mut output = BytesMut::from(&b"prefix"[..]);
+        frame.encode_frame(&mut output);
+        assert_eq!(&output[..6], b"prefix");
+        assert_eq!(&output[6..], golden);
+        let mut stream = golden.to_vec();
+        stream.extend([0xfd, 1, 0, 0xff, 0xff]);
+        let mut input = stream.as_slice();
+        assert_eq!(
+            BitProgressFrame209026::decode_frame(&mut input).unwrap(),
+            frame
+        );
+        assert_eq!(input, &stream[golden.len()..]);
+        assert_eq!(
+            BitProgressFrame209026::decode_frame(&mut input).unwrap(),
+            BitProgressFrame209026 {
+                progress_key: 0,
+                channel_mask: u16::MAX
+            }
+        );
+        assert!(input.is_empty());
+        for cut in 0..golden.len() {
+            let original = &golden[..cut];
+            let mut input = original;
+            assert_eq!(
+                BitProgressFrame209026::decode_frame(&mut input)
+                    .unwrap_err()
+                    .kind(),
+                ErrorKind::UnexpectedEof
+            );
+            assert_eq!(input, original);
+        }
+        for bad in [
+            vec![0xfe, 1, 0, 0, 0],
+            vec![0xfd, 1, 0xff, 0xff, 0xff, 0xff, 0x10, 0, 0],
+        ] {
+            let mut input = bad.as_slice();
+            assert_eq!(
+                BitProgressFrame209026::decode_frame(&mut input)
+                    .unwrap_err()
+                    .kind(),
+                ErrorKind::InvalidData
+            );
+            assert_eq!(input, bad);
+        }
+    }
+
+    #[test]
+    fn bit_mask_progress_golden_and_maximum_array() {
+        let golden = [
+            0xfe, 1, 0x80, 1, 4, 0, 0x80, 1, 0x80, 0x80, 1, 0xff, 0xff, 0xff, 0xff, 0x0f,
+        ];
+        let frame = BitMaskProgressFrame209026 {
+            progress_key: 128,
+            words: vec![0, 128, 16384, u32::MAX],
+        };
+        let mut output = BytesMut::from(&b"prefix"[..]);
+        frame.encode_frame(&mut output).unwrap();
+        assert_eq!(&output[..6], b"prefix");
+        assert_eq!(&output[6..], golden);
+        let mut stream = golden.to_vec();
+        stream.extend([0xfe, 1, 0, 0]);
+        let mut input = stream.as_slice();
+        assert_eq!(
+            BitMaskProgressFrame209026::decode_frame(&mut input).unwrap(),
+            frame
+        );
+        assert_eq!(input, &stream[golden.len()..]);
+        assert_eq!(
+            BitMaskProgressFrame209026::decode_frame(&mut input)
+                .unwrap()
+                .words,
+            Vec::<u32>::new()
+        );
+        assert!(input.is_empty());
+        for cut in 0..golden.len() {
+            let original = &golden[..cut];
+            let mut input = original;
+            assert_eq!(
+                BitMaskProgressFrame209026::decode_frame(&mut input)
+                    .unwrap_err()
+                    .kind(),
+                ErrorKind::UnexpectedEof
+            );
+            assert_eq!(input, original);
+        }
+        // All 255 distinct one/two-byte values, with an independent encoding.
+        let frame = BitMaskProgressFrame209026 {
+            progress_key: 0,
+            words: (0..255).collect(),
+        };
+        let mut golden = vec![0xfe, 1, 0, 255];
+        golden.extend(0..128);
+        for low in 0..127 {
+            golden.extend([low | 0x80, 1]);
+        }
+        let mut output = BytesMut::new();
+        frame.encode_frame(&mut output).unwrap();
+        assert_eq!(&output[..], golden);
+        let mut input = golden.as_slice();
+        assert_eq!(
+            BitMaskProgressFrame209026::decode_frame(&mut input).unwrap(),
+            frame
+        );
+        assert!(input.is_empty());
+    }
+
+    #[test]
+    fn bit_mask_progress_invalid_frames_are_transactional() {
+        let frame = BitMaskProgressFrame209026 {
+            progress_key: 0,
+            words: vec![0; 256],
+        };
+        let mut output = BytesMut::from(&b"prefix"[..]);
+        assert_eq!(
+            frame.encode_frame(&mut output).unwrap_err().kind(),
+            ErrorKind::InvalidInput
+        );
+        assert_eq!(&output[..], b"prefix");
+        let mut invalid = vec![vec![0xfd, 1, 0, 0], vec![0xff, 1, 0, 0]];
+        for bad in [[0xff, 0xff, 0xff, 0xff, 0x10], [0x80; 5]] {
+            let mut key = vec![0xfe, 1];
+            key.extend(bad);
+            key.push(0);
+            invalid.push(key);
+            for at in [0, 127, 254] {
+                let mut words = vec![0xfe, 1, 0, 255];
+                words.extend(vec![0; at]);
+                words.extend(bad);
+                words.extend(vec![0; 254 - at]);
+                invalid.push(words);
+            }
+        }
+        for bad in invalid {
+            let mut input = bad.as_slice();
+            assert_eq!(
+                BitMaskProgressFrame209026::decode_frame(&mut input)
+                    .unwrap_err()
+                    .kind(),
+                ErrorKind::InvalidData
+            );
+            assert_eq!(input, bad);
         }
     }
 }

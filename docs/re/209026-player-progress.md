@@ -25,8 +25,8 @@ establishes this as record +0x28, distinct from UID +0x14.
 Nested definition `0x1425ace00` contains one Dword. Dwords use unsigned
 varints; kind-17 arrays use a one-byte count, as already established in
 [character protocol](209026-character-protocol.md#array-boundaries-for-the-capture-census).
-510's bit-mask unpacking is only partially traced and remains outside the
-small codec added for 511.
+The [bit-progress follow-up](209026-bit-progress.md) traces 509/510 setters
+and distinguishes their final-only notifications from 511's per-channel events.
 
 ## Progress representation
 
