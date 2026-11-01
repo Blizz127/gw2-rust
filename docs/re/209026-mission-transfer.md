@@ -59,13 +59,63 @@ The map-loading handlers are separately identified by embedded diagnostics:
 | Server ID | Established layout | Static behavior |
 | --- | --- | --- |
 | 1063 | Four Dwords, two Bytes | Stores map ID from field 1 masked with 0x3fffffff at context +0x1f0; looks up its map definition into +0x1e8; sets readiness mask 0x80. Field-1 high bits also set context flags 0x200/0x400. |
-| 1060 | Float3, Float2, Float2, Word, Byte, Qword, Dword | Handler `0x141412da0` logs **OnRecvLoadMap** with the Word and context map ID, then forwards vectors and other parameters to `0x141418ee0`. Vector roles and units remain unresolved. |
+| 1060 | Float3, Float2, Float2, Word, Byte, Qword, Dword | Handler `0x141412da0` logs **OnRecvLoadMap** with the Word and context map ID, then forwards vectors and other parameters to `0x141418ee0`. See the load callback findings below. |
 | 1061 | Empty | Handler `0x141412d60` calls `0x141418ec0` and logs **OnRecvLoadAgents** with context map ID. |
 
 These handlers establish message roles and some field flow, not a complete
 map bootstrap. ID 1063's readiness branch differs from creation's ID 1049
 because it does not set mask 0x1. No map/agent population fixture is inferred
 from the empty ID-1061 message alone.
+
+## Load command and result callbacks
+
+ID 1060's handler converts its Byte to `2 * value * pi / 255` using float
+constants at `0x14193fc84` and `0x14192bb9c`. This establishes a full-turn
+angular scale; the world axis and orientation convention remain unknown.
+The Float3 is passed separately, while the two Float2 values are copied as
+16 consecutive bytes into context +0x1d8. The Word is used by the inspected
+diagnostic but not forwarded to the load helper. The final Dword goes to
+`0x1410b5900`; its meaning is still unresolved.
+
+`0x141418ee0` obtains the resource pointer at map definition +0x68 (or an
+embedded fallback if absent) and calls view slot +0x190. The view interface's
+vtable is `0x141b7e818`; this slot resolves to `0x14094e6c0`, which forwards
+the resource, map definition, vectors, angle, Qword and callback to
+`0x1409538c0` at its embedded loader. The loader stores the Float3 at +0x2a8,
+angle at +0x2b4, Qword at +0x318 and callback at +0x210. Physical roles of the
+vector and Qword remain unresolved.
+
+Before accepting these parameters, the loader asserts its state is one of
+`STATE_LOAD_CONTENT`, `STATE_LOAD_MANIFEST`, or `STATE_SERVER_WAIT`
+(numeric states 1–3, individual name mapping not yet established), and
+`m_mapDef == mapDef`. Thus this command expects a matching prepared load;
+it is not established as a standalone map-bootstrap message.
+
+The ID-1060 path selects callback `0x141418fb0`. A nonzero callback result
+sends empty client **ID 420** through `0x141418840` when a mission connection
+exists, then logs **MsgSendMapLoaded**. A zero result forwards to
+`0x141419010`, which sends empty client **ID 418** through `0x141418810`
+and logs **MsgSendFailedToLoad** after its resource handling. The alternate
+callback `0x141419010` does nothing for nonzero results. These are static
+completion paths; neither message has been observed from a live map load.
+
+Private boundary fixtures additionally parse ID 1060 + ID 1061 as
+**42 + 2 = 44 bytes**, and IDs 420/418 as **2 + 2 = 4 bytes**, with no
+remainder. The vectors and scalars are handwritten placeholders. These
+mode-0600 fixtures were never sent and do not represent an established
+message sequence or valid map content.
+
+Load callback evidence is exported separately in
+`~/re/gw2/notes/209026-map-load-static-1.json`:
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_8c911ab24364890e572d62d41587e17758b00051ccb052be52da1baf66d3c91b` | Load helper, resource forwarding and success/failure callbacks. |
+| `ev_d2d733e42156b2da160d4381d1e8a5ead30e2e90d0219abdda83944ecbcb928b` | ID-1060 fields, result senders and explicit result diagnostics. |
+| `ev_bbfd8b08c260f0ad5f45553b90348ffb155eaf7d813dacafbffb74d650ccf25e` | View vtable slot and float constants. |
+| `ev_4900a13621ebc86e2a06a4a8e532b40d2dd8b6a8832666c4eee65dc0d4111cf2` | View forwarding to embedded loader. |
+| `ev_b161b3bb7781e754b9aad87db2da91bbd9acfb794648b3e863fea218fe88ffee` | Interface +8 construction, loader state/definition guards and parameter storage. |
+| `ev_a6c13ee541b2de04a5aaeb178f3b4b9a4f0b33f6aae533b1852323b3a71e777b` | Both fixture censuses and named loader assertions. |
 
 ## Boundary check and evidence
 

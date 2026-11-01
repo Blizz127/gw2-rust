@@ -155,6 +155,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Static mission ID 1065 supplies an immediate/deferred next destination;
     map-loading IDs 1060/1061/1063 are mapped separately. The synthetic
     redirect fixture parses all 39 bytes, but no transfer sequence was sent.
+    Load callbacks identify client 420 (MapLoaded) and 418 (FailedToLoad),
+    with matching prepared-map/state prerequisites. Offline load/result
+    boundary fixtures parse 44/4 bytes completely; no live load was attempted.
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
