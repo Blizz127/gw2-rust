@@ -92,7 +92,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Further UI progression waits. Independent character-protocol RE continues.
   - **Static character-list path:** server ID 17 populates records consumed by
     the character-select scene. The summary blob's version-11 size and validation
-    checks are mapped; several field meanings remain unresolved. Account reply
+    checks are mapped. The preview copies 45 appearance bytes from summary +6,
+    establishing its race/sex offsets; preview construction rejects sex 2 even
+    though normalization admits it. Several other fields remain unresolved. Account reply
     consumers identify home shard, auth base time and a billing category enum.
     Character-slot capacity is computed from the ID-8/ID-13 account array plus
     mode-dependent base counts; the formula is documented, runtime UI untested. The new

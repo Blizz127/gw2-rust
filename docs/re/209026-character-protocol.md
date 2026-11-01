@@ -114,9 +114,10 @@ observations, not tested fixture recommendations.
 | +0x23 | Byte < 3 |
 | +1 | u16 accepted by callback `0x141419e40` |
 
-The callback requires a non-null lookup result from a content interface. The
-numeric fields resemble character level/profession/race/appearance information,
-but their names are not yet established by consumers. They remain offsets here.
+The callback requires a non-null lookup result from a content interface.
+The preview consumer below establishes the appearance substructure and its
+race/sex fields. Other field names require separate consumer evidence; matching
+a numeric range alone is insufficient.
 The scene additionally reads a GUID at normalized blob +0x85 and skips its
 resource lookup when all 16 bytes are zero. A blob passing the basic checks is
 therefore insufficient to guarantee a rendered character.
@@ -129,6 +130,53 @@ Evidence: `ev_0205d1011aed3e65f16c7dacf89651e6aeb4d826a3386a6668e9fb7566cef53d`
 (content lookup),
 `ev_81eb316c831dccd39758b438c1e0cbc6b09818772e381963177a0c3cc408c2b7`
 (scene GUID use).
+
+## Summary-to-preview appearance conversion
+
+The character-item path at `0x140436874` normalizes the record into a temporary
+159-byte summary, then passes it to `0x14147df50` and the result to
+`0x14147da90`. The converter copies exactly **45 bytes from summary +6**
+to preview-description +0x48. The builder passes that block to
+`0x1411be9b0`, whose named assertions identify byte +0x1b as race and
+byte +0x1d as sex. These match the independently mapped
+[creation appearance fields](209026-character-creation.md#appearance-fields-and-local-validation).
+Consequently summary **+0x21 is race** and **+0x23 is sex**, with the same
+embedded enum labels. This establishes a shared 45-byte appearance layout;
+it does not establish the meaning of creation request bytes 45–47.
+
+The decoder and renderer have different checks: the summary decoder accepts
+sex values below 3, but the preview builder explicitly asserts
+`sex != CHAR_SEX_NONE` for value 2. A blob passing normalization is therefore
+not necessarily safe input for preview creation. Content-dependent appearance
+lookups still need valid data, and no synthetic preview has been tested.
+
+The converter also copies six 12-byte records from summary offsets
+0x3d, 0x49, 0x55, 0x61, 0x6d and 0x79 to preview-description offsets
+0, 0x0c, 0x18, 0x24, 0x30 and 0x3c. If a record's first signed Dword is
+negative it clears that entire output record; otherwise it copies the Dword
+and following eight bytes. Their content meaning is not yet established.
+It clears 12 bytes at output +0x78. The copied appearance region ends at
++0x74; the inspected converter does not write the intervening +0x75–0x77.
+
+The item also retains a normalized summary at object +0x2d0. It passes
+summary +4 to localized format ID 0xc274 and summary +5 to the icon-selection
+helper `0x140311d60`, whose predicate `0x1411c6040` admits values 1–9.
+Another consumer at `0x1404334a7` passes summary +5 to text selector
+`0x1411c5da0` and uses summary +0x23 to choose a gendered format. This supports
+level/profession interpretations for +4/+5, but the localized strings were
+not decoded here; these display calls are retained as evidence rather than
+treated as a runtime validation of either field.
+
+Private REA bundle: `~/re/gw2/notes/209026-summary-preview-static-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_075501fef02b9043e9e85f87ceff4893bce8822d81dcee000084bca8de407b0d` | Character-item normalization, preview construction and display consumers. |
+| `ev_0135260b715de40d51fac0b11a9648a736ac217d663493e2905271aa38bc5ac9` | Exact appearance copy and six-record conversion. |
+| `ev_11510a9ab0c9c8262504d2802049a0a6bf24a3f1a2e5507b92237b838d5777d5` | Preview-description appearance passed to the builder. |
+| `ev_03ac4d679b76936cf3427cc6c48b799df11109a516dc326e2c7c0f81f337f34a` | Race/sex reads and preview sex-2 assertion; icon-selection path. |
+| `ev_4e9cedcd7dd0401f519be4daf2aa65162fbab841ba984dfeb83dbc27e0e56c30` | Named race/sex assertions, 1–9 predicate and summary text consumers. |
+| `ev_c66c815beebbc427f8bd47338c44e59508ffc3ed37d49e558db3fbfbabe681fa` | Localized text selector and combined summary display format. |
 
 ## Word and Qword encoding confirmed statically
 
