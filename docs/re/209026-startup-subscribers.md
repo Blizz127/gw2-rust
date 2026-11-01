@@ -180,8 +180,8 @@ latter calls `0x1411c8e80` on the supplied definition. That helper maps the
 index through the table rooted at `0x1428a7ef8`, then tests the mapped mask
 against the referenced definition's +0x28. A matching category requires
 `0x1410f5310(index)` to return true; otherwise the quest predicate returns
-false immediately. The mask mapping has not yet been traced, so mask
-0x20 alone does not identify the category index or its gameplay name.
+false immediately. The mapping follow-up below identifies mask 0x20 as category index 4;
+its gameplay name remains unresolved.
 
 After all six category checks pass, the predicate checks definition
 +0x60. For this frozen target that reference is null, so it returns true
@@ -194,8 +194,8 @@ service. These downstream concrete methods remain untraced.
 `0x1410f5310` bounds-checks index <6 and forwards to `0x1410f71b0`.
 The inspected body obtains context **+0x68**, enumerates values through
 `0x1412dffd0`, searches a 12-byte-entry collection at service +0x10/count
-+0x1c, and calls `0x14023ceb0` when the key is missing. That fallback and
-mapping need further reads. No runtime account state, preferences or
++0x1c, and calls `0x14023ceb0` when the key is missing. The follow-up below resolves this category
+and the missing-entry behavior. No runtime account state, preferences or
 credential caches were accessed. The archived definition is present;
 neither its presence nor an empty quest object proves that this callback
 will skip the category-dependent subscription branch.
@@ -220,6 +220,63 @@ Unaligned edge bytes in the broad initializer read are not used.
 | `ev_65977a2d110a879bf30e68b05f0644114d440dc5bebf0e1fd7a5fc1520076466` | Frozen guard references and mask 0x20. |
 | `ev_e16d84d750da0556c62c36c6b1ea4ca580ef01181056a3e9e7cb927f8bc86631` | Mapping-mask test and category-value wrapper. |
 | `ev_be3b2a713b446dd2bfec745fb7dcad4c6beefc0a86b8e412d7ea88ce10f92929` | Bounded category-value search and missing-entry fallback. |
+
+## Category 4: stored value and fallback precedence
+
+Initializer `0x1402097c0` constructs the category-mask map from six pairs
+copied from `0x142160440`, `0x142160490` and `0x1421604a0`. The collection
+constructor `0x1403c00c0` copies each pair's first Dword into its key and
+second Dword into its value:
+
+| Category index | Mask |
+| ---: | ---: |
+| 0 | 0x02 |
+| 1 | 0x04 |
+| 2 | 0x08 |
+| 3 | 0x10 |
+| **4** | **0x20** |
+| 5 | 0x40 |
+
+For the frozen type-68 key 156 reference, only category 4 therefore
+reaches the value query, assuming normal map initialization. The iterator
+`0x1412dffd0` uses jump-table entry `0x1412e0298` to select
+`0x1412e01b4` for category 4. Its first call writes **78 (0x4e)** and
+returns true; subsequent calls clear the output and return false.
+Converter `0x1412e03a0` maps ID 78 through entry `0x1412e0690` to
+`0x1412e0508`, returning **59 (0x3b)**.
+
+The complete category-value path now distinguishes these cases:
+
+- If context service +0x68 contains key 59 in its 12-byte-entry collection,
+  the entry's Dword +4 determines the result: nonzero is true. A present
+  zero value does **not** consult the fallback.
+- If key 59 is absent, `0x14023ceb0(78)` searches the process-memory array
+  at `0x14266c008`, count `0x14266c014`, with 16-byte entries. It compares
+  entry Word +0 to 78 and returns Word +2 on a match, otherwise zero.
+- Because this category enumerates only ID 78, a false result exhausts the
+  iterator and returns false; there is no second category-4 value.
+
+Thus, after the empty refresh paths and successful content resolution,
+this callback skips its final subscription when the category-4 value is
+true. A false value enters the service +0xc8 subscription/query branch.
+Neither the stored collection nor the fallback array's runtime contents
+were read or changed. Their initialization/population and the downstream
+subscription methods remain separate questions; this trace does not
+choose or manufacture account state.
+
+Private bundle: `~/re/gw2/notes/209026-quest-startup-category-1.json`.
+No runtime replay or source change was made.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_a3241db03679697281e67554fe6eb09efcce3b68405940c5711e62943ddd5d02` | Query true/false returns, complete fallback lookup and category iterator dispatch. |
+| `ev_04aa7bf485ce59da6648650cfe680b211f4dd6f1b4ffb0edde2eeb13dfaa9fd4` | Category-map initializer candidates. |
+| `ev_2a9c111e09598d07d70f6a77f6ae7dc2200d417d4df37d5df586bdc54938e279` | Initializer source blocks and destination map. |
+| `ev_9969d67b06fa213cd82ef81aa40b73c938f49e2785d3df583e2a2bd79c51652d` | Six key/mask pairs and category jump-table entries. |
+| `ev_8f9bc5ba8719cfc4ca0ff23979efb32c72ee2f1512756186974f4728429b6ac7` | Map constructor call, category-4 iterator body and value-key converter dispatch. |
+| `ev_c4d9175cec4782366dcfc28e2efd5e47a08f56cf0e99f1858a83453353f79273` | ID-78 converter jump-table entry. |
+| `ev_78e14ab34d52c014d5a12a7a7a10c0ef606713e868bda1e8e8f9b5867067d484` | Key-59 return and pair-map constructor input. |
+| `ev_5b2f8218c00afc891517ff8e882354c6d395ec75955b47393c642d3cdca41bae` | Pair-to-map key/value copies and exhausted iterator return. |
 
 ## Coverage and evidence
 
