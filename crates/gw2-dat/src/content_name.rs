@@ -36,8 +36,8 @@ fn component(name: &str, output: &mut String) {
     }
     let digest = digest.finalize();
     let mut mixed = 0xcbf2_9ce4_8422_2325u64;
-    for bytes in digest.chunks_exact(4) {
-        let mut word = u32::from_le_bytes(bytes.try_into().unwrap());
+    for bytes in digest.as_chunks::<4>().0.iter() {
+        let mut word = u32::from_le_bytes(*bytes);
         for _ in 0..4 {
             // The client mixes the entire remaining Dword, not just its low byte.
             mixed = (mixed ^ u64::from(word)).wrapping_mul(0x100_0000_01b3);

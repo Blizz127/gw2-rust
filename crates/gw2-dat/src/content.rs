@@ -201,7 +201,7 @@ impl<'a> ContentIndex<'a> {
     }
 
     pub fn entries(&self) -> impl ExactSizeIterator<Item = IndexEntry> + '_ {
-        self.entries.chunks_exact(16).map(|b| IndexEntry {
+        self.entries.as_chunks::<16>().0.iter().map(|b| IndexEntry {
             content_type: dword(b, 0),
             offset: dword(b, 4),
             namespace_index: dword(b, 8),
@@ -241,7 +241,7 @@ impl<'a> ContentIndex<'a> {
         let value = u64::from_le_bytes(bytes.try_into().unwrap());
         if self
             .file_fixups
-            .chunks_exact(4)
+            .as_chunks::<4>().0.iter()
             .any(|field| dword(field, 0) == slot)
         {
             return Err(Error::new(ErrorKind::Unsupported, "content file reference"));
@@ -253,7 +253,7 @@ impl<'a> ContentIndex<'a> {
             }
             Ok(())
         };
-        for field in self.local_fixups.chunks_exact(4) {
+        for field in self.local_fixups.as_chunks::<4>().0.iter() {
             if dword(field, 0) == slot {
                 let offset = usize::try_from(value)
                     .ok()
@@ -262,7 +262,7 @@ impl<'a> ContentIndex<'a> {
                 record(ContentReference::Local { offset })?;
             }
         }
-        for field in self.external_fixups.chunks_exact(8) {
+        for field in self.external_fixups.as_chunks::<8>().0.iter() {
             if dword(field, 0) == slot {
                 record(ContentReference::External {
                     container_index: dword(field, 4),
@@ -270,7 +270,7 @@ impl<'a> ContentIndex<'a> {
                 })?;
             }
         }
-        for field in self.string_fixups.chunks_exact(4) {
+        for field in self.string_fixups.as_chunks::<4>().0.iter() {
             if dword(field, 0) == slot {
                 let index = usize::try_from(value)
                     .ok()
@@ -300,17 +300,17 @@ impl<'a> ContentIndex<'a> {
     ) -> Result<ContentFileReference> {
         let file_count = self
             .file_fixups
-            .chunks_exact(4)
-            .filter(|field| dword(field, 0) == slot)
+            .as_chunks::<4>().0.iter()
+            .filter(|field| dword(field.as_slice(), 0) == slot)
             .count();
         let conflicts = self
             .local_fixups
-            .chunks_exact(4)
-            .chain(self.string_fixups.chunks_exact(4))
+            .as_chunks::<4>().0.iter()
+            .chain(self.string_fixups.as_chunks::<4>().0.iter())
             .any(|field| dword(field, 0) == slot)
             || self
                 .external_fixups
-                .chunks_exact(8)
+                .as_chunks::<8>().0.iter()
                 .any(|field| dword(field, 0) == slot);
         if file_count != 1 || conflicts {
             return Err(invalid("missing or conflicting content file fixup"));
@@ -386,8 +386,8 @@ impl<'a> ContentIndex<'a> {
             .filter(|&p| p < self.main.len())
             .ok_or_else(|| invalid("content string outside chunk"))?;
         let mut units = Vec::with_capacity(max_units.min(256));
-        for pair in self.main[target..].chunks_exact(2) {
-            let unit = u16::from_le_bytes(pair.try_into().unwrap());
+        for pair in self.main[target..].as_chunks::<2>().0.iter() {
+            let unit = u16::from_le_bytes(*pair);
             if unit == 0 {
                 return String::from_utf16(&units).map_err(|_| invalid("invalid content UTF-16"));
             }

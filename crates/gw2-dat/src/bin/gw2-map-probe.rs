@@ -85,10 +85,10 @@ fn consider(
             return;
         }
     }
-    if let Some(hit) = vertical_segment_hit(tri, xy, range) {
-        if best.as_ref().is_none_or(|(old, _)| hit.z > old.z) {
-            *best = Some((hit, source));
-        }
+    if let Some(hit) = vertical_segment_hit(tri, xy, range)
+        && best.as_ref().is_none_or(|(old, _)| hit.z > old.z)
+    {
+        *best = Some((hit, source));
     }
 }
 fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
@@ -230,7 +230,7 @@ fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
                     .iter()
                     .filter(|v| !v.iter().all(|v| v.is_finite()))
                     .count();
-                for (triangle, indices) in m.indices.chunks_exact(3).enumerate() {
+                for (triangle, indices) in m.indices.as_chunks::<3>().0.iter().enumerate() {
                     let tri = [
                         vertices[indices[0] as usize],
                         vertices[indices[1] as usize],

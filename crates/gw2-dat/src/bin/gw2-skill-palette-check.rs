@@ -47,8 +47,8 @@ fn run(path: &str) -> io::Result<()> {
     ]
     .map(|words| {
         let mut guid = [0u8; 16];
-        for (part, word) in guid.chunks_exact_mut(4).zip(words) {
-            part.copy_from_slice(&word.to_le_bytes());
+        for (part, word) in guid.as_chunks_mut::<4>().0.iter_mut().zip(words) {
+            *part = word.to_le_bytes();
         }
         guid
     });
