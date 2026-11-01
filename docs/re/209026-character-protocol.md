@@ -105,13 +105,13 @@ observations, not tested fixture recommendations.
 
 `0x1417f4d90` then checks these offsets in the normalized structure:
 
-| Offset | Constraint |
+| Offset | Constraint and established meaning |
 | --- | --- |
-| +4 | Byte <= 80 |
-| +5 | Byte in 1..=9 |
-| +0x21 | Byte < 5 |
+| +4 | Level Byte <= 80 |
+| +5 | Profession Byte in 1..=9 |
+| +0x21 | Race Byte < 5 |
 | +0x22 | Byte <= 15 |
-| +0x23 | Byte < 3 |
+| +0x23 | Sex Byte < 3; preview has the stricter check below |
 | +1 | u16 accepted by callback `0x141419e40` |
 
 The callback requires a non-null lookup result from a content interface.
@@ -162,15 +162,24 @@ The item also retains a normalized summary at object +0x2d0. It passes
 summary +4 to localized format ID 0xc274 and summary +5 to the icon-selection
 helper `0x140311d60`, whose predicate `0x1411c6040` admits values 1–9.
 Another consumer at `0x1404334a7` passes summary +5 to text selector
-`0x1411c5da0` and uses summary +0x23 to choose a gendered format. This supports
-level/profession interpretations for +4/+5, but the localized strings were
-not decoded here; these display calls are retained as evidence rather than
-treated as a runtime validation of either field.
+`0x1411c5da0` and uses summary +0x23 to choose a gendered format.
+
+A separate named consumer establishes +4/+5 without relying on those localized
+strings: `0x14036bb6d` normalizes the name-selected record into stack +0x40.
+It reads +5 at `0x14036bb8e`, converts it through `0x140338420` (which calls
+the established profession-name getter for values 1–9), and assigns it to
+the literal **profession** key at `0x141ad0478`. It then reads +4 at
+`0x14036bbbb` and assigns the numeric value to **level** at `0x141ad1a50`.
+Both belong to an object published under **character**. Thus summary +4 is
+level and +5 is profession; the enum labels match the creation request.
+The summary-level check admits zero, unlike creation's 1–80 check.
 
 Private REA bundle: `~/re/gw2/notes/209026-summary-preview-static-1.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_9ea072dfbda42d47c47fa2173c27d7392050dad322d172fef426848bdc4d68eb` | Name-selected summary's numeric/text property writes and content lookup callback. |
+| `ev_fae013ac7a9d9db5d3dac41c2a54e1a073208029d211696f6403228247d1d033` | Literal character/level/profession keys and profession-name conversion. |
 | `ev_075501fef02b9043e9e85f87ceff4893bce8822d81dcee000084bca8de407b0d` | Character-item normalization, preview construction and display consumers. |
 | `ev_0135260b715de40d51fac0b11a9648a736ac217d663493e2905271aa38bc5ac9` | Exact appearance copy and six-record conversion. |
 | `ev_11510a9ab0c9c8262504d2802049a0a6bf24a3f1a2e5507b92237b838d5777d5` | Preview-description appearance passed to the builder. |
