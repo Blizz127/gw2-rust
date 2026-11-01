@@ -19,8 +19,11 @@ the player at that index, and also inserts a GUID lookup entry. It then
 notifies the context's event collection.
 
 This establishes how the player table used by server 444 can be populated.
-The string and final Dword meanings are not yet established. The GUID is
-used as a lookup key; it has not been equated with any auth/account GUID.
+The [player-field trace](209026-player-creation-fields.md) identifies the
+string as the stored literal player name and the GUID as `m_portalUserId`.
+The final Dword's low bit selects initial state 2 versus 3 and conditionally
+inserts input-binding selector 4; its full gameplay meaning remains open.
+The GUID has not been equated with a particular STS response field.
 
 ## Character factory
 
@@ -34,8 +37,9 @@ The callback allocates a 0xb08-byte character, constructs it through
 pointer array at context +0x60, and stores the new character at that index.
 It returns the character's +0x48 interface. The engine message that invokes
 this factory was subsequently traced to server 37's queued creation path;
-see [agent creation](209026-agent-creation.md). Initial component data and
-queue timing remain unresolved.
+see [agent creation](209026-agent-creation.md). The [command-clock trace](209026-agent-command-clock.md) now establishes
+40 ms timestamp units and immediate creation after timing bookkeeping;
+complete component/bootstrap state remains unresolved.
 
 ## Finalization: server 170
 
