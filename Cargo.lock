@@ -286,6 +286,7 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "getrandom 0.4.3",
+ "gw2-proto",
  "lz4_flex",
  "num-bigint",
  "rc4",

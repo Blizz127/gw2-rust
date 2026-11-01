@@ -14,3 +14,4 @@ rc4 = { workspace = true }
 tokio-util = { workspace = true }
 getrandom = { workspace = true }
 num-bigint = { workspace = true }
+gw2-proto = { workspace = true }

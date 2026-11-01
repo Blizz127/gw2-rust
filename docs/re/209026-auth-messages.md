@@ -157,3 +157,35 @@ Private export: `~/re/gw2/notes/209026-auth-success-static.json`.
 | `ev_39cd597707855c49e80601e490ee32ca3cb899d4230796fbc03ad4492fdc7d91` | Nested array definitions and String switch. |
 | `ev_49983c94e72ecb49d3502d9c5fe3ebf79c5b32e3abfc0aef5b444d8fdcd0c8d3` | Terminated UTF-16 encoder. |
 | `ev_3406d2c89365f45a4d78facf74d34091b8a0ae9308b9ca112cbfbea9442cbd44` | Array counts and fixed byte buffers. |
+
+## Correlated synthetic account result: run 53
+
+The observer parses client messages 2 (36 bytes), 3 (21), 1 (7) and 10 (51)
+using terminated UTF-16, raw GUIDs/fixed buffers and varints. It takes the actual
+request ID from message 10 and sends ID 8's explicit private body followed by
+ID 7 with zero result/status fields. The body contains synthetic identity GUIDs,
+seven zero Dwords, a zero Byte, two fresh private 32-byte blocks and an empty
+array. These field values are a local experiment, not a complete account model.
+
+The client reaches ID 8's handler, matches the request ID, and enters the
+request-type-7 data-storage path (`0x14023a7f0`). It sends client ID 4 and reaches
+`0x14023aa48` after marking the outstanding request complete. The next observed
+serialization is client ID 34, definition `0x1425af950`, caller return
+`0x1402418a1`. The wire capture totals 230 bytes and exactly matches the client
+RC4 input; the third write is 115 bytes for the ID-4 follow-up. The ID-34 probe
+establishes a serialization attempt, not yet a separately captured wire message.
+
+The last periodic screenshot preceded this result and still shows the login
+form. No post-result screenshot or character-selection screen is established.
+The next step is to trace ID 34 and capture the resulting UI state.
+
+Implementation adds opt-in `--auth-reply-body FILE`; it preserves split client
+reads and replies once to a complete ID 10. It performs no credential validation.
+`StringEncoding::Utf16Terminated` adds bounded, terminated wide strings without
+changing the existing counted option. Focused tests verify terminator bounds,
+surrogate pairs, truncated input, split/coalesced auth messages and correlation;
+observer build and clippy pass. An initial clippy style warning was corrected.
+
+Evidence: `ev_498df340b729b9de04a714b433e05c1f58af7a941e05d6c843d5a24b03e1ad92`,
+private export `~/re/gw2/notes/209026-auth-success-run53.json`. Isolation, container
+cleanup, executable hashes and archive count remain verified.

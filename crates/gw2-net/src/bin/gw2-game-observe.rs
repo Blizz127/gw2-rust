@@ -17,6 +17,9 @@ use gw2_net::{
 use num_bigint::BigUint;
 use tokio_util::codec::{Decoder, Encoder};
 
+#[path = "game_observe/auth.rs"]
+mod auth;
+
 fn invalid(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidInput, message)
 }
@@ -48,7 +51,9 @@ fn observe(
     key: &ServerKey,
     log: &Path,
     reply: Option<&Bytes>,
+    auth_body: Option<Bytes>,
 ) -> io::Result<()> {
+    let mut auth = auth_body.map(auth::AuthProbe::new);
     stream.set_read_timeout(Some(Duration::from_secs(30)))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
     // Run 47 has a 16-byte preamble, with build at +4. Other fields remain opaque.
@@ -105,6 +110,14 @@ fn observe(
             capture.flush()?;
             total += decoded.len();
             eprintln!("Decrypted game bytes: {} (total {total})", decoded.len());
+            if let Some(auth) = &mut auth
+                && let Some(reply) = auth.push(&decoded)?
+            {
+                let mut wire = BytesMut::new();
+                codec.encode(reply, &mut wire)?;
+                stream.write_all(&wire)?;
+                eprintln!("Explicit correlated auth fixture sent");
+            }
         }
     }
     eprintln!("Game capture complete: {total} bytes");
@@ -115,6 +128,7 @@ fn main() -> io::Result<()> {
     let mut listen: SocketAddr = "127.1.0.2:6112".parse().unwrap();
     let (mut params, mut private, mut logs) = (None, None, None);
     let mut reply = None;
+    let mut auth_body = None;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -128,18 +142,25 @@ fn main() -> io::Result<()> {
             "--params" => params = args.next().map(PathBuf::from),
             "--private" => private = args.next().map(PathBuf::from),
             "--log" => logs = args.next().map(PathBuf::from),
-            "--reply-frame" => {
+            "--reply-frame" | "--auth-reply-body" => {
                 let path = args.next().ok_or_else(|| invalid("missing reply file"))?;
                 let mut bytes = Vec::new();
                 File::open(path)?.take(65536).read_to_end(&mut bytes)?;
                 if bytes.is_empty() || bytes.len() > 65535 {
                     return Err(invalid("reply must contain 1..65535 plaintext bytes"));
                 }
-                reply = Some(Bytes::from(bytes));
+                if arg == "--reply-frame" {
+                    reply = Some(Bytes::from(bytes));
+                } else {
+                    if bytes.len() > 65000 {
+                        return Err(invalid("auth fixture body exceeds bound"));
+                    }
+                    auth_body = Some(Bytes::from(bytes));
+                }
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE]",
+                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE]",
                 ));
             }
         }
@@ -179,9 +200,10 @@ fn main() -> io::Result<()> {
         let stream = stream?;
         let key = Arc::clone(&key);
         let reply = reply.clone();
+        let auth_body = auth_body.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
-            if let Err(e) = observe(stream, &key, &log, reply.as_ref()) {
+            if let Err(e) = observe(stream, &key, &log, reply.as_ref(), auth_body) {
                 eprintln!("Game observation ended: {e}");
             }
         });

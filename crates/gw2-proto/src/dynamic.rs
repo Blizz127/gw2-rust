@@ -35,6 +35,8 @@ pub enum CountPrefix {
 pub enum StringEncoding {
     /// Count of UTF-16 code units (per [`CountPrefix`]), then the units, little-endian.
     Utf16Counted(CountPrefix),
+    /// Build 209026: UTF-16LE units followed by zero; Size includes the terminator.
+    Utf16Terminated,
 }
 
 /// Encodings that are not yet confirmed. `None` means "reject this field kind".
@@ -188,6 +190,19 @@ pub fn decode_field(f: &Field, rules: &Rules, buf: &mut &[u8]) -> Result<Value> 
             Value::Bytes(take_bytes(buf, n)?)
         }
         "String" => match rules.string {
+            Some(StringEncoding::Utf16Terminated) => {
+                let max = size.unwrap_or(MAX_ELEMENTS).min(MAX_ELEMENTS);
+                let mut units = Vec::new();
+                loop {
+                    if units.len() >= max {
+                        return Err(invalid("String exceeds Size without a terminator"));
+                    }
+                    let unit = u16::decode(buf)?;
+                    if unit == 0 { break; }
+                    units.push(unit);
+                }
+                Value::Text(String::from_utf16(&units).map_err(|_| invalid("bad UTF-16"))?)
+            }
             Some(StringEncoding::Utf16Counted(p)) => {
                 let n = read_count(p, buf)?;
                 if let Some(max) = size
@@ -283,6 +298,18 @@ pub fn encode_field(f: &Field, rules: &Rules, v: &Value, out: &mut BytesMut) -> 
             out.extend_from_slice(b);
         }
         ("String", Value::Text(s)) => match rules.string {
+            Some(StringEncoding::Utf16Terminated) => {
+                let units: Vec<u16> = s.encode_utf16().collect();
+                if units.contains(&0) {
+                    return Err(invalid("terminated String contains a zero unit"));
+                }
+                let max = size.unwrap_or(MAX_ELEMENTS).min(MAX_ELEMENTS);
+                if units.len() >= max {
+                    return Err(invalid("String and terminator exceed Size"));
+                }
+                units.iter().for_each(|u| u.encode(out));
+                0u16.encode(out);
+            }
             Some(StringEncoding::Utf16Counted(p)) => {
                 let units: Vec<u16> = s.encode_utf16().collect();
                 if let Some(max) = size
@@ -454,6 +481,27 @@ mod tests {
         }
         assert!(decode_frame(msgs, &rules, &mut &[99u8, 0][..]).is_err());
         assert!(encode_message(&msgs[0], &rules, &Value::U8(1), &mut BytesMut::new()).is_err());
+    }
+
+    #[test]
+    fn terminated_utf16_preserves_following_fields_and_bounds() {
+        let field = Field { kind: "String".into(), name: "text".into(), size: Some(3), type_name: None, fields: vec![] };
+        let rules = Rules { string: Some(StringEncoding::Utf16Terminated), ..Rules::default() };
+        // A surrogate pair uses two units; the terminator occupies the third.
+        let wire = [0x3d, 0xd8, 0x00, 0xde, 0, 0, 0x78, 0x56];
+        let mut cursor = &wire[..];
+        assert_eq!(decode_field(&field, &rules, &mut cursor).unwrap(), Value::Text("😀".into()));
+        assert_eq!(cursor, &[0x78, 0x56]);
+        let mut out = BytesMut::new();
+        encode_field(&field, &rules, &Value::Text("😀".into()), &mut out).unwrap();
+        assert_eq!(&out[..], &wire[..6]);
+        for cut in 0..6 {
+            assert_eq!(decode_field(&field, &rules, &mut &wire[..cut]).unwrap_err().kind(), ErrorKind::UnexpectedEof);
+        }
+        assert_eq!(decode_field(&field, &rules, &mut &[65, 0, 66, 0, 67, 0][..]).unwrap_err().kind(), ErrorKind::InvalidData);
+        assert!(encode_field(&field, &rules, &Value::Text("abc".into()), &mut BytesMut::new()).is_err());
+        assert!(encode_field(&field, &rules, &Value::Text("a\0".into()), &mut BytesMut::new()).is_err());
+        assert_eq!(decode_field(&field, &rules, &mut &[0, 0][..]).unwrap(), Value::Text(String::new()));
     }
 
     #[test]
