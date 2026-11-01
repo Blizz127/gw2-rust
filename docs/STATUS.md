@@ -187,6 +187,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Server 151 sets attitude only for an existing character. Servers 182/183
     are alternative coreStats creation paths; 185 only updates an existing
     component. Their private framing census consumed 249 bytes completely;
+    named icon/trait consumers establish the third scalar byte as profession.
+    The two level fields' exact names remain unresolved;
     see [re/209026-character-core-stats.md](re/209026-character-core-stats.md).
     See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
