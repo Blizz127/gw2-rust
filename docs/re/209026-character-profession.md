@@ -92,6 +92,71 @@ direct named consumer of every remaining +0x40 getter was not established.
 The neighboring +0x18 virtual returns different constants (1, 6, 11, ...);
 those must not be confused with these profession values.
 
+## Guardian meter and update layouts
+
+The prepared local character candidate is profession 1. Its creation
+handler 477 calls `0x141294e90` with the three floats in wire order, then
+`0x141294f70` with both zero-extended bytes. Guardian construction clears
+the relevant fields; no playable defaults are supplied by that zeroing.
+
+| Creation field | Storage | Observed meaning/use |
+| --- | --- | --- |
+| Float 1 | Component +0x84 | Meter maximum. |
+| Float 2 | Component +0x88 | Meter rate. |
+| Float 3 | Component +0x80 | Meter current, clamped for ordinary finite inputs with nonnegative maximum. |
+| Byte 1 | Dword +0x90 | Raw value, exposed by Guardian secondary virtual +0x20. Gameplay name unresolved. |
+| Byte 2 | Dword +0x94 | Raw value, exposed by secondary virtual +0x28. Gameplay name unresolved. |
+
+The setter first changes maximum, evaluates the old meter while changing
+rate, then replaces current with the supplied third float and records a
+fresh timestamp at +0x8c. The shared evaluator `0x141288dd0` uses this
+four-field meter at component +0x80. For ordinary finite values and
+nonnegative maximum:
+
+```text
+if now == 0: return stored_current
+return clamp(stored_current + f32(u32(now - stored_timestamp))
+             * f32_bits(0x3a83126f) * rate, 0, maximum)
+```
+
+It does not mutate the meter while evaluating. Time source `0x1409cb4a0`
+uses an optional callback at `0x142682360`, otherwise imported
+`WINMM.dll!timeGetTime` at IAT slot `0x141915110`. The multiplier is f32
+0.001. Thus the fallback clock gives rate units per second; no claim is
+made here about an installed callback's runtime behavior. This is distinct
+from the health meter's world-time path.
+
+Guardian primary virtual +0xf8 (`0x141294980`) divides the evaluated
+current by maximum **without a zero-denominator guard**. A zero-filled
+creation payload therefore is not established as a useful default. The
+first byte is also compared against an integer requirement in
+`0x141294870` under a separate character-state condition. This trace does
+not name the meter as a particular profession resource or resolve those
+state and byte semantics.
+
+The following operations begin with Dword character index:
+
+| ID | Descriptor / handler | Fields after index / behavior |
+| --- | --- | --- |
+| 478 | `0x1425cb580` / `0x141256610` | None. Calls profession removal `0x1411d6a00`, invokes the component deleting destructor and clears character +0x510. |
+| 479 | `0x1425cb6a0` / `0x141256670` | **Five Floats**. The handler passes only the first three (maximum, rate, current) to `0x141294e90`; the two trailing floats are part of the descriptor despite being unused by this handler. |
+| 480 | `0x1425cb830` / `0x1412566f0` | Two Bytes. Calls `0x141294f70`, storing both and notifying listeners. |
+
+479/480 fetch the existing profession through character primary +0xa8 and
+call Guardian methods directly. They do not create missing state or check
+the derived profession type in the inspected handlers. Their valid use
+therefore requires the matching existing component; a framing codec cannot
+establish this lifetime/type condition.
+
+Private bundle: `~/re/gw2/notes/209026-guardian-meter-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_2573d7d1ad13ca3e6045c3097c68f4acee3b94c2f2be491e235e494fa3062b19` | Creation arguments, meter and byte setters, vtables and zero initialization. |
+| `ev_dd3e17fb42814b4d6cc9db4843f25a3ac92e1327ff7a017c9be6f13884ac72ca` | Meter evaluator, ratio getter, conditional byte use and clock wrapper. |
+| `ev_cf4a421cf1d4d3c282942d5fd292d206107f44f0cd0ce3aff9541b61d69fd2be` | timeGetTime import, update/removal handlers, five-float 479 descriptor and raw-byte getters. |
+| `ev_cd25a14fbd23545b97767a6fc979e04256188b2c2d71ea706dbc62213f5407ea` | 480 descriptor, 0.001 constant, removal body and bounded clock-reference search. |
+
 ## Scope and evidence
 
 For a fresh player, profession creation must precede server 170's chatter
