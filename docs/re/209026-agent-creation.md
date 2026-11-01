@@ -25,8 +25,8 @@ Server **37**, descriptor `0x1425b3a00`, handler `0x1410335c0`, has:
 | 7–9 | Byte each | Forwarded into creation parameters; meanings unresolved. |
 | 10 | Point3 | Three raw float words plus a variable-length Dword; details below. |
 | 11–12 | Word each | Interpreted as signed values for angular conversion, with 0x7fff as a special value. Full semantics unresolved. |
-| 13 | ArrayFixed(8), Float | Eight raw float words copied into the creation command. |
-| 14 | Float | Forwarded to the agent constructor. |
+| 13 | ArrayFixed(8), Float | Eight raw float words; element 3 supplies height. See [dimension trace](209026-agent-dimensions.md) for the remaining observed uses. |
+| 14 | Float | Collision radius in map units; constructor asserts greater than zero. |
 
 The handler allocates a command through `0x141035c50`, then submits it via
 `0x14102fcf0`. The command has vtable `0x14211c338`; its +0x10 method is
