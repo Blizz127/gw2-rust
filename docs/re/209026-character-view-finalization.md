@@ -70,7 +70,8 @@ It belongs to AvContext +0x20's vtable `0x142142658`, slot +0x118, and
 checks the supplied player against character-context virtual +0x70.
 It obtains that player's finalized controlled character through virtual
 +0x78, then applies the same eligibility predicate. The corresponding
-player-event producer remains to be traced. These extra paths do not
+[player-event follow-up](209026-player-spectating.md) resolves this to
+server 460 reset; server 459 uses the adjacent view-removal event. These extra paths do not
 justify omitting finalization from the fresh-character sequence.
 
 ## Evidence

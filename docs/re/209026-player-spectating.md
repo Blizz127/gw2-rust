@@ -46,6 +46,52 @@ are still unresolved. State 3 plus null pointers is the observed reset
 state, not independent proof of a valid map bootstrap. There is still no
 evidence requiring 459/460 for ordinary map entry.
 
+## View removal and restoration on state events
+
+A static follow-up resolves the AvContext player listener. Its character-
+context listener +0x48 slot is `0x141110920`: when the selected player
+changes, it unsubscribes AvContext +0x20 from the supplied old player's
+virtual +0x428 and subscribes it to the current context +0x70 player
+through virtual +0x420. That slot resolves to `0x1411bbb40`, inserting
+into player +0x90. AvContext +0x20 uses vtable `0x142142658`.
+The [control trace](209026-character-control.md) establishes the context
+selected-player store and +0x48 notification order.
+
+| Server operation | Player event | AvContext effect |
+| --- | --- | --- |
+| 459, `0x1411bc280` | After storing the supplied state, dispatch player +0x90 virtual +0x110 through `0x14098abfc` | `0x141111640` removes an existing controlled-character view through `0x14110f380`; it then selects the spectate target's view, or null. |
+| 460, `0x1411bc350` | After restoring state 3 and clearing target/camera, dispatch player +0x90 virtual +0x118 through `0x140255578` | `0x141111730` applies the ordinary eligibility predicate and creates the controlled-character view if eligible and absent, then restores the selected-view pointer. |
+
+Both callbacks assert that the supplied player matches context virtual
++0x70 and obtain its controlled character through player virtual +0x78.
+That getter returns null unless the controlled character exists and is
+finalized. The callbacks then pass it into helpers that dereference the
+character without a null guard. These events therefore have a concrete
+controlled/finalized-character requirement when this listener is installed.
+
+The removal callback does not test the new numeric state before removing
+the view. Supplying state 3 in server 459 is consequently **not equivalent
+to server 460**, whose separate event restores the view. The reset's
+eligibility predicate sees state 3, but still checks associated-player
+and existing-view conditions described in the
+[view-finalization trace](209026-character-view-finalization.md).
+Neither event proves complete rendering readiness. Other listeners on
+these notifications remain unexhausted, and no runtime test was performed.
+
+Private follow-up bundle: `~/re/gw2/notes/209026-player-spectating-view-1.json`
+(1,551 records; 30,324,287 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_b72d647c30b9c327cc63f6eddc505728ea6f5087a0e0df1f816423ca2ed392eb` | Complete state-set/reset bodies, state stores and event order. |
+| `ev_0192b3ee7d59d8b5d48f23862c78e5555aa7145f6598bd6ad1e787674613591e` | Exact event thunks and complete removal callback. |
+| `ev_88e1740f85b17a1e370ede2392b4c9588a9df3d356f37c939df4c603c2d24dd3` | Player listener +0x110/+0x118 and context subscription callback entries. |
+| `ev_6965ea811f6d0e615b9eeffb4b38ab75bf75dcd4765f9ddda56e3c64cfc4096b` | Complete restoration callback and eligibility predicate. |
+| `ev_14b50a962a0cf6e913b9b3fce08efd0f4d467f4cc7ac6cc23f8be97c07dca7e6` | Complete selected-player subscription switch. |
+| `ev_f87b7f73c7198c2f4a55db780ce370e039d6ec0ea8de8f8275110b6206dc3c59` | Player +0x420 registration slot resolves to collection insertion. |
+| `ev_d45fd2261dcee4a85581da00ff840f9d0cce2b40c360604a5cd8d5ed86d61c4b` | Player collection insertion body and character-dereferencing view lookup. |
+| `ev_a3c848e8cb4700c92ddfc527c52c2cbb431b3552435b0a99c2d91ec867b61669` | Controlled-character getter enforces finalization. |
+
 ## Supporting content consumers
 
 Content type 334 is also iterated at `0x14096d44e` and
