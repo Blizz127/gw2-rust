@@ -97,13 +97,42 @@ shipped data. An exhaustive shape check established that **all 90 strings
 have 45 appearance bytes**, but 80 have **236 color values (59 rows)** and
 the ten profession-9 entries have **240 values (60 rows)**. Parsed race/sex
 match the corresponding registry keys. This is fewer values than the client's
-68-row read loop; its exhausted-token behavior remains unverified. A local
-reader must report the provided rows and must not invent the absent rows.
+68-row read loop. A local extraction reader reports the provided rows;
+the subsequent static tail trace below separately establishes the importer's
+zero-fill behavior for the absent values.
 Request 415's rows 2–7 are present in every extracted default.
 Nine profession-9 strings also contain CR/CR/LF whitespace adjacent to
 three color tokens. A second strict-reader rejection exposed this formatting;
 the token audit is retained as
 `ev_2f3700e119920918406d72e4bab164af2092b3c2392b34a945d0a6ef742f8e1a`.
+
+### Exhausted color tokens
+
+The token helper `0x1409ba190` receives the delimiter set comma/apostrophe
+at `0x14215f3b4`, an output buffer and capacity 16. At the end of a canonical
+string it skips the closing apostrophe, leaves the cursor at the terminating
+wide NUL, writes an empty terminated token and returns zero. The color loop
+does not use that return value; its inspected assertion tests a different,
+already nonnull appearance cursor.
+
+Numeric helper `0x1409ba150` forwards to `0x140e66a40`, then `0x140e65234`
+with base 10. Empty input consumes no digit, leaves its digit-seen flag clear,
+and returns zero through `0x140e65900`–`0x140e65915`. Therefore the remaining
+iterations write zero into the matrix. For the canonical extracted strings,
+the static path fills rows **59–67** (profession 1–8) or **60–67**
+(profession 9) with zero. This is a control-flow conclusion, not a runtime
+observation. The extraction reader still preserves the distinction between
+supplied and absent rows; request 415's selected rows are unaffected.
+
+Private bundle: `~/re/gw2/notes/209026-default-color-tail-static-1.json`.
+Evidence: `ev_dc97364b3576bd8077903246d681b4a2e315bb722be6532e5e4dc7605296959d`
+(delimiter bytes and token-helper exhaustion),
+`ev_983d3a5f097731a3a1e15d2e558593a37b7e91fda6b15213e6b4d8c171136f67`
+(numeric wrapper),
+`ev_00ef8c767add772b29d1f80bb1e26bb564468950e2e598555a400f9000e6f755`
+(numeric setup), and
+`ev_6390bca441802fb8b37f337cc06f4f42fa19bd9d1401bb1fa9a6b66e3089d99b`
+(no-digit zero-return branch).
 
 The extraction checked the archive entry's hash against the location scan,
 pointer bounds, relocation membership and string termination. Private data:

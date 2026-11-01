@@ -55,7 +55,8 @@ impl AppearanceDefault209026 {
             return Err(invalid());
         }
         // Shipped defaults contain only 59 or 60 rows despite the client's
-        // 68-row loop. Keep only supplied rows; missing-tail behavior is unknown.
+        // 68-row loop. Keep only supplied rows, separately from the client's
+        // statically traced empty-token zero-fill behavior.
         // At least eight rows are needed to provide request 415's rows 2–7.
         let count = colors.split(',').count();
         if !(32..=272).contains(&count) || count % 4 != 0 {

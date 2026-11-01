@@ -66,6 +66,10 @@ The [content-registry trace](209026-content-registry.md) now locates the
 ten race/sex definitions in archive file 1282852 and extracts their 90
 profession-specific default strings privately. This provides shipped input
 for parsing appearance and color selections; runtime use remains untested.
+Those strings supply only 59 or 60 rows. The later token-helper trace shows
+that exhausted tokens parse as zero for the remaining iterations through
+row 67; this static result applies to the canonical extracted strings. The
+strict local reader retains only explicitly supplied rows.
 
 ## Evidence
 
