@@ -92,9 +92,13 @@ is clear and calls collision virtual +0x108. That sets the distinct
 
 At the end of the base-agent constructor, the full/simple collision +0x20
 entries (`0x14212c928`, `0x14212d1e8`) both resolve to **`0x140163990`**,
-a plain `ret 0`. The type-0 character game interface +0x10 entry at
-`0x142161720` resolves to the same stub. These two final constructor
-callbacks therefore do not enter the collision scene.
+a plain `ret 0`. The type-0 character game interface instead uses vtable
+**`0x142161670`**: its +0x10 entry at `0x142161680` resolves to
+`0x1411dc6e0`. The previous use of `0x142161710` as the table base was
+incorrect. The [corrected callback trace](209026-character-entry-callbacks.md)
+shows an immediate return for identity high nibble 0x3 (including candidate
+0x30000001), and a conditional nested float-setting call for other identities.
+Only the collision callbacks are unconditional no-ops.
 
 This narrows the candidate bootstrap relationship: creation and the two
 entry states are distinct, and 46 is a verified route that supplies both
