@@ -39,8 +39,9 @@ Adapter `0x1402451d0` allocates a 16-byte callback. It stores table
 
 A successful Purchase response therefore reaches a no-op. It does not post
 item (0x42) or package (0x43) results and notifies no store listener. A
-failed Purchase, whether a transport error or null XML (error 0x3f), posts
-event 0x50 with the Purchase request ID. That event follows the
+failed Purchase, whether a transport error or null XML (error 0x3f), submits
+event 0x50 with the Purchase request ID through `0x141069d20`. The process
+gates documented in the callback trace still apply. That event follows the
 [dispatch](209026-quest-store-dispatch.md) error branch.
 
 ## Effect on the quest continuation
