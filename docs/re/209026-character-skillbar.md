@@ -71,6 +71,53 @@ flags, updates an embedded object and emits events. This trace does not
 claim that the direct setter alone unconditionally dereferences the skill
 bar; the event-listener graph remains incomplete.
 
+## Slot updates and auto-attack selection
+
+Registration continues at `0x1421709e0`. Every message below starts with
+a Dword character index and requires an existing skill bar through
+character primary virtual +0xc8. These are field mutations, not skill-bar
+allocation or proof of useful initial skill choices.
+
+| ID | Descriptor / handler | Remaining fields and inspected effect |
+| --- | --- | --- |
+| 621 | `0x1425d8740` / `0x14125bd20` | Byte slot. Calls `0x1411fb680` with value zero to clear that slot's bit in component +0x128. |
+| 622 | `0x1425d8830` / `0x14125be20` | Byte auto-attack slot. 255 maps to signed -1; other values are zero extended. Calls `0x1411f9e90`. |
+| 623 | `0x1425d8950` / `0x14125bec0` | Dword auto-attack mask. Calls `0x1411f9ef0`. |
+| 624 | `0x1425d8a70` / `0x14125bf50` | Dword content key. Nonzero resolves type 299; zero supplies null. Virtual +0x260 stores component +0xc8 and notifies. Record's gameplay role unresolved. |
+| 625 | `0x1425d8bb0` / `0x14125c010` | Dword content reference, resolved through content virtual +0x230 and passed to skill-bar virtual +0x268. Full effect unresolved. |
+| 626 | `0x1425d8dc0` / `0x14125c0d0` | Two Dwords: content reference and engine-agent index. `0x1411fb240` stores resolved content at +0x130, updates the agent reference at +0x138 and triggers normal rebuild. |
+| 627 | `0x1425d8e90` / `0x14125c1a0` | Float, passed to `0x1411fb280`, which updates a field through the object at skill-bar +0x150. Gameplay meaning unresolved. |
+
+621's setter explicitly asserts `skillbarSlot < CHAR_SKILLBAR_SLOTS` with
+upper bound 23. The bit's gameplay meaning is not yet named. It can also
+schedule a callback and notify listeners when the old value was set;
+do not equate clearing it with deleting the skill in that slot.
+
+For 622, a changed selection stores component +0x88, clears +0x8c, then
+sets one bit in +0x8c unless selection is -1. For 623, a changed mask is
+stored at +0x8c and +0x88 becomes its lowest set-bit index, or -1 for a zero
+mask. The iterator constructor `0x1409be9a0` isolates the lowest bit and
+`0x1409bf150` obtains its index using BSR. Both setters notify listeners.
+
+Consumer `0x1411f63d0` calls `0x1410f62f0`, which reads the named setting
+**EnableMultiAutoAttacks** at `0x14213f6a8`. With it enabled, the consumer
+iterates +0x8c's set bits and indexes the skill pointers at +0x1d0. With it
+disabled, it indexes the same array using +0x88. This establishes the
+auto-attack role of 622/623 without assigning names to every skill slot.
+No range sanitization is visible in these two setters; their ability to
+store arbitrary bytes/masks is not proof those values are safe to use.
+
+Private bundle: `~/re/gw2/notes/209026-skillbar-slot-updates-1.json`
+(1,024 records, 22,915,210 bytes, mode 0600).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_60621a526d2641c72dda8efed24a2ad48f217c2b51650b04c40ef73dd9b4d6c8` | Registration pairs, 622–624 handlers and slot-flag setter. |
+| `ev_5080c941ae3f22ff573c3219bea26008e3692c0003fb826358685db48aae57f3` | Hash-guarded 621–627 descriptors, selection/mask setters, 625–627 handlers. |
+| `ev_ed4af17929eda91173312092de7160732ad994b4a4a5e295d9c8d52a114c4042` | Named setting search and bounded field-use census. |
+| `ev_5ba7fd4244aa28d5add7bd6070300563912745959e9a2c2007e74dfdd32c4bdb` | Single/multiple-slot consumer, setting lookup, 624 setter and mask iterator. |
+| `ev_71f25d63585fccaa1ab88f65c9362673fa3477eab3847905ed422b8a85428b0a` | Setting literal, bit-index helper, corrected consumer entry boundary and 626/627 setters. |
+
 ## Limits and evidence
 
 These findings add component lifetime and rebuild constraints, not valid
