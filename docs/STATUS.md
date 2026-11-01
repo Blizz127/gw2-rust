@@ -111,7 +111,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     [re/209026-primitive-fields.md](re/209026-primitive-fields.md).
   - **Static character-creation path:** creation context sends ID 415 through
     mission protocol 0, group 39. Registration and descriptor establish its
-    bounded string, fixed/variable arrays and scalar wire layout. The static
+    bounded string, fixed/variable arrays and scalar wire layout. Local validation
+    identifies race/sex offsets and the separate profession byte, with embedded
+    numeric labels; content-dependent appearance validity remains unresolved. The static
     creation-scene exchange maps server 1049/client 410 and server 1050/client
     411, plus the view readiness flags. Server 1051 feeds the creation error
     dialog; server 1048 updates the list and, outside cinema states, starts
@@ -129,6 +131,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     loopback cipher exchanges), build and CLI fixture-conflict check pass.
     Validated prefixes are retained in exclusive mode-0600 sidecars; the
     loopback test verifies their exact bytes and no-overwrite behavior.
+    The capture limit is now exactly 1 MiB even after a short initial read;
+    the focused loopback regression and observer build pass.
     See [re/209026-mission-join.md](re/209026-mission-join.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion

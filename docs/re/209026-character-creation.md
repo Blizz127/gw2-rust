@@ -28,8 +28,8 @@ After the two-byte little-endian message ID, the descriptor encodes:
 | Order | Encoding | Source or established meaning |
 | --- | --- | --- |
 | 1 | String, limit 20 UTF-16 code units including terminator | Name at context data +0x78; validation accepts 1–19 units before NUL. |
-| 2 | Fixed array of 48 Bytes; no count prefix | Context data base, containing appearance data; detailed field meanings unresolved. |
-| 3 | Byte | Context data +0xa0; validator/sender check value below 11; meaning unresolved. |
+| 2 | Fixed array of 48 Bytes; no count prefix | Context data base, containing appearance data; race at byte 27 and sex at byte 29, as mapped below. |
+| 3 | Byte | Profession from context data +0xa0; validator/sender check value below 11. This bound alone does not establish a playable profession. |
 | 4 | Byte | Level from context data +0x30; context validates 1–80, sender asserts below 255. |
 | 5 | Dword varint | Flags: context supplies 0 or 8 according to a virtual predicate. |
 | 6 | One-byte count, then Byte elements; maximum 32 | Context data +0x38 array; sender assertion names `madLibAnswerIdsBytes`. |
@@ -49,6 +49,54 @@ The sender's packed decoded offsets, relative to its message ID, are:
 name pointer +2, appearance pointer +0xa, two Bytes +0x12/+0x13, flags
 +0x14, answer count +0x18, answer pointer +0x19, final array pointer +0x21.
 These offsets describe local serializer input, not on-wire pointer values.
+
+## Appearance fields and local validation
+
+The context validator `0x1412a0440` examines 45 appearance bytes before the
+separate level/name/profession checks. Its byte-index table at `0x1412a0698`
+and branch table at `0x1412a0668` identify these zero-based offsets within
+the 48-byte appearance array:
+
+| Offset | Established meaning or local check |
+| --- | --- |
+| 27 (0x1b) | Race, less than 5; assertion names `CHAR_RACES`. |
+| 29 (0x1d) | Sex, less than 3 and not 2 (`CHAR_SEX_NONE`), admitting 0 and 1. |
+| 2, 4, 12, 14, 16, 28, 30, 31, 32 | Must differ from 0xff (`INVALID_APPEARANCE`); individual meanings unresolved. |
+
+The race-name getter `0x1411c6740` selects UTF-16 labels at `0x141aeb410`
+through `0x141aeb450`: **0 Asura, 1 Charr, 2 Human, 3 Norn, 4 Sylvari**.
+The failure-report path in `0x1411ca000` selects **0 Male, 1 Female** from
+the sex byte. These are labels embedded in this build, not inferred from
+external enum definitions.
+
+The assertion at `0x14217dfb0` names the Dword at context data +0xa0
+`m_data->profession`. The name getter `0x1411c5f40`, indexed by profession
+minus one through `0x1411c600c`, supplies:
+
+| Profession value | Embedded label |
+| --- | --- |
+| 1 | Guardian |
+| 2 | Warrior |
+| 3 | Engineer |
+| 4 | Ranger |
+| 5 | Thief |
+| 6 | Elementalist |
+| 7 | Mesmer |
+| 8 | Necromancer |
+| 9 | Revenant |
+
+Value 10 enters a diagnostic branch and returns null; zero and values outside
+the getter's 1–10 range enter its assertion path. The context's upper-bound
+check alone is therefore insufficient to select a valid profession.
+
+After these checks, `0x1411ca000` loops over 45 bytes and calls
+`0x1411ca0d0` for each. That helper immediately accepts a zero byte; nonzero
+values use race/sex-dependent content lookups and field-specific validation.
+Those content IDs and the remaining appearance fields are not yet mapped.
+The three remaining wire bytes (45–47) are outside these inspected loops;
+their meaning and any other validation remain unresolved. Passing a local
+zero-byte shortcut is not evidence that an all-zero appearance is a valid
+character or that a server would accept it. No fixture was sent or changed.
 
 ## Limits and next dependency
 
@@ -191,10 +239,17 @@ Evidence: `ev_327f5b54412d9d00b8209f927420c279eaeab8de5fc4c054b8933f5a5d8e4473`
 ## Evidence
 
 Private REA bundles: `~/re/gw2/notes/209026-character-static-6.json` and
-`~/re/gw2/notes/209026-mission-static-9.json`.
+`~/re/gw2/notes/209026-mission-static-9.json`, plus
+`~/re/gw2/notes/209026-appearance-static-1.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_58dce70adbe120cf3386545939466e4581f3f2773c4c1cee3330b2091b9e1dc5` | Context appearance, level, name and profession validation. |
+| `ev_b622d260a5d4df02ced8de7c696f8b1e23061fdf863a7e8a2064b5a5d78c15cf` | Appearance byte/branch tables and named assertions. |
+| `ev_79f54260ecfce38afefe516ad1e724811962c04c71adbfbb8ee1be7d6cac2ee9` | Content validation, zero-byte shortcut and sex labels. |
+| `ev_aaec03f1d94d827c0394a5714898d9acf3bb81d659ef6694929ff146a2115520` | Race/profession name getters. |
+| `ev_ef37e34afa132881412b34171c2aff3e5b21424bd902362c759aa7d9d14f26e2` | Embedded labels, profession switch table and value-10 diagnostic branch. |
+| `ev_f591e72bc98757e798df7215e82478301c111f5d09ab3ab2a045ba7795952fc3` | Full profession switch and range guard. |
 | `ev_09e232402b8a05219e98e2ad793867b579fe3c93208808b37709215f35b0de3f` | Event-0x5d jump-table target and summary lookup. |
 | `ev_d7c2fb6ab5e99ff4468933a5e53124f904539e3c7377502ec21c5fa8fc9a7252` | Success/error view handler and name-keyed record lookup. |
 | `ev_f28d1f111fc74ae907d8417864a4f63cd0283754d60ada3c22bf6578bf83eeb1` | Context GUID/name/blob writes and continuation assertions. |
