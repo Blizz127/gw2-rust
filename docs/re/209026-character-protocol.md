@@ -92,3 +92,52 @@ Runtime list population is still untested and remains behind the UI gate.
 | `ev_176240d6026f8a2e4ac45bfcb0ea4356e40e3ad258cbbfd6791e26b820b7d630` | Accessor reads ID-17 vector. |
 | `ev_ae068f97653fc0143eb6ff829dabccc178df12df177cc137eb7b3b15afb6aee6` | Character item copies the record. |
 | `ev_007a08c64d1a850ed19c20215c1c28d6fca0c8479ba865441081868b4e1eae72` | Blob-decoder thunk and descriptor. |
+
+## Summary blob version and checks
+
+`0x1417f4ae0` clears a 159-byte output structure, marks its version byte 255,
+and rejects inputs shorter than five bytes. Version 11 requires exactly 159
+bytes and is copied directly. Older versions 7, 8 and 9 require 153 bytes;
+version 10 requires 157. Those paths convert into version 11, with additional
+field conversions for versions 7/8. Other historical versions below 11 take a
+fatal-error path; malformed size/version combinations fail. These are static
+observations, not tested fixture recommendations.
+
+`0x1417f4d90` then checks these offsets in the normalized structure:
+
+| Offset | Constraint |
+| --- | --- |
+| +4 | Byte <= 80 |
+| +5 | Byte in 1..=9 |
+| +0x21 | Byte < 5 |
+| +0x22 | Byte <= 15 |
+| +0x23 | Byte < 3 |
+| +1 | u16 accepted by callback `0x141419e40` |
+
+The callback requires a non-null lookup result from a content interface. The
+numeric fields resemble character level/profession/race/appearance information,
+but their names are not yet established by consumers. They remain offsets here.
+The scene additionally reads a GUID at normalized blob +0x85 and skips its
+resource lookup when all 16 bytes are zero. A blob passing the basic checks is
+therefore insufficient to guarantee a rendered character.
+
+Evidence: `ev_0205d1011aed3e65f16c7dacf89651e6aeb4d826a3386a6668e9fb7566cef53d`
+(version conversion),
+`ev_d105b602296b43cd635bc3e99ebe6b591df78d0f54d804f818b878bd456b1188`
+(range checks),
+`ev_b668f5948f5bda3a3c9b567c907cbc6b263bd14ad9848509d625670e547e2b2e`
+(content lookup),
+`ev_81eb316c831dccd39758b438c1e0cbc6b09818772e381963177a0c3cc408c2b7`
+(scene GUID use).
+
+## Word and Qword encoding confirmed statically
+
+The encoder's switch table at `0x140ff178c` maps kind 3 (Word) to
+`0x140ff05ce` and kind 5 (Qword) to `0x140ff06ae`. They copy two and eight
+little-endian bytes respectively, advancing the input and wire counts by those
+fixed sizes. Kind 4 (Dword) instead calls the already observed varint writer.
+The census can now admit Word/Qword without guessing their boundaries.
+
+Evidence: `ev_c3c2675a9c93befe6907945a0bf79699042f712d6a5c97247c1bff743d89c048`,
+`ev_601a5ec89d41392a0dffc67e88e90cd3436486bd703461c791667ba236d77cf7`,
+`ev_3d15c6d1bc295e724e111250e88d32644d6534696b01798023d1fa966cfc3413`.

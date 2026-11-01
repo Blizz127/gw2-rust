@@ -57,6 +57,8 @@ fn census(messages: &[Message], bytes: &[u8], output: &mut impl Write) -> io::Re
                 || !matches!(
                     field.kind.as_str(),
                     "Byte"
+                        | "Word"
+                        | "Qword"
                         | "Dword"
                         | "Guid"
                         | "String"
@@ -137,7 +139,7 @@ mod tests {
 
     #[test]
     fn reports_boundaries_without_values_and_stops_on_unverified_encoding() {
-        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="3"><Messages Name="40"><Client><Message Id="2"><String Size="32"/></Message><Message Id="3"><Qword/></Message></Client></Messages></Protocol></Protocols>"#).unwrap();
+        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="3"><Messages Name="40"><Client><Message Id="2"><String Size="32"/></Message><Message Id="3"><Float/></Message></Client></Messages></Protocol></Protocols>"#).unwrap();
         let messages = &schema.protocols[0].groups[0].client;
         let mut bytes = vec![2, 0];
         for unit in "private-test-value".encode_utf16().chain([0]) {
