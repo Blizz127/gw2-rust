@@ -26,7 +26,7 @@ Numbering floats F0 through F5 in wire order:
 | --- | --- | --- |
 | F0 | `0x1412076b0` | First meter's current value at component +0xc, through `0x141275fd0`. |
 | F1 | `0x1412076f0` | First meter's maximum at +0x10, through `0x141276030`. |
-| F2 | `0x141207770` | First meter +0xc, component +0x14, through `0x141276120`. Semantic name unresolved. |
+| F2 | `0x141207770` | First meter rate at component +0x14, through `0x141276120`; units per second (follow-up below). |
 | F3 | `0x1412077b0` | Second meter's current value at component +0x28. |
 | F4 | `0x1412077f0` | Second meter's maximum at +0x2c. |
 | F5 | `0x141207730` | Component +0x40, also exposed by getter `0x141207490`. Meaning unresolved. |
@@ -40,10 +40,79 @@ establishes that arbitrary NaN/infinity inputs are usable.
 
 The Byte is stored at character +0x188 **only on the allocation branch**.
 That branch also emits a character-component event and can set character
-flags +0x178 mask 2 after checking player/state predicates. Neither the byte's
-meaning nor those predicates' complete role is assigned here. Sending the
+flags +0x178 mask 2 after checking player/state predicates. The byte's
+meaning is established below; the predicates' complete role remains open. Sending the
 same layout to an existing component therefore does not repeat every
-creation-side effect.
+creation-side effect. The follow-up below names the byte as health state.
+
+### Health-state byte and first-meter rate
+
+The Byte is zero extended at handler `0x14124fad2` and passed to the
+creation helper, whose allocation branch stores it as a Dword at character
++0x188 (`0x1411d6477`). Character primary virtual +0x238 resolves to
+`0x1411d7d50`, which returns that Dword.
+
+The party WebUI consumer `0x1403670b0` calls that getter at `0x1403670f5`,
+asserts `state < CHAR_HEALTH_STATES` with upper bound 3, and uses the result
+to index a three-pointer label table at `0x14255c078`:
+
+| Byte | Embedded UTF-16 label | Literal address |
+| --- | --- | --- |
+| 0 | `alive` | `0x141ad70b8` |
+| 1 | `dead` | `0x141ad70c8` |
+| 2 | `downed` | `0x141acf3f0` |
+
+Independent predicates agree: primary virtual +0x360 (`0x1411d9260`)
+compares +0x188 with 1, while +0x370 (`0x1411d9280`) compares it with 2.
+The character +8 interface's virtual +0x30 (`0x1411d8e50`) compares its
++0x180, the same whole-character field, with zero. A named consumer at
+`0x14141b813` uses the latter and +0x370 in the assertion
+`character->IsAlive() || (character->IsDowned() && character->IsInWater())`.
+Thus the labels are directly tied to the health creation byte. The update
+branch still ignores this byte; sending 256 to an existing component is
+not a health-state transition mechanism.
+
+The same party consumer obtains health through primary virtual +0x68,
+`0x1411d7cb0`, which returns character +0x3e8. It publishes health virtual
++0x10/+0x18/+0x20 under literal keys `current`, `max`, `rate`. Health vtable
+`0x142168cf8` maps these to getters `0x140ccb790`, `0x14089ba20` and
+`0x1412074a0`, reading component +0xc/+0x10/+0x14. This names F2 as rate.
+
+The rate setter stores meter +0xc and clears meter flags bit 1, selecting
+the supplied rate directly instead of recomputing it from the separate
+base/multiplier pair. Health update helper `0x141207460` passes the local
+world time from `0x141023500` (world +0x1d4) into meter update
+`0x141275f20`. The [clock trace](209026-agent-command-clock.md) establishes
+that this field counts milliseconds. For ordinary finite inputs, when
+not paused and after the initial zero-clock special case, the update is:
+
+```text
+delta_ms = u32(now_ms - previous_ms)
+current = clamp(current + f32(delta_ms) * f32_bits(0x3a83126f) * rate,
+                0, maximum)
+```
+
+The constant at `0x14192d3c0` is f32 0.001: F2 is current-value units per
+second. The subtraction is a wrapping 32-bit subtraction, then converted
+as a zero-extended 64-bit integer. Meter flags bit 0 pauses accumulation
+while still advancing the stored clock. These are client-side meter rules,
+not server-authoritative combat behavior or a complete runtime validation.
+F3/F4's second meter and F5 remain unnamed.
+
+Private follow-up bundle: `~/re/gw2/notes/209026-health-state-rate-1.json`
+(972 records, 22,016,895 bytes). Static REA only; no client launched.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_b38fc084aa017441e35d2fcbe0eed9394a0960318fd9bfa6298b82486c586f49` | Creation/update split, state store and health constructor. |
+| `ev_f59f424976978fe46cc1ced33d1699152c119b14cfcc5ddda83ee33026fe81c0` | State getter, equality predicates and state mutations. |
+| `ev_5d1dd503783bd9d4b8551fda81c8acfbfa7e7636c58e8732dff24a704bb1fc86` | State assertion strings and predicate vtable entries. |
+| `ev_7de29f67db02a624987395b352b13f9a4d61145ff79b252aea5df4e2b29e465c` | Label-table consumer and independent alive/downed assertion. |
+| `ev_cbc1da600f0e5c3d05081bb8afde4457d97f8c162870375f17dc58fa54a4ac59` | Party consumer calls, label pointers and health property keys. |
+| `ev_6bcaedd5c27855b9fb4eaf0a19324bc1539723bb6e7e55a8964208e44bfe30ff` | Character/health vtable bindings and health tick caller. |
+| `ev_069edcfb873b43f91db0f95bb7a60f35460a9b448020145607fe3dc5ccd73186` | Exact getters, byte zero extension and direct rate setter. |
+| `ev_fc3266bc7f314d2716af71db173b8151482758dc209ff85fb1f8fdb52769c872` | Meter initialization, accumulation, pause and local world-clock getter. |
+| `ev_77f3e77f7848b6bc933cf37fec5f22e2f9794e878b5db867bd800cde67453063` | Rate conversion constant and all three state strings. |
 
 ## Server 217: endurance component creation
 
