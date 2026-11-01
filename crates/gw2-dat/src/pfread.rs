@@ -69,9 +69,6 @@ fn invalid(msg: impl Into<String>) -> Error {
 /// Decodes a chunk payload with the given version schema.
 /// `ptr64` comes from the packfile header (`Packfile::is_64bit`).
 pub fn read_chunk(data: &[u8], version: &VersionSchema, ptr64: bool, limits: Limits) -> Result<PfValue> {
-    // Every element occupies at least one byte of the payload (or one pointer
-    // target), so a budget of twice the payload size never rejects real data.
-    let limits = Limits { max_elements: limits.max_elements.max(data.len().saturating_mul(2)), ..limits };
     let mut r = Reader { data, ptr_width: if ptr64 { 8 } else { 4 }, limits, elements: 0 };
     let mut pos = 0usize;
     r.read_struct(&version.fields, &mut pos, 0)
@@ -104,11 +101,12 @@ impl Reader<'_> {
         if off == 0 {
             return Ok(None);
         }
-        let target = slot as i64 + off;
-        if target < 0 || target as usize >= self.data.len() {
-            return Err(invalid(format!("pointer at {slot} -> {target} outside chunk of {}", self.data.len())));
-        }
-        Ok(Some(target as usize))
+        let target = i64::try_from(slot).ok()
+            .and_then(|slot| slot.checked_add(off))
+            .and_then(|target| usize::try_from(target).ok())
+            .filter(|&target| target < self.data.len())
+            .ok_or_else(|| invalid(format!("pointer at {slot} with offset {off} outside chunk of {}", self.data.len())))?;
+        Ok(Some(target))
     }
 
     fn count_elements(&mut self, n: usize) -> Result<()> {
@@ -382,6 +380,32 @@ mod tests {
             assert_eq!(out.get("raw"), Some(&PfValue::Array(vec![PfValue::U8(7), PfValue::U8(8), PfValue::U8(9)])));
             assert_eq!(out.get("name"), Some(&PfValue::Text("queensdale".into())));
             assert_eq!(out.get("none"), Some(&PfValue::Null));
+        }
+    }
+
+    #[test]
+    fn honors_explicit_element_budget_even_with_padding() {
+        let s = parse(XML).unwrap();
+        let v = s[0].chunks[0].version(1).unwrap();
+        let mut data = build(8);
+        data.resize(data.len() + 1024, 0);
+        // Two items, two list entries, and three raw bytes consume seven elements.
+        let exact = Limits { max_elements: 7, ..Limits::default() };
+        assert!(read_chunk(&data, v, true, exact).is_ok());
+        for max_elements in [0, 1, 6] {
+            let tight = Limits { max_elements, ..Limits::default() };
+            assert!(read_chunk(&data, v, true, tight).is_err());
+        }
+    }
+
+    #[test]
+    fn extreme_64_bit_pointer_offsets_return_errors() {
+        let s = parse(XML).unwrap();
+        let v = s[0].chunks[0].version(1).unwrap();
+        for offset in [i64::MAX, i64::MIN] {
+            let mut data = build(8);
+            data[20..28].copy_from_slice(&offset.to_le_bytes());
+            assert!(read_chunk(&data, v, true, Limits::default()).is_err());
         }
     }
 

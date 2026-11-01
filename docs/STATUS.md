@@ -8,6 +8,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
   [client-build.md](client-build.md)). The REA target is `Gw2-64.new.exe` (sha256 `99342078…`).
   REA confirms that target identity; current certificate-check analysis is described below.
 - `Gw2.dat` reader is verified on real data (see client-build.md). Queensdale = map file 192711.
+  The schema reader now honors explicit element limits and rejects overflowing
+  64-bit pointer offsets. Five focused tests and the inspector build pass.
+  Queensdale's 20 chunks decode with explicit `--max-elements 16000000`;
+  its occlusion chunk exceeds the unchanged four-million default. See
+  [re/209026-packfile-reader-bounds.md](re/209026-packfile-reader-bounds.md).
 - The client runs offline in the sandbox (Wine 10 and GE-Proton 11).
   - **Silent-connection blocker solved (2026-10-31, run 21)**:
     - Cause: the client's StsLib address lookup recurses forever when the host's only

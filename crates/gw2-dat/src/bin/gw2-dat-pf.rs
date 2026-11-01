@@ -1,4 +1,4 @@
-//! `gw2-dat-pf <Gw2.dat> <file_id>... [--schema packfiles.xml] [--depth N]`
+//! `gw2-dat-pf <Gw2.dat> <file_id>... [--schema packfiles.xml] [--depth N] [--max-elements N]`
 //!
 //! Reads archive entries and, if they are packfiles, decodes each chunk with the
 //! matching schema version (default: the vendored 208039 reference schema). It
@@ -50,10 +50,18 @@ fn main() -> ExitCode {
     let mut ids = Vec::new();
     let mut schema_path = None;
     let mut depth = 3usize;
+    let mut limits = Limits::default();
     while let Some(a) = args.next() {
         match a.as_str() {
             "--schema" => schema_path = args.next(),
             "--depth" => depth = args.next().and_then(|d| d.parse().ok()).unwrap_or(3),
+            "--max-elements" => {
+                let Some(max_elements) = args.next().and_then(|n| n.parse().ok()) else {
+                    eprintln!("--max-elements requires a nonnegative integer");
+                    return ExitCode::from(2);
+                };
+                limits.max_elements = max_elements;
+            }
             _ if path.is_none() => path = Some(a),
             _ => match a.parse::<u32>() {
                 Ok(id) => ids.push(id),
@@ -65,7 +73,7 @@ fn main() -> ExitCode {
         }
     }
     let (Some(path), false) = (path, ids.is_empty()) else {
-        eprintln!("usage: gw2-dat-pf <Gw2.dat> <file_id>... [--schema packfiles.xml] [--depth N]");
+        eprintln!("usage: gw2-dat-pf <Gw2.dat> <file_id>... [--schema packfiles.xml] [--depth N] [--max-elements N]");
         return ExitCode::from(2);
     };
     let xml = match &schema_path {
@@ -133,7 +141,7 @@ fn main() -> ExitCode {
             let mut errors = Vec::new();
             let mut decoded = None;
             for vs in &candidates {
-                match read_chunk(chunk.bytes(), vs, pf.is_64bit(), Limits::default()) {
+                match read_chunk(chunk.bytes(), vs, pf.is_64bit(), limits) {
                     Ok(v) => {
                         decoded = Some((vs.type_name.clone(), v));
                         break;
