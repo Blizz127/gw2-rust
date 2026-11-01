@@ -117,7 +117,19 @@ by the name string. Completion `0x14023e070` copies its GUID/name to globals
 on zero error and emits event 0x5d with a 96-byte result. This is evidence of
 a further auth transaction after the character-list update, not a direct
 return to character select or a completed world entry. The reply and following
-route still need tracing.
+route are partly mapped below.
+
+Auth server **ID 3**, descriptor `0x1425b0a50`, supplies Dword request ID,
+Dword scalar, Address, then four Dwords whose low Words form the result code.
+Handler `0x140240750` calls `0x14023add0`, which finds the matching request
+at transaction +0x30 and requires state 3 at +0x20. It invokes virtual slot
++0x20 with the address/scalar, sets state 1, and copies the four-Word result
+to +0x24. For the name transaction, slot +0x20 is `0x14023e2d0`: it copies
+the 28-byte address to +0x78 and scalar to +0x94. Unlike the generic completion
+reply, this path populates the destination before completion event 0x5d.
+The inspected constructor zeroes the GUID at +0x68, and this callback does not
+fill it; the meaning/use of that zero GUID in subsequent code remains unresolved.
+No additional reply or subsequent world-join behavior is claimed here.
 
 Server ID 1051 has four Dwords; handler `0x1414128f0` takes their low Words
 and emits event `0x10000002`. The creation scene subscribes to that event and
@@ -159,10 +171,14 @@ Evidence: `ev_327f5b54412d9d00b8209f927420c279eaeab8de5fc4c054b8933f5a5d8e4473`
 ## Evidence
 
 Private REA bundles: `~/re/gw2/notes/209026-character-static-6.json` and
-`~/re/gw2/notes/209026-mission-static-6.json`.
+`~/re/gw2/notes/209026-mission-static-7.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_35fdff9c75b433cd3a66f5ee398b84fc49287908bc440ac0a999949f14e00f97` | Auth server descriptor/handler registration table. |
+| `ev_e29a621ac3cbca0f315653e262e655bf1400d9d14f7c4ff08985078ae38bf341` | ID-3 argument unpacking. |
+| `ev_115e86141cb6171624bfeb21b25970739e8efbcbf6bbefd08151a6f110fb95d2` | Request/state guard and address-result completion callback. |
+| `ev_b55d2d87ffa3b11bd5d99f9e105e029d0f5aa2d927e6d0336613903bdb4ac697` | ID-3 descriptor and name-transaction address/scalar storage. |
 | `ev_9a473d0cbded76ac95369395f9c77b8df6fbec7b1976ad0b569f1d5867b4ef5b` | Creation scene event subscription and control branches. |
 | `ev_e0e5e4f17e05a938f9a4289384799face8a139e3407067af8ce16dd2057f98d3` | Error event feeds localized error dialog and restores controls. |
 | `ev_4e0a0e9362b2c28403e750448ec283347e7e4a459d9f057533bf26d2931cdd12` | ID-1048 view callback and name handoff; error dialog formatter. |
