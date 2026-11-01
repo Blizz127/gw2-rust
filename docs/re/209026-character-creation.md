@@ -98,6 +98,35 @@ their meaning and any other validation remain unresolved. Passing a local
 zero-byte shortcut is not evidence that an all-zero appearance is a valid
 character or that a server would accept it. No fixture was sent or changed.
 
+The initialization path reinforces the 45-byte distinction. At
+`0x14129c43c` it allocates 0xa8 bytes for context data, initializes level
+to -1 and profession to 11, fills the first **45** bytes with 0xff, then
+clears those same 45 bytes at `0x14129c51b`. It chooses sex from a one-bit
+value and race from the five-entry table at `0x1425e38a0`, sets a profession
+from a filtered table, and later validates the result with `0x1411ca000`.
+The table at `0x1425e3878` contains profession IDs
+`[6, 4, 8, 2, 1, 3, 5, 7, 9]`; filtering uses `0x14129cad0`, so table
+membership alone is not evidence that every choice is available.
+
+The appearance import helper `0x14129deb0` likewise clears 45 bytes and
+writes race/sex. With an optional source string it reads the literal
+`appearanceV0='` section and loops over exactly 45 byte values, asserting
+that race and sex agree with the selected values. No explicit stores to
+bytes 45–47 appear in these inspected initializer/import blocks. Allocator
+behavior and all indirect callbacks were not traced, so this does not prove
+those bytes are uninitialized or semantically meaningful. Keep all 48 wire
+bytes opaque except for independently established fields.
+
+Private bundle `~/re/gw2/notes/209026-appearance-init-static-1.json` retains
+`ev_24cc4069a8ad3bf916ae4cecac26b0a77019980e6f93f4783c9d78eda764ac38`
+(allocation/initialization),
+`ev_16584670ce7b25e24165c6b95c781479110cfe48136705e92a0ac47b8f90399d`
+(selection tables and final validator),
+`ev_e01b2bb0f34f4ae31494d02390e89f6c89de08bacaf55b95372abf1686d131dd`
+(45-byte import loop), and
+`ev_92465786fac1d822ba251b6ae43a9b6f26ae59fb973e48e5b03b20cff210279b`
+(named appearance source and return path).
+
 ## Limits and next dependency
 
 The nearby context path `0x14129ec50` ends at `0x140163990`, a return-zero
