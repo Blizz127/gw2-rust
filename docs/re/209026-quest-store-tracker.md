@@ -68,6 +68,36 @@ has no identified explicit completion emission in the inspected callback.
 Any cleanup on that separate success path and any readiness dependency
 remain open. No emulator response policy changed.
 
+## Selected request release path
+
+The second search request has primary table `0x142111808`, whose +0
+entry is `0x140ff6190`. Its request-interface +0 entry `0x140ff59f4`
+adjusts RCX by -0x10 and jumps to the same destructor. The destructor
+releases the auxiliary buffer at whole +0x58, decrements the Dword counter
+at `0x14289a504`, invokes a nonnull whole +8 callback's virtual +8, and
+conditionally releases the request allocation. Counter helper
+`0x1409b2040` is an atomic decrement with no callback.
+
+For callback table `0x1419248c0`, +8 is `0x140246e90`, which calls virtual
++0 with EDX=1. That resolves to `0x1402443d0`, which only conditionally
+releases the 16-byte callback allocation. Neither selected destructor
+emits an event or accesses the tracker. The request's complete success
+entry `0x140ff72f0` calls callback +0x20 and returns on nonnull XML;
+it contains no extra completion call after the callback. Thus the checked
+success callback and release chain do not supply the missing cleanup.
+Other lifecycle dispatch outside this chain remains unclassified; this
+is not proof of a permanent entry or an observable client hang.
+
+Private follow-up bundle:
+`~/re/gw2/notes/209026-quest-store-release-1.json` (1,920 records).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_53fff20c420b814507ad5c2e4089d678731374a0ee18903afcefd599d56f418b` / `ev_9fed1389a77bec4be577ac139be6d39055b7c112d21064c1181193db72de2b32` | Callback and request destructor table entries. |
+| `ev_e1ca42dab96331445d67675f611c5504bbc625672a883f6b225a63cc25bfaf54` | Callback deleting destructor and search-request table installation. |
+| `ev_e42452edba1f13c7d0679e8c1a49c5a9815413ecf57d869ca227150e803f316f` | Complete request destructor and interface adjustment thunk. |
+| `ev_c495241dc4ff92bf0cbb615818506a39c75cb62a653de1d3195a0d1bf08df0c2` | Atomic counter helper, callback release wrapper and complete search success entry. |
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-quest-store-tracker-1.json`
