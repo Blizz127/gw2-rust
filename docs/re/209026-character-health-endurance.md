@@ -260,8 +260,8 @@ existing endurance component. Registration pairs follow `0x14216f300`.
 | 221 | `0x1425e05c0` | `0x14124ed60` | Dword segment divisor, passed to `0x1412231e0`. |
 
 The three update setters reset the deficit-tracking fields +0x20 to
-current points and +0x24 to zero. The tracking algorithm's complete
-semantics remain open. No update above creates a missing component.
+current points and +0x24 to zero. The [deficit follow-up](209026-endurance-deficit.md) traces separate balance/deficit
+bookkeeping and its half-maximum predicate; action callers remain open. No update above creates a missing component.
 
 Private REA bundle: `~/re/gw2/notes/209026-endurance-fields-1.json`
 (987 records, 22,252,022 bytes, mode 0600). Static analysis only.
