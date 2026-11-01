@@ -85,7 +85,25 @@ the string slot is an index recorded in `stringIndices`. Resolving that
 index through the packfile's wide-string table yields **nine defaults per
 race/sex, one for each profession 1–9**: 90 strings in total. Each sampled
 string has `appearanceV0='...' armorColorV0='...'` sections. Parsing all
-values and runtime validation remain separate work.
+values and runtime validation remain separate work. The importer tail at
+`0x14129dfd9` asserts that the parsed race/sex match the selected context.
+After the 68-by-4 color loop, **Sylvari (race 4) overrides appearance byte 0
+to 255 and byte 37 to zero** (`0x14129e185`). A reader intended to reproduce
+imported defaults must retain this adjustment rather than copy the string's
+45 bytes unchanged.
+
+A first strict reader requiring 272 explicit color values rejected the
+shipped data. An exhaustive shape check established that **all 90 strings
+have 45 appearance bytes**, but 80 have **236 color values (59 rows)** and
+the ten profession-9 entries have **240 values (60 rows)**. Parsed race/sex
+match the corresponding registry keys. This is fewer values than the client's
+68-row read loop; its exhausted-token behavior remains unverified. A local
+reader must report the provided rows and must not invent the absent rows.
+Request 415's rows 2–7 are present in every extracted default.
+Nine profession-9 strings also contain CR/CR/LF whitespace adjacent to
+three color tokens. A second strict-reader rejection exposed this formatting;
+the token audit is retained as
+`ev_2f3700e119920918406d72e4bab164af2092b3c2392b34a945d0a6ef742f8e1a`.
 
 The extraction checked the archive entry's hash against the location scan,
 pointer bounds, relocation membership and string termination. Private data:
@@ -98,11 +116,32 @@ pointer bounds, relocation membership and string termination. Private data:
 Both are under `~/re/gw2/notes/`, mode 0600. These are shipped defaults,
 not evidence of successful character creation or rendering.
 
+## Bounded local reader
+
+`gw2_dat::appearance::AppearanceDefault209026` reads these two explicit
+decimal sections, bounded by 4096 bytes. It checks exactly 45 appearance
+values, byte range and expected race/sex, then applies the Sylvari edits.
+It retains only supplied color rows: 8–68 complete rows of four `u32`
+values, allowing ASCII whitespace around tokens. `creation_colors()` returns
+rows 2–7 in wire order. It rejects incomplete rows, numeric overflow, extra
+sections and trailing data. This is a strict extraction reader, not a complete
+emulation of the client's permissive importer.
+
+`gw2-default-check FILE RACE SEX` reads at most 4097 bytes and prints only
+structure/counts, with no appearance/color values. Three focused unit tests
+cover malformed input, truncation, bounds, race/sex, Sylvari adjustments,
+short tails, wrapped tokens and selected-row order. Tests and checker build
+pass. A private REA check passes all **90/90** extracted defaults and five
+CLI rejection cases. Runtime creation/rendering remains untested.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-content-registry-static-1.json`.
 Subsequent index/default evidence is retained in
 `~/re/gw2/notes/209026-content-defaults-static-1.json`.
+The importer-tail evidence is in `209026-content-defaults-static-2.json`.
+Corpus shape/token checks and final reader validation are retained in
+`209026-content-defaults-static-3.json`.
 
 | REA evidence | Observation |
 | --- | --- |
@@ -122,3 +161,7 @@ Subsequent index/default evidence is retained in
 | `ev_2378d7531511f446989794f1a072207dcdc90957c45f9ea4e2948937d52eddee` | Default array offsets and importer string access. |
 | `ev_e3de06eb630a74a5216b2338d5640f02c2b2ef91873a059ea100088c9df9e771` | Relocation-checked extraction of 90 defaults. |
 | `ev_f4086219017949db5c5a51294252e034bf5d79bc613ecb1b23800b1a5f9082e2` | One extracted default's section structure. |
+| `ev_56f9032195eeff1db875bc739fdd69808a474cb9c3fb91ca1a6dec45e5022fda` | Race/sex assertions, 272 color reads and Sylvari overrides. |
+| `ev_4d90f2db1f2af032d88831d25dbeabf1a0e8eb8b2e2340aa501e4db5f2a6444d` | Initial strict reader rejection; not a successful corpus check. |
+| `ev_61d1a79d57344ffb2c32f794c29f3f7cfb3ba6211e2b49feb04e20d90f244f14` | All 90 strings: appearance/color arities and context values. |
+| `ev_01346f3afd4df4c9d95736f15d3c5bc041fc90dc7dc65b1a9217d17d86252e8f` | Final reader: 90 corpus passes and five CLI rejection cases. |

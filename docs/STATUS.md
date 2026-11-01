@@ -122,7 +122,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     ten GUIDs and 32 base content containers (archive IDs 1282830–1282861).
     All ten type-137 records are located in file 1282852. Relocation-checked
     extraction yields 90 shipped default strings, one per race/sex/profession;
-    complete value parsing and runtime validity remain unverified.
+    the bounded `gw2-default-check` now parses all 90/90, preserves the supplied
+    59/60 color rows and applies the client's Sylvari appearance adjustments.
+    Three focused tests, build and five CLI rejection cases pass. Runtime
+    validity remains unverified.
     See [re/209026-content-registry.md](re/209026-content-registry.md).
     Creation context sends ID 415 through
     mission protocol 0, group 39. Registration and descriptor establish its
