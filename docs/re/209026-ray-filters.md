@@ -76,8 +76,9 @@ body-pair `+0x10` (vtable `0x14212e570`), shape ray `+0x20`
 Private bundle: `~/re/gw2/notes/209026-ray-filters-1.json`.
 
 The diagnostic surface probe deliberately does not synthesize these query
-fields or claim client-filter equivalence. Caller construction, actual
-movement-query layer/mask values and later matrix updates remain open.
+fields or claim client-filter equivalence. The [scene wrapper and collector trace](209026-ray-query-construction.md)
+now establishes generic query construction. Actual movement-query caller masks
+and later matrix updates remain open.
 
 - Custom predicates: `ev_62dc09fa6df6181f46998bc09425be1dd5e2025427df86b7c73c23727bf65e8e`.
 - Base wrappers and group comparisons: `ev_6605399078e6e0ed26b1ed5a1723acb4da36c4837b3884830e3a9f46a0163a50`.
