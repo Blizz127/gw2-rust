@@ -87,6 +87,11 @@ sets/clears player +0x8c bit 5; input bit 1 sets/clears bit 3. Other input
 bits do not affect that setter. The flags' names remain unresolved. This
 message is distinct from the four specialization/trait layouts above.
 
+The [complete base-content census](209026-specialization-content.md) now
+maps 81 specialization keys and 2,425 trait keys, with all 729 major-trait
+membership references resolved. Content membership, tier and runtime
+eligibility remain separate from this framing layer.
+
 ## Typed framing scope
 
 `gw2_proto::specialization::SpecializationFrame209026` covers 640–643 only,
