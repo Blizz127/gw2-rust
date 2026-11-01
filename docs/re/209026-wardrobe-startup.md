@@ -113,7 +113,9 @@ AvContext's character-context listener virtual +0x80 resolves through
 entry `0x142142558` to `0x1411109a0`. Its complete body applies
 `& 0xffffaff7` to listener +0x468 (whole-context +0x478) and returns.
 It clears masks 0x8, 0x1000 and 0x4000; it allocates no character
-component. Other subscribers to 431's initial event remain unexhausted.
+component. The [subscriber follow-up](209026-startup-subscribers.md)
+resolves three embedded-player callbacks to no-ops and identifies a
+conditional quest callback; other subscribers remain unexhausted.
 
 The complete wardrobe refresh `0x14121a710`–`0x14121aae6` reads owner
 coreStats profession/race/sex, maps profession to an armor weight class,
