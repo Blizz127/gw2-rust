@@ -75,7 +75,10 @@ constructor tail invokes the collision +0x20 method and game component
 +0x10 callback. It does not itself directly call the scene-entry wrapper.
 Other traced wrapper callers include `0x14102b580`, which conditionally
 enters based on command +0x80 bit 1, and two other construction/command
-paths. Their complete packet/lifecycle relationships remain open. Thus
+paths. The [follow-up](209026-agent-world-entry.md) maps `0x14102b580` to server 46,
+which enters the agent world before optional collision scene entry; the two
+final first-creation callbacks are no-ops. Other lifecycle relationships
+remain open. Thus
 server 49 is a verified entry operation, **not proof that every initial
 bootstrap must send it separately**. Game/component callbacks and other
 entry paths must be accounted for before choosing an initial sequence.
