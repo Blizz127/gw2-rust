@@ -62,8 +62,8 @@ numeric states or authorization to send a bootstrap fixture.
 
 The same AvContext listener's +0x28 entry is `0x141110620`. Its nonzero
 R8 branch tails into `0x14110f380`; the zero branch calls the factory with
-third argument 1 only if a view lookup is absent. The event's producer
-and argument meaning have not been resolved here.
+third argument 1 only if a view lookup is absent. The [server-585 follow-up](209026-character-view-suppression.md) resolves
+this event to a finalized-character flag setter and view deletion/recreation.
 
 The factory also has a caller at `0x14111179b`, within `0x141111730`.
 It belongs to AvContext +0x20's vtable `0x142142658`, slot +0x118, and
