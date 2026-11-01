@@ -141,8 +141,12 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     parse correctly. Runtime startup and creation remain unverified. See
     [re/209026-character-creation.md](re/209026-character-creation.md).
     The bounded answer array is now traced to sorted content answer bytes,
-    with separate question-bitset bookkeeping and race/profession filters;
-    valid content combinations remain unverified. See
+    with separate question-bitset bookkeeping and race/profession filters.
+    The single base type-260 record in archive 1282831 contains 45 questions
+    and 193 answers. Content filtering yields five questions per race/profession
+    combination, with no co-applicable answer-byte collisions. The two client
+    selection paths differ on some answers; runtime/server acceptance remains
+    unverified. See
     [re/209026-creation-answers.md](re/209026-creation-answers.md).
     The final 24 Dwords map to item-color selections for six equipment slots;
     content validity and runtime creation remain unverified. See

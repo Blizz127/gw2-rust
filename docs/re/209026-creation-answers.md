@@ -77,9 +77,50 @@ appearance. Actual content values, localized question meanings, mandatory
 answer combinations and server validation remain unverified. The earlier
 synthetic request-415 fixture is still only a wire-boundary check.
 
+## Frozen archive content
+
+The [base-container lookup](209026-content-registry.md) makes the actual
+question data accessible without entering the client UI. Static tracing of
+`0x1412e6360` confirms that service slot +0x48 iterates a content type,
+using the caller's cursor; the creation initializer supplies cursor zero
+and requests type 260.
+
+A read-only REA scan of all 32 base containers found exactly **one indexed
+type-260 record**: archive file **1282831**, index entry **17301**, content
+offset **3991224**. The decoded packfile's SHA-256 is
+`f9af9a85b3de5bd09c1840d058bb61442e414cdfeb0f99720f8896e2d6ccba56`.
+The private extractor verified the mapped type/offset, local-relocation
+membership and array bounds before reading question and answer records.
+
+The record has **45 questions and 193 answer entries**, with 190 distinct
+answer bytes. Question indices are 1–36 and 181–189; all are unique.
+Answer bytes 187, 188 and 189 each occur under both questions 188 and 189.
+They therefore cannot be treated as globally unique content identifiers.
+
+Applying the established flags predicate to every race/profession combination:
+
+- Each of the 45 combinations has exactly **five applicable questions**.
+- Each applicable question has **3–6 eligible answers** after answer filtering.
+- No answer byte collides between eligible questions in any one combination.
+- Selecting the first eligible answer per question and sorting the five bytes
+  produces five distinct values for all 45 combinations. This is a deterministic
+  analysis choice, not the client's random-selection policy.
+
+The question-only initializer can encounter answers excluded by the separate
+answer predicate: across all applicable question/combination pairs there are
+44 such occurrences. This confirms that the two previously traced selection
+paths are not interchangeable for this content. It does not establish which
+path is last applied by the full creation UI or what the server accepts.
+
+Extracted records and eligibility sets are private in
+`~/re/gw2/notes/creation-answers-209026.json` (53,257 bytes, mode 0600),
+SHA-256 `4d7a79e22d8d8954d56c1edb8dc3f686f7565d04c807599aff7d1a37ad453994`.
+No answer fixture was sent to the client and no runtime creation was tested.
+
 ## Evidence
 
 Private export: `~/re/gw2/notes/209026-creation-answers-static-1.json`.
+Archive findings: `~/re/gw2/notes/209026-creation-answer-content-static-1.json`.
 
 | REA evidence | Observation |
 | --- | --- |
@@ -88,3 +129,7 @@ Private export: `~/re/gw2/notes/209026-creation-answers-static-1.json`.
 | `ev_c6772b65ff604f0981b7f58be89b4026b70f5e7701b4da6c48df848cbdeb9618` | Vtable slots, profession bit jump table and madLib assertion. |
 | `ev_fa5be1564bf34f33087c4a02828d60652294b54716ef8f7400eceede32b1ff4e` | Answer replacement, question bitset, sorted insertion search, filtered selection and race reset. |
 | `ev_e9f9a114ae887363e88bd14667eb9fe0cd5143f2c1cf7bd2c3bde5f7956d65b0` | Byte insertion implementation, request bridge and question assertion. |
+| `ev_7efc6ab871c47a6eee891ec860213ea729b69aa5fb7ba4c020a7b9c676bc7bd0` | Type iterator and cursor-zero creation lookup. |
+| `ev_fea1a9d83933cecdd63cbc0800e8c111a4877918b79812a330d2399c2fc717dc` | All 32 base containers; one indexed type-260 record. |
+| `ev_417ae2d8a22e463ccdbc6081afbd1eb4e2da36cfd4a9f2b25951df09aab13ed6` | Bounded question/answer extraction and eligibility analysis. |
+| `ev_b31a55a9c7e671548f0a03aa9dfdad6669dc9e2a6e8fa7b46d8e850bb2ebc38c` | Reused bytes, no co-applicable collisions and 45 deterministic selection checks. |
