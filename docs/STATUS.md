@@ -167,6 +167,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Client 420 is sent before model/asset/agent streaming finishes; the later
     client 412 (AgentsLoaded) follows READY and connection/view guards.
     This provides a static candidate for sequencing server 1036, still untested.
+    Agent streaming requires a controlled character; its setter checks that
+    the character is finalized. The population-message sequence remains open.
     See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.

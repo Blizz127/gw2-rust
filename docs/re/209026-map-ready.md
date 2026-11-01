@@ -48,15 +48,36 @@ assertions and diagnostics identify these states:
 | 7 | MAP_STREAM | Success advances to 9 and invokes MapLoaded callback; failure advances to 8. |
 | 9 | MODELS_STREAM | Further model streaming before state 10. |
 | 10 | MAP_ASSET_STREAM | Further asset processing before state 11. |
-| 11 | AGENT_STREAM | `0x140951ce0` waits for a nonnull service result and streaming readiness/timing conditions. |
+| 11 | AGENT_STREAM | `0x140951ce0` waits for a nonnull controlled character and streaming readiness/timing conditions. |
 | 12 | READY_WAIT | `0x140952f00` waits for its countdown, finishes service callbacks, then sets 13. |
 | 13 | READY | The view may emit AgentsLoaded once the connection and view conditions above also hold. |
 
 This table describes the inspected normal path and selected branches, not
-every state or every failure condition. In particular, the exact meanings
-of the service's nonnull object and all model/agent streaming prerequisites
-remain open. Empty server ID 1061 reaches a no-op default-view callback;
+every state or every failure condition. The full model/agent streaming
+prerequisites remain open. Empty server ID 1061 reaches a no-op default-view callback;
 it cannot stand in for whatever population data those services require.
+
+## Controlled-character prerequisite
+
+The service at thread-local context +0x98 is named **charContext** by the
+assertion near `0x1408c00b3`. Its virtual +0x68 getter is the same getter
+used by AGENT_STREAM. At `0x1402cdaa0`, its result is immediately checked
+against an assertion named **controlledCharacter** (`0x14193aa40`). Other
+call sites repeat this naming. Thus the loader waits for the controlled
+character, not merely an arbitrary populated character list.
+
+`0x1411b8550` assigns the controlled-character pointer at character-context
++0x98. A nonnull new value is checked against
+`!m_controlledCharacter || m_controlledCharacter->IsFinalized()`; the tested
+flag is character +0x178 mask 0x10. It updates character control state and
+notifies listeners through the context's +0x230 event collection. Identical
+old/new pointers return without those updates.
+
+The direct caller `0x1411bc8e0` resolves its integer argument through
+`0x1411b4500`, stores the returned character at its own +0x18, asserts that
+it exists, then calls the setter. This establishes an existing-character
+lookup before assignment. The incoming message and creation/finalization
+sequence are still unresolved; no speculative population packet was sent.
 
 ## Evidence
 
@@ -71,3 +92,13 @@ Private bundle: `~/re/gw2/notes/209026-map-ready-static-1.json`.
 | `ev_14d59c1c6fc8c109709e5dd7bea009472f42ade96499e824ac271747e9389760` | View tick's READY/connection/once checks and empty ID-412 sender. |
 | `ev_fca0caa0d42ee5c567c233a2b024d48dcac8397953698ae4839cf1ee332fac16` | Ready-message wrapper, connection predicate and bounded view-tick disassembly. |
 | `ev_4dc55aed33a651746678610d0b35ff21020c8ad1e0837bf93a99e0c3ebf3ee74` | Explicit MsgSendAgentsLoaded diagnostic, state-1 handler and flag reset. |
+
+Additional private bundle: `~/re/gw2/notes/209026-controlled-character-static-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_2c86467144a4bc4eccbd9c31be5d5df964f13a2bf8b214d1601ed163edb52470` | charContext assertion identifies the service. |
+| `ev_18d79a638e6e59f0074bb9a8253b45fa0456d50b68fc4b8b07a6c5d8eac4b2c1` | Getter result named controlledCharacter. |
+| `ev_0a4bfc57dd1a39f280b5098df61696903e0ee31797d74fd43fb4823a5003d3d5` | Assignment, finalized check and notifications. |
+| `ev_bc78bfabb09dd7c54a743844115d4719e1871c8f1f9d04cfcde1f36dacfdc4e0` | Direct caller of the setter. |
+| `ev_38092b0a47aee7451d279fe7d3cfb990be98e2ebbbea7c08e8ed2b0d9185f1a0` | Caller resolves a character before setting control. |
