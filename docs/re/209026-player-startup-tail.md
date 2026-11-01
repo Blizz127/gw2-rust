@@ -70,8 +70,8 @@ permanent-category data in its selected content list.
 Achievement virtual +0x68 (`0x1412167d0`) and +0x70 (`0x141216920`)
 derive a nonnegative remaining interval from +0x70/+0x78, +0x68 and
 `0x1409cb4a0`; no additional component pointer is used in those two
-methods. The full content lists, achievement evaluation, context
-notifications and final global callback are not exhausted by this note.
+methods. The category lists and final global callback are followed below;
+general achievement evaluation and context notifications are not exhausted.
 The evidence narrows allocation requirements; it does not establish an
 empty player object as a complete usable startup state.
 
@@ -108,6 +108,81 @@ the nested per-item progress-query loop is skipped and its computed mask
 is zero. The largest nonnull sublist among the 121 records has 19 entries.
 This does not skip the later category enumeration or prove the complete
 startup tail ready.
+
+## Fixed categories and capped child cache
+
+The later refresh looks up three GUIDs through content virtual +0x68.
+The table records their four little-endian Dwords in instruction order;
+these are content identifiers, not account identifiers.
+
+| GUID Dwords | Frozen record | Use |
+| --- | --- | --- |
+| `20508e27 40ffb20a 2b42e09f 95358149` | Type 1, key 97, file 1282845, offset `0x98d0` | Aggregate at context +0x284; timer at +0x288. |
+| `ae3e6ce1 4bcd6ef1 3707d9b8 a2d22e7a` | Type 1, key 96, file 1282850, offset `0xa5b0` | Aggregate at context +0x28c; timer at +0x290. |
+| `647d3b02 41f02302 886da388 cf556fbb` | Type 2, file 1282848, offset `0xb688` | Parent pointer filter for the capped child cache. |
+
+The first two records have +0x58 tag **1**, with nonnull +0x60 data
+at `0x9968` and `0xa648` respectively. Their data +0x20 selectors are
+0 and 1. Achievement virtual +0x140 (`0x141216bc0`) pairs that data
+pointer with the manager's +0x58 or +0x5c scalar. Virtual +0x138
+(`0x141215ef0`) uses iterator `0x141215100` to find the first achievement
+with +0x3c mask 4. Both frozen data objects have **zero counts at +0x08
+and +0x38**, and null arrays at +0x00 and +0x30. The iterator therefore
+returns null regardless of the scalar, without entering either list.
+
+For tag 1, aggregate virtual +0x58 returns directly at `0x1412167ae`
+when that search returns null. It **does not write its output** on this
+branch. The two startup call sites initialize their output Dword to zero
+before calling, so the values compared/stored at context +0x284/+0x28c
+are zero. This differs from the explicit zero-output handling of a null
+category and must not be generalized to arbitrary uninitialized callers.
+The timer calls still run separately.
+
+The third GUID resolves uniquely, but **none of the 486 type-1 records**
+in the 32 frozen base containers has a resolved +0x50 pointer to it.
+Thus its selected child list is empty. This conclusion relies on the
+nonnull resolved parent; a missing parent would instead compare against
+null +0x50 pointers and is not equivalent to skipping enumeration.
+
+For a nonempty list, the helper sorts ascending by unsigned +0x40 and
+caps the count at three. Context +0x298 stores eight-byte cache entries
+(data key +0x28, aggregate), with pointer +0x2a0 and count +0x2ac.
+Count/key changes rebuild the cache through aggregate virtual +0x58.
+When keys match, it asserts permanent-category tag 0 and nonnull +0x60
+data, then checks the first achievement with mask 4 and updates the
+cached value from query virtual +0x50's output +0x18. With the frozen
+empty selection, neither per-category query loop runs; a previously
+nonempty cache can still be cleared and signal a change.
+
+Source SHA-256 values:
+
+- 1282845: `81028af31ccfaf10571e166eb09d49d5c75ce1e6f0eea7656be1cc9c80ad841e`.
+- 1282850: `7c4267d7cba4fc5878a66512f207b53f4abb69f86e3a49102d9339475b79e4e4`.
+- 1282848: `176ae80621ebfe33adc0bd58bbce865b3d582e402890b1f624a80d0af5793576`.
+
+Validation refinement: the shared analysis helper previously compared
+expected hashes only for files listed in the map-content inventory.
+It now merges the prior appearance and numeric-content inventories,
+rejects conflicting hashes, requires all 32 expected hashes, and checks
+every opened container. The category census above passed that stricter
+check. The 121-record threshold census was also rerun successfully and
+produced the same result/evidence ID; REA does not bind external helper
+source bytes to that ID. Failed preliminary helper assertions are retained
+in the bundle and are not successful census results.
+
+Private bundle: `~/re/gw2/notes/209026-player-startup-categories-1.json`.
+This is static content/branch evidence, not a client startup smoke.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_b17d81d83f26c55be35a164797274f9361e36138e4415f95853f1a3468cb15b4` | GUIDs, caller-initialized outputs, timer calls and parent filtering. |
+| `ev_04d3a4550c0cc568180ff731b2c2f66cdcf552f2d3b2e2a1c835d0bd1087619b` | Sort, cap, cache comparisons, assertions and rebuild queries. |
+| `ev_4f6b0bfd0e9456805362c9779442a3258219f3c3b80c0609355793c3dc8b42fc` | Cache cleanup and aggregate tag-1 early-return branch. |
+| `ev_18ff06d2556f001daf52073dd1e767cdc01b259f1c309216c33ef300b60f90f1` | Complete category census with all 32 expected hashes enforced. |
+| `ev_921041401293c0edab05f6f74299fca6f5f42838f0d681be9e22bb055f3546db` | Achievement method-table entries. |
+| `ev_82af73bed1e79a04f868f400c9aada1474db7a1b133c1848346d276100be7f86` | First mask-4 search, aggregate output/return distinction and constructor scalars. |
+| `ev_f3d0c39148eab1557181d5533c9ff2d9e7c3560328263c06eb0a24d9f5d026e8` | Complete selector and iterator, including both empty-list exits. |
+| `ev_57cec4f42dfd7dbe203cd6dc69fc22b13aa92b903c206233f80aebdd097bab00` | Both fixed categories' empty list data and valid selectors. |
 
 ## Shared preferences callback
 
