@@ -380,3 +380,53 @@ No source implementation changed and no runtime smoke was performed.
 | `ev_8f992bce1a6d3c54e55c8904e6ea6dd7e9d5f2c1e907ee53c5954def4afdada1` | Quest +0x70 entry. |
 | `ev_639c507326ba903aa2d6be5e79c609663c2742862156ab42d2e9e2676c11672b` | Remaining constructor, leading-helper entry and +0x70 null branch. |
 | `ev_26c64ed53c27a231cacd5c286b7d829c9c385a74ef52d3d48f9cf3b2b6f96bbb` | Null-quest false return, refresh early-return epilogue and conditional registration. |
+
+## Alert and chat-context startup slots
+
+Two more candidates from the bounded subscription search resolve to the
+same no-op `0x140163990` for this event:
+
+| Service identification | Constructor / registration site | Registered interface / table | Startup +0x80 entry |
+| --- | --- | --- | --- |
+| Alert (`AlContext.cpp`) | `0x14116e320` / `0x1411726be` | Whole +0x20 / `0x14214f1c0` | `0x14214f240` |
+| Chat-context table region (`CtCliContext.h`) | `0x1412a0b40` / `0x1412a2fc6` | Whole +0x28 / `0x14217e9d0` | `0x14217ea50` |
+
+Alert initialization wrapper `0x14116f150` sets whole +0x100 mask 1
+before tail-calling `0x141172610` when that bit was clear. The latter
+registers its +0x20 context listener when mask 8 is clear and records that
+bit. The wrapper's assertion source points directly to `AlContext.cpp`.
+Its primary table is `0x14214ebc0`; resolving the registration's actual
++0x20 interface is necessary to select the startup callback.
+
+The other service has primary table `0x14217e470`; its virtual +0x10 is
+`0x1412a2f10`, which guards initialization with whole +0x628 mask 0x40.
+The constructor explicitly installs the registered +0x28 interface table.
+Adjacent diagnostic strings name the chat context. Neither primary table's
+initialization body is treated as the +0x80 event callback.
+
+These findings add no component requirement to **this startup event**.
+They do not prove initialization harmless or classify other virtual slots.
+The remaining unclassified sites in the original bounded search are
+`0x1411031e3`, `0x1411dfd98`, and `0x1412c3d0c`. The search covered only
+`0x141100000..0x141300000` with a nearby context-field heuristic; the
+[map-layout listener](209026-quest-navigation-guard.md) outside that range
+already demonstrates why this is not an exhaustive runtime subscriber list.
+The [content-direction callback](209026-content-direction-startup.md)
+was classified separately and establishes the server-538 report dependency.
+
+Private bundle: `~/re/gw2/notes/209026-startup-alert-chat-1.json`
+(1,867 records). Static REA only; no source behavior or client state changed.
+Pointer and RIP searches were candidate discovery; final table claims use
+validated constructor stores and direct table reads. The previously
+exported `209026-content-direction-startup-1.json` contains the registration
+sites and function ranges used here.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_e189a24e89a2152b523f3e54e9a9dd6796a737a7696616e0dd94c2106822d56d` / `ev_d8b539a6af4888ca6275da8143659f04122537e19b2e0037750cdc23a752f712` | Chat initialization function pointer and primary-table start. |
+| `ev_7633e3ab219b3da19b4d3283c4d534513962344070c92c9456088b6e1df2e4f9` / `ev_c5c427c8d281aed48f7e3c5df2ec4a0c773cb2e4e552db0e3eb18649de4435d8` | Constructor-reference candidates and validated constructor/destructor stores. |
+| `ev_53d14d98a98b82c4d0e47666f192ee1a41afb64e81e431b9f3fa180f73cea12e` / `ev_99d514cf2df141fdde3d6c4f1f503e259802e2c81d00670621021055cf79f666` / `ev_82e4a803fa5186243204a6e0c83c5e2afd4a97f4c261d16965c2c877bc1815de` | Chat registered-interface installation, no-op entry and adjacent source strings. |
+| `ev_fe6e842db2e69072c404e22362b22bca897184131e5ee2f35dcbd5d0f531372f` / `ev_b0636558159016672902ea3a411a98f9a1a96d028ced13aa42aee10e66f375ae` / `ev_b92938b8b6928aa324dc48f7d93dfd9972b63aed746b9af4fb7714141243429e` | Alert wrapper candidate, validated initialization branch and unwind range. |
+| `ev_86e8480d62dd2dfe844aa3eba52ad0c852c9fd5d1cf3243c801807627908765c` / `ev_e2e6e5ac1791ac7900702fa22d39c35c5c396d487ccc45bbfc4744c5f3759f3d` | Alert primary-table function reference and start. |
+| `ev_e3b13215bc02a08b3dac127d9b1158edd8eb0a58d4bb068f293849fa2129c50a` / `ev_34fe750dffad82e7b3f658390bc5c27cdde27f026de13f8da820647a674d9ee1` / `ev_01180183d43bf97898cb4124429b2251f626028ff7554c8a23252fb5f16919c0` | Alert constructor-reference candidate, interface stores and validated constructor boundary. |
+| `ev_93104572b22e4acedc8e61576d540bf5e373fd3f45a6f807537f475cf477fa18` / `ev_cec0814ca13673d92be0def46188e8b0eafd620c8eba6a45c4ca8d187abd8096` | Alert no-op startup entry and source-path/flag assertion strings. |

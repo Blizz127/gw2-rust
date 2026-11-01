@@ -128,7 +128,7 @@ the artifact, not the external helper source. No client replay occurred.
 
 | REA evidence | Observation |
 | --- | --- |
-| `ev_34902bed9175252c8765e8342886ba8539fd0095cd855eb8e55e52fa26135c73` / `ev_5d46c114d4676268486330ee2aa71714efa610ca8bb4f6fff2e16e9e0c46ad57` | Six remaining subscription candidates and containing unwind ranges; five remain unclassified. |
+| `ev_34902bed9175252c8765e8342886ba8539fd0095cd855eb8e55e52fa26135c73` / `ev_5d46c114d4676268486330ee2aa71714efa610ca8bb4f6fff2e16e9e0c46ad57` | Six subscription candidates and containing unwind ranges; later classifications are recorded in the linked startup-subscriber note. |
 | `ev_11f1c19a1bdf3d6567a1d3789f3c332c0300b6a4e2f5e3b934cc54410954f2d8` / `ev_9207200d255c4b343661c4afaaca9aeeec5ec0f92681fbb102fce9c21070641c` | Constructor interface and startup callback entry. |
 | `ev_ef24d8ee284e0d6d81258d06b02304f8a293560bd7dabc9bfd44ec3a700115e1` / `ev_d66743de2960a6d34877387ddb85e8fd3319097024c5be09cb48d7722deefedd` | Complete callback branches and leading configuration entry. |
 | `ev_3a61d502c298225e8dd0fdeb95bd115c08365b484459d536af52ea4497875f40` | Content-direction source path. |
