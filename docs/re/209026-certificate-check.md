@@ -43,12 +43,12 @@ used instead. No complete string inventory or whole-program call graph is claime
 - Neither observation proves that a self-signed certificate with a matching
   subject and a different key will be accepted.
 
-## Local server identity (source inspection, not client evidence)
+## Local server identity before correction (source inspection, not client evidence)
 
 `tools/gen-test-cert.sh` generates our own RSA-1024 key (exponent 65537) and a
 self-signed SHA-256 certificate. It uses a PrintableString subject with
 `C=US, ST=Washington, L=Bellevue, CN=cligate.101.ncplatform.net`, and writes the
-private key only to the selected ignored output directory.
+private key to the selected output directory (gitignored by default).
 
 `gw2_login::tls::ServerConfig::load` checks the private key's modulus length and
 exponent, and searches the certificate bytes for that modulus. This is a local
@@ -133,12 +133,28 @@ performed in this investigation.
    extensions. A multi-certificate test would additionally need the CA/chain checks
    above; it is not necessary for the proposed single-certificate experiment.
 
-**Current generator mismatch, reproduced locally:** running the existing script
+**Original generator mismatch, reproduced locally:** running the pre-correction script
 into a fresh ignored temporary directory and inspecting only public certificate
 metadata with OpenSSL produced `sha256WithRSAEncryption` and **no SubjectAltName**.
 The temporary identity was removed by the test harness. This is a source/fixture
-check, not client runtime evidence. Those two fields need correction before a GW2
-handshake experiment; the existing subject encoding and RSA shape can be retained.
+check, not client runtime evidence. Those two fields required correction before a GW2
+handshake experiment; the existing subject encoding and RSA shape were retained.
+
+### Fixture correction and focused verification
+
+After committing the research, `tools/gen-test-cert.sh` was changed to use SHA-1
+signatures, an explicit DNS SAN (default `cligate.101.ncplatform.net`, configurable
+with `DNS_NAME`), and critical KeyUsage `keyEncipherment`. Existing generated
+identities are not automatically replaced; the script still refuses to overwrite
+a key without its explicit `--force` option.
+
+Verification on 2026-11-01: `cargo test -p gw2-login --test tls_openssl -- --nocapture`
+passed **2/2**. The certificate test checks both encoded signature-algorithm fields,
+the SAN and key usage, and retains the existing overwrite/mismatched-key/key-size
+checks. The interop test now trusts only the generated test certificate explicitly
+and enables `-verify_return_error` and `-verify_hostname` before completing TLS 1.2
+AES128-SHA and exchanging data both ways. Shell syntax and `git diff --check` passed.
+These remain local OpenSSL checks, not a GW2 acceptance result.
 
 ## Evidence index
 

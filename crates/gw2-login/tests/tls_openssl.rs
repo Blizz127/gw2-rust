@@ -44,6 +44,21 @@ fn gen_test_cert_output_loads_and_bad_shapes_are_rejected() {
     let cfg = gen_and_load(&a);
     assert_eq!(cfg.modulus().len(), 128);
     assert!(cfg.modulus()[0] & 0x80 != 0);
+    // REA found that this client requires SHA-1/RSA signatures and a DNS SAN;
+    // matching the subject CN alone is insufficient. Inspect the encoded fixture.
+    let cert = Command::new("openssl")
+        .args(["x509", "-inform", "DER", "-in"])
+        .arg(a.join("cligate-101.cert.der"))
+        .args(["-noout", "-text"])
+        .output().unwrap();
+    assert!(cert.status.success());
+    let cert_text = String::from_utf8_lossy(&cert.stdout);
+    let algorithms: Vec<_> = cert_text.lines()
+        .filter_map(|l| l.trim().strip_prefix("Signature Algorithm: ")).collect();
+    assert_eq!(algorithms, ["sha1WithRSAEncryption", "sha1WithRSAEncryption"]);
+    assert!(cert_text.contains("X509v3 Subject Alternative Name:"), "missing DNS SAN extension");
+    assert!(cert_text.contains("DNS:cligate.101.ncplatform.net"), "wrong DNS SAN");
+    assert!(cert_text.contains("Key Encipherment"), "missing keyEncipherment usage");
     // The script refuses to overwrite an existing key without --force.
     let again = Command::new("bash").arg(gen_script()).arg(&a).output().unwrap();
     assert!(!again.status.success());
@@ -74,6 +89,13 @@ fn openssl_s_client_completes_handshake_and_exchanges_data() {
     let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("tls-interop-{}", std::process::id()));
     let cfg = gen_and_load(&dir);
     assert_eq!(cfg.modulus().len(), 128);
+    let trusted_cert = dir.join("trusted-test-cert.pem");
+    let convert = Command::new("openssl")
+        .args(["x509", "-inform", "DER", "-in"])
+        .arg(dir.join("cligate-101.cert.der"))
+        .arg("-out").arg(&trusted_cert)
+        .output().unwrap();
+    assert!(convert.status.success());
 
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
@@ -96,6 +118,8 @@ fn openssl_s_client_completes_handshake_and_exchanges_data() {
     let mut child = Command::new("openssl")
         .args(["s_client", "-connect", &format!("127.0.0.1:{port}"), "-tls1_2"])
         .args(["-cipher", "AES128-SHA:@SECLEVEL=0", "-legacy_server_connect", "-ign_eof"])
+        .args(["-verify_return_error", "-verify_hostname", "cligate.101.ncplatform.net", "-CAfile"])
+        .arg(&trusted_cert)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -116,6 +140,7 @@ fn openssl_s_client_completes_handshake_and_exchanges_data() {
     let (got, suites) = server.join().expect("server thread");
     let _ = std::fs::remove_dir_all(&dir);
 
+    assert!(out.status.success(), "s_client failed: {stderr}");
     assert_eq!(got, b"ping from s_client\n");
     assert!(suites.contains(&0x002f));
     assert!(stdout.contains("pong from gw2-login"), "stdout:\n{stdout}\nstderr:\n{stderr}");

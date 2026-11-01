@@ -22,9 +22,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
       Build 1004), then `/Sts/Ping` every 30 s.
   - **Certificate check mapped statically (2026-11-01):** the RSA client requires
     SHA-1/RSA signatures, a matching DNS SAN, valid dates and a chain signature
-    verified against an embedded issuer Name/key entry. The existing local test
-    certificate uses SHA-256 and lacks SAN; it needs correction before the runtime
-    experiment ([re/209026-certificate-check.md](re/209026-certificate-check.md)).
+    verified against an embedded issuer Name/key entry. The local generator now
+    emits SHA-1/RSA, DNS SAN and keyEncipherment; its focused tests pass 2/2,
+    including OpenSSL trust/hostname verification. Existing generated identities
+    were not replaced ([re/209026-certificate-check.md](re/209026-certificate-check.md)).
   - `-authsrv host[:6112]` sets the later AuthSrv hop (docs/re/209026-cmdline-and-hosts.md).
   - **Patch step solved (2026-11-01, run 35,
     [re/209026-patcher.md](re/209026-patcher.md)):**
@@ -42,9 +43,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     1b. ~~Our own test key/cert.~~ Done 2026-11-01: `tools/gen-test-cert.sh` writes an RSA-1024
        (e = 65537) key and a self-signed cert to gitignored `data/tls/`. The subject is byte-identical
        to the Name pinned beside the cligate.101 key. `ServerConfig::load` enforces that shape.
-    2. ~~REA on the certificate check.~~ Static findings documented. Next: correct the
-       local test certificate, then verify the hostname and local trust configuration
-       inside the sandbox. No GW2 TLS handshake has passed yet.
+    2. ~~REA on the certificate check and local fixture correction.~~ Done. Next:
+       verify the hostname and local trust configuration inside the sandbox.
+       No GW2 TLS handshake has passed yet.
     3. Capture the login messages inside TLS.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
@@ -55,13 +56,16 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 | --- | --- | --- |
 | 1 | Freeze client, capture traffic, message list for our build | client frozen; REA observations and offline patch/STS captures recorded; complete message list pending |
 | 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
-| 3 | Login stub: redirect, secure login, our own key | StartTls reached; local TLS server implemented; certificate acceptance mapped statically; fixture correction and sandbox handshake pending |
+| 3 | Login stub: redirect, secure login, our own key | StartTls reached; local TLS server and corrected fixture implemented; certificate acceptance mapped statically; sandbox handshake pending |
 | 4 | Character select / creation | not started |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
-## Crates (workspace tests: 75 pass, clippy clean)
+## Crates (last full workspace check: 75 pass, clippy clean, commit `31772d8`)
+
+Latest focused check: the two `gw2-login` OpenSSL certificate/interop tests pass after
+the fixture correction. The full workspace suite was not rerun for this change.
 
 | Crate | State |
 | --- | --- |
