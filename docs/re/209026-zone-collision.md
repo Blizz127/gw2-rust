@@ -59,3 +59,19 @@ Private bundle `~/re/gw2/notes/209026-zone-collision-1.json`.
   `ev_9314f17f72725c999853618007a3ad40b301d57f2df159b4811ad90b2ca08d95`.
 - REA execution of private `check-zone-world-matrix.rs`:
   `ev_2d4da3df8fca81d9c5653b6fc6bf2bb40c62ccce9d7b759bb4e68b9ff7ae6469`.
+
+## Typed support
+
+`MapCollide::zone_animation_209026` now selects the fixed sequence explicitly,
+sharing the ordered exact-match helper with prop selection. Missing geometry or
+sequence returns `None`; it does not substitute the prop default or first entry.
+`ModelPlacement::zone_primary_map_physics_matrix_209026` exposes the verified
+zone transform through the same matrix calculation.
+
+Eight focused map-collision tests and the library/inspector build pass. A test
+places the fixed zone sequence after a different first animation and checks
+first-match order and missing selections. REA execution of private
+`check-zone-typed-rust.rs` verified all 4,381 typed selections against their raw
+ordered lists and repeated the 62,148-vertex transform comparison above.
+Evidence `ev_23388a3e2f5909fb64324d1ef98303003c462044519568d82db7e3e5a7529ef9`,
+private bundle `209026-zone-collision-rust-1.json`.

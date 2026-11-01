@@ -102,6 +102,13 @@ impl ModelPlacement {
         ]
     }
 
+    /// Collision-vertex matrix for a `zoneModels` placement in the primary map.
+    /// The traced zone path shares the prop scale/rotation/origin convention.
+    /// Use `MapCollide::zone_animation_209026` for its fixed sequence selection.
+    pub fn zone_primary_map_physics_matrix_209026(&self) -> [[f32; 4]; 3] {
+        self.prop_primary_map_physics_matrix_209026()
+    }
+
     /// Local collision quaternion `[x, y, z, w]` for a build-209026 prop.
     ///
     /// Stored angles are radians. The Hamilton product is
@@ -292,7 +299,18 @@ impl MapCollide {
             0 => 0x2cdf07c8ba, // packed "zeropose"
             sequence => sequence,
         };
-        self.geometries.get(prop.geometry_index as usize)?.animations.iter()
+        self.animation_for_geometry_209026(prop.geometry_index, sequence)
+    }
+
+    /// Select a zone placement's fixed build-209026 sequence token.
+    /// Unlike a prop, a zone does not store its own sequence. This selects the
+    /// first exact `0x83e502b9fa` match, without first-animation or shape fallback.
+    pub fn zone_animation_209026(&self, zone: &ModelPlacement) -> Option<&CollideAnimation> {
+        self.animation_for_geometry_209026(zone.geometry_index, 0x83e502b9fa)
+    }
+
+    fn animation_for_geometry_209026(&self, geometry: u32, sequence: u64) -> Option<&CollideAnimation> {
+        self.geometries.get(geometry as usize)?.animations.iter()
             .filter_map(|&i| self.animations.get(i as usize))
             .find(|a| a.sequence == sequence)
     }
@@ -331,6 +349,26 @@ mod tests {
         assert_eq!(m.map(|r|r[3]),[10.0,20.0,30.0]);
         let m = ModelPlacement {scale:3.0,..Default::default()}.prop_primary_map_physics_matrix_209026();
         assert_eq!(m,[[3.,0.,0.,0.],[0.,3.,0.,0.],[0.,0.,3.,0.]]);
+    }
+
+    #[test]
+    fn zone_animation_uses_fixed_token_without_prop_sequence() {
+        let mut m = MapCollide {
+            animations: vec![
+                CollideAnimation {sequence:0x2cdf07c8ba,..Default::default()},
+                CollideAnimation {sequence:0x83e502b9fa,..Default::default()},
+                CollideAnimation {sequence:0x83e502b9fa,..Default::default()},
+            ],
+            geometries: vec![CollideGeometry {animations:vec![0,2,1],..Default::default()}],
+            ..Default::default()
+        };
+        let zone = ModelPlacement {scale:1.,sequence:None,..Default::default()};
+        assert!(std::ptr::eq(m.zone_animation_209026(&zone).unwrap(), &m.animations[2]));
+        assert!(m.prop_animation_209026(&zone).is_none());
+        m.geometries[0].animations = vec![0];
+        assert!(m.zone_animation_209026(&zone).is_none());
+        let zone = ModelPlacement {geometry_index:1,..zone};
+        assert!(m.zone_animation_209026(&zone).is_none());
     }
 
     fn s(fields: Vec<(&str, PfValue)>) -> PfValue {
