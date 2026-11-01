@@ -151,11 +151,11 @@ scalar preservation, classified external zero offsets, wrong types,
 truncated records, null nonempty arrays, local array extents, arithmetic
 overflow and invalid reference classes. Empty arrays remain explicit.
 
-The read-only checker, run through REA against all 32 frozen base
+The initial read-only checker, run through REA against all 32 frozen base
 containers, reports **9 professions, 81 specializations, 2,425 traits,
 81 specialization references and 729 major-trait references**, matching
-the independent Python census. It rejects duplicate keys/enums but does
-not resolve external targets or validate eligibility. Command:
+the independent Python census. That initial version rejected duplicate
+keys/enums but did not resolve external targets or validate eligibility. Command:
 `gw2-profession-check /path/to/frozen-209026/Gw2.dat`.
 
 Smoke evidence `ev_7e6865593fe6e90352eeafd348791a3a3cca1c2d9e2d6a63ca5cf6b56f49dd37`;
@@ -174,6 +174,23 @@ files, perform I/O or treat an external offset as belonging to the source.
 Two focused tests and the library build pass, including local and external
 zero offsets, source/target index errors, destination overruns, offset/length
 overflow, string rejection and empty byte ranges.
+
+The checker now loads the ordered 32-container base set and uses that
+resolver for the full catalog graph. Each profession array and major-trait
+array must have nine entries. Every pointed-to record must have the expected
+stored content type **and** an exact matching typed index entry; interior
+addresses with a coincidental header are not accepted. Profession membership
+must cover every specialization exactly once. Each specialization's nine
+major traits must be distinct with three choices at each tier. Non-null
+progress references must target indexed type-353 records.
+
+The checker build and REA archive smoke pass: **81 profession memberships,
+729 major-trait references and 81 progress references** resolve, and the
+Guardian list exactly matches the independent census. This proves these
+structural relationships, not unlock state or runtime eligibility.
+Evidence `ev_fa78e508d949607f7839e2cb055062e8f2dbf0217d1c56efb8cc8ef6f47d6070`;
+private bundle `~/re/gw2/notes/209026-profession-resolved-catalog-1.json`
+(1,129 records, 24,235,236 bytes).
 
 ## Evidence
 

@@ -259,7 +259,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Bounded `gw2-dat` profession/specialization/trait views now expose these
     fields and explicit references. Three focused tests and library/checker
     builds pass; the 32-container Rust smoke matches the independent census.
-    External target resolution and gameplay eligibility remain separate.
+    The bounded cross-container resolver passes two focused tests/build;
+    the checker now resolves all 81 profession memberships, 729 major-trait
+    and 81 progress references to indexed records of the expected types.
+    Gameplay eligibility remains unverified.
     Appearance validation now has a 45-byte branch map and ten race/sex
     content keys (type 137). All 90 shipped defaults have since been extracted
     and parsed; full content-dependent validation remains unresolved. See
