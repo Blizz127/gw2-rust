@@ -21,7 +21,7 @@ Server **37**, descriptor `0x1425b3a00`, handler `0x1410335c0`, has:
 | 3 | Dword | Copied into the command's auxiliary-data object. |
 | 4 | BufferVarSmall, max 250 | Copied into the auxiliary-data object. Raw descriptor parameter is 0x100fa; the established buffer length bound uses its low 16 bits. |
 | 5 | Byte | Agent type, used to select the factory. Character factory is type 0. |
-| 6 | Dword | Forwarded into base-agent initialization; meaning unresolved. |
+| 6 | Dword | Character identity/classification value; high nibble 3 identifies a player character on the type-0 path (see below). |
 | 7–9 | Byte each | Forwarded into creation parameters; meanings unresolved. |
 | 10 | Point3 | Three raw float words plus a variable-length Dword; details below. |
 | 11–12 | Word each | Interpreted as signed values for angular conversion, with 0x7fff as a special value. Full semantics unresolved. |
@@ -36,9 +36,52 @@ value to find the registered factory. Its virtual call at `0x141024ef6`
 reaches the type-0 character factory mapped in
 [character population](209026-character-population.md).
 
-This is a queued creation path. Queue timing, required auxiliary data,
-content parameters and subsequent component initialization remain open.
+This uses the command/queue path. Required auxiliary data, content
+parameters and subsequent component initialization remain open.
 The path alone does not establish a working map-entry sequence.
+
+## Immediate creation through the command path
+
+The constructor combines the incoming flag byte with `0x18080`, so masks
+`0x8000`, `0x80` and `0x10000` are always present for server 37.
+`0x14102fcf0` binds the existing agent, if any, to command +0x20. A missing
+agent normally causes rejection, but mask 0x8000 admits this command.
+After timing/sequence bookkeeping it tests mask 0x80 and invokes command
+virtual +8 (`0x14103e880`) immediately. If command +0x20 is null, that
+method calls virtual +0x10, the creation method described above.
+
+Thus first creation is not simply deferred until the calculated command
+deadline. This does not remove the bookkeeping dependencies or other
+rejection paths (including an existing agent marked for removal). Field 1
+participates in the timing adjustment at `0x14102ffb0`; an appropriate
+initial server value and all clock setup remain unverified.
+
+## Player identity and ownership
+
+Field 6 reaches base agent +0x40 through `0x141031290`. The base-agent
+virtual +0x118 getter (`0x1402b6260`) returns it; the character constructor
+stores it at character +0xa0. The character's +8 interface exposes:
+
+- IsPlayer, `0x1411d9be0`: `(identity & 0xf0000000) == 0x30000000`.
+- Player index, `0x1411d84e0`: use a nonzero override at whole-character
+  +0x220; otherwise, for IsPlayer, subtract `0x30000000` from identity.
+  The constructor initializes that override to zero.
+- GetPlayer, `0x1411d84a0`: return null for index zero, otherwise look up
+  that index in the character context's player table.
+
+For example, identity `0x30000001` selects player-table index 1 on the
+default path. This is a static relationship, not an auth GUID or proof of
+valid character content. Server 428's corresponding entry must exist by
+the time server 170 validates GetPlayer during finalization.
+
+There is also a separate player-to-owned-character assignment: server
+**443**, descriptor `0x1425c8dd0`, handler `0x1412556a0`, contains two
+Dwords. It looks up the player using field 0, then `0x1411bc830` resolves
+field 1 through the raw character lookup and stores it at player +0x20.
+The helper checks `!m_charOwned` before assignment and a nonnull character
+afterward. It updates a component binding and notifies listeners. This
+does not replace the character-to-player lookup above or server 444's
+separate controlled-character assignment.
 
 ## Point3 wire representation
 
@@ -87,3 +130,15 @@ Private bundle: `~/re/gw2/notes/209026-agent-creation-static-1.json`.
 | `ev_d686f518b2f7aa555c4825745d1825ddfd30a0a399918ac6e86a22aa58861484` | Point3 decoder and both switch tables. |
 | `ev_246e148bdbe9aa4285713e5b3bf002e2da20ed05e3c8de373289893590580540` | Point3 encoder and decoded-size metadata. |
 | `ev_128274762e5f6fecd3404179b210ca7d3bd916106f08d93a41f263a92e642bef` | Hash-guarded server-37 schema extraction. |
+
+Follow-up private bundle: `~/re/gw2/notes/209026-agent-identity-static-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_6f7a6b02593a1e45bdc459ce86eb28f2011c4e61b9cd55403672ea09b8230d65` | Command admission, bookkeeping and immediate virtual +8 dispatch. |
+| `ev_7ee3ac337806c498ea041735db0dd738f268cb5269b2ae763675df5e3323860a` | Missing-agent creation dispatch and timing adjustment. |
+| `ev_8b3278dd110edfb65d8170c103b70e5002c82b7aee09fe6fad831615b9c48c2a` | Base identity storage and character constructor getter/copy. |
+| `ev_9c2462ace0163d574d067ab05a1cba448ba37a171da96e86d1c7d57590029c8d` | Server 443 handler/descriptor and getter pointers. |
+| `ev_ddd140a2950a358e2b05880c7893cbf90c7803819626f4dd28d30f075f40bac9` | GetPlayer, identity getter and named m_charOwned assertion. |
+| `ev_21cf2347080c440d12c8953b914edaa81bf80320a7db43821941254f551b657f` | Player index override/fallback and IsPlayer pointer. |
+| `ev_fbc77ad344dff3341efff7f616fdecac093daca9cc7471c7afe0d43a5af3296a` | IsPlayer predicate and zero-initialized override. |

@@ -181,6 +181,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     admitted by the census; focused test/build and 386-byte framing smoke
     passed. No live bootstrap is claimed; queue timing and required content
     remain open ([re/209026-agent-creation.md](re/209026-agent-creation.md)).
+    The first server-37 creation dispatch is immediate after queue bookkeeping.
+    Its identity field maps high-nibble-3 characters to player-table indexes;
+    server 443 separately assigns the player's owned-character pointer.
     See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.
