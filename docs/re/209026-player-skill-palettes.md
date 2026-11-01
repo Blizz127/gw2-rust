@@ -53,6 +53,9 @@ construction derives it from an agent state through `0x14122acc0`, whose
 switch diagnostic explicitly names **agentState**. The [eligibility follow-up](209026-skill-palette-content.md) identifies
 this selector as charLocale. Numeric locale names remain unresolved;
 do not label these arrays land/water solely from the two-array shape.
+The [state-conversion follow-up](209026-character-locale.md) maps all 15
+agent states, including two that preserve the previous locale, and traces
+constructor selection plus the state callback's conditional rebuild.
 
 After storing a palette, the setter notifies listeners, then reads the
 **owned character** at player +0x20 and its skill bar at character +0x520.
