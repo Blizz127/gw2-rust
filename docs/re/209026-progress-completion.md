@@ -13,7 +13,8 @@ and returns false on the first failure, true after all pass. For data types
 unsigned Dword against **Dword +0x10 in the parameters referenced at
 definition +0x38**. The parameter pointer is dereferenced without a null
 guard. Type 0 tests whether its channel bit is set. Type 1 follows a
-separate bit-mask parameter path; its full representation remains open.
+separate bit-mask parameter path; the [bit-progress follow-up](209026-bit-progress.md)
+now identifies its set-bit count and independent width/completion fields.
 
 In contrast, virtual +0x30 returns the largest enabled channel's numeric
 value, as already traced. Numeric maximum, channel completion and the

@@ -17,6 +17,13 @@ pub struct ProgressDefinition209026 {
     pub parameters: Option<ContentReference>,
 }
 
+/// Type-1 parameters: completion count and storage width are independent.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BitMaskProgressParameters209026 {
+    pub completion_count: u32,
+    pub bit_count: u32,
+}
+
 fn invalid(message: &'static str) -> Error {
     Error::new(ErrorKind::InvalidData, message)
 }
@@ -49,6 +56,25 @@ impl ProgressDefinition209026 {
             channel_mask: dword(bytes, 0x40),
             parameters,
         })
+    }
+
+    /// Resolve BIT_MASK parameters without interpreting other data types.
+    pub fn bit_mask_parameters(
+        &self,
+        containers: &[ContentIndex<'_>],
+        source_container: usize,
+    ) -> Result<Option<BitMaskProgressParameters209026>> {
+        if self.data_type != 1 {
+            return Ok(None);
+        }
+        let reference = self
+            .parameters
+            .ok_or_else(|| invalid("bit-mask progress has null parameters"))?;
+        let target = resolve_reference(containers, source_container, reference, 0x14)?;
+        Ok(Some(BitMaskProgressParameters209026 {
+            completion_count: dword(target.bytes, 0),
+            bit_count: dword(target.bytes, 0x10),
+        }))
     }
 
     /// Resolve the completion limit for counter/maximum types only.
@@ -188,6 +214,64 @@ mod tests {
         put(&mut bytes, 0x30, 54);
         let pf = pack(&bytes, &[], &[]);
         assert!(ProgressDefinition209026::read(&ContentIndex::parse(&pf).unwrap(), 0x20).is_err());
+    }
+
+    #[test]
+    fn progress_content_bit_mask_parameters_preserve_independent_fields() {
+        let mut bytes = definition();
+        put(&mut bytes, 0x4c, 1);
+        let source = pack(&bytes, &[], &[(0x58, 1)]);
+        for (completion_count, bit_count) in [(120, 0), (500, 249), (0, u32::MAX)] {
+            let mut params = vec![0; 0x14];
+            put(&mut params, 0, completion_count);
+            put(&mut params, 0x10, bit_count);
+            let target = pack(&params, &[], &[]);
+            let indexes = [
+                ContentIndex::parse(&source).unwrap(),
+                ContentIndex::parse(&target).unwrap(),
+            ];
+            let view = ProgressDefinition209026::read(&indexes[0], 0x20).unwrap();
+            assert_eq!(
+                view.bit_mask_parameters(&indexes, 0).unwrap(),
+                Some(BitMaskProgressParameters209026 {
+                    completion_count,
+                    bit_count
+                })
+            );
+            assert_eq!(view.counter_limit(&indexes, 0).unwrap(), None);
+            assert!(view.bit_mask_parameters(&indexes[..1], 0).is_err());
+            let short = pack(&params[..0x13], &[], &[]);
+            assert!(
+                view.bit_mask_parameters(
+                    &[
+                        ContentIndex::parse(&source).unwrap(),
+                        ContentIndex::parse(&short).unwrap()
+                    ],
+                    0
+                )
+                .is_err()
+            );
+        }
+        let source = pack(&bytes, &[], &[]);
+        let index = ContentIndex::parse(&source).unwrap();
+        assert!(
+            ProgressDefinition209026::read(&index, 0x20)
+                .unwrap()
+                .bit_mask_parameters(&[index], 0)
+                .is_err()
+        );
+        for data_type in [0, 2, 3, u32::MAX] {
+            put(&mut bytes, 0x4c, data_type);
+            let source = pack(&bytes, &[], &[]);
+            let index = ContentIndex::parse(&source).unwrap();
+            assert_eq!(
+                ProgressDefinition209026::read(&index, 0x20)
+                    .unwrap()
+                    .bit_mask_parameters(&[index], 0)
+                    .unwrap(),
+                None
+            );
+        }
     }
 
     #[test]

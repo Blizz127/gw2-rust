@@ -268,7 +268,13 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     [Bit-progress setters](re/209026-bit-progress.md) now establish 509
     mask replacement and 510 channel-block splitting with final-only
     notifications. Both bounded raw codecs pass three focused tests and
-    the library build, including the 255-word array boundary.
+    the library build, including the 255-word array boundary. A complete
+    progress census now covers 23,939 definitions. BIT_MASK completion
+    counts set bits against a threshold distinct from storage width; the
+    typed parameter reader passes four focused tests. The optimized Rust
+    checker resolves 9,616 counter/maximum limits and 2,986 bit-mask
+    parameter records, matching the independent census. Debug archive
+    checks timed out; the optimized check passed in about 15 seconds.
     [Slot follow-up](re/209026-reward-track-slots.md) identifies 565/569
     pin values, 568 active-track selection and 566 map-specific selection.
     Pin value domains and 567 keyed-state meaning remain unresolved.
