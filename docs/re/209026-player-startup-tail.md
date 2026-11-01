@@ -184,6 +184,84 @@ This is static content/branch evidence, not a client startup smoke.
 | `ev_f3d0c39148eab1557181d5533c9ff2d9e7c3560328263c06eb0a24d9f5d026e8` | Complete selector and iterator, including both empty-list exits. |
 | `ev_57cec4f42dfd7dbe203cd6dc69fc22b13aa92b903c206233f80aebdd097bab00` | Both fixed categories' empty list data and valid selectors. |
 
+## Progress-backed fields and required definitions
+
+The complete ordinary tail after the achievement helper queries six GUIDs
+through progress-manager virtual +0x20. The manager vtable is
+`0x14216c780`; this slot is **`0x1412319c0`**, distinct from its named
+lookup +0x10 (`0x141231af0`). The GUID method first resolves content
+virtual +0x68, asserts a nonnull definition, then forwards definition
++0x28 to the sorted runtime-object lookup +0x28 (`0x141231a20`). That
+lookup returns null when absent and does not allocate. Thus the progress
+**objects** are optional here; their content **definitions** are required.
+
+All six definitions resolve uniquely in the frozen base content. They
+are type 53, each with channel mask **0x100** (channel 8), matching the
+literal channel argument used by the tail.
+
+| Key | Data type | Context destination | GUID Dwords |
+| --- | --- | --- | --- |
+| 576 | 3, MAXIMUM | +0x268 float | `282b59dc 492fc9aa 3e044da7 d04cd7e6` |
+| 411 | 0, BIT | +0x270 mask 1 | `0d596930 47b6b53d c050a1aa 6cac5566` |
+| 412 | 1, BIT_MASK | +0x270 mask 2 | `08f1c132 493aa169 cb974dae a1a85fa8` |
+| 413 | 0, BIT | +0x270 mask 4 | `c905490a 418dbcb2 79b33688 522116df` |
+| 409 | 2, COUNTER | +0x274 Dword | `3b295693 4be18309 17bfa692 fb7cdd34` |
+| 410 | 1, BIT_MASK | +0x264 Dword, low byte of query result | `3abce8a9 43fa812a bfb31e9d 913b381b` |
+
+Key 576 is in file 1282855 at `0x40cfd0`; the other five are in file
+1282833 at `0x3eb580`, `0x3eb3b8`, `0x3f1e60`, `0x3edb48`, and
+`0x3eced0` respectively. Source SHA-256 values:
+
+- 1282855: `9f9226f71e3871066237d560e95b62ef33c847818a7bd78cea586507f492cfa6`.
+- 1282833: `5ab847328dd307407d9701711890f08282f9c6f3639d24bb9684ea46006e26ef`.
+
+Absent objects yield zero for the scalar fields. The key-576 conversion
+divides by the float literal 100 before its clamping sequence; absent
+progress therefore produces zero. The three +0x270 bits are queried
+only while each bit is clear and are only set by a nonzero result; a
+missing object does not clear an already-set bit.
+
+The tail compares old/new values through conversion helpers and ORs
+change bits into context +0x278: masks 2, 4, 8, 0x10, 0x20, 0x40 and 1
+for +0x268, account-backed +0x26c, the three +0x270 bits, +0x274 and
++0x264 respectively. This records pending changes; it is not proof of
+when their downstream listeners run.
+
+Even absent key-409 runtime progress does not skip conversion helper
+`0x1411c6380`. That helper requires GUID Dwords
+`1d10f932 4e7db5e8 f93d2882 4269f3d8`. It resolves to **type 0, key 283**,
+file 1282853, offset `0x7cb8`, SHA-256
+`33ca7ae0d8e93f4fbfbe966e3e639a80e9e7ba6dcef710819cbb86e231ee0603`.
+Its +0x78/+0x80 array has six 32-byte entries with unsigned thresholds
+**1, 1000, 3000, 10000, 50000, 250000**. The helper returns the index of
+the first threshold strictly greater than its input, or count minus one
+when none is greater. Input zero therefore returns index zero. The
+content lookup and nonnull assertion occur for both old/new conversions.
+No gameplay name is assigned from these numbers alone.
+
+The final preferences callback is controlled by whether a queried runtime
+object equals the helper's second argument, rather than solely by changed
+scalar values. In the 431 path that argument is null: an absent first
+progress object already makes the callback condition true. Other queried
+objects can also set it. This explains why the callback can run with
+unchanged zero progress. It remains the scheduling method described
+below, not an additional character-component allocation.
+
+Private bundle: `~/re/gw2/notes/209026-player-startup-progress-1.json`.
+All content reads used the strengthened 32-container hash checks.
+No progress messages were transmitted and no client smoke was run.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_4d766caef991bb5698d9c3ff279239ad5908386a17886385d7bcbb7aa028e907` | Tail GUIDs, null guards, channel arguments and flag updates. |
+| `ev_bd8acb14f7ab87f291c6a44b2016cd2ba43a2ccda15c41b633b349fc554cbe27` | Remaining scalar writes, final callback condition and converter entry. |
+| `ev_6d8b4ece7e7ea7e438af4015c62cdc4f38e8dd0de0ecc9fb70499ed3be8eaabb` | Boolean conversion and threshold comparison/return. |
+| `ev_bbadc18ae94324625a600ab3c388632a1776e4cdbf9b8d3eb759f5f0fca653c9` | Six progress definitions and required threshold content census. |
+| `ev_7d59af670a444c9c9b25844aae70f7b6dc6a3ca3145edce26984e2644f5c75a8` | Complete nonallocating sorted object lookup. |
+| `ev_aef4a9634be7ac79cb12c53592fcbf2fc156c284a1d8acbeb599cc683ae29281` | Progress-manager table entries. |
+| `ev_4a4584f17c3f18c98be9b1e5685fe9f8b9c0edc77d520c60aedaa2844de1ceaa` | Complete GUID lookup and required-definition assertion. |
+| `ev_b4c5aca40c616a96a4bca4d284fdcc1c5e33edd4f9708ca4d6cf7ee21fe16bd5` | Float literal backing the key-576 conversion. |
+
 ## Shared preferences callback
 
 Both `0x1411b8ba0` and `0x1411b9680` can finish with
