@@ -9,13 +9,13 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use bytes::BytesMut;
+use bytes::{Bytes, BytesMut};
 use gw2_net::{
     ServerCodec,
     dh::{ByteOrder, ParamBlob, ServerKey, session_secret},
 };
 use num_bigint::BigUint;
-use tokio_util::codec::Decoder;
+use tokio_util::codec::{Decoder, Encoder};
 
 fn invalid(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidInput, message)
@@ -43,7 +43,12 @@ fn read_exact_file(path: &Path, size: usize) -> io::Result<Vec<u8>> {
     Ok(data)
 }
 
-fn observe(mut stream: TcpStream, key: &ServerKey, log: &Path) -> io::Result<()> {
+fn observe(
+    mut stream: TcpStream,
+    key: &ServerKey,
+    log: &Path,
+    reply: Option<&Bytes>,
+) -> io::Result<()> {
     stream.set_read_timeout(Some(Duration::from_secs(30)))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
     // Run 47 has a 16-byte preamble, with build at +4. Other fields remain opaque.
@@ -70,6 +75,12 @@ fn observe(mut stream: TcpStream, key: &ServerKey, log: &Path) -> io::Result<()>
     stream.write_all(&[1, 22])?;
     stream.write_all(&block)?;
     eprintln!("Game key reply sent; client public length {}", public.len());
+    if let Some(reply) = reply {
+        let mut wire = BytesMut::new();
+        codec.encode(reply.clone(), &mut wire)?;
+        stream.write_all(&wire)?;
+        eprintln!("Explicit game reply sent: {} plaintext bytes", reply.len());
+    }
     let mut chunk = [0u8; 8192];
     let mut total = 0;
     while total < 1024 * 1024 {
@@ -103,6 +114,7 @@ fn observe(mut stream: TcpStream, key: &ServerKey, log: &Path) -> io::Result<()>
 fn main() -> io::Result<()> {
     let mut listen: SocketAddr = "127.1.0.2:6112".parse().unwrap();
     let (mut params, mut private, mut logs) = (None, None, None);
+    let mut reply = None;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -116,9 +128,18 @@ fn main() -> io::Result<()> {
             "--params" => params = args.next().map(PathBuf::from),
             "--private" => private = args.next().map(PathBuf::from),
             "--log" => logs = args.next().map(PathBuf::from),
+            "--reply-frame" => {
+                let path = args.next().ok_or_else(|| invalid("missing reply file"))?;
+                let mut bytes = Vec::new();
+                File::open(path)?.take(65536).read_to_end(&mut bytes)?;
+                if bytes.is_empty() || bytes.len() > 65535 {
+                    return Err(invalid("reply must contain 1..65535 plaintext bytes"));
+                }
+                reply = Some(Bytes::from(bytes));
+            }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT]",
+                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE]",
                 ));
             }
         }
@@ -157,9 +178,10 @@ fn main() -> io::Result<()> {
     for (index, stream) in listener.incoming().enumerate() {
         let stream = stream?;
         let key = Arc::clone(&key);
+        let reply = reply.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
-            if let Err(e) = observe(stream, &key, &log) {
+            if let Err(e) = observe(stream, &key, &log, reply.as_ref()) {
                 eprintln!("Game observation ended: {e}");
             }
         });

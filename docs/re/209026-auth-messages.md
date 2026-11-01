@@ -82,3 +82,29 @@ Private export: `~/re/gw2/notes/209026-auth-messages-static.json`.
 Run 51 used network-none Docker, own in-memory public identity, synthetic portal
 fixtures, and mode-0600 captures. Cleanup, unchanged executable hashes and archive
 count 1,124,232 were verified. No character-selection screen is reached yet.
+
+## Offline reply verification: run 52
+
+The explicit fixture contains server message ID 2 and varint value 1. The observer
+compresses and encrypts it using `ServerCodec`. The client reaches `0x140240700`,
+and the decoded u32 at +2 equals 1. It then sends protocol-3 client ID 1 and
+**ID 10**, definition `0x1425af5c0`, caller return `0x140241775`.
+
+The two captured client writes total 115 bytes (57 + 58), exactly equal to the
+client's pre-encryption buffers. The synthetic portal Token now appears in this
+plaintext. This verifies one LZ4-compressed server frame, incoming u16/varint
+handling for this reply, and continued RC4 state across both client writes.
+It does not establish arbitrary message semantics or character selection.
+
+ID 10's static fields are kind 4, kind 11, kind 11, kind 13 (parameter 64),
+and kind 13 (parameter 28). The next step is to map its construction and the
+corresponding successful server response before adding another fixture.
+
+The observer's new `--reply-frame FILE` option sends one explicit bounded
+plaintext message block through its server codec after key exchange. It is off
+by default. Focused build, clippy, and the split-read server-frame test passed.
+Network isolation, cleanup, unchanged executables and archive count were verified.
+
+Evidence: `ev_5c3222b1673679e682200585b4f83250fb4694fcb9c1704dd7b4951c64d242fd`;
+private export `~/re/gw2/notes/209026-auth-ready-run52.json`.
+Definition-byte capture: `ev_6bd28470bb62ebb9dfddbfac03905e7a805a17332198210f84154ca3e334a209`.
