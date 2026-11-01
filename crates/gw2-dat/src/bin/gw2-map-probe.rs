@@ -5,6 +5,7 @@ use gw2_dat::{
     packfile::Packfile,
     pfread::{Limits, PfValue, read_chunk},
     pfschema::{find_all, parse},
+    scene_bounds::{Bounds3, SceneBounds209026},
     surface::{VerticalHit, vertical_segment_hit},
     terrain::{TerrainHeights209026, TerrainTiles209026},
     water::MapWater209026,
@@ -144,6 +145,18 @@ fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
         Some(PfValue::U32(v)) => *v,
         _ => return Err(bad("missing cells per chunk")),
     };
+    let rect = match get("parm")?.get("rect") {
+        Some(PfValue::Floats(v)) if v.len() == 4 => [v[0], v[1], v[2], v[3]],
+        _ => return Err(bad("missing rectangle")),
+    };
+    let bounds = SceneBounds209026::primary_map(
+        rect,
+        cells,
+        Bounds3 {
+            min: map.bounds_min,
+            max: map.bounds_max,
+        },
+    )?;
     drop(values);
     let mut best = [None; 3];
     let mut counts = [0usize; 3];
@@ -247,6 +260,10 @@ fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
     }
     println!("file={id} physics_xy={xy:?} z_interval={range:?} identity_primary_map=true");
     println!(
+        "character_origin_bounds={:?} simple_character_bounds={:?}",
+        bounds.character, bounds.expanded
+    );
+    println!(
         "water global_surface_map_z={:?} global_surface_physics_z={:?} explicit_volumes={} (metadata only)",
         water.global_surface_z(),
         water.global_surface_z().map(|z| -z / 32.),
@@ -264,6 +281,12 @@ fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
         match hit {
             Some((h, source)) => {
                 println!("{name}: z={} normal={:?} source={source}", h.z, h.normal);
+                let collision_point = [xy[0], xy[1], h.z];
+                println!(
+                    "  inside_character_bounds={} inside_simple_character_bounds={}",
+                    bounds.character.contains(collision_point),
+                    bounds.expanded.contains(collision_point)
+                );
                 // Server 37, build 209026, before character bounds handling.
                 // This is the surface point, not a validated character origin.
                 let point = [xy[0] * 32., xy[1] * 32., -h.z * 32.];

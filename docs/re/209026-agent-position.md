@@ -61,8 +61,10 @@ zero without changing the vector. Otherwise it clamps components using
 SSE min/max and returns one. In the latter case the constructor replaces
 its +0x30 and +0x120 vectors with the clamped result and clears their tags.
 An out-of-bounds input therefore need not become the requested initial
-position. The origin and policy of these particular bounds still need
-tracing; they must not be equated with raw `havk` bounds without evidence.
+position. The follow-up [scene-bounds trace](209026-scene-bounds.md)
+establishes their sources: the full clamp combines the map rectangle and
+terrain-cell inset with archive Z, while the simple check uses expanded
+archive XYZ bounds.
 
 ## Practical scope
 
