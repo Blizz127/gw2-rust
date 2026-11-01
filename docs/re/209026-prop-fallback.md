@@ -57,9 +57,11 @@ so fallback layer 15 initially pairs only with layer 0. Static prop meshes
 relationships do not by themselves identify an actor or a ground-query mask.
 
 Custom pair filter `0x1410bd3d0` applies a further predicate `0x1410bd190`,
-then calls the base matrix lookup `0x1416d08f0`. That lookup uses low five
-bits for ordinary values; shared nonzero high-group identifiers take a separate
-subsystem path. Custom ray filters impose additional mask/owner checks.
+then masks both inputs to their low five bits before calling base lookup
+`0x1416d08f0`, so this custom body-pair path always uses the layer matrix.
+The base function also has a shared nonzero high-group path, reachable from
+other callers including the world-ray wrapper. Custom ray filters impose
+additional mask/tagged-pointer checks; see [ray filter trace](209026-ray-filters.md).
 Consequently, the small fallback's existence is not proof that it supports
 walking or should be included by every query. Runtime filter changes and the
 actual movement-query masks remain to be traced.
