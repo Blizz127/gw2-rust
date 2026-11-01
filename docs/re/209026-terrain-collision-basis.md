@@ -82,3 +82,20 @@ Private bundle `~/re/gw2/notes/209026-terrain-collision-basis-1.json`.
 - Global node lookup and sign flip: `ev_12af03a6611323d2da20effbea080675ecec756f22f935f44df4302e2e480148`.
 - Heightfield constructor: `ev_8252bb4847e13d00ded0c18a6c86797a45a48ccf96c88c17687c766531031be6`.
 - Triangle assembly: `ev_fd5a4235b6f6e76601b0b00c87502dc50c797488e95d36d44ce133cebf053fe6`.
+
+## Rust extraction and check
+
+`TerrainHeights209026::primary_map_physics_triangles` extracts one cell's two
+triangles with the traced node lookup, ideal coordinate conversion and winding.
+The caller remains responsible for exclusion flags and scene clipping. A focused
+test uses deliberately unequal neighboring border copies to verify global node
+selection, checks axis/sign conversion, last-cell boundaries and winding.
+All seven terrain tests and the library/inspector build pass.
+
+REA execution of private `check-terrain-triangles-rust.rs` checked all 1,089,536
+Queensdale triangles: finite vertices, positive XY cross product 9 for each
+triangle, and at most 0.0000152587890625 collision-unit height difference between
+triangle interpolation and the existing point sampler. This is an offline
+consistency check, not an in-client physics replay. Evidence:
+`ev_740c41fe4ea136a072c82fe66f175d09952cc81136d80956eeba021f138c4d10`,
+private bundle `209026-terrain-triangles-rust-1.json`.

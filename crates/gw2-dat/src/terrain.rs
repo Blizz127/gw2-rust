@@ -98,6 +98,42 @@ impl TerrainHeights209026 {
         Self::new(rect, dims, cells, heights)
     }
 
+    /// Two collision triangles for a zero-based cell in an identity primary map.
+    ///
+    /// Uses the heightfield's global node lookup (including neighboring chunks
+    /// at internal edges), then maps XYZ to `[x/32, y/32, -height/32]`.
+    /// Winding is `[NW,SW,NE]`, `[SE,NE,SW]`. This expresses the traced ideal
+    /// quarter-turn, without reproducing client quaternion rounding.
+    ///
+    /// Callers must apply chunk collision exclusions and scene clipping before
+    /// assembling a collision scene. Props, water and walkability are separate.
+    pub fn primary_map_physics_triangles(&self, [x, y]: [u32; 2]) -> Option<[[[f32; 3]; 3]; 2]> {
+        let [x, y] = [x as usize, y as usize];
+        if x >= self.chunks[0] * self.cells || y >= self.chunks[1] * self.cells {
+            return None;
+        }
+        let node = |gx: usize, gy: usize| {
+            let cx = (gx / self.cells).min(self.chunks[0] - 1);
+            let cy = (gy / self.cells).min(self.chunks[1] - 1);
+            let lx = gx - cx * self.cells;
+            let ly = gy - cy * self.cells;
+            let index = (cy * self.chunks[0] + cx) * self.stride * self.stride
+                + (ly + 1) * self.stride
+                + lx
+                + 1;
+            [
+                (self.rect[0] + gx as f32 * self.spacing) * 0.03125,
+                (self.rect[3] - gy as f32 * self.spacing) * 0.03125,
+                -self.heights[index] * 0.03125,
+            ]
+        };
+        let nw = node(x, y);
+        let sw = node(x, y + 1);
+        let ne = node(x + 1, y);
+        let se = node(x + 1, y + 1);
+        Some([[nw, sw, ne], [se, ne, sw]])
+    }
+
     /// Raw terrain height for map-local XY, with the client's half-open bounds.
     /// Both minimum edges are included; both maximum edges are excluded.
     /// Returns `None` outside the rectangle or for nonfinite input/result.
@@ -291,6 +327,34 @@ mod tests {
             [0., f32::INFINITY],
         ] {
             assert_eq!(t.height_at(xy), None);
+        }
+    }
+
+    #[test]
+    fn collision_triangles_map_axes_and_use_global_border_nodes() {
+        let mut h = vec![0.; 50];
+        h[7] = 32.; // NW of cell (1,0) in chunk 0.
+        h[12] = 64.; // SW.
+        h[8] = 999.; // Old chunk's duplicate NE; heightfield selects next chunk.
+        h[13] = 999.;
+        h[31] = 96.; // Next chunk's NE.
+        h[36] = 128.; // Next chunk's SE.
+        let t = TerrainHeights209026::new([0., 0., 6144., 3072.], [4, 2], 2, h).unwrap();
+        assert_eq!(
+            t.primary_map_physics_triangles([1, 0]),
+            Some([
+                [[48., 96., -1.], [48., 48., -2.], [96., 96., -3.]],
+                [[96., 48., -4.], [96., 96., -3.], [48., 48., -2.]],
+            ])
+        );
+        let edge = t.primary_map_physics_triangles([3, 1]).unwrap();
+        assert_eq!(edge[1][0], [192., 0., 0.]);
+        assert_eq!(t.primary_map_physics_triangles([4, 0]), None);
+        assert_eq!(t.primary_map_physics_triangles([0, 2]), None);
+        for tri in edge {
+            let a = [tri[1][0] - tri[0][0], tri[1][1] - tri[0][1]];
+            let b = [tri[2][0] - tri[0][0], tri[2][1] - tri[0][1]];
+            assert!(a[0] * b[1] - a[1] * b[0] > 0.);
         }
     }
 
