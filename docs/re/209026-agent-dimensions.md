@@ -20,8 +20,8 @@ observed uses, not proposed names for all eight values.
 
 | Input | Base-agent offset | Full collision-character initial use |
 | --- | --- | --- |
-| Array 0 | +0x138 | Also copied to base +0x15c and +0x160; later meaning unresolved. |
-| Array 1 | +0x13c | Stored; not passed to the collision factory here. |
+| Array 0 | +0x138 | Base movement speed; also initializes current/previous speed at +0x15c/+0x160. |
+| Array 1 | +0x13c | Turn-command scale; not passed to the collision factory here. |
 | Array 2 | +0x140 | Stored; not passed to the collision factory here. |
 | Array 3 | +0x144 | Height input; after factory adjustment and /32, collision +0x29c. |
 | Array 4 | +0x148 | /32 to collision +0x2ac; participates in a second height minimum and an auxiliary shape's height. |
@@ -29,6 +29,10 @@ observed uses, not proposed names for all eight values.
 | Array 6 | +0x150 | /32 to collision +0x2a4; used as another shape parameter on a flagged branch. |
 | Array 7 | +0x154 | -value/32 to collision +0x454. Full meaning unresolved. |
 | Final float | +0x80 | /32 to collision +0x2a0, the radius used by the capsule and six-point ray sample. |
+
+The subsequent [movement-parameter trace](209026-agent-movement-parameters.md)
+establishes the first two roles and records the third scalar's limited
+consumer evidence without assigning it a semantic name.
 
 `0x14109ca00` receives flags, height, radius and array 6 in the four
 register argument slots. Stack arguments include constant 50, array 4,
