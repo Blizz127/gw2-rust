@@ -86,7 +86,7 @@ allocation or proof of useful initial skill choices.
 | 624 | `0x1425d8a70` / `0x14125bf50` | Dword content key. Nonzero resolves type 299; zero supplies null. Virtual +0x260 stores component +0xc8 and notifies. Record's gameplay role unresolved. |
 | 625 | `0x1425d8bb0` / `0x14125c010` | Dword content reference, resolved through content virtual +0x230 and passed to skill-bar virtual +0x268. Full effect unresolved. |
 | 626 | `0x1425d8dc0` / `0x14125c0d0` | Two Dwords: content reference and engine-agent index. `0x1411fb240` stores resolved content at +0x130, updates the agent reference at +0x138 and triggers normal rebuild. |
-| 627 | `0x1425d8e90` / `0x14125c1a0` | Float, passed to `0x1411fb280`, which updates a field through the object at skill-bar +0x150. Gameplay meaning unresolved. |
+| 627 | `0x1425d8e90` / `0x14125c1a0` | Float recharge-rate scale, passed to `0x1411fb280`, which updates the object at skill-bar +0x150; see the setter constraints below. |
 
 621's setter explicitly asserts `skillbarSlot < CHAR_SKILLBAR_SLOTS` with
 upper bound 23. The bit's gameplay meaning is not yet named. It can also
@@ -117,6 +117,77 @@ Private bundle: `~/re/gw2/notes/209026-skillbar-slot-updates-1.json`
 | `ev_ed4af17929eda91173312092de7160732ad994b4a4a5e295d9c8d52a114c4042` | Named setting search and bounded field-use census. |
 | `ev_5ba7fd4244aa28d5add7bd6070300563912745959e9a2c2007e74dfdd32c4bdb` | Single/multiple-slot consumer, setting lookup, 624 setter and mask iterator. |
 | `ev_71f25d63585fccaa1ab88f65c9362673fa3477eab3847905ed422b8a85428b0a` | Setting literal, bit-index helper, corrected consumer entry boundary and 626/627 setters. |
+
+## Palette sources during normal rebuild
+
+Slot helper `0x141212cd0` obtains a context scalar from skill-bar +8
+interface virtual +0x40, then calls `0x141212d20`. The latter creates a
+stack adapter with vtable `0x142169d08`, calls palette chooser
+`0x141213790`, and resolves the selected palette through `0x141213650`.
+The output is the resolved entry's first pointer, or null on lookup failure.
+This is a local content lookup, not a list supplied by message 618.
+
+The chooser's byte indirection table at `0x141213834` and target table at
+`0x141213820` establish these numeric slot routes:
+
+| Slots | Adapter virtual | Observed source through skill-bar +8 interface |
+| --- | --- | --- |
+| 0–4 | +0x100 | Adapter `0x1411f79e0` calls interface +0xf8 (`0x1411f7970`) with slot and context scalar. A character predicate guards lookup on the associated player's embedded +0x9be0 object, virtual +0x58. |
+| 5–7 | +0x88 | `0x1411f7530`: character inventory +0x3f0, virtual +0x18, then returned item's virtual +8 and helper `0x141212ee0`. |
+| 8–9 | +0xa8 | `0x1411f7680`: same sequence using inventory virtual +0x20. |
+| 19 | +0x68 | `0x1411f7450`: inventory virtual +0xd8, with a content override branch, else item virtual +8 and helper `0x141212ee0`. |
+| 10–18, 20–22 | none | This chooser returns null. Other rebuild branches can populate these slots. |
+
+Slot values above 22 enter a diagnostic path. The scalar for slots 0–4
+comes through `0x1411f72e0` from character primary virtual +0x1b0; its
+meaning and the player's +0x58 implementation are not yet established.
+The inventory virtual offsets are observed routes, not assigned equipment
+slot names. Helper `0x141212ee0` selects a palette pointer using the
+content record's +0x2c discriminator: value 9 selects `[record+0x30]+0x10`,
+value 24 selects `[record+0x30]+0x58`; other values return null.
+
+Resolver `0x141213650` applies palette flag/context checks, calls row
+selector `0x141212bc0`, and scans that row's entries (stride 0x70) until
+predicate `0x141212fe0` succeeds. It returns the first passing entry or
+null. The row selector and eligibility predicate remain untraced here.
+For fallback slots 12–18, helper `0x1412138f0` starts with the corresponding
+slot minus 12, then follows additional content pointers to a nested palette
+or direct default. This explains why the chooser's null routes do not
+mean those slots are always empty.
+
+## Recharge-rate scale
+
+Message 627's helper `0x1411fb280` compares the received float with the
+value at recharge object +0x30. On change it calls `0x141214550`, whose
+assertion at `0x14216a1e0` is **rechargeRateScale > 0.0f**. The ordinary
+object constructor `0x1412122d0` initializes this field to 1.0f. The skill
+bar can also obtain a shared object, so this is not a claim that every
+existing bar starts with a newly constructed rate.
+
+Before storing the new scale, the setter advances existing recharge
+records with the old scale through `0x141214ca0`. That routine subtracts
+an integer conversion of `elapsed_world_ms * old_scale` from eligible
+remaining-time fields, saturating at zero and skipping sentinel
+0xffffffff entries. After the store, `0x141214d90` divides the two list
+heads' remaining times by the new scale, converts them, and schedules the
+smaller delay through `0x141023800`, or cancels when neither is finite.
+The conversion helper is `0x1409bef10`; its precise rounding behavior is
+not asserted here. Message 627 changes recharge speed, not the skill
+content pointer or a per-slot remaining-time value. This does not establish
+which server updates initialize individual recharge records.
+
+Private bundle: `~/re/gw2/notes/209026-skillbar-palettes-recharge-1.json`
+(1,031 records, 23,049,732 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_462fbbf39b187b6e09cd6a458116d5e206d424f7a6c6dc6e2c6160e6857db50b` | Slot helpers, fallback lookup and recharge-scale setter. |
+| `ev_dee3809f413b081e808545e41e040e6febc2032efeb5958f52cf87e7d79f3a48` | Named recharge assertion, chooser and recharge advancement. |
+| `ev_6abf93a9f4e473fb1ca2b00106bd48773ed15b23448e87a9b35b0460cc193278` | Slot tables, adapter routes and ordinary recharge constructor. |
+| `ev_b033815c9c23d66bf7206cf6a0c936918ebd980e6c28654f3c59d40a9f512fb5` | Interface vtable, special +0x100 adapter and generic entry resolver. |
+| `ev_8ba63227aa19f9f31b4256cc9d5855b12ba19826adb76c7e31bd6de62f1743fe` | Inventory palette getters and exact +0xf8/+0x40 targets. |
+| `ev_0f7f5ebb0043b0776eb82765a22ad80fb026fae97de825eb79920ea079d00c2c` | Associated-player lookup, context scalar source, content discriminator and rescheduling. |
+| `ev_62787555e8c163dc94de7bc678e03b4a2582d3961ef1030a57587531a681aeac` | Player +0x9be0 constructor and conversion helper. |
 
 ## Typed lifecycle and selection frames
 
