@@ -39,7 +39,9 @@ It ends with another event dispatch.
 The recalculation helper clears the slot byte first. If the specialization
 pointer is non-null, it dereferences **player +0x20 (owned character)**
 without a null guard and checks character virtual +0x350. This predicate
-(`0x1411d9210`) reads character flags +0x178 bit 3. If set, the helper
+(`0x1411d9210`) reads character flags +0x178 bit 3, now identified as
+**IsControlled()** by [control-setter assertions](209026-character-control.md).
+If set, the helper
 requires player +0x9a60, explicitly asserted as **m_rewardTrackMgr**, and
 uses the specialization's +0x50 content reference to count passed
 progress thresholds. Thus the guarded skill-bar tail does not make a

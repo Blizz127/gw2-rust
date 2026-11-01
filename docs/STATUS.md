@@ -217,6 +217,13 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Agent streaming requires a finalized controlled character. Server 444's
     equal-index branch assigns an existing character; an offline fixture
     parsed two frames completely (16 bytes). Population ordering remains open.
+    The branch follow-up identifies B as the player index in both branches
+    and character flag bit 3 as IsControlled. Equal IDs install local control;
+    unequal IDs update the player's character association without setting
+    that flag. Local-player subscriptions use embedded objects and do not
+    immediately call listeners; subsequent notification dependencies remain
+    open. Owned-character control also directly requires coreStats. No replay
+    or User Agreement interaction was performed for this static follow-up.
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message
