@@ -79,6 +79,23 @@ map-unit conversion and does not consume the second/third vectors, state
 bytes or tick in its complete body. These different consumer paths are
 another reason to preserve explicit wire fields without inventing defaults.
 
+## Typed framing scope
+
+A typed server-87 frame can expose agent index, tick, command flags,
+collision-position Float4, raw transform tag, two further Float4s and two
+state bytes. It must retain all float bits and the incoming tag verbatim,
+even where the client's outbound serializer canonicalizes that tag. Decoding
+must consume exactly one frame and leave input unchanged on any error.
+This API supplies no valid state, component defaults or collision simulation.
+
+Three focused typed-frame tests and the library build pass. Literal 59-byte
+and 65-byte goldens cover distinct vectors, raw NaN payloads, negative zero,
+infinity, subnormal bits and unsigned maxima; a 57-byte zero frame checks the
+minimum length. Prefix/concatenation checks preserve adjacent input. Every
+truncated golden, wrong message ID and overflowing tick/tag varint fails
+without advancing the caller's slice. These are transport checks only; no
+frame was sent to the client.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-float4-position-state-1.json`.

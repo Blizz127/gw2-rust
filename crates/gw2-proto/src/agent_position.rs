@@ -1,5 +1,6 @@
-//! Build-209026 server-86 position frames. See
-//! `docs/re/209026-agent-position-update.md` for execution gates and bounds.
+//! Build-209026 server-86/87 position frames. See
+//! `docs/re/209026-agent-position-update.md` and
+//! `docs/re/209026-agent-position-state.md` for execution gates and bounds.
 
 use std::io::{Error, ErrorKind, Result};
 
@@ -43,6 +44,61 @@ impl AgentPosition209026 {
             remote_tick: u32::decode(&mut cursor)?,
             command_flags: u8::decode(&mut cursor)?,
             position: Point3::decode(&mut cursor)?,
+        };
+        *input = cursor;
+        Ok(frame)
+    }
+}
+
+/// Server 87's explicit collision-coordinate position and associated state.
+/// All float bits and the raw tag survive transport; this does not apply the
+/// native outgoing serializer's tag canonicalization or collision predicates.
+#[derive(Debug, Clone)]
+pub struct AgentPositionState209026 {
+    pub agent_index: u16,
+    pub remote_tick: u32,
+    pub command_flags: u8,
+    pub position: [f32; 4],
+    pub transform_tag: u32,
+    pub second_vector: [f32; 4],
+    pub third_vector: [f32; 4],
+    pub state_bytes: [u8; 2],
+}
+
+impl AgentPositionState209026 {
+    pub const MESSAGE_ID: u16 = 87;
+
+    /// Append one complete frame without interpreting its state.
+    pub fn encode_frame(&self, output: &mut BytesMut) {
+        Self::MESSAGE_ID.encode(output);
+        self.agent_index.encode(output);
+        self.remote_tick.encode(output);
+        self.command_flags.encode(output);
+        self.position.encode(output);
+        self.transform_tag.encode(output);
+        self.second_vector.encode(output);
+        self.third_vector.encode(output);
+        self.state_bytes.encode(output);
+    }
+
+    /// Consume one frame, leaving input unchanged on every decoding error.
+    pub fn decode_frame(input: &mut &[u8]) -> Result<Self> {
+        let mut cursor = *input;
+        if u16::decode(&mut cursor)? != Self::MESSAGE_ID {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "expected agent-position-state message 87",
+            ));
+        }
+        let frame = Self {
+            agent_index: u16::decode(&mut cursor)?,
+            remote_tick: u32::decode(&mut cursor)?,
+            command_flags: u8::decode(&mut cursor)?,
+            position: <[f32; 4]>::decode(&mut cursor)?,
+            transform_tag: u32::decode(&mut cursor)?,
+            second_vector: <[f32; 4]>::decode(&mut cursor)?,
+            third_vector: <[f32; 4]>::decode(&mut cursor)?,
+            state_bytes: <[u8; 2]>::decode(&mut cursor)?,
         };
         *input = cursor;
         Ok(frame)
@@ -148,6 +204,136 @@ mod tests {
         rejected(&bad_tick, ErrorKind::InvalidData);
         let mut bad_tag = WIRE[..19].to_vec();
         bad_tag.extend_from_slice(&[0xff, 0xff, 0xff, 0xff, 0x10]);
+        rejected(&bad_tag, ErrorKind::InvalidData);
+    }
+}
+
+#[cfg(test)]
+mod state_tests {
+    use super::*;
+
+    // Tick 300 and tag 128 take two bytes each; three distinct Float4s.
+    const WIRE: &[u8] = &[
+        0x57, 0, 0x34, 0x12, 0xac, 2, 0xa5, 0, 0, 0x80, 0x3f, 0, 0, 0, 0xc0, 0, 0, 0x60, 0x40, 0,
+        0, 0, 0x80, 0x80, 1, 0, 0, 0x80, 0x40, 0, 0, 0xa0, 0x40, 0, 0, 0xc0, 0x40, 0, 0, 0xe0,
+        0x40, 0, 0, 0, 0x41, 0, 0, 0x10, 0x41, 0, 0, 0x20, 0x41, 0, 0, 0x30, 0x41, 0xfe, 0xdc,
+    ];
+
+    #[test]
+    fn position_state_frame_golden_and_concatenation() {
+        let frame = AgentPositionState209026 {
+            agent_index: 0x1234,
+            remote_tick: 300,
+            command_flags: 0xa5,
+            position: [1.0, -2.0, 3.5, -0.0],
+            transform_tag: 128,
+            second_vector: [4.0, 5.0, 6.0, 7.0],
+            third_vector: [8.0, 9.0, 10.0, 11.0],
+            state_bytes: [0xfe, 0xdc],
+        };
+        let mut output = BytesMut::from(&b"prefix"[..]);
+        frame.encode_frame(&mut output);
+        assert_eq!(&output[..6], b"prefix");
+        assert_eq!(&output[6..], WIRE);
+        assert_eq!(WIRE.len(), 59);
+        frame.encode_frame(&mut output);
+        output.extend_from_slice(&[0xcc]);
+        let mut input = &output[6..];
+        for _ in 0..2 {
+            let decoded = AgentPositionState209026::decode_frame(&mut input).unwrap();
+            assert_eq!(decoded.agent_index, frame.agent_index);
+            assert_eq!(decoded.remote_tick, frame.remote_tick);
+            assert_eq!(decoded.command_flags, frame.command_flags);
+            assert_eq!(
+                decoded.position.map(f32::to_bits),
+                frame.position.map(f32::to_bits)
+            );
+            assert_eq!(decoded.transform_tag, frame.transform_tag);
+            assert_eq!(decoded.second_vector, frame.second_vector);
+            assert_eq!(decoded.third_vector, frame.third_vector);
+            assert_eq!(decoded.state_bytes, frame.state_bytes);
+        }
+        assert_eq!(input, &[0xcc]);
+    }
+
+    #[test]
+    fn position_state_frame_retains_float_bits_and_unsigned_boundaries() {
+        let bits = [0x8000_0000, 0x7fc1_2345, 0xff80_0000, 0x0000_0001];
+        let frame = AgentPositionState209026 {
+            agent_index: u16::MAX,
+            remote_tick: u32::MAX,
+            command_flags: u8::MAX,
+            position: bits.map(f32::from_bits),
+            transform_tag: u32::MAX,
+            second_vector: bits.map(f32::from_bits),
+            third_vector: bits.map(f32::from_bits),
+            state_bytes: [u8::MAX; 2],
+        };
+        let wire = [
+            0x57, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f, 0xff, 0, 0, 0, 0x80, 0x45, 0x23,
+            0xc1, 0x7f, 0, 0, 0x80, 0xff, 1, 0, 0, 0, 0xff, 0xff, 0xff, 0xff, 0x0f, 0, 0, 0, 0x80,
+            0x45, 0x23, 0xc1, 0x7f, 0, 0, 0x80, 0xff, 1, 0, 0, 0, 0, 0, 0, 0x80, 0x45, 0x23, 0xc1,
+            0x7f, 0, 0, 0x80, 0xff, 1, 0, 0, 0, 0xff, 0xff,
+        ];
+        let mut output = BytesMut::new();
+        frame.encode_frame(&mut output);
+        assert_eq!(&output[..], wire);
+        assert_eq!(wire.len(), 65);
+        let mut input = wire.as_slice();
+        let decoded = AgentPositionState209026::decode_frame(&mut input).unwrap();
+        assert!(input.is_empty());
+        assert_eq!(decoded.agent_index, u16::MAX);
+        assert_eq!(decoded.remote_tick, u32::MAX);
+        assert_eq!(decoded.command_flags, u8::MAX);
+        assert_eq!(decoded.transform_tag, u32::MAX);
+        assert_eq!(decoded.position.map(f32::to_bits), bits);
+        assert_eq!(decoded.second_vector.map(f32::to_bits), bits);
+        assert_eq!(decoded.third_vector.map(f32::to_bits), bits);
+        assert_eq!(decoded.state_bytes, [u8::MAX; 2]);
+
+        let mut zero_wire = [0; 57];
+        zero_wire[0] = 87;
+        let mut input = zero_wire.as_slice();
+        let zero = AgentPositionState209026::decode_frame(&mut input).unwrap();
+        assert!(input.is_empty());
+        assert_eq!(zero.agent_index, 0);
+        assert_eq!(zero.remote_tick, 0);
+        assert_eq!(zero.command_flags, 0);
+        assert_eq!(zero.transform_tag, 0);
+        assert_eq!(zero.position.map(f32::to_bits), [0; 4]);
+        assert_eq!(zero.second_vector.map(f32::to_bits), [0; 4]);
+        assert_eq!(zero.third_vector.map(f32::to_bits), [0; 4]);
+        assert_eq!(zero.state_bytes, [0; 2]);
+        output.clear();
+        zero.encode_frame(&mut output);
+        assert_eq!(&output[..], zero_wire);
+    }
+
+    #[test]
+    fn position_state_frame_errors_are_transactional() {
+        fn rejected(bytes: &[u8], kind: ErrorKind) {
+            let mut input = bytes;
+            assert_eq!(
+                AgentPositionState209026::decode_frame(&mut input)
+                    .unwrap_err()
+                    .kind(),
+                kind
+            );
+            assert_eq!(input, bytes);
+        }
+        for end in 0..WIRE.len() {
+            rejected(&WIRE[..end], ErrorKind::UnexpectedEof);
+        }
+        let mut wrong_id = WIRE.to_vec();
+        wrong_id[0] = 86;
+        rejected(&wrong_id, ErrorKind::InvalidData);
+        let mut bad_tick = WIRE[..4].to_vec();
+        bad_tick.extend_from_slice(&[0xff, 0xff, 0xff, 0xff, 0x10]);
+        bad_tick.extend_from_slice(&WIRE[6..]);
+        rejected(&bad_tick, ErrorKind::InvalidData);
+        let mut bad_tag = WIRE[..23].to_vec();
+        bad_tag.extend_from_slice(&[0xff, 0xff, 0xff, 0xff, 0x10]);
+        bad_tag.extend_from_slice(&WIRE[25..]);
         rejected(&bad_tag, ErrorKind::InvalidData);
     }
 }
