@@ -102,6 +102,11 @@ entry operations. It does not establish a complete packet sequence or
 valid initial flags, nor exhaust every nested constructor or context
 callback. No additional runtime fixture or inferred defaults are added.
 
+The [body follow-up](209026-entry-collision-bodies.md) confirms constructor
+allocation of the entry bodies and identifies the full +0x118 extent
+operation as separate visibility-phantom allocation. Its rigid-body
+prerequisite is supplied by the full constructor on successful allocation.
+
 ## Typed framing scope
 
 An explicit server-46 frame type can carry index, tick, command flags,
