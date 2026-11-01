@@ -64,6 +64,9 @@ provide the full sequence of messages or content values needed to enter a map.
 
 Follow-up [core-stat analysis](209026-character-core-stats.md) maps server
 151's attitude setter and the alternative 182/183 component-creation paths.
+The [downstream finalization trace](209026-character-finalization-dependencies.md)
+also establishes owned-character, coreStats and inventory dependencies, and
+maps inventory-component creation to server 282.
 
 ## Offline validation
 

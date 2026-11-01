@@ -190,6 +190,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     named icon/trait consumers establish the third scalar byte as profession.
     The two level fields' exact names remain unresolved;
     see [re/209026-character-core-stats.md](re/209026-character-core-stats.md).
+    Downstream finalization requires the fresh player's owned-character pointer
+    and coreStats, plus inventory for the finalized coreStats. Server 282 creates
+    that inventory component; its framing check passed (two frames, seven bytes;
+    truncated varint rejected). See
+    [re/209026-character-finalization-dependencies.md](re/209026-character-finalization-dependencies.md).
     See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.
