@@ -12,7 +12,9 @@ flag byte with **0x08032000**, installs vtable `0x14211cb88`, and clears
 command +0xbc. It copies the decoded Point3 to +0xa8 and tick to +0xb8.
 It also calls `0x141030750(world, &point)`: this forwards to world +8
 interface virtual +0x2d8. A false result adds command flag **0x40000**.
-That query's implementation and the resulting scheduling effect remain open.
+The [point-admission follow-up](209026-agent-point-admission.md) identifies
+this as a configurable raw coordinate-magnitude test, independent of the
+transform tag and rectangular bounds. The flag's downstream effect remains open.
 
 The handler submits through `0x14102fcf0`. Command virtual +0x10,
 `0x14103aac0`, requires a bound agent and calls bound-interface virtual
