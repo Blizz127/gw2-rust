@@ -1,8 +1,10 @@
-//! `gw2-assetcdn [--listen ADDR]... [--latest "B E ES M MS"] [--log FILE]`
+//! `gw2-assetcdn [--listen ADDR]... [--latest "B E ES M MS"] [--files DIR] [--log FILE]`
 //!
 //! Offline asset-CDN stand-in for the sandbox (see `gw2_login::assetcdn`). It answers
 //! `/latest64/<program>` and `/latest/<program>` with the configured five numbers, and
-//! answers every other path with 404. Every request line is logged so the next requests
+//! serves `/program/<program>/<x>/<y>/<fileId>` from `DIR/<fileId>` (raw bytes; the
+//! `/compressed` variant gets 404 so the client falls back to raw), and answers every
+//! other path with 404. Every request line is logged so the next requests
 //! the client makes (manifests, files) show up.
 //!
 //! Default listen address: 127.1.0.1:80. Use 127.1.0.x, never 127.0.0.x
@@ -30,13 +32,16 @@ fn main() {
     let mut listen: Vec<SocketAddr> = Vec::new();
     let mut latest = Latest { build: 209026, ..Latest::default() };
     let mut log_path = None;
+    let mut files: Option<String> = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         let v = args.next().unwrap_or_else(|| usage());
         match a.as_str() {
             "--listen" => listen.push(v.parse().unwrap_or_else(|_| usage())),
-            "--latest" => latest = Latest::parse(&v).unwrap_or_else(|| usage()),
+            // `_` or `,` may stand in for spaces (the sandbox SERVER string splits on spaces).
+            "--latest" => latest = Latest::parse(&v.replace(['_', ','], " ")).unwrap_or_else(|| usage()),
             "--log" => log_path = Some(v),
+            "--files" => files = Some(v),
             _ => usage(),
         }
     }
@@ -60,10 +65,12 @@ fn main() {
         });
         println!("asset cdn on {addr}, latest = {}", latest.body().trim_end());
         let log = log.clone();
+        let files = files.clone();
         handles.push(std::thread::spawn(move || {
             for s in l.incoming().flatten() {
                 let log = log.clone();
-                std::thread::spawn(move || serve(s, latest, &log));
+                let files = files.clone();
+                std::thread::spawn(move || serve(s, latest, files.as_deref(), &log));
             }
         }));
     }
@@ -72,7 +79,7 @@ fn main() {
     }
 }
 
-fn serve(mut s: TcpStream, latest: Latest, log: &Log) {
+fn serve(mut s: TcpStream, latest: Latest, files: Option<&str>, log: &Log) {
     let peer = s.peer_addr().map(|a| a.to_string()).unwrap_or_default();
     let line = |msg: String| {
         if let Ok(mut w) = log.lock() {
@@ -95,7 +102,20 @@ fn serve(mut s: TcpStream, latest: Latest, log: &Log) {
                         line(format!("{} {} -> latest(program {program}, 64bit {bits64}) {}", req.method, req.path, latest.body().trim_end()));
                         response(200, "OK", "text/plain", latest.body().as_bytes())
                     }
-                    Route::Other => {
+                    Route::File { file_id, compressed: false } if files.is_some() => {
+                        let p = format!("{}/{file_id}", files.unwrap_or_default());
+                        match std::fs::read(&p) {
+                            Ok(b) => {
+                                line(format!("{} {} -> file {file_id} ({} bytes)", req.method, req.path, b.len()));
+                                response(200, "OK", "application/octet-stream", &b)
+                            }
+                            Err(_) => {
+                                line(format!("{} {} -> 404 (no {p})", req.method, req.path));
+                                response(404, "Not Found", "text/plain", b"")
+                            }
+                        }
+                    }
+                    Route::File { .. } | Route::Other => {
                         line(format!("{} {} -> 404", req.method, req.path));
                         response(404, "Not Found", "text/plain", b"")
                     }

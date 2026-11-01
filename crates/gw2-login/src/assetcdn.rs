@@ -103,10 +103,23 @@ pub fn decode_request(buf: &[u8]) -> Result<Option<(Request, usize)>, String> {
 pub enum Route {
     /// `/latest64/<program>` or `/latest/<program>`.
     Latest { program: u32, bits64: bool },
+    /// `/program/<program>/<x>/<y>/<fileId>[/compressed]` (observed run 24 as
+    /// `/program/101/1/0/<id>/compressed`, then without `/compressed`).
+    File { file_id: u32, compressed: bool },
     Other,
 }
 
 pub fn route(req: &Request) -> Route {
+    let p: Vec<&str> = req.path.trim_start_matches('/').split('/').collect();
+    if let ["program", _, _, _, id, rest @ ..] = &p[..]
+        && let Ok(file_id) = id.parse()
+    {
+        match rest {
+            [] => return Route::File { file_id, compressed: false },
+            [c] if *c == "compressed" => return Route::File { file_id, compressed: true },
+            _ => {}
+        }
+    }
     let mut parts = req.path.trim_start_matches('/').split('/');
     match (parts.next(), parts.next().and_then(|p| p.parse().ok()), parts.next()) {
         (Some("latest64"), Some(program), None) => Route::Latest { program, bits64: true },
@@ -155,6 +168,10 @@ mod tests {
         let (r3, _) = decode_request(b"GET /latest/101 HTTP/1.1\r\n\r\n").unwrap().unwrap();
         assert_eq!(route(&r3), Route::Latest { program: 101, bits64: false });
         assert!(decode_request(b"P /Sts/Connect STS/1.0\r\n\r\n").is_err());
+        let (r4, _) = decode_request(b"GET /program/101/1/0/9999990/compressed HTTP/1.1\r\n\r\n").unwrap().unwrap();
+        assert_eq!(route(&r4), Route::File { file_id: 9999990, compressed: true });
+        let (r5, _) = decode_request(b"GET /program/101/1/0/9999990 HTTP/1.1\r\n\r\n").unwrap().unwrap();
+        assert_eq!(route(&r5), Route::File { file_id: 9999990, compressed: false });
         assert!(decode_request(&vec![b'a'; MAX_HEAD + 1]).is_err());
     }
 
