@@ -1,14 +1,12 @@
 //! Game-connection Diffie–Hellman.
 //!
-//! What we have (inferred, not yet REA-confirmed for our build; see
-//! `docs/re/public-protocol-notes.md`): a 512-bit prime, g = 4, and the server's
+//! Build 209026 uses a 512-bit prime, g = 4, and the server's
 //! public value baked into the client as a 136-byte `.rdata` blob:
 //! `u32 1, u32 g, [u8; 64] p, [u8; 64] server_public`.
 //!
-//! **Unknown:** the bignum byte order in the blob. [`ByteOrder`] stays explicit until
-//! REA settles it. Also unknown: exactly how the session secret combines with the
-//! server's 20-byte block. [`session_secret`] implements the public description
-//! (shared secret XOR block) and is marked provisional.
+//! REA establishes little-endian limbs and a 20-byte shared-value prefix XORed
+//! with the server's 20-byte block. See `docs/re/209026-game-handshake.md`.
+//! [`ByteOrder`] remains explicit for parameter serialization.
 //!
 //! Our server keeps its own private exponent. The client process gets our public
 //! value (and, if we choose, our prime) written over the blob in memory.
@@ -89,7 +87,10 @@ pub struct ServerKey {
 
 impl std::fmt::Debug for ServerKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ServerKey").field("p", &self.p).field("g", &self.g).finish_non_exhaustive()
+        f.debug_struct("ServerKey")
+            .field("p", &self.p)
+            .field("g", &self.g)
+            .finish_non_exhaustive()
     }
 }
 
@@ -118,7 +119,12 @@ impl ServerKey {
 
     /// The blob to write over the client's baked parameters (in memory only).
     pub fn param_blob(&self, version: u32) -> ParamBlob {
-        ParamBlob { version, g: self.g.clone(), p: self.p.clone(), server_public: self.public() }
+        ParamBlob {
+            version,
+            g: self.g.clone(),
+            p: self.p.clone(),
+            server_public: self.public(),
+        }
     }
 
     /// Shared secret from the client's public value. Returns None for
@@ -132,13 +138,13 @@ impl ServerKey {
     }
 }
 
-/// PROVISIONAL: session secret = shared secret bytes XOR the server's 20-byte
-/// block (repeating the block), per the 2013 public notes. Feed the result to
-/// [`crate::rc4_key`]. Replace this once REA shows the real combination.
-pub fn session_secret(shared: &BigUint, block: &[u8; 20], o: ByteOrder) -> Vec<u8> {
-    let mut s = to_bytes(shared, KEY_BYTES, o).expect("shared < p fits 64 bytes");
-    for (i, b) in s.iter_mut().enumerate() {
-        *b ^= block[i % 20];
+/// Build-209026 key input: low 20 little-endian shared-value bytes XOR the
+/// server block. A short shared value is zero-padded. Feed to [`crate::rc4_key`].
+pub fn session_secret(shared: &BigUint, block: &[u8; 20]) -> [u8; 20] {
+    let bytes = shared.to_bytes_le();
+    let mut s = *block;
+    for (dst, src) in s.iter_mut().zip(bytes) {
+        *dst ^= src;
     }
     s
 }
@@ -162,9 +168,25 @@ mod tests {
         let s2 = client.shared(&server.public()).unwrap();
         assert_eq!(s1, s2);
         let block = [0x5Au8; 20];
-        let k1 = crate::rc4_key(&session_secret(&s1, &block, ByteOrder::Little));
-        let k2 = crate::rc4_key(&session_secret(&s2, &block, ByteOrder::Little));
+        let k1 = crate::rc4_key(&session_secret(&s1, &block));
+        let k2 = crate::rc4_key(&session_secret(&s2, &block));
         assert_eq!(k1, k2);
+    }
+
+    #[test]
+    fn session_input_truncates_shared_value_and_zero_pads() {
+        let block = [0x80; 20];
+        let mut shared = [0xff; 64];
+        shared[..20].fill(0x25);
+        assert_eq!(
+            session_secret(&BigUint::from_bytes_le(&shared), &block),
+            [0xa5; 20]
+        );
+        let mut expected = block;
+        expected[0] ^= 0x34;
+        expected[1] ^= 0x12;
+        assert_eq!(session_secret(&BigUint::from(0x1234u32), &block), expected);
+        assert_eq!(session_secret(&BigUint::from(0u32), &block), block);
     }
 
     #[test]
@@ -172,7 +194,11 @@ mod tests {
         let server = ServerKey::generate(test_prime(), BigUint::from(4u32)).unwrap();
         assert!(server.shared(&BigUint::from(0u32)).is_none());
         assert!(server.shared(&BigUint::from(1u32)).is_none());
-        assert!(server.shared(&(test_prime() - BigUint::from(1u32))).is_none());
+        assert!(
+            server
+                .shared(&(test_prime() - BigUint::from(1u32)))
+                .is_none()
+        );
         assert!(server.shared(&test_prime()).is_none());
     }
 

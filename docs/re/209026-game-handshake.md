@@ -16,8 +16,8 @@ That function requires length 136 and version 1, imports 64 bytes at +8 and
 64 bytes at +72, and imports the u32 at +4. The two large values and generator
 are used in two calls to the same large-integer operation `0x141570b90`, with
 a common generated exponent and modulus. Their roles as DH prime, server
-public value and generator are derived from this use; a runtime arithmetic
-comparison is still pending.
+public value and generator are derived from this use; run 48 confirms the DH
+arithmetic against an independently computed shared value, as described below.
 
 Importer `0x14156fbd0` copies ascending little-endian u32 limbs and removes zero
 limbs at the high end. Exporter `0x1415707e0` returns the limb pointer and count
@@ -26,9 +26,11 @@ multiplied by four. Thus this path uses **little-endian** integer bytes.
 Constructor `0x140fefb00` clears a 20-byte buffer at object +0x118, then copies
 at most 20 bytes from the first operation's result. It sends the second result
 as `u8 0, u8 total_length, little-endian integer bytes`, where integer length
-is a multiple of four and at most 64. Run 47's 66-byte raw chunk is consistent
-with this record; a direct byte/header cross-check is pending. The preceding
-16 bytes have not yet been mapped.
+is a multiple of four and at most 64. Run 47 directly confirms type 0 and length
+66, with 82 total captured bytes.
+Its preceding 16-byte preamble contains build 209026 at offset +4; other preamble
+fields remain opaque. The probe observer checks that build field and uses the
+observed fixed preamble length.
 
 ## Server reply and session key
 
@@ -44,10 +46,11 @@ is **the first 20 little-endian shared-value bytes XOR the 20-byte reply block**
 zero-padding a short shared value. It is not the full 64 bytes XOR a repeating
 block. Cipher setup performs five SHA-1-style steps and feed-forward, followed
 by the 256-byte RC4 key schedule. For exactly 20 input bytes this matches the
-existing `rc4_key` structure; a runtime key-state comparison is pending. The
+existing `rc4_key` structure; run 50 independently verifies the resulting
+decryption against the client plaintext. The
 existing helper's arbitrary-length folding is not confirmed by this path.
 
-## Next experiment and limits
+## Local experiment design
 
 Use an ephemeral private server exponent and substitute only its public value
 in the offline client's process memory, guarded by the original full parameter
@@ -57,7 +60,52 @@ keys. Answer the type-1 reply and capture subsequent decrypted client bytes into
 private files. No instructions or validation outcomes need changing. Preserve
 TLS synthetic fixtures and isolate the binary listener with `-authsrv`.
 
-No game handshake or message schema has yet been validated at runtime.
+## Offline runtime: run 48
+
+With `-authsrv 127.1.0.2`, the binary connection reaches a separate loopback
+listener while portal TLS remains on 127.1.0.1. A GDB probe at `0x140ff4480`
+checks the full original 136-byte block, then writes only our 64-byte public
+value at +72 and verifies it. The prime, generator and version are unchanged.
+At `0x140fefc4c`, the client public value and its stored shared prefix are read;
+Python's `pow(client_public, own_private, p)` produces exactly the same low
+20 bytes. This confirms the DH roles and byte order for this client.
+
+The Rust observer sends a type-1, length-22 reply with a fresh random block.
+The client reaches `0x140fee9e6` after initializing its cipher and sends 57
+bytes. A private decoded capture is created with mode 0600, but a search for
+the synthetic token in standard GUID encodings does **not** match. Decryption
+was therefore initially unverified.
+
+## Exact plaintext verification: runs 49–50
+
+Run 49 stayed at the login form, with no StartTls or game exchange; its plaintext
+comparison was unavailable. Screenshots showed entered synthetic credentials
+without a submitted login. Run 50 added UI input settling and armed the RC4
+input breakpoint only after game cipher initialization, avoiding unrelated early
+calls. These changes address probe/input timing; no client behavior was patched.
+
+The probe at `0x140ff4dc0` selects the outgoing cipher context (connection object
++0x234) and captures its input buffer into a private file. **All 57 decoded bytes
+match all 57 bytes in the client buffer exactly.** The DH prefix also matches
+again. The synthetic Token GUID is absent from that first plaintext in both
+standard UUID byte representations. Its meaning awaits message-schema analysis;
+absence of a token here is not evidence of a cipher failure.
+
+Run 50 verifies the client-to-server cipher and key derivation for this build.
+Server-to-client compressed frames, message replies and character selection
+remain unverified.
+
+Network isolation, container cleanup, frozen/working executable hashes and
+archive count 1,124,232 were verified. REA owned-process cleanup is verified;
+its unrelated-host-process survey remains incomplete. No character-selection
+or server-to-client game-message response has been demonstrated.
+
+Implementation: `gw2-game-observe` accepts an explicit local parameter blob and
+private exponent, requires a loopback listener, validates key-record lengths
+and public values, sends the 22-byte response, and captures bounded decrypted
+traffic in exclusive mode-0600 files. `session_secret` now returns the exact
+20-byte XOR input; four focused DH tests, the observer build and crate clippy
+pass. The full workspace suite was not rerun.
 
 ## Evidence
 
@@ -78,3 +126,18 @@ REA Rizin reads and GNU objdump through REA; no executable writes.
 | `ev_08ad9996759cd7674d22b53c33f9e78f86de477980b0d20da8c6f07febd91f33` | Dispatch table. |
 | `ev_3d0b931fbd02c9e861a5d8581bc6d50be38fa60b6545a28b470612ca62a55450` | Type-1 response, 20-byte XOR, state transition. |
 | `ev_d6befa846a4f7e10ca7233c800ad3c28d7254eaee4ef6bff8b6ebb6cb2ca9517` | Key derivation and RC4 schedule. |
+
+Additional evidence:
+
+- `ev_23c89113a6d92ae0e65ff3a77c96eb6a229c7497ae47136592d271b6fd7eb27a`:
+  run-47 raw metadata, processed through REA; no raw values printed.
+- `ev_759929af7ed260bd52dc284b441df963e815866f8f8fc4cd91cc1dec95389927`:
+  run 48, private export `~/re/gw2/notes/209026-game-handshake-run48.json`.
+- `ev_959382d03a203ebeb6e67a2268edafb305203982b0f2777483841a017f1c07df`:
+  RC4 input-buffer signature and state update, supporting the next probe.
+
+- `ev_a5c2b3ab2b94e2eb5d348cec61010ed8dd04a0afeb3d43db597dff2c95cfd245`:
+  run 49, no login exchange; no plaintext conclusion.
+- `ev_2106636f8c4dcc2567f8f53688d609e304e64a1cff397a4e6ce417c6701e6550`:
+  run 50, exact 57-byte plaintext match; private export
+  `~/re/gw2/notes/209026-game-handshake-run50.json`.

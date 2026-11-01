@@ -61,7 +61,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     callback. The client opens a second local TCP connection and sends 16 + 66
     binary bytes while the portal connection stays open. See
     [re/209026-game-token.md](re/209026-game-token.md).
-  - **Next:** map and answer the binary game handshake.
+  - **Binary cipher passed (runs 48/50):** the guarded in-memory public-key
+    substitution produces the same DH shared prefix as the local server. Its
+    key reply is accepted, and all 57 decoded bytes exactly match the client's
+    pre-encryption buffer. See [re/209026-game-handshake.md](re/209026-game-handshake.md).
+  - **Next:** identify the first binary messages and their server replies.
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
@@ -72,7 +76,7 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 | --- | --- | --- |
 | 1 | Freeze client, capture traffic, message list for our build | client frozen; REA observations and offline patch/STS captures recorded; complete message list pending |
 | 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
-| 3 | Login stub: redirect, secure login, our own key | TLS/GetHostname and synthetic SSO/account/token replies passed; binary connection reached; game handshake pending |
+| 3 | Login stub: redirect, secure login, our own key | TLS/GetHostname and synthetic SSO/account/token replies passed; binary DH/cipher and first decrypted payload verified; game replies pending |
 | 4 | Character select / creation | not started |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
@@ -80,14 +84,14 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 
 ## Crates (last full workspace check: 75 pass, clippy clean, commit `31772d8`)
 
-Latest runtime check: run 47 accepts the synthetic token and opens the binary connection; container
+Latest runtime check: run 50 verifies the binary DH/cipher and exact client plaintext; container
 cleanup, executable hashes and archive index count verified. Focused checks cover
 OpenSSL interop and the observer's pipelined StartTls, split STS, GetHostname and explicit XML replies.
 The full workspace suite was not rerun for this change.
 
 | Crate | State |
 | --- | --- |
-| `gw2-net` | RC4 key derivation, LZ4 server frames, DH module (own server key, 136-byte param blob). Byte order and the secret/block combination are provisional. |
+| `gw2-net` | Build-209026 DH little-endian parameters, 20-byte shared prefix/XOR and client-to-server RC4 verified. `gw2-game-observe` captures private decrypted traffic with an explicit local identity. Server-to-client LZ4 frames remain based on the older reference. |
 | `gw2-proto` | Primitive encodings (varint Dword, Guid, Point3, Address, Optional…), the `protocols.xml` loader, and `dynamic`: a schema-driven decoder/encoder. Unconfirmed kinds (String, ArrayVar*, Buffer*, CString) are rejected until `Rules` are set from REA. `gw2-schema-census <xml>`: 1440 of 1770 messages in the 208039 reference decode with confirmed kinds only. |
 | `gw2-dat` | AN/MFT archive, Huffman/LZ decompressor, PF chunks. Also `pfschema`, a loader for the 208039 reference `packfiles.xml` (6 packfile types, 52 chunks, 372 versions, vendored and labeled), and `pfread`, a safe schema-driven chunk decoder (packed structs, slot-relative 4/8-byte pointers, bounded depth and elements). Arrival tools: `gw2-dat-ls --sample`, then `gw2-dat-pf <Gw2.dat> <ids>` to decode real packfiles. `gw2-dat-pf` tries each schema candidate for names the reference lists twice (`mapc`/`nm15`). `mapc::MapCollide` is a typed view of `havk` collision: triangle meshes, geometry→animation→mesh links, prop/zone placements, validated cross-references. It is the basis for ground height and mob pathing. Placement transform conventions are unknown. The navmesh (`nm15`) payload is opaque Havok bytes. |
 | `gw2-login` | STS/1.0 codec and `gw2-login-observe`: captures plaintext or, with explicit local identity, upgrades StartTls and captures decrypted STS into private files. `tls`: minimal TLS 1.2 server, `TLS_RSA_WITH_AES_128_CBC_SHA` only, no extensions. OpenSSL interop and offline build-209026 handshake passed. Explicit XML fixtures reach the binary game connection; account storage and credential validation remain to implement. |
@@ -135,7 +139,7 @@ remain provisional unless a build-specific finding confirms them.
 **Unknown:**
 - How the later AuthSrv connection completes (`-authsrv` handling itself is documented
   in [re/209026-cmdline-and-hosts.md](re/209026-cmdline-and-hosts.md)).
-- The game transport session key derivation. The portal flow through synthetic token acceptance is documented above.
+- The game messages needed after the confirmed DH/RC4 exchange. The portal flow through synthetic token acceptance is documented above.
 - Where runtime-key-encrypted text keys come from.
 
 ## First REA probes when Gw2-64.exe arrives
