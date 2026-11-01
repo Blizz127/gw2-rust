@@ -208,8 +208,9 @@ That routine emits success event `0x10000009`, copies the result GUID to mission
 context +0x20 and name to +0x30, and normalizes the summary into +0x58 through
 the existing character-blob validator. Failure emits event `0x10000008` instead.
 On success, its continuation tests mission-context +0x228 bit 1 (the connected
-flag) and view state 0–3. If both hold, `0x141410f30` asserts context mode +0x1b4
-is zero and the GUID is nonzero, then sends empty mission client **ID 430**
+flag) and view state 0–3. If both hold, `0x141410f30` asserts context redirect
+type +0x1b4 is zero (`GAME_REDIRECT_TYPE_CHAR_CREATE`) and the GUID is nonzero,
+then sends empty mission client **ID 430**
 through `0x1414188d0`. Otherwise `0x14094f4d0` chooses content/map parameters
 and calls `0x141410e80`, the general auth route-request path already mapped in
 the mission-join notes. The ID-3 destination address is not directly consumed

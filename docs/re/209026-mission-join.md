@@ -37,6 +37,24 @@ An alternate path's assertion at `0x1422dd648`, reached when its mode equals 1,
 names this value `GAME_TYPE_CHARCREATE`. The UI event labels and allowed-branch
 predicate are not yet identified, and this request has not been seen at runtime.
 
+The mission context has a separate **redirect type** at +0x1b4; it must not
+be confused with ID 29's game-type value. Creation setup `0x141417d10` clears
+the 28-byte `gameRedirect` block and stores redirect type **0**, then calls
+the constructor that sends game type **1**. Assertion text at `0x1422dd690`
+names redirect type 0 `GAME_REDIRECT_TYPE_CHAR_CREATE`. The general route
+setup `0x141417d50` instead stores redirect type 1 and its additional parameters.
+This explains why `0x141410f30`, the post-name-selection path to empty mission
+ID 430, asserts context +0x1b4 equals zero: that is the creation redirect
+type, not the auth request's game type. It also requires a nonzero character
+GUID, which the [name-selection ID-8 branch](209026-character-creation.md)
+can supply. Runtime branch selection remains unverified.
+
+Evidence: `ev_799e554598affb373767291a68bea738fad4a49db6e17bf23ddbbd3d522923db`
+(context writes and continuation guards),
+`ev_9b36716eebd275280db4ea9b8495534231d8c0f2076dfad6c56e9f32b6f66c72`
+(named assertion and distinct route constructor), retained privately in
+`~/re/gw2/notes/209026-creation-redirect-static-1.json`.
+
 The intended static sequence is therefore creation route lookup (auth ID 29),
 route result (auth ID 20), protocol-0 game join, and later creation-data request
 (mission ID 415). It does not follow that replying to ID 29 alone is enough

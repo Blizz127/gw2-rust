@@ -114,7 +114,7 @@ The refresh completion slot +0x18 is `0x14023e130`. It emits event **0x65**
 with an eight-byte result. In dispatcher `0x140950d40`, index
 `0x65 - 0x16 = 0x4f` maps through byte `0x140950fc7` (8) and target table
 `0x140950f50` to `0x140950f10`, then `0x14094edb0`. Unless view flag
-+0x60 bit 1 is set, a zero first result Word calls view slot +0xc0 with
++0x60 mask 0x1 is set, a zero first result Word calls view slot +0xc0 with
 state **4 (char_select)**; a nonzero result takes the error-display path.
 The only direct constructor caller found by this scan is `0x14094e595`,
 within conditional view-result handling. This does not establish a UI refresh
