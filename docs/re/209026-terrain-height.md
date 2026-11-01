@@ -96,3 +96,21 @@ and was executed through REA. Main records:
 - Floor helper/constants: `ev_66ddd3a45a434e1a1d93cb48667e396107d39ec5cd01af201df18bd5377b7ab7`.
 - Coordinate wrapper: `ev_5171eea42ffc18f9dad06583956c3035e43d45efd8e91dab20011b2438d3a9de`.
 - Archive border audit: `ev_a315622262bec5c4e4981228d05d8627c4d61dc99ab05bb6763e2c3713a30a38`.
+
+## Rust implementation check
+
+`gw2_dat::terrain::TerrainHeights209026` validates resident array length, finite
+heights, dimensions and rectangle extents before sampling. It retains chunk
+borders and implements the traced float interpolation and half-open bounds.
+The named-field constructor accepts decoded `parm` v0 / `trn` v15 values;
+streamed terrain and nonidentity map transforms are outside this API.
+
+Four focused tests pass for triangle selection, chunk selection/borders, bounds,
+invalid inputs and schema fields; the library and `gw2-dat-pf` build pass.
+A REA execution of private `check-terrain-rust.rs` checked Queensdale's complete
+grid: 544,768 sample nodes match their selected chunk values exactly, and
+1,089,536 interior queries (two per cell) differ from double-precision
+barycentric calculations by at most 0.00048828125. This is an offline numerical
+check, not an in-client replay. Evidence:
+`ev_2ef1312e64000647aa26bf0d58f7a7db04f852d401d99c3b73edd67f18f22f36`,
+private bundle `209026-terrain-height-rust-1.json`.
