@@ -94,3 +94,26 @@ Private bundle: `~/re/gw2/notes/209026-collision-rotation-static-1.json`.
 Rust smoke bundle: `~/re/gw2/notes/209026-collision-rotation-rust-1.json`,
 record `ev_c687dee8ffa898014d5a746f0b23217d5118367f5f600d40f4327f2ccafff8ed`.
 Private helper: `~/re/gw2/notes/check-map-prop-rotation-rust.rs`.
+
+## Combined primary-map matrix
+
+`ModelPlacement::prop_primary_map_physics_matrix_209026` combines the traced
+uniform mesh scale, local quaternion and converted origin into a row-major
+3×4 matrix. Compute it once per prop and apply it to selected collision-mesh
+vertices. It does not select sequences or create fallback shapes, and applies
+only to the identity primary map / initial untagged placement path.
+
+Seven focused map-collision tests and the library/inspector build pass. The
+combined test checks scale before noncommuting rotations and translation last.
+REA execution of private `check-prop-world-matrix.rs` checked all 8,301 Queensdale
+prop matrices and 536,453 selected mesh-vertex instances (911,224 triangle
+instances). Every transformed vertex is finite; maximum coordinate difference
+from independent double-precision sequential rotations is 0.00007139788
+collision units. Model scales range from 0.14691299 to 7.7309065.
+
+62 props select an animation with an empty collision-mesh list. This audit does
+not establish their fallback/blocker behavior; do not report complete prop
+collision coverage from the selected triangle count alone. The audit is offline
+algebra/data validation, not a live physics comparison. Evidence:
+`ev_68e6d1d38a2b6ca77e7d2590da41d801fbb22e2bd60740ca40d92c10f133116f`,
+private bundle `209026-prop-world-matrix-rust-1.json`.

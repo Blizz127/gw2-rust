@@ -83,6 +83,25 @@ impl ModelPlacement {
         [tx * 0.03125, ty * 0.03125, -tz * 0.03125]
     }
 
+    /// Collision-vertex to world matrix for a prop in the identity primary map.
+    ///
+    /// Mesh vertices already use collision units. Apply the model's uniform
+    /// scale, then its local collision quaternion, then the converted placement
+    /// origin. Rows are `[m00,m01,m02,tx]`, etc. This does not select animation
+    /// meshes, implement fallback shapes or handle nonidentity/tagged transforms.
+    pub fn prop_primary_map_physics_matrix_209026(&self) -> [[f32; 4]; 3] {
+        let [x,y,z,w] = self.prop_local_physics_rotation_209026();
+        let s = self.scale;
+        [
+            [(1.0-2.0*(y*y+z*z))*s, 2.0*(x*y-z*w)*s, 2.0*(x*z+y*w)*s,
+             self.translate[0]*0.03125],
+            [2.0*(x*y+z*w)*s, (1.0-2.0*(x*x+z*z))*s, 2.0*(y*z-x*w)*s,
+             self.translate[1]*0.03125],
+            [2.0*(x*z-y*w)*s, 2.0*(y*z+x*w)*s, (1.0-2.0*(x*x+y*y))*s,
+             -self.translate[2]*0.03125],
+        ]
+    }
+
     /// Local collision quaternion `[x, y, z, w]` for a build-209026 prop.
     ///
     /// Stored angles are radians. The Hamilton product is
@@ -296,6 +315,23 @@ mod tests {
     use super::*;
     use crate::pfread::{Limits, read_chunk};
     use crate::pfschema::{find, parse};
+
+    #[test]
+    fn prop_world_matrix_scales_then_rotates_then_translates() {
+        let prop = ModelPlacement {
+            scale: 2.0,
+            translate: [320.0,640.0,-960.0],
+            rotate: [std::f32::consts::FRAC_PI_2;3],
+            ..Default::default()
+        };
+        let m = prop.prop_primary_map_physics_matrix_209026();
+        // Rz(-90) -> Rx(90) -> Ry(90) sends [1,2,3] to [-1,-3,-2].
+        let p = m.map(|r|r[0]+r[1]*2.0+r[2]*3.0+r[3]);
+        for (a,b) in p.into_iter().zip([8.0,14.0,26.0]) { assert!((a-b).abs()<0.00001); }
+        assert_eq!(m.map(|r|r[3]),[10.0,20.0,30.0]);
+        let m = ModelPlacement {scale:3.0,..Default::default()}.prop_primary_map_physics_matrix_209026();
+        assert_eq!(m,[[3.,0.,0.,0.],[0.,3.,0.,0.],[0.,0.,3.,0.]]);
+    }
 
     fn s(fields: Vec<(&str, PfValue)>) -> PfValue {
         PfValue::Struct(fields.into_iter().map(|(n, v)| (n.to_string(), v)).collect())
