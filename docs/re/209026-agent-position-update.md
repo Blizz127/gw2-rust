@@ -36,8 +36,8 @@ to **`0x14102b370`**. This method has no server-64-style active-command
 The full collision constructor installs vtable **`0x14212c908`**. Its
 +0x4a8 entry is **`0x1410a3240`**, traced through its return at
 `0x1410a35f7`. This establishes a position write on this implementation;
-the simple collision implementation and all common command admission paths
-are outside this follow-up.
+the simple collision implementation is described below. Common command
+admission paths are not exhaustively traced in this follow-up.
 
 1. Collision flags +0x58 bit 7 triggers an object +0x68 virtual +0x68
    query. A nonnull result returns early.
@@ -80,6 +80,67 @@ or assert acceptance by the client. Three focused tests pass: literal wire
 goldens/concatenation, raw float bits/unsigned limits, and every truncated
 prefix plus wrong IDs and overflowing tick/tag varints. The library build
 also passes. No runtime replay or default fixture is added.
+
+## Simple collision follow-up
+
+Constructor `0x1410a54f0` installs primary vtable **`0x14212d1c8`**.
+Its +0x290 predicate is the same flags-bit-27 getter as the full object;
+its +0x4a8 update is **`0x1410a7c30`**. This entire method through
+`0x1410a7d05` does not read the incoming third argument. It calls
+`0x1410a5a30` on its +0x10 interface, then **`0x1410a67f0`**, which
+clears flag masks 0x800/0x40000, releases the two backing allocations at
++0xf0 and +0x100 when their capacity markers allow it, clears their
+counts, and zeros vectors +0x140/+0x150.
+
+The method converts the incoming point by the same 1/32 and Z-negation
+rule, preserving the tag. It calls **`0x1410a8a90`**, which copies that
+tagged point to **+0x30/+0x40** at `0x1410a8c68`. When old/new transform
+IDs differ, an earlier branch converts existing frame-dependent vectors
+through scene helpers. It then resolves the newly stored point. If the
+resolved XYZ is outside expanded scene **+0x50..+0x60**, it calls
+**`0x1410b55a0`**: componentwise `min(scene_max, point)` followed by
+`max(scene_min, result)`. It converts that clamped vector back into the
+selected frame through `0x1410b70d0` and replaces +0x30. Thus this update
+path clamps finite out-of-bounds destinations; it does not use the full
+object's old-point fallback. NaN behavior is not described as a safe clamp.
+
+Next it calls **`0x1410a8d30(this, 1)`**. This resolves the stored point
+and calls **`0x1410a5fb0`** for a collision-adjusted destination. The
+latter uses half the height at +0x17c for its vertical segment, water
+state at +0x168, and query **`0x141099a50` with mask 0x7830**. Flag bit
+49 bypasses that query; a miss also falls back to input plus half-height
+along collision Z. A hit sets flag bit 50; miss/bypass leaves it clear.
+The query's entire collision traversal is not reimplemented here.
+
+The update helper computes differences against prior positions and scales
+them by **25.0** (four float words at `0x14212d140`). It stores vectors
+at +0x140/+0x150. It can zero those vectors and snap the corresponding
+position when the squared magnitude exceeds float bits **0x4480147b**
+at `0x14212d8bc` and its second argument is nonzero. Another comparison
+uses componentwise absolute differences with **0.01** at `0x14212d100`.
+The final resolved-position writes to **+0x130** occur at `0x1410a8f50`
+or `0x1410a8f7f`; the latter also requires the +0x10 interface predicate
+`0x1410c1140` to be false, count +0xf8 zero and flags bit 27 clear.
+Other paths retain the difference vector for subsequent advancement.
+This is evidence of conditional snapping/interpolation, not an unconditional
+immediate copy of packet XYZ to +0x130.
+
+The outer update finally calls `0x1410a8820` and asserts that +0x130 XYZ
+lies within expanded scene bounds. This assertion follows the requested-point
+clamp and collision adjustment. The full and simple implementations therefore
+need distinct runtime checks before a world server can rely on matching
+position outcomes. The transport codec requires no change.
+
+Private follow-up bundle: `~/re/gw2/notes/209026-agent-position-simple-1.json`
+(1,344 records, 27,400,823 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_e4c31c3d13237500ccf7ba0bcef6ab232812884bbaae29dd2c77f174f0e200ed` / `ev_304c994879be0cf4bf233c7573e1e2bff3ca4aca2e8b572b50f09890412ab7a9` | Simple constructor and vtable entries. |
+| `ev_b90fb68e125a9c5324970ee2b7358fb516ef5b5656bcc9b207ffd22a67a2fbc7` | Complete simple position-update method. |
+| `ev_63da78c1417ebcf8f4dfd03da8254dac6ff0e9a88146a06e4407bfc8e252d76a` / `ev_598ac06727ab05567d04ad78a5fcbde1e50e132e3f822fa91d50425f05d54f40` | Tagged-point helper, advancement helper and buffer reset. |
+| `ev_5437019609c02fdbc52cb1f5998dd6e005d41e696f296b03deeca6ac1da9436b` | Complete expanded-bounds clamp and ground-query wrapper. |
+| `ev_7cca4ebd44768726be4801db31a71cf969110f1430865f0a7b57e281091ca124` | Difference scale, threshold and component tolerance constants. |
 
 Private bundle: `~/re/gw2/notes/209026-agent-position-update-1.json`
 (1,337 records, 27,248,915 bytes).
