@@ -77,14 +77,66 @@ map-space facing, returning no direction for the sentinel. It should not
 silently substitute a direction or claim the sentinel can create an agent.
 Host Rust trigonometric results need not be bit-identical to the Windows
 CRT; the field order, signed scaling, sentinel and coordinate convention
-are the established contract. Inverse quantization/encoding is not traced
-by this note.
+are the established contract.
 
 `gw2-proto::agent_creation::facing_209026` now implements this offline
 decode, returning `None` for either sentinel. Two focused tests pass:
 field order/cardinal directions/exact half-turn denominator, and sentinel
 handling/signed extremes/unit length. The library builds. No orientation
 packet was sent, and no Windows-CRT bitwise equivalence test was run.
+
+## Outgoing conversion and quantization
+
+The server-37 command serializer `0x14103b760` calls inverse-direction
+helper `0x1410396f0` on command +0x98, then scalar quantizer `0x1410394e0`
+on each angle. Pitch goes to decoded message +0x2e and yaw to +0x30,
+confirming the receiving field order independently.
+
+For a nonzero finite input, the inverse helper computes XY squared length
+as `y*y + x*x`. Below f32 `1e-12` (bits `0x2b8cbccc`) it replaces both
+components with positive zero; otherwise it multiplies each by the
+reciprocal square root. Pitch is `asinf(clamp(z, -1, 1))`; yaw is
+`atan2f(normalized_y, normalized_x)`. The asinf exceptional-path literal
+identifies `0x140e5fef0`; `0x140e5cfa8` implements the quadrant-sensitive
+arctangent, including signed-zero and half-turn cases. The helper does
+**not** normalize the full XYZ input before taking asin. An exactly zero
+input instead produces two positive infinities, which quantize to the
+0x7fff sentinel.
+
+The scalar quantizer wraps angles outside [-pi, pi] by multiples of f32
+2*pi, using ceiling helper `0x1409bebe0` -> `0x140e5e268`. Within that
+interval it computes `(angle / f32_pi) * 32766.0`, with separate single
+precision operations, and tail-calls `0x1409bebf0`. That helper asserts
+the value lies within +/-0x1fffff, adds f32 **14680064** (bits `0x4b600000`),
+takes the low 22 result bits and subtracts 0x200000. Under the ordinary
+nearest-even floating-point mode this rounds to the nearest integer,
+with half ties to even; truncation or Rust `round()` would differ.
+The scaled facing range lies entirely within its asserted bounds.
+
+The offline encoder accepts finite directions whose squared lengths
+meet the creation constructor's bounds above, without silently normalizing
+them. This is an API restriction for creation use, not a check inside the
+client inverse helper. It preserves the near-vertical XY handling and
+Z clamp. Its asin/atan2 results are already in the quantizer's principal
+interval, so arbitrary-angle wrapping is unnecessary for this API. Host
+trigonometry may differ at quantization boundaries; no bitwise CRT claim
+or runtime orientation validation follows from this trace.
+
+`gw2-proto::agent_creation::facing_words_209026` implements this creation-only
+encoder. All five focused facing tests and the library build pass, covering
+signed axes/zero, half ties, rejected inputs, vertical projection, Z clamp
+and direction round trips. No packet was sent.
+
+Additional private bundle: `~/re/gw2/notes/209026-agent-facing-encoding-1.json`
+(902 records, 20,854,076 bytes).
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_01495251aae13295e4405a9b16468bba418f43a00a63a15d2f1b413138cd469d` | Serializer calls and pitch/yaw destination order. |
+| `ev_cf4001802dd1127b7c1d9a5c1d9a60d5eb228f39fa2eecabffbbf0ff0aeec00c` | Scalar quantizer, scaling and asin special cases. |
+| `ev_8bd2eebec1eeca9f11cf8978a5ad42ad726bc6243fafa77e9d1ce4de4809affa` | Asinf literal, angle constants, XY threshold and rounding entry. |
+| `ev_c9cc6535d8499bb22d1bdac9c952f4cddfd3b10ddbb4ba63effe7627ae95d5c7` | Bit-extraction rounding tail, ceiling helper and quadrant arctangent. |
+| `ev_77becd8e3d8de030e8ea7fee914e50bff2adad380d5c5e2a5fc7d838c221e4fd` | Full inverse helper and rounding bias constant. |
 
 ## Evidence
 
