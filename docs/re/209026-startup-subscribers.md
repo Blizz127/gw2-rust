@@ -324,7 +324,9 @@ The final consumer getter `0x1402eea80` returns static object
 `0x1402effc0`. Its first branch returns false immediately for input zero.
 For a nonzero input it searches its +0x48 collection, skips an existing
 non-null associated entry, or calls `0x1402ee5a0` and returns true. The
-latter helper and any later processing remain untraced. This proves a
+[tracker follow-up](209026-quest-store-tracker.md) resolves the helper to
+null-valued ID insertion and identifies conditional store-error cleanup.
+This proves a
 zero-input no-op at this consumer, not a zero result from the preceding
 query or absence of the already completed listener registration. The
 follow-up establishes a nonzero ID on normal return from the reached

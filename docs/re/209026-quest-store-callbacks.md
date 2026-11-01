@@ -79,8 +79,9 @@ The initial selected service-method reads and a bounded immediate-value search i
 is not an exhaustive receiver census: handlers may be registered through
 tables or reside elsewhere. Primary service methods +0/+8 are listener
 list insertion/removal, not the sought dispatcher. In particular, the
-combined trace does not yet show how the earlier request tracker clears or whether
-its pending state affects readiness. No error or empty-result fixture
+[tracker follow-up](209026-quest-store-tracker.md) identifies conditional
+error cleanup, while successful empty-response cleanup and any pending-state
+effect on readiness remain unresolved. No error or empty-result fixture
 should be described as validated from this static evidence alone.
 
 ## Evidence

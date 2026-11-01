@@ -5,7 +5,9 @@ Static REA follow-up, 2026-11-01, to the
 IDs 0x42/0x43/0x50 are nested inside process event **0x23**. The receiver
 decodes item/package buffers and notifies store listeners. Its ordinary
 error notification reaches a no-op slot in the quest-facing service.
-This does not establish request-tracker completion or zone readiness.
+The [tracker follow-up](209026-quest-store-tracker.md) identifies a
+separate error listener that removes its matching entry; successful
+empty-response completion and zone readiness remain unresolved.
 The client remained stopped; no request or agreement acceptance occurred.
 
 ## Queue envelope and buffer lifetime
@@ -87,7 +89,8 @@ asserting runtime subscription state.
 The item/package callbacks have executable bodies; their full mutation
 and notification paths remain to be traced. The error slot itself cannot
 clear this service's quest subscription or complete the separate tracker.
-Other registered listeners may react to the same error, so this is not a
+The separate tracker listener does react to a matching ID, as documented
+in that follow-up. This is not a
 claim that the error event has no global effect. No empty-result/error
 fixture is runtime-validated by this analysis.
 
