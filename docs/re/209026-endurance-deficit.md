@@ -25,8 +25,9 @@ Both return without the operation when flags bit 0 is clear. Both also
 consult setting descriptor ID 42 (`0x2a`), expected content type 64. If
 an owner exists, they call owner +0x40 interface virtual +0x50, then that
 returned object's virtual +0x58 with the looked-up skill pointer. A true
-result suppresses the predicate/consume operation. The full meaning of
-that owner-side predicate remains untraced. For the established character
+result suppresses the predicate/consume operation. The [buff-context follow-up](209026-character-buff-context.md) resolves
+that predicate to occupied-entry skill-pointer membership; the context is
+created by the character constructor with an initially empty backing pointer. For the established character
 +0x40 vtable, its +0x50 getter is `0x140400100`, returning interface
 +0x90 (whole-character +0xd0).
 
