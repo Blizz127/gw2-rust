@@ -107,6 +107,29 @@ and emits event `0x10000002`. These are useful candidates for later capture,
 but their ordering relative to request 415 and their success/error semantics
 have not been established by runtime evidence.
 
+## Private schema preparation
+
+REA extraction from the frozen artifact generated ignored
+`data/protocol/209026/mission.xml`: protocol 0 groups 39 and 40, 43 client
+and 54 server definitions, 12,104 bytes, SHA-256
+`aa140ba13e1107d9411c227f5320fdd9ee4cd305beca3906eb0b0ba7ff6fb44d`.
+The extractor checks the executable hash and writes exclusively with mode 0600.
+Kinds 6, 7, 8 and 14 retain explicit `UnverifiedKind` tags; this schema is a
+partial protocol extraction, not the full mission message registry.
+
+The schema parser accepts all 97 definitions. With the capture census, local
+handwritten fixtures parse server IDs 1049/1050 as two 2-byte frames, client
+IDs 410/411 likewise, and client ID 415 as one 86-byte frame including a
+multi-byte Dword in its final fixed array. The raw fixtures remain private in
+`~/re/gw2/notes/mission-*.fixture`. These are boundary checks; the creation
+fixture's zero appearance block is not validated character data and was never
+sent to the client.
+
+Evidence: `ev_327f5b54412d9d00b8209f927420c279eaeab8de5fc4c054b8933f5a5d8e4473`
+(extraction metadata),
+`ev_f30bc66b6f7e85ed0e25ed328d270a190255da1be74db09b6b1fc10921136db0`
+(schema/fixture census), exported privately in `209026-mission-static-5.json`.
+
 ## Evidence
 
 Private REA bundles: `~/re/gw2/notes/209026-character-static-6.json` and
