@@ -2,7 +2,9 @@
 
 Static REA analysis, 2026-11-01, on the frozen executable identified in
 [character creation](209026-character-creation.md). No appearance fixture
-was sent and no content defaults were extracted from the archive.
+was sent. Subsequent work extracted all 90 race/sex/profession defaults;
+see [content registry](209026-content-registry.md). The branch map below
+still does not establish full content-dependent validity of those defaults.
 
 ## Race/sex content selection
 

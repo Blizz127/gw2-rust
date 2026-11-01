@@ -116,7 +116,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     template skins/colors and map key 15. Its 159-byte summary and 226-byte
     record pass structural, frame-census and observer startup validation.
     Opaque fields are zero and slot order is an explicit fixture convention;
-    no client replay occurred. Details are in the character-protocol note.
+    no client replay occurred. The complete equipment loop passes resolved
+    models/colors rather than the record index to model calls; that does not
+    prove permutation equivalence. Details are in the character-protocol note.
     Static refresh mapping identifies client ID 25, pending ID-17 list records,
     and completion event 0x65 returning to char_select on success; runtime
     ordering remains untested.
@@ -226,8 +228,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     truncated varint rejected). See
     [re/209026-character-finalization-dependencies.md](re/209026-character-finalization-dependencies.md).
     Appearance validation now has a 45-byte branch map and ten race/sex
-    content keys (type 137). Archive defaults and usable appearance content
-    remain unresolved; see [re/209026-appearance-validation.md](re/209026-appearance-validation.md).
+    content keys (type 137). All 90 shipped defaults have since been extracted
+    and parsed; full content-dependent validation remains unresolved. See
+    [re/209026-appearance-validation.md](re/209026-appearance-validation.md).
     Server 256 creates or updates health; server 217 creates endurance.
     Their framing smoke consumed two frames/44 bytes and rejected a truncated
     float. Scalar meanings and live initialization remain partly unresolved;

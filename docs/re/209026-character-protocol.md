@@ -307,6 +307,31 @@ The armor record's model pointer and type-9 color parameter records supply
 the preview material setup. The substitution policy, +0x80 enum labels and
 the six records' named equipment-slot mapping remain unresolved.
 
+A follow-up inspected the entire six-record helper. The loop index only
+selects the 12-byte input record and controls iteration. Its model calls
+receive the resolved skinArmor model and computed color parameters, not
+that index. SkinArmor also supplies optional additional model references.
+This establishes no positional slot dispatch in this helper; it does not
+prove that permutations have identical effects, since model application is
+sequential and duplicate or overlapping models could interact.
+
+The other description converter, `0x14147de50`, copies appearance bytes
+from input +0 to description +0x48 and six records from input +0x30 through
++0x6c to description +0 through +0x3c. It also copies a seventh record from
+input +0x78 to description +0x78, unlike the summary converter's zero fill.
+Its caller at `0x141161259` uses the same builder. This second layout does
+not establish named summary slots. The private candidate's slots-2–7
+ordering remains an explicit convention.
+
+Follow-up bundle:
+`~/re/gw2/notes/209026-summary-equipment-order-static-1.json`.
+Evidence `ev_b14e02162fb6cefcf50c70eb1a3c8d60a1b684262eacf9d14b45b790605810a5`
+records the second converter;
+`ev_1ee0a184eefb47154c74791599a2e20934a7a6bd4c2773e350f03713e5efe97e`
+records the complete equipment loop; and
+`ev_703508c69aae5a2a34b21eef4d4b99a1552cbbb7a5659d33d7f98c0a924b855d`
+records its surrounding builder. These are static observations only.
+
 Combining this with the converter: a **negative signed skin Dword** clears
 the preview record; zero is skipped by the builder. Positive skin IDs retain
 the four color keys. Missing skin lookup also skips the record in the inspected
