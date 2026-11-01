@@ -85,7 +85,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     See [re/209026-post-auth-portal.md](re/209026-post-auth-portal.md).
   - **Verified fixture (run 57):** EmailVerified=1 reaches the SSO callback;
     AuthTypeName None is consumed. The launcher displays its optional 2FA signup
-    reminder. Next: dismiss with Remind me later, inspect the launcher, then Play.
+    reminder. **Run 58:** Remind me later reaches the news panel and active Play
+    button. All 233 captured bytes match client plaintext.
+  - **Next:** select Play and capture character-selection startup/traffic.
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
@@ -96,16 +98,16 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
 | --- | --- | --- |
 | 1 | Freeze client, capture traffic, message list for our build | client frozen; REA observations and offline patch/STS captures recorded; complete message list pending |
 | 2 | Gw2.dat reader | **verified on real build-209026 data**: archive, decompressor, packfiles, map chunks, typed collision |
-| 3 | Login stub: redirect, secure login, our own key | TLS and synthetic portal/binary auth fixtures verified; ordered configuration and post-auth portal replies reach launcher 2FA reminder; Play transition pending |
-| 4 | Character select / creation | not started |
+| 3 | Login stub: redirect, secure login, our own key | offline synthetic fixtures reach logged-in launcher with active Play button; credential validation and account persistence remain unimplemented |
+| 4 | Character select / creation | starting Play transition capture; no character-select screen yet |
 | 5 | One zone (Queensdale, map 15) load-in and spawn | Queensdale POI/waypoint/heart coordinates cached; continent↔map frame in `gw2_api::floor`. The map → in-world coordinate mapping is unknown. |
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
 ## Crates (last full workspace check: 75 pass, clippy clean, commit `31772d8`)
 
-Latest runtime check: run 57 consumes post-auth portal replies and reaches the optional
-2FA reminder for the verified synthetic identity. Container
+Latest runtime check: run 58 reaches the active Play button with 233 bytes matching
+client plaintext. Container
 cleanup, executable hashes and archive index count verified. Focused checks cover
 OpenSSL interop and the observer's pipelined StartTls, split STS, GetHostname and explicit XML replies.
 The full workspace suite was not rerun for this change.

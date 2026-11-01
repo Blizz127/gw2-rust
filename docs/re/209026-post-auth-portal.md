@@ -75,3 +75,19 @@ Evidence: `ev_1fd0886bfb7476add758468646b0581bb714414ce4d8e3e901e897f96bd75dbf`,
 private export `~/re/gw2/notes/209026-verified-fixture-run57.json`.
 No assertion was observed; isolation, container cleanup, executable hashes and
 archive count remain verified. Character selection has not been reached.
+
+## Active Play button: run 58
+
+Selecting the existing Remind me later control dismisses the optional signup
+reminder. The launcher displays its news panel, Edit Account / Log Out controls,
+100% playable state, and an active orange Play button. This establishes the
+launcher login transition for the explicit synthetic local fixtures. It does
+not establish credential validation, account persistence or character selection.
+
+The shorter observation window retains one binary connection: all 233 decrypted
+bytes exactly match the client's pre-encryption capture. No assertion is observed.
+Network isolation, exact container cleanup, both executable hashes and archive
+count remain verified. Evidence:
+`ev_45df8de04911ffada7751aeb6d9beed2d1ffbfd23f864e4d6b00dad44d11cdb6`,
+private export `~/re/gw2/notes/209026-launcher-play-run58.json`.
+Next: select Play and capture the engine's next requests/UI in the same isolation.
