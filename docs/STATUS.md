@@ -198,6 +198,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Appearance validation now has a 45-byte branch map and ten race/sex
     content keys (type 137). Archive defaults and usable appearance content
     remain unresolved; see [re/209026-appearance-validation.md](re/209026-appearance-validation.md).
+    Server 256 creates or updates health; server 217 creates endurance.
+    Their framing smoke consumed two frames/44 bytes and rejected a truncated
+    float. Scalar meanings and live initialization remain partly unresolved;
+    see [re/209026-character-health-endurance.md](re/209026-character-health-endurance.md).
     See [re/209026-map-ready.md](re/209026-map-ready.md).
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.
