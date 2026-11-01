@@ -89,7 +89,7 @@ All nine progress definitions identified in the Guardian census have
 one value targets channel **4**. The reward getter returns that value,
 and specialization recalculation compares it with the mapped thresholds.
 For example, specialization data key 13 / wire UID 15 references track
-key 103 and progress key 4894. This maps a possible local fixture field;
+key 24 and progress key 4858. This maps a possible local fixture field;
 it does not select or validate an unlock level. A framing-valid empty or
 four-value array is not automatically a valid content update.
 

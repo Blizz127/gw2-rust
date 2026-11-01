@@ -259,6 +259,12 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     specialization progress listener is now traced: final progress
     notification refreshes matching slot bytes without clearing traits;
     another 640 assignment would clear them. No replay was performed.
+    [Completion predicates](re/209026-progress-completion.md) distinguish
+    all-channel completion from numeric maximum and threshold counts. The
+    bounded type-53 reader passes three focused tests and builds; a REA
+    archive smoke resolves all 81 specialization completion limits. An
+    independent pointer join corrected four Guardian rows in the earlier
+    reward-track table (key 13 / UID 15 uses track 24, progress 4858).
     [Slot follow-up](re/209026-reward-track-slots.md) identifies 565/569
     pin values, 568 active-track selection and 566 map-specific selection.
     Pin value domains and 567 keyed-state meaning remain unresolved.

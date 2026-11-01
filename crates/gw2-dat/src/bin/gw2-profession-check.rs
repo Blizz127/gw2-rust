@@ -14,6 +14,7 @@ use gw2_dat::{
         ContentPointerArray209026, ProfessionDefinition209026, SpecializationDefinition209026,
         TraitDefinition209026,
     },
+    progress_content::ProgressDefinition209026,
 };
 
 type Location = (usize, u32);
@@ -159,6 +160,9 @@ fn run(path: &str) -> io::Result<()> {
         ));
     }
     let mut progress_references = 0;
+    let guardian_keys: BTreeSet<_> = guardian.iter().map(|(key, _)| *key).collect();
+    let mut guardian_progress = Vec::new();
+    let mut counter_limits = 0;
     for ((container, _), specialization) in specialization_records {
         let mut tiers = [0; 3];
         let mut keys = BTreeSet::new();
@@ -179,6 +183,27 @@ fn run(path: &str) -> io::Result<()> {
             if !progress_records.contains(&location) {
                 return Err(invalid("progress reference is not an indexed record"));
             }
+            let parameter_slot = location
+                .1
+                .checked_add(0x40)
+                .ok_or_else(|| invalid("track progress slot overflow"))?;
+            let progress_ref = containers[location.0]
+                .reference(parameter_slot)?
+                .ok_or_else(|| invalid("track has null progress definition"))?;
+            let (progress_container, progress_offset) =
+                target(&containers, location.0, progress_ref, 53)?;
+            let progress =
+                ProgressDefinition209026::read(&containers[progress_container], progress_offset)?;
+            let limit = progress.counter_limit(&containers, progress_container)?;
+            counter_limits += usize::from(limit.is_some());
+            if guardian_keys.contains(&specialization.key) {
+                guardian_progress.push((
+                    specialization.key,
+                    progress.key,
+                    progress.channel_mask,
+                    limit,
+                ));
+            }
             progress_references += 1;
         }
     }
@@ -193,6 +218,12 @@ fn run(path: &str) -> io::Result<()> {
     );
     println!(
         "Guardian specialization (data key, wire UID): {guardian:?}; gameplay eligibility not validated"
+    );
+    println!(
+        "resolved specialization progress definitions; counter/maximum limits={counter_limits}"
+    );
+    println!(
+        "Guardian (specialization data key, progress data key, channel mask, completion limit): {guardian_progress:?}"
     );
     Ok(())
 }

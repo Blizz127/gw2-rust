@@ -45,15 +45,21 @@ Source hashes accompany the private results.
 
 | Specialization data key / UID | Track data key | Type-53 progress data key | Threshold count | First / last |
 | --- | ---: | ---: | ---: | --- |
-| 42 / 57 | 24 | 4858 | 12 | 2 / 60 |
+| 13 / 15 | 24 | 4858 | 12 | 2 / 60 |
 | 16 / 19 | 100 | 4839 | 12 | 2 / 60 |
-| 13 / 15 | 103 | 4894 | 12 | 2 / 60 |
-| 49 / 69 | 30 | 4890 | 12 | 2 / 60 |
-| 46 / 64 | 45 | 4899 | 12 | 2 / 60 |
+| 42 / 57 | 103 | 4894 | 12 | 2 / 60 |
+| 46 / 64 | 30 | 4890 | 12 | 2 / 60 |
+| 49 / 69 | 45 | 4899 | 12 | 2 / 60 |
 | 27 / 36 | 85 | 4838 | 19 | 30 / 250 |
 | 62 / 76 | 417 | 9611 | 19 | 30 / 250 |
 | 65 / 32 | 466 | 14185 | 19 | 30 / 250 |
 | 81 / 77 | 521 | 21488 | 18 | 40 / 250 |
+
+Correction: the original table paired four specialization rows with tracks
+by list order. Joining the recorded container/offset pointers and the Rust
+archive check independently establish the mapping above. In particular,
+specialization key 13 / UID 15 uses track 24 and progress 4858. See the
+[completion follow-up](209026-progress-completion.md) for both evidence records.
 
 The five 12-entry sequences are exactly
 `[2, 5, 8, 11, 15, 20, 25, 30, 36, 44, 52, 60]`.
@@ -68,8 +74,9 @@ thresholds. This is a bounded static consequence of the getter and
 threshold values, not proof that a zero-progress specialization is a
 playable default. The 801-entry maximum belongs to the broader track
 catalog; it is not evidence that a specialization byte consumes that
-particular track. Four-slot eligibility and raw slot-byte meanings remain
-unresolved. No initial track selection is prescribed here.
+particular track. Later work traces [eligibility](209026-progress-completion.md) and
+identifies the [slot bytes as pin values](209026-reward-track-slots.md);
+their allowed domain remains open. No initial track selection is prescribed here.
 
 ## Evidence
 
