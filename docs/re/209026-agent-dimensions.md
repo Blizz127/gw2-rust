@@ -26,7 +26,7 @@ observed uses, not proposed names for all eight values.
 | Array 3 | +0x144 | Height input; after factory adjustment and /32, collision +0x29c. |
 | Array 4 | +0x148 | /32 to collision +0x2ac; participates in a second height minimum and an auxiliary shape's height. |
 | Array 5 | +0x14c | -value/64 to collision +0x2a8; contributes to body/character vertical-origin conversion. |
-| Array 6 | +0x150 | /32 to collision +0x2a4; used as another shape parameter on a flagged branch. |
+| Array 6 | +0x150 | /32 to collision +0x2a4; alternate convex shape Y radius (zero uses main radius). |
 | Array 7 | +0x154 | -value/32 to collision +0x454; offsets the water level passed to movement. |
 | Final float | +0x80 | /32 to collision +0x2a0, the radius used by the capsule and six-point ray sample. |
 
@@ -96,7 +96,8 @@ The flagged branch can instead call `0x1410b60f0` → `0x141096310` →
 `0x1416c3a60`, whose RTTI names `hkpCylinderShape`. Its supplied endpoints
 are `[0,0,0]` and `[0,0,height_collision]`; it receives a separate convex
 margin, initially 0.05 at `0x14263a6f4`. Another branch calls `0x1410b6260`
-with additional parameters and has not been fully traced here.
+with additional parameters; the [alternate-shape trace](209026-agent-alternate-shape.md)
+follows its three 12-point rings and origin into a convex-hull constructor.
 
 The full constructor also creates a box through `0x1410b6000` and
 `0x141095380`: half-extents are approximately
@@ -109,9 +110,9 @@ remain open.
 
 The simple factory takes array 3, final radius and array 6, together with
 constant 55. Its constructor stores the adjusted height/32 at +0x17c,
-radius/32 at +0x180, and array6/32 at +0x184. It may cap the radius later;
-the threshold and complete simple-character behavior are not established
-here. Do not apply the full capsule convention to this path by assumption.
+radius/32 at +0x180, and array6/32 at +0x184. It caps the scaled radius at 0.05 collision units, then builds a
+box; see the [alternate-shape trace](209026-agent-alternate-shape.md).
+Complete simple-character behavior remains unresolved. Do not apply the full capsule convention to this path by assumption.
 
 The full factory asserts `createFlags & COLLIDER_CHAR_CREATE_FLAG_PLAYER`.
 The base constructor derives those flags from creation bytes and can also
