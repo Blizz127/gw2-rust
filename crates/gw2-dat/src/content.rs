@@ -39,6 +39,54 @@ pub enum ContentReference {
     },
 }
 
+/// A checked byte range in an explicitly supplied content-container set.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ResolvedContent<'a> {
+    pub container_index: usize,
+    pub offset: usize,
+    pub bytes: &'a [u8],
+}
+
+/// Resolve a classified record/array reference without loading any files.
+/// `containers` must use the same ordering as external container indexes.
+/// The caller selects the needed byte length and validates the record type.
+pub fn resolve_reference<'a>(
+    containers: &[ContentIndex<'a>],
+    source_container: usize,
+    reference: ContentReference,
+    byte_length: usize,
+) -> Result<ResolvedContent<'a>> {
+    if source_container >= containers.len() {
+        return Err(invalid("source content container is absent"));
+    }
+    let (container_index, offset) = match reference {
+        ContentReference::Local { offset } => (source_container, offset),
+        ContentReference::External {
+            container_index,
+            offset,
+        } => (
+            usize::try_from(container_index)
+                .map_err(|_| invalid("external content container index overflow"))?,
+            usize::try_from(offset).map_err(|_| invalid("external content offset overflow"))?,
+        ),
+        ContentReference::String { .. } => {
+            return Err(invalid("string reference is not a content byte range"));
+        }
+    };
+    let container = containers
+        .get(container_index)
+        .ok_or_else(|| invalid("target content container is absent"))?;
+    let bytes = offset
+        .checked_add(byte_length)
+        .and_then(|end| container.content_bytes().get(offset..end))
+        .ok_or_else(|| invalid("resolved content range outside target container"))?;
+    Ok(ResolvedContent {
+        container_index,
+        offset,
+        bytes,
+    })
+}
+
 pub struct ContentIndex<'a> {
     main: &'a [u8],
     flags: u32,
@@ -480,5 +528,113 @@ mod tests {
         let mut b = payload();
         b[0] |= 1;
         assert!(ContentIndex::parse(&pack(b)).is_err());
+    }
+
+    #[test]
+    fn content_resolution_uses_target_container_and_preserves_zero_offsets() {
+        let (source, _) = references_payload();
+        let source = pack(source);
+        let mut target = payload();
+        target[0xa9..].fill(0x5c);
+        let target = pack(target);
+        let containers = [
+            ContentIndex::parse(&source).unwrap(),
+            ContentIndex::parse(&target).unwrap(),
+        ];
+        let local = resolve_reference(
+            &containers,
+            0,
+            containers[0].reference(0).unwrap().unwrap(),
+            8,
+        )
+        .unwrap();
+        assert_eq!(
+            (local.container_index, local.offset, local.bytes),
+            (0, 0, &b"\0\0\0\0\0\0\0\0"[..])
+        );
+        let external = resolve_reference(
+            &containers,
+            0,
+            ContentReference::External {
+                container_index: 1,
+                offset: 0,
+            },
+            32,
+        )
+        .unwrap();
+        assert_eq!((external.container_index, external.offset), (1, 0));
+        assert_eq!(external.bytes, &[0x5c; 32]);
+        let tail = resolve_reference(
+            &containers,
+            0,
+            ContentReference::External {
+                container_index: 1,
+                offset: 31,
+            },
+            1,
+        )
+        .unwrap();
+        assert_eq!(tail.bytes, &[0x5c]);
+        assert!(
+            resolve_reference(&containers, 1, ContentReference::Local { offset: 32 }, 0)
+                .unwrap()
+                .bytes
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn content_resolution_rejects_missing_containers_strings_and_bad_ranges() {
+        let pf = pack(payload());
+        let containers = [ContentIndex::parse(&pf).unwrap()];
+        for (source, reference, length) in [
+            (1, ContentReference::Local { offset: 0 }, 1),
+            (
+                usize::MAX,
+                ContentReference::External {
+                    container_index: 0,
+                    offset: 0,
+                },
+                1,
+            ),
+            (
+                0,
+                ContentReference::External {
+                    container_index: 1,
+                    offset: 0,
+                },
+                1,
+            ),
+            (
+                0,
+                ContentReference::External {
+                    container_index: u32::MAX,
+                    offset: 0,
+                },
+                1,
+            ),
+            (
+                0,
+                ContentReference::External {
+                    container_index: 0,
+                    offset: u64::MAX,
+                },
+                1,
+            ),
+            (
+                0,
+                ContentReference::External {
+                    container_index: 0,
+                    offset: 31,
+                },
+                2,
+            ),
+            (0, ContentReference::Local { offset: usize::MAX }, 1),
+            (0, ContentReference::Local { offset: 1 }, usize::MAX),
+            (0, ContentReference::Local { offset: 33 }, 0),
+            (0, ContentReference::String { index: 0 }, 0),
+        ] {
+            assert!(resolve_reference(&containers, source, reference, length).is_err());
+        }
     }
 }

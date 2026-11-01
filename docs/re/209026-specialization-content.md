@@ -138,7 +138,7 @@ contains 1,126 records, 24,224,037 bytes.
 `gw2_dat::profession_content` exposes typed views of the verified type-315,
 type-386 and type-77 fields through the existing `ContentIndex`.
 It checks the stored content type and each accessed byte range, preserves
-raw keys/flags/tiers, and return classified references for profession and
+raw keys/flags/tiers, and returns classified references for profession and
 major-trait arrays. Local array ranges must fit the current container;
 external arrays remain explicit references whose destination bounds and
 record types the caller must validate. String references are not valid
@@ -163,6 +163,17 @@ private bundle `~/re/gw2/notes/209026-profession-reader-smoke-1.json`
 (1,128 records, 24,231,497 bytes). The first shell-escape invocation was
 rejected by Rizin and did not run the checker; the corrected invocation
 above completed successfully.
+
+`gw2_dat::content::resolve_reference` accepts an ordered slice of already parsed
+containers. Local references use their source container; external references
+use their explicit container index. It checks both container indexes,
+offset conversion, range addition and destination byte bounds, and reject
+string references. The caller still supplies the intended field/record
+length and verifies the destination's content type. It does not discover
+files, perform I/O or treat an external offset as belonging to the source.
+Two focused tests and the library build pass, including local and external
+zero offsets, source/target index errors, destination overruns, offset/length
+overflow, string rejection and empty byte ranges.
 
 ## Evidence
 
