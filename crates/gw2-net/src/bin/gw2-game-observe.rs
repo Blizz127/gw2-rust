@@ -55,6 +55,14 @@ fn read_exact_file(path: &Path, size: usize) -> io::Result<Vec<u8>> {
     Ok(data)
 }
 
+/// The client idles on the auth connection between login and Play (news
+/// panel, User Agreement, character select); run 59 shows a 30 s timeout drops
+/// it and forces a re-login. The Play phase therefore waits longer, but still
+/// bounded.
+fn read_timeout(play_enabled: bool) -> Duration {
+    Duration::from_secs(if play_enabled { 600 } else { 30 })
+}
+
 fn observe(
     mut stream: TcpStream,
     key: &ServerKey,
@@ -68,7 +76,8 @@ fn observe(
         (Some(probe), Some(route)) => Some(probe.with_play_route(route)?),
         (probe, _) => probe,
     };
-    stream.set_read_timeout(Some(Duration::from_secs(30)))?;
+    let play_enabled = auth.as_ref().is_some_and(auth::AuthProbe::play_enabled);
+    stream.set_read_timeout(Some(read_timeout(play_enabled)))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
     let preamble = preamble.read(&mut stream)?;
     let mut header = [0u8; 2];

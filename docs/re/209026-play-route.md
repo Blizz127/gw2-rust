@@ -159,9 +159,12 @@ the ctx +0xdd value. A server parser should follow the wire table above.
 Offline fixture: `gw2-game-observe --auth-play-route LOOPBACK:PORT`, which
 requires `--auth-character-record`. After the login reply it answers:
 - client 22 with server 8 (name-select form, the record's own Guid in field 2) followed by server 3 (zero result, the loopback address)
-- client 29 with server 20 (zero values, the same address)
+- client 29 with server 20, echoing client 29's game type, reserved value and map key as fields 1–3 (inferred: they overwrite those transaction slots), with the same address
 
-Undecodable frames disable the phase. Unit tests cover every split point and
+Undecodable frames disable the phase. The real run-58/59 auth captures replay
+through it with the phase intact; client 4 and 34 follow login. With the phase
+enabled the read timeout is 600 s, because run 59's 30 s timeout dropped the idle
+connection and forced a re-login. Unit tests cover every split point and
 decode each reply against `auth.xml`. **Nothing has been sent to the client.**
 The zero values and the address are synthetic; their semantics are unresolved.
 

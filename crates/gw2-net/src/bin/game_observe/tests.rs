@@ -172,3 +172,9 @@ fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
         fs::remove_file(prefix_path).unwrap();
     }
 }
+
+#[test]
+fn play_phase_extends_but_bounds_the_read_timeout() {
+    assert_eq!(read_timeout(false), Duration::from_secs(30));
+    assert_eq!(read_timeout(true), Duration::from_secs(600));
+}

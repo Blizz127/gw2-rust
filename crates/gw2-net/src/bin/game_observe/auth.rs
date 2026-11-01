@@ -215,6 +215,11 @@ impl AuthProbe {
         }
     }
 
+    /// Whether the opt-in Play phase is still active.
+    pub fn play_enabled(&self) -> bool {
+        self.play.is_some()
+    }
+
     /// Enable the opt-in Play phase after the login reply.
     pub fn with_play_route(mut self, route: PlayRoute) -> io::Result<Self> {
         let invalid = |_| io::Error::new(ErrorKind::InvalidData, "invalid embedded auth schema");
@@ -285,9 +290,12 @@ impl AuthProbe {
                 29 => {
                     let mut input = &frame[..];
                     let route = RouteRequest29::decode_frame(&mut input)?;
+                    // Server 20's fields 1-3 overwrite the transaction slots
+                    // client 29 filled (game type, 0, map key); echo them
+                    // rather than clearing the map key. Inferred, not verified.
                     RouteResult20 {
                         request: route.request,
-                        values: [0; 3],
+                        values: [route.game_type, route.reserved, route.map_key],
                         address: play.route.address,
                         scalar: 0,
                     }
@@ -544,6 +552,8 @@ mod tests {
             assert_eq!(m20.id, 20);
             let Value::Struct(f20) = v20 else { panic!() };
             assert_eq!(f20[0].1, Value::U32(501));
+            assert_eq!(f20[1].1, Value::U32(4));
+            assert_eq!(f20[3].1, Value::U32(15));
             assert_eq!(f20[4].1, Value::Address("127.1.0.3:6112".parse().unwrap()));
             assert!(cursor.is_empty(), "cut {cut}");
         }
@@ -560,5 +570,26 @@ mod tests {
         assert!(plain.push(&login_input()).unwrap().is_some());
         assert!(plain.push(&play_input()).unwrap().is_none());
         assert!(PlayRoute::new("10.0.0.1:6112".parse().unwrap(), Guid([0; 16])).is_err());
+    }
+
+    /// Replays a private real capture (never committed): set
+    /// GW2_AUTH_CAPTURE to a run-58/59 `*-0.decrypted.bin` and run with
+    /// `--ignored`. The phase must survive the client's post-login frames.
+    #[test]
+    #[ignore]
+    fn play_phase_survives_real_post_login_capture() {
+        let path = std::env::var("GW2_AUTH_CAPTURE").expect("GW2_AUTH_CAPTURE");
+        let capture = std::fs::read(path).unwrap();
+        let fixture = ReplyFixture::new(Bytes::from_static(&[0x44; 2]), None).unwrap();
+        let route = PlayRoute::new("127.1.0.3:6112".parse().unwrap(), Guid([0x55; 16])).unwrap();
+        let mut probe = AuthProbe::new(fixture).with_play_route(route).unwrap();
+        let mut replies = 0;
+        for byte in capture.chunks(1) {
+            if probe.push(byte).unwrap().is_some() {
+                replies += 1;
+            }
+        }
+        assert_eq!(replies, 1, "only the login reply; no 22/29 in this capture");
+        assert!(probe.play_enabled(), "post-login frames must not disable the phase");
     }
 }

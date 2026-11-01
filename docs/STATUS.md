@@ -198,7 +198,9 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     Typed Play-path frames (`gw2_proto::play_route`: client 22/29, server 3/20) pass
     three focused tests cross-checked against `auth.xml`; nothing was exchanged with the client.
     `gw2-game-observe --auth-play-route` adds an opt-in offline Play phase (22 → 8+3, 29 → 20);
-    7/7 observer tests pass, including every-split replies. Client replay waits on the Run59 hold.
+    8 observer tests pass, including every-split replies. The run-58/59 captures replay without
+    disabling the phase (client 4 and 34 parsed). The Play phase's read timeout is 600 s, because
+    run 59 showed the 30 s timeout forcing a re-login. Client replay waits on the Run59 hold.
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small
@@ -401,7 +403,7 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 | 6 | Movement, a few NPCs/mobs, basic attacks (web API data) | `gw2-api` importer done. Build 209026 cache: maps 1086, skills 4763, specializations 81, professions 9, races 5, continents 2, Queensdale floor (47 POIs, 17 hearts, 7 hero challenges, 26 sectors) |
 | 7 | Combat, events, loot | later |
 
-## Crates (last full workspace check: 75 pass, clippy clean, commit `31772d8`)
+## Crates (last full workspace check 2026-11-01: 221 pass, 1 ignored; clippy clean except 11 pre-existing `gw2-dat` `as_chunks` lints from rustc 1.98)
 
 Latest runtime check: run 59 reaches the untouched User Agreement panel after Play;
 run 58 has 233 bytes matching client plaintext. Container
