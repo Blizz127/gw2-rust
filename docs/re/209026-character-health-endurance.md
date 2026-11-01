@@ -114,6 +114,47 @@ Private follow-up bundle: `~/re/gw2/notes/209026-health-state-rate-1.json`
 | `ev_fc3266bc7f314d2716af71db173b8151482758dc209ff85fb1f8fdb52769c872` | Meter initialization, accumulation, pause and local world-clock getter. |
 | `ev_77f3e77f7848b6bc933cf37fec5f22e2f9794e878b5db867bd800cde67453063` | Rate conversion constant and all three state strings. |
 
+## Existing-health messages 257–260
+
+The consecutive registrations following 256 identify four further messages:
+
+| ID | Descriptor | Handler | Fields after character-index Dword |
+| --- | --- | --- | --- |
+| 257 | `0x1425e2440` | `0x14124fb30` | Float current; Float second-meter current. |
+| 258 | `0x1425e2510` | `0x14124fbb0` | None: removes the health component. |
+| 259 | `0x1425e2590` | `0x14124fc10` | Float current; Float maximum; Float second current; Float second maximum; Float unnamed F5 value. |
+| 260 | `0x1425e26d0` | `0x14124fcc0` | Float first-meter rate. |
+
+All four require an existing raw character. 257, 259 and 260 obtain its
+existing health component through primary virtual +0x68, whose getter
+asserts `m_health`. They do not allocate health. The 259 handler sets each
+maximum before the corresponding current value, despite the opposite order
+on the wire, and does not update the first-meter rate. The 260 handler
+calls the same direct-rate setter as 256. None of these handlers sets the
+character's health-state Dword at +0x188.
+
+258 calls `0x1411d68b0`, which asserts that health exists, destroys/frees
+the 0x88-byte component and clears character +0x3e8. It does not remove the
+character or set the health-state Dword. It is not a death-state message.
+
+The second meter and F5 retain unnamed gameplay semantics. Its getters
+are established mechanically: health virtual +0x28/+0x30/+0x38 read
+component +0x28/+0x2c/+0x30 (second current/maximum/rate), while +0x40
+reads +0x40 (F5). The bounded UI-name search did not supply a direct name
+for them; this note does not assume barrier, shield or defiance semantics.
+
+Private bundle: `~/re/gw2/notes/209026-health-updates-1.json`
+(980 records, 22,116,985 bytes). Static REA, no messages sent.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_85d46f683b7559b9097580c9e802fc1c8fe29b30436395781b61503ef960433d` | Complete health vtable and second-current getter. |
+| `ev_9b518cf93155e32754a5ebc05907027b50be319bda1332748ca80876f9dbb535` | Second-maximum/rate getters and bounded UI-name search. |
+| `ev_4fe9bf5d10d5a2bf8761ba01324940fb88f6c6e5257f8631876a7cd0244d492b` | Direct setter call sites. |
+| `ev_16060f5cde33acaa16f5c758b337cf6cc2c662e2e84a51dc1996f66e93002607` | Registration pointers and complete 257/258/259 handlers. |
+| `ev_3b2b93dca748d762bdaa2c0e6342f91219f8fd9e98a72eb266e719689274e76f` | Hash-guarded descriptors, 259 registration and removal body. |
+| `ev_01b1868c372bc1c68cf6b5e4dac0d30c33196130091cdb3b182f22b3886cc4b5` | 260 descriptor/handler and common float setters. |
+
 ## Server 217: endurance component creation
 
 Descriptor `0x1425e00d0`, pair `0x14216f300`, handler `0x14124ec90`:
