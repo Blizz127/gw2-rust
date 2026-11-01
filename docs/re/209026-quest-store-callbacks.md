@@ -70,15 +70,16 @@ mask 0x20. With mask 4 set and EDX=0, it returns true without calling the
 queue helper. Otherwise it passes the process's +0x680 object, event ID,
 and one buffer/length pair to **`0x14106dc50`** and converts that helper's
 result to Boolean. The callback bodies do not check this return value.
-Queue ownership/copy semantics and the receiving handlers remain untraced.
+The [dispatch follow-up](209026-quest-store-dispatch.md) establishes copied
+queue buffers, outer event 0x23 and the receiving store handler.
 These IDs are internal dispatch values, **not game wire message IDs**.
 
-Selected service-method reads and a bounded immediate-value search in
+The initial selected service-method reads and a bounded immediate-value search in
 `0x140250000..0x140280000` did not identify the receiving handlers. This
 is not an exhaustive receiver census: handlers may be registered through
 tables or reside elsewhere. Primary service methods +0/+8 are listener
 list insertion/removal, not the sought dispatcher. In particular, the
-trace does not yet show how the earlier request tracker clears or whether
+combined trace does not yet show how the earlier request tracker clears or whether
 its pending state affects readiness. No error or empty-result fixture
 should be described as validated from this static evidence alone.
 
