@@ -16,7 +16,7 @@ Server **37**, descriptor `0x1425b3a00`, handler `0x1410335c0`, has:
 | Field | Type | Confirmed use |
 | --- | --- | --- |
 | 0 | Word | Passed to the agent command queue and creation object's index field. |
-| 1 | Dword | Passed as a separate queue argument; timing/sequence meaning unresolved. |
+| 1 | Dword | Remote simulation-tick timestamp; compared with a local 40 ms tick counter. See [clock trace](209026-agent-command-clock.md). |
 | 2 | Byte | Combined with fixed command flags. |
 | 3 | Dword | Copied into the command's auxiliary-data object. |
 | 4 | BufferVarSmall, max 250 | Copied into the auxiliary-data object. Raw descriptor parameter is 0x100fa; the established buffer length bound uses its low 16 bits. |
@@ -53,8 +53,10 @@ method calls virtual +0x10, the creation method described above.
 Thus first creation is not simply deferred until the calculated command
 deadline. This does not remove the bookkeeping dependencies or other
 rejection paths (including an existing agent marked for removal). Field 1
-participates in the timing adjustment at `0x14102ffb0`; an appropriate
-initial server value and all clock setup remain unverified.
+participates in the timing adjustment at `0x14102ffb0`. The follow-up
+[clock trace](209026-agent-command-clock.md) establishes its tick units,
+the delay estimator and timer/report units. A valid server epoch and
+complete bootstrap remain unverified.
 
 ## Player identity and ownership
 
