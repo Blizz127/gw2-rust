@@ -165,6 +165,38 @@ Private bundle: `~/re/gw2/notes/209026-character-refresh-static-1.json`.
 
 ## Summary blob version and checks
 
+### Private candidate preparation
+
+A local candidate has been prepared from the frozen Human/Male profession-1
+appearance default, level 1, Queensdale map key 15, and the corresponding
+level-1 equipment template. Its six equipment positions use an explicit
+fixture convention of equipment slots 2–7; the renderer's six-record loop
+resolves skins directly, but the original summary slot ordering remains
+unverified. Absent slots and opaque summary fields are zero. The scene GUID
+at +0x85 is zero, following the observed skip branch. Record identity/name
+are synthetic, and the unresolved record Dword/two Qwords are zero.
+
+This is a private protocol candidate for structural checks. It must not be
+reported as a valid rendered character or successful login/creation. Client
+replay remains behind the untouched Agreement panel.
+
+Private directory:
+`~/re/gw2/notes/character-candidate-209026-human-male-guardian/` (0700;
+files 0600). It contains the extracted default string, `summary.bin`
+(159 bytes), `record-body.bin` (226 bytes), `server17-frame.bin` (229 bytes)
+and a hash/assumption manifest. Three equipment records contain template
+skins with their matching color rows.
+
+REA validation passed the default reader, version-11 summary structure/sex
+checks, full frame census (one server ID 17, 229 bytes) and observer fixture
+validation. The observer startup intentionally stopped at `missing --params`,
+before identity loading or socket binding. The temporary one-byte account
+body used solely for that startup check is not an account-reply fixture and
+was deleted. No network replay occurred.
+
+Evidence: `ev_8cb7c1b2a26dfe7a658285ce815fc49d370564b5b8d0c5956d5a942fd8750685`,
+private bundle `~/re/gw2/notes/209026-character-candidate-check-1.json`.
+
 `0x1417f4ae0` clears a 159-byte output structure, marks its version byte 255,
 and rejects inputs shorter than five bytes. Version 11 requires exactly 159
 bytes and is copied directly. Older versions 7, 8 and 9 require 153 bytes;
