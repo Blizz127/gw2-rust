@@ -88,6 +88,11 @@ The evidence establishes a wardrobe prerequisite for the direct 431
 body; it does not prove that the initial context event cannot create it,
 or that 248 is the only way to supply it. No bootstrap sequence is replayed.
 
+The [bounded player-tail follow-up](209026-player-startup-tail.md) resolves
+several later getters to embedded account/achievement/progress objects
+and identifies an explicitly optional pointer. Content evaluation and
+callbacks remain open.
+
 ## Evidence
 
 `crates/gw2-proto/src/wardrobe.rs` implements transactional 247/248

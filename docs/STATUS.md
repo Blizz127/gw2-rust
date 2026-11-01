@@ -237,6 +237,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     four-Word state. 431 additionally asserts skill-bar owner association
     and dereferences wardrobe coreStats; later progress/content callbacks
     still need work ([wardrobe startup](re/209026-wardrobe-startup.md)).
+    The [player-tail follow-up](re/209026-player-startup-tail.md) resolves
+    several later getters to embedded account/achievement/progress objects
+    and confirms a guard around optional player +0x97b8. Content/category
+    evaluation and runtime callbacks remain unresolved.
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message
