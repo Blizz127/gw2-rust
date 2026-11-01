@@ -264,6 +264,7 @@ name = "gw2-dat"
 version = "0.1.0"
 dependencies = [
  "quick-xml",
+ "sha2",
 ]
 
 [[package]]

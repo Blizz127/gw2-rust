@@ -243,6 +243,8 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     static reconstruction, including permissive missing-property paths;
     no live validator/rendering result is claimed. Encoded palette-name
     conversion is documented in [re/209026-content-names.md](re/209026-content-names.md).
+    `gw2_dat::content_name::encode_209026` now provides that bounded conversion;
+    two focused tests, library build and all 50 archive-reference checks pass.
     Server 256 creates or updates health; server 217 creates endurance.
     Their framing smoke consumed two frames/44 bytes and rejected a truncated
     float. Scalar meanings and live initialization remain partly unresolved;

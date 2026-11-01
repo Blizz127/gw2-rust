@@ -28,10 +28,22 @@ The mixing step must not be replaced with ordinary byte-wise FNV-1a.
 SHA-256 initialization and big-endian digest output were inspected; the
 Base64 alphabet and grouping were inspected independently.
 
-The Rust tooling implementation will accept at most 511 UTF-16 code units,
+`gw2_dat::content_name::encode_209026` accepts at most 511 UTF-16 code units,
 rejecting embedded NUL and longer input. This bounds its supported inputs
 without asserting the client's behavior for an overlong or unterminated name.
 It performs no content lookup and does not establish name uniqueness.
+
+The library build and two focused tests pass: independent Python vectors
+cover the mixing step, last-dot splitting, empty components and UTF-16
+encoding; boundary cases cover 511/512 code units, surrogate pairs and NUL.
+An offline REA smoke then uses the compiled Rust function for all 50 palette
+references. Each matches the independent Python result and resolves the
+same archive palette, retaining all 349 passing palette-entry checks.
+No client or network replay occurred.
+
+Rust smoke evidence:
+`ev_fb2231a94550af4109bc9021e4c87e9433572e4a1f32c3ea1ed4c18522f9f514`,
+private bundle `~/re/gw2/notes/209026-content-name-rust-check-1.json`.
 
 Private evidence bundle:
 `~/re/gw2/notes/209026-appearance-palettes-and-keys-1.json`.

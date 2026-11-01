@@ -10,6 +10,7 @@
 
 pub mod archive;
 pub mod appearance;
+pub mod content_name;
 pub mod decompress;
 pub mod manifest;
 pub mod mapc;
