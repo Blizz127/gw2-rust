@@ -62,6 +62,9 @@ dependency: an existing, initialized character and its player association
 must be finalized before controlled-character readiness. It does not yet
 provide the full sequence of messages or content values needed to enter a map.
 
+Follow-up [core-stat analysis](209026-character-core-stats.md) maps server
+151's attitude setter and the alternative 182/183 component-creation paths.
+
 ## Offline validation
 
 The hash-guarded extraction found exactly server 428, 170 and 444 with the
