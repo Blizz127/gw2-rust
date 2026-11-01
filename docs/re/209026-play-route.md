@@ -156,6 +156,15 @@ Client 29 carries a non-creation game type derived from the summary map's
 type, the summary map key (15 for the Queensdale fixture), the hash and
 the ctx +0xdd value. A server parser should follow the wire table above.
 
+Offline fixture: `gw2-game-observe --auth-play-route LOOPBACK:PORT`, which
+requires `--auth-character-record`. After the login reply it answers:
+- client 22 with server 8 (name-select form, the record's own Guid in field 2) followed by server 3 (zero result, the loopback address)
+- client 29 with server 20 (zero values, the same address)
+
+Undecodable frames disable the phase. Unit tests cover every split point and
+decode each reply against `auth.xml`. **Nothing has been sent to the client.**
+The zero values and the address are synthetic; their semantics are unresolved.
+
 Still open:
 - Queensdale's map type, and therefore its game-type value; the content field read by `0x1412e2cd0` is not decoded.
 - The source of ctx +0xdd and of the hashed string.

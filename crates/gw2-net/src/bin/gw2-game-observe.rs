@@ -61,9 +61,13 @@ fn observe(
     log: &Path,
     reply: Option<&Bytes>,
     auth_body: Option<auth::ReplyFixture>,
+    play: Option<auth::PlayRoute>,
     preamble: Preamble,
 ) -> io::Result<()> {
-    let mut auth = auth_body.map(auth::AuthProbe::new);
+    let mut auth = match (auth_body.map(auth::AuthProbe::new), play) {
+        (Some(probe), Some(route)) => Some(probe.with_play_route(route)?),
+        (probe, _) => probe,
+    };
     stream.set_read_timeout(Some(Duration::from_secs(30)))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
     let preamble = preamble.read(&mut stream)?;
@@ -140,6 +144,7 @@ fn main() -> io::Result<()> {
     let mut auth_body = None;
     let mut character = None;
     let mut preamble = Preamble::Auth;
+    let mut play_address: Option<SocketAddr> = None;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -157,6 +162,14 @@ fn main() -> io::Result<()> {
                 character = Some(Bytes::from(bytes));
             }
             "--mission-preamble" => preamble = Preamble::Mission,
+            "--auth-play-route" => {
+                play_address = Some(
+                    args.next()
+                        .ok_or_else(|| invalid("missing play-route address"))?
+                        .parse()
+                        .map_err(|_| invalid("invalid play-route address"))?,
+                )
+            }
             "--listen" => {
                 listen = args
                     .next()
@@ -185,7 +198,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY] | --mission-preamble]",
+                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble]",
                 ));
             }
         }
@@ -203,6 +216,19 @@ fn main() -> io::Result<()> {
             "character record fixture requires --auth-reply-body",
         ));
     }
+    if play_address.is_some() && character.is_none() {
+        return Err(invalid(
+            "play-route fixture requires --auth-character-record",
+        ));
+    }
+    // The character value server 8 returns is the record's own leading Guid.
+    let play = match (play_address, &character) {
+        (Some(address), Some(record)) if record.len() >= 16 => Some(auth::PlayRoute::new(
+            address,
+            gw2_proto::Guid(record[..16].try_into().unwrap()),
+        )?),
+        _ => None,
+    };
     let auth_body = auth_body
         .map(|body| auth::ReplyFixture::new(body, character))
         .transpose()?;
@@ -241,7 +267,7 @@ fn main() -> io::Result<()> {
         let auth_body = auth_body.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
-            if let Err(e) = observe(stream, &key, &log, reply.as_ref(), auth_body, preamble) {
+            if let Err(e) = observe(stream, &key, &log, reply.as_ref(), auth_body, play, preamble) {
                 eprintln!("Game observation ended: {e}");
             }
         });

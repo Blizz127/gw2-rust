@@ -76,6 +76,7 @@ fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
                 &server_path,
                 Some(&Bytes::from_static(&[0x19, 4])),
                 auth_fixture,
+                None,
                 mode,
             )
         });
