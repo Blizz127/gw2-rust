@@ -140,7 +140,8 @@ The chooser's byte indirection table at `0x141213834` and target table at
 
 Slot values above 22 enter a diagnostic path. The scalar for slots 0–4
 comes through `0x1411f72e0` from character primary virtual +0x1b0; its
-meaning and the player's +0x58 implementation are not yet established.
+meaning remains open. The [player-palette follow-up](209026-player-skill-palettes.md)
+identifies the +0x58 implementation and message 612, which populates its arrays.
 The inventory virtual offsets are observed routes, not assigned equipment
 slot names. Helper `0x141212ee0` selects a palette pointer using the
 content record's +0x2c discriminator: value 9 selects `[record+0x30]+0x10`,
@@ -149,7 +150,8 @@ value 24 selects `[record+0x30]+0x58`; other values return null.
 Resolver `0x141213650` applies palette flag/context checks, calls row
 selector `0x141212bc0`, and scans that row's entries (stride 0x70) until
 predicate `0x141212fe0` succeeds. It returns the first passing entry or
-null. The row selector and eligibility predicate remain untraced here.
+null. The [row-selector follow-up](209026-player-skill-palettes.md) identifies
+profession/category matching; full entry eligibility remains open.
 For fallback slots 12–18, helper `0x1412138f0` starts with the corresponding
 slot minus 12, then follows additional content pointers to a nested palette
 or direct default. This explains why the chooser's null routes do not
