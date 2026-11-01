@@ -99,6 +99,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     `gw2-capture-census` reports IDs/boundaries without field values; focused
     tests/build/clippy pass and the run-58 capture parses completely. See
     [re/209026-character-protocol.md](re/209026-character-protocol.md).
+  - **Static character-creation path:** creation context sends ID 415 through
+    mission protocol 0, group 39. Registration and descriptor establish its
+    bounded string, fixed/variable arrays and scalar wire layout. Mission
+    bootstrap, reply and runtime creation remain unverified. See
+    [re/209026-character-creation.md](re/209026-character-creation.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
