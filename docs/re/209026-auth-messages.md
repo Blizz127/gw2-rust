@@ -108,3 +108,52 @@ Network isolation, cleanup, unchanged executables and archive count were verifie
 Evidence: `ev_5c3222b1673679e682200585b4f83250fb4694fcb9c1704dd7b4951c64d242fd`;
 private export `~/re/gw2/notes/209026-auth-ready-run52.json`.
 Definition-byte capture: `ev_6bd28470bb62ebb9dfddbfac03905e7a805a17332198210f84154ca3e334a209`.
+
+## ID 10 and reply correlation
+
+Sender `0x1402416f0` takes the request u32, two 16-byte values, and two string
+pointers. Server ID 8's handler `0x140240850` forwards the first u32 to
+`0x14023a770`, which searches outstanding requests by the field at +0x30 and
+requires request state 3. For request type 7 it stores returned identity and
+account fields. This handler also sends client ID 4 once, then sets a context
+flag. ID 8 alone does not mark the outstanding request complete.
+
+Server ID 7's handler `0x1402407a0` calls `0x14023a9e0`. That helper searches by
+the same request u32, requires state 3, records two result fields for request
+type 7, then sets state 1 and copies four low-u16 status fields. A minimal
+synthetic experiment can therefore send ID 8 with the actual request ID, then
+ID 7 with that ID and zero result/status fields. The meanings and acceptable
+values of the other account fields remain to be tested; zero-filled fields
+are a fixture hypothesis, not a recovered production account format.
+
+ID 8 fields: Dword, Guid, Guid, seven Dwords, Byte, BufferFixed(32),
+ArrayVarSmall(max 50), BufferFixed(32). The nested array entry consists of
+Word, Word, Dword, Dword, Dword. ID 7 has seven Dwords, including request ID.
+
+## String and buffer wire observations
+
+The outgoing kind-13 branch at `0x140ff0c0a` obtains a wide-string length, adds
+one for the terminator, checks that count against the definition's maximum,
+and copies those little-endian u16 units directly. **String is UTF-16LE with
+a terminating zero unit and no count prefix** on this path; the schema maximum
+includes the terminator. This differs from the previously configurable counted
+string option. Empty strings therefore occupy two bytes.
+
+Kind 17 at `0x140ff0f26` writes a u8 element count before recursively encoding
+its elements. Kind 18 uses u16. Kind 19 at `0x140ff1198` copies exactly the
+schema size in bytes from the field pointer. These observations permit bounded
+parsing of the initial client messages and construction of an empty-array
+account fixture. Incoming handling of the richer fixture still needs runtime
+verification.
+
+Private export: `~/re/gw2/notes/209026-auth-success-static.json`.
+
+| Evidence ID | Observation |
+| --- | --- |
+| `ev_26999b58d55375a43db6f45939acd137347b8faa49699e3b36107389cb33016a` | ID-10 sender. |
+| `ev_4ce1e89b64bb7defdf56d06562dbd8eb14c4e2f1b17cf34bef97383a2758ca37` | ID-8 handler and client ID-4 follow-up. |
+| `ev_a083b4b967bbfa0d5c46fe9754b6efcb9efb51b387c73c334b3ca1a161382def` | Correlated request data storage. |
+| `ev_9e99eb92f2c8ef4d437f4fe73ffd9c38b178a89976c9219420da509a2a5123d6` | ID-7 request completion. |
+| `ev_39cd597707855c49e80601e490ee32ca3cb899d4230796fbc03ad4492fdc7d91` | Nested array definitions and String switch. |
+| `ev_49983c94e72ecb49d3502d9c5fe3ebf79c5b32e3abfc0aef5b444d8fdcd0c8d3` | Terminated UTF-16 encoder. |
+| `ev_3406d2c89365f45a4d78facf74d34091b8a0ae9308b9ca112cbfbea9442cbd44` | Array counts and fixed byte buffers. |
