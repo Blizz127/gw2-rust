@@ -308,8 +308,8 @@ does not itself select that zero return. For resolved type **35 or 68**,
 the method directly copies the input GUID; other types have a separate
 collection lookup not needed for the established type-68 target. A GUID
 unequal to the sentinel at `0x141b91390` is passed to context service
-**+0x1f8**, obtained through `0x140266200`, virtual **+0x1a0**. That concrete
-service method remains unresolved. The query's returned Dword becomes
+**+0x1f8**, obtained through `0x140266200`, virtual **+0x1a0**. The [store-request follow-up](209026-quest-store-request.md) resolves
+that method to nonzero request-ID generation and asynchronous submission. The query's returned Dword becomes
 the next call's input; it should not be assumed to be zero merely because
 the +0xc8 service's collections began empty.
 
@@ -320,7 +320,9 @@ For a nonzero input it searches its +0x48 collection, skips an existing
 non-null associated entry, or calls `0x1402ee5a0` and returns true. The
 latter helper and any later processing remain untraced. This proves a
 zero-input no-op at this consumer, not a zero result from the preceding
-query or absence of the already completed listener registration.
+query or absence of the already completed listener registration. The
+follow-up establishes a nonzero ID on normal return from the reached
++0x1f8 method, so this zero-input guard does not skip that path.
 
 Private bundle: `~/re/gw2/notes/209026-quest-startup-subscription-1.json`.
 All reads were static; no client launch, service execution or state edits.
