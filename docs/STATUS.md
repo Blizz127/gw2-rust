@@ -105,7 +105,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     bootstrap, reply and runtime creation remain unverified. See
     [re/209026-character-creation.md](re/209026-character-creation.md).
   - **Static mission join:** auth request 29 and reply 20 lead through a
-    correlated route transaction to the protocol-0 game join. Address encoding
+    correlated route transaction to the protocol-0 game join. Creation uses
+    route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small
+    mission control group are mapped. Address encoding
     copies 28 raw bytes with a big-endian port; the Rust port codec is corrected.
     Exact-byte IPv4/IPv6 test and observer/census builds pass. Mission bootstrap
     remains untested. See [re/209026-mission-join.md](re/209026-mission-join.md).

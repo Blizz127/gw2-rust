@@ -26,6 +26,22 @@ parameters. That routine stores mission state and calls `0x14023c990`, which
 constructs a `0xc0000014` game-join transaction with vtable `0x141923748`.
 The exact triggering UI action and valid route values remain unverified.
 
+The character-creation route is now identified statically. Character-select
+routine `0x1402a0720` obtains the view interface and calls vtable slot +0x38.
+The table at `0x141b7e818` maps that slot to `0x14094b0b0`. On its allowed
+branch, this initializes creation context through slot +0xc8, then calls
+`0x141410e40` -> `0x141417d10` -> `0x14023cc70`. The last routine zeroes
+the transaction's 96-byte payload and sets +0x40 to 1. Consequently ID 29
+contains `[request_id, 1, 0, 0, 0, 0]` followed by a zero GUID on this path.
+An alternate path's assertion at `0x1422dd648`, reached when its mode equals 1,
+names this value `GAME_TYPE_CHARCREATE`. The UI event labels and allowed-branch
+predicate are not yet identified, and this request has not been seen at runtime.
+
+The intended static sequence is therefore creation route lookup (auth ID 29),
+route result (auth ID 20), protocol-0 game join, and later creation-data request
+(mission ID 415). It does not follow that replying to ID 29 alone is enough
+to initialize the creation scene.
+
 ## Game join
 
 The join start method `0x14023e740` is named by the client string
@@ -48,6 +64,26 @@ connection and sets the connected flags. Join completion emits event 0x25.
 This traces prerequisites for the separately documented
 [creation request](209026-character-creation.md); it does not prove a complete
 mission bootstrap or successful character creation.
+
+## Small mission control group
+
+Protocol-0 group 40 is registered at `0x1401a6f90`, with two client descriptors
+at `0x141923b70` and six server descriptor/handler pairs at `0x141923b80`.
+These are distinct from auth protocol-3 group 40.
+
+| Server ID | Descriptor fields | Handler behavior |
+| --- | --- | --- |
+| 1 | Four Dwords | `0x14023ede0` copies their low Words into the connection error, if no error is already set, and returns false. |
+| 2 | Two Dwords, String(128) | `0x14023ee20` saves text and a message ID; diagnostic format names DisconnectEx, msgId and prevMsgId. |
+| 3 | Empty | `0x14023ed60` sends client ID 2 with one Dword: 1000 divided by a local setting, or 40 if that setting is zero. |
+| 4 | Dword | `0x14023edc0` calls `0x14023b150`; values at most 5000 enter a ten-entry history and an event is emitted. Meaning unresolved. |
+| 5 | Float, Word, Float, Word, Word, Word | `0x14023ee70` copies six values into account/game globals through `0x14023b110`. Meanings unresolved. |
+| 1267 (0x4f3) | Five Dwords | `0x14023eeb0` passes field 0 as transaction ID and the low Words of fields 1–4 as a result to `0x14023b5c0`. |
+
+These handlers identify control traffic and one automatic client response. They
+do not establish which messages a server must send first or which scene-loading
+messages are required. Float remains outside the capture census's admitted
+primitive set until its wire representation is separately verified.
 
 ## Address wire byte order
 
@@ -85,10 +121,19 @@ evidence is exported privately in `209026-mission-static-2.json`.
 
 ## Evidence
 
-Private bundle: `~/re/gw2/notes/209026-mission-static-1.json`.
+Private bundles: `~/re/gw2/notes/209026-mission-static-1.json` through
+`209026-mission-static-3.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_efb0c852ec226cba26970a168ec167d64fc6f37408e1049a8c55cd8bbf32e233` | Protocol-0 group-40 registration. |
+| `ev_968a8ba79cbd482fa3496e57a5bf23675c940c48a68ba9e96289ff00869788b6` | Control handlers and descriptors for IDs 1, 2, 3, 4 and 1267. |
+| `ev_db6b73b11687b7d1c4b69561068e512a0bd740673946a4cda357bf6a58067444` | ID-5 descriptor, scalar storage, bounded history and diagnostic text. |
+| `ev_366c7c8e6cf6a30b9c8dce6765d875967671ec5c63ce19141318876a298d8776` | Route constructors, including zero payload plus mode 1. |
+| `ev_31788c6ddd4992bc634ef461df2ba23b74d3d4952705ab869cd785d391290116` | Creation route setup and general route setup. |
+| `ev_20b9425269c9ba6121e6c4010c7497e7407633fd5c571f664953d76293fdf66d` | View call path and GAME_TYPE_CHARCREATE assertion. |
+| `ev_a5e305fa68b209ea356b18d3d35c670148a7a071d7c43d3fea5dc38c7a026e38` | View vtable slot and mode-1 comparison. |
+| `ev_af809e5875e85a09b74987715c1b02f7e3151bdc81ce560b0153996a67002a4d` | Character-select scene calls creation view slot. |
 | `ev_17ea319db572bb3fe9f12a6b2493e1a4eb185bbdae16a1531fce2f6aa4ba5ef5` | Route/join transaction vtables and construction. |
 | `ev_c7a18d00178716cf541c903e3a200cba374d80f0e47c72b1c017a5590d8c5c25` | Auth ID-29 sender. |
 | `ev_a6a6b01af93a755c24a3634c144fa0115570487bab833229444aca10cf77a1c3` | ID-20 handler arguments. |
