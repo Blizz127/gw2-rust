@@ -228,9 +228,10 @@ nonnull +0xe8 record reaches loading call `0x140cf7000`, using record
 +0x28. A nonnull result becomes model +0x40, with the previous current
 model retained at +0x48, and sets whole-view +0xb78 mask 0x80. Both an
 absent record and a null load result instead reach model virtual +0x120
-without installing a replacement here. That callback and the record's
-population are separate dependencies; this helper alone does not ensure
-that a view has a loaded model.
+without installing a replacement here. The [record/callback follow-up](209026-character-model-records.md)
+resolves selection to type-146 content and confirms that this callback
+returns when no model exists; this helper alone does not ensure that a
+view has a loaded model.
 
 The no-record helper later repeats the wardrobe/inventory helper
 `0x141165d60` when model +0xe0 is nonnull and view +0x08 virtual +0x1f0
