@@ -96,6 +96,12 @@ transactionally and encoding should append it. Such an API must not imply
 that the agent exists, that scene entry has not already happened, or that
 an incoming flag/tick choice is valid. No runtime sender is introduced.
 
+The `AgentSceneEntry209026` codec now implements that scope. Two focused
+transport tests and the library build pass: literal 6/7/10-byte goldens,
+zero/max unsigned values, prefix and concatenated frame boundaries, every
+truncated representative frame, wrong ID and overflowing tick rejection.
+Errors leave the input slice unchanged. No frame was transmitted.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-agent-scene-entry-1.json`.
