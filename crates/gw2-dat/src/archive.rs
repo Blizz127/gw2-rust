@@ -86,6 +86,8 @@ pub struct Archive<R = File> {
     reader: Mutex<R>,
     len: u64,
     index: HashMap<u32, MftEntry>,
+    /// Every MFT entry after the header slot, in MFT order (0-based).
+    entries: Vec<MftEntry>,
 }
 
 impl Archive<File> {
@@ -160,6 +162,7 @@ impl<R: Read + Seek> Archive<R> {
             reader: Mutex::new(reader),
             len,
             index,
+            entries,
         })
     }
 
@@ -198,8 +201,30 @@ impl<R: Read + Seek> Archive<R> {
         self.read_limited(file_id, Some(n))
     }
 
+    /// All MFT entries (0-based, header slot excluded), including ones that no file id
+    /// points at, such as the archive's own index entries.
+    pub fn mft_entries(&self) -> &[MftEntry] {
+        &self.entries
+    }
+
+    /// Like [`Archive::read_head`], but for a raw MFT entry number (0-based).
+    pub fn read_mft_head(&self, mft: usize, n: usize) -> Result<Vec<u8>> {
+        let entry = *self.entries.get(mft).ok_or(ErrorKind::NotFound)?;
+        self.read_entry(&entry, Some(n))
+    }
+
+    /// Like [`Archive::read`], but for a raw MFT entry number (0-based).
+    pub fn read_mft(&self, mft: usize) -> Result<Vec<u8>> {
+        let entry = *self.entries.get(mft).ok_or(ErrorKind::NotFound)?;
+        self.read_entry(&entry, None)
+    }
+
     fn read_limited(&self, file_id: u32, head: Option<usize>) -> Result<Vec<u8>> {
-        let entry = self.index.get(&file_id).ok_or(ErrorKind::NotFound)?;
+        let entry = *self.index.get(&file_id).ok_or(ErrorKind::NotFound)?;
+        self.read_entry(&entry, head)
+    }
+
+    fn read_entry(&self, entry: &MftEntry, head: Option<usize>) -> Result<Vec<u8>> {
 
         let full = entry.size as usize;
         let end = entry

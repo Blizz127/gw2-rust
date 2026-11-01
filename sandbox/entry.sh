@@ -55,14 +55,20 @@ case "$mode" in
     start_x
     prepare_prefix
     if [[ "${DNS_SINK:-0}" == 1 && -x /server/gw2-dns-observe ]]; then
-      /server/gw2-dns-observe --log /sandbox/logs/dns.log >/sandbox/logs/dns.out 2>&1 &
-      echo "dns sinkhole started (all names -> 127.0.0.1, log /sandbox/logs/dns.log)"
+      # 127.1.0.1, not 127.0.0.x: the client's StsLib lookup recurses forever on 127.0.0.0/24
+      # when the host has only loopback (docs/re/209026-connect-path.md).
+      /server/gw2-dns-observe --answer "${DNS_ANSWER:-127.1.0.1}" --log /sandbox/logs/dns.log >/sandbox/logs/dns.out 2>&1 &
+      echo "dns sinkhole started (all names -> ${DNS_ANSWER:-127.1.0.1}, log /sandbox/logs/dns.log)"
     fi
     if [[ -n "${SERVER:-}" ]]; then
-      read -ra cmd <<<"$SERVER"
-      "/server/${cmd[0]}" "${cmd[@]:1}" >/sandbox/logs/server.log 2>&1 &
+      # SERVER may hold several commands separated by ';' (each a binary under /server).
+      IFS=';' read -ra cmds <<<"$SERVER"; n=0
+      for c in "${cmds[@]}"; do
+        read -ra cmd <<<"$c"; [[ ${#cmd[@]} -gt 0 ]] || continue; n=$((n+1))
+        "/server/${cmd[0]}" "${cmd[@]:1}" >"/sandbox/logs/server$n.log" 2>&1 &
+        echo "server $n started: ${cmd[*]}"
+      done
       sleep 1
-      echo "server started: $SERVER"
     fi
     # Screenshot the virtual display every ${SHOT_EVERY:-20}s into /sandbox/logs/shots/.
     mkdir -p /sandbox/logs/shots

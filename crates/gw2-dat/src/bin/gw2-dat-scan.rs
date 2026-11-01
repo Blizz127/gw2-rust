@@ -6,6 +6,8 @@
 //! `--map-rects` instead prints `file_id<TAB>x0<TAB>y0<TAB>x1<TAB>y1` for every
 //! `mapc` packfile, from its `parm` chunk (`MapParam.rect`, the same units as the
 //! web API `map_rect`).
+//! `--unindexed` instead scans MFT entries that no file id points at (by offset),
+//! printing `mft#<TAB>stored size<TAB>label<TAB>first 16 bytes` for each.
 
 use std::collections::BTreeMap;
 use std::process::ExitCode;
@@ -30,11 +32,13 @@ fn main() -> ExitCode {
     let mut want = None;
     let mut limit = 50usize;
     let mut map_rects = false;
+    let mut unindexed = false;
     while let Some(a) = args.next() {
         match a.as_str() {
             "--type" => want = args.next(),
             "--limit" => limit = args.next().and_then(|n| n.parse().ok()).unwrap_or(50),
             "--map-rects" => map_rects = true,
+            "--unindexed" => unindexed = true,
             _ => path = Some(a),
         }
     }
@@ -51,6 +55,19 @@ fn main() -> ExitCode {
     };
     let mut ids: Vec<u32> = archive.file_ids().collect();
     ids.sort_unstable();
+    if unindexed {
+        let used: std::collections::HashSet<u64> =
+            ids.iter().filter_map(|id| archive.entry(*id)).map(|e| e.offset).collect();
+        for (i, e) in archive.mft_entries().iter().enumerate() {
+            if used.contains(&e.offset) || e.size == 0 {
+                continue;
+            }
+            let head = archive.read_mft_head(i, 16).unwrap_or_default();
+            let hex: Vec<String> = head.iter().map(|b| format!("{b:02x}")).collect();
+            println!("{i}\t{}\t{}\t{}", e.size, label(&head), hex.join(" "));
+        }
+        return ExitCode::SUCCESS;
+    }
     if map_rects {
         for &id in &ids {
             let Ok(head) = archive.read_head(id, 4096) else { continue };
@@ -92,7 +109,7 @@ fn main() -> ExitCode {
     let mut by_count: Vec<_> = hist.into_iter().collect();
     by_count.sort_by_key(|e| std::cmp::Reverse(e.1));
     println!("entries {}  head-read errors {errors}", ids.len());
-    for (l, n) in by_count.iter().take(60) {
+    for (l, n) in by_count.iter().take(limit.max(60)) {
         println!("{n:>9}  {l}");
     }
     if let Some(w) = want {
