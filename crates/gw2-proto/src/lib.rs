@@ -25,6 +25,7 @@ pub mod dynamic;
 pub mod endurance;
 pub mod guardian;
 pub mod health;
+pub mod play_route;
 pub mod player_creation;
 pub mod player_startup;
 pub mod progress;
