@@ -24,6 +24,11 @@ and coreStats creation must therefore precede server 170. Server 443's
 setter uses the raw character lookup and checks `!m_charOwned`; it does
 not require the finalized flag. This fits the ordering without a cycle.
 It does not establish the behavior of every ownership/control transition.
+The [coreStats initialization callback](209026-character-core-stats.md#initialization-already-requires-player-ownership)
+adds a stricter order: fresh owned-player coreStats creation itself requires
+the associated player and owned-character pointer. Its earned-level setter
+reads owned coreStats before any finalized-flag guard. Creation stores the
+new component before that setter, so 443 must precede 182/183 for this path.
 
 ## Inventory creation: server 282
 
@@ -156,7 +161,7 @@ ordering of event listeners and content setup.
 | Operation | Prerequisite established by this trace and linked findings |
 | --- | --- |
 | Server 282: inventory component | Character exists through server 37. |
-| Server 182 or 183: coreStats | Character exists; component not already created. |
+| Server 182 or 183: coreStats | Character exists; component not already created. Player path also needs associated player and owned coreStats; for a fresh owned character, 443 precedes this creation, which stores its component before the level callback. |
 | Server 443: owned-character assignment | Player entry and character exist. |
 | Server 151: attitude | Character exists; an earlier update would be ignored. |
 | Server 605: initial skill availability | Player entry exists and type-64 skill key resolves; direct path does not require an owned character. |

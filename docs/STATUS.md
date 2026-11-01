@@ -235,7 +235,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     are alternative coreStats creation paths; 185 only updates an existing
     component. Their private framing census consumed 249 bytes completely;
     named icon/trait consumers establish the third scalar byte as profession.
-    The two level fields' exact names remain unresolved;
+    The first level is earned level; the second level's name remains unresolved.
+    Initialization's earned-level callback already dereferences the associated
+    player's owned coreStats, before finalization. For a fresh owned character,
+    the required order is 428, 37, 443, then 182 or 183;
     see [re/209026-character-core-stats.md](re/209026-character-core-stats.md).
     Downstream finalization requires the fresh player's owned-character pointer
     and coreStats, plus inventory for the finalized coreStats. Server 282 creates

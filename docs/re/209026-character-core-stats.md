@@ -63,6 +63,59 @@ character. 185 cannot replace that creation step. This does not establish
 which creation variant is appropriate for a local player, valid appearance
 content, or the complete set of components needed before server 170.
 
+## Initialization already requires player ownership
+
+The first level setter `0x141208f50` stores +0xac and immediately calls
+`0x1411de950` with its owning character. This call is **not guarded by the
+finalized flag**. For a player character, it obtains the associated player
+and calls `0x1411bbdd0`. That helper asserts **m_charOwned** (literal
+`0x14215ef60`), dereferences player +0x20, gets that owned character's
+coreStats, and reads its earned level through virtual 0. It passes the
+result to `0x141237fa0`, which retains the unsigned maximum in an embedded
+player field. A missing player, owned character or owned coreStats cannot
+satisfy this direct path.
+
+Both 182 and 183 invoke this setter after `0x1411d60a0` has constructed
+and stored their new component at character +0x388. Therefore, for the
+fresh owned character, the necessary order is **player creation 428,
+character creation 37, owned assignment 443, then coreStats 182 or 183**.
+This strengthens the earlier requirement that ownership precede 170.
+Other player-character transitions require the associated player's owned
+coreStats too; this trace does not establish their complete sequencing.
+
+Owned setter `0x1411bc830` stores the raw character and subscribes an
+embedded player listener through `0x141273060`. Character construction
+installs vtable `0x142161518` at +0x40; its +0xf8 entry `0x1411db920`
+only adds the listener to a collection. This direct subscription does not
+read coreStats. The setter then dispatches player listeners through virtual
++0xe8 (`0x14026e898`); those runtime-dependent listeners are not exhaustively
+traced here. There is no coreStats prerequisite in the inspected direct
+owned-assignment path, but this is not a complete bootstrap proof.
+
+The other common setters dispatch change notifications. Their derived
+attribute helpers `0x1412083c0` and `0x1412084b0` skip their substantive
+attribute loops until character flag +0x178 bit 0x10 is set. The final
+initialization event `0x1411da600` checks coreStats and dispatches character
+listeners through virtual +0x70. These guards do not apply to the direct
+earned-level callback above, and do not prove all listeners safe.
+
+Private bundle: `~/re/gw2/notes/209026-core-initialization-order-1.json`
+(1,080 records, 23,766,504 bytes). Static REA only; no client replay.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_281545deb183c5ac97ab19759fb82040ed13d122b561af9a47cfd3da1fb21b54` | Profession setter, finalized guards and initialization-event trampoline. |
+| `ev_6bcd713d8315f2f4c9c49fa3b51b2007e2c876ac0c1676bd8f16263784e88358` | Earned-level direct callback and second-level setter. |
+| `ev_b644f3f552a12e075309e7ac7ce8889bf84d07a4891a3e0995050df76eef57a2` | Player-only callback and appearance setter. |
+| `ev_3cc9b7f8798d20260ebd66cf09d35c9def1a6986fecfce718c8eb246d3c8c3c4` | Owned-coreStats dereference and 183 handler order. |
+| `ev_f4da576e57161a49bc1fcd80c5fdb58c1607aa6661f1d01765e4be8dedfcf240` | Owned setter, assertion literal, component storage and maximum-level update. |
+| `ev_0a6c9f18d63d53a337c86e4fad316ea9a028176c535ef6e32bbab2db40615798` | Subscription wrapper, player-event trampoline and 182 handler order. |
+| `ev_336ee0ebe486a872b5ef973118995ed2ee17946fb26958f77dd3d6a858428041` | Character +0x40 interface installation. |
+| `ev_da5b1834d5f4366aaf8444d310f0a7492458673514183f9b40379ef8dad8ad29` | Subscription vtable target. |
+| `ev_f2ffba8058c3f10ed3e23ef19055504ceec9d6aff16deba8b01ddfeec110c18c` | Listener insertion and duplicate assertion. |
+| `ev_47c5197dc3755a849c450ff264d2cbde045d88e61c4eb74875e1e76797d3eba8` | Listener insertion tail branches. |
+| `ev_c2fd5c34e43a257ca15235ab82abefe447137fc34e82e142e9782bdcdb61ca9f` | Remaining insertion tail and return. |
+
 ## Profession getter trace
 
 The component's primary vtable at `0x142168da0`, virtual +0x28, points to
