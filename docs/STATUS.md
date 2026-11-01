@@ -158,6 +158,9 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     Load callbacks identify client 420 (MapLoaded) and 418 (FailedToLoad),
     with matching prepared-map/state prerequisites. Offline load/result
     boundary fixtures parse 44/4 bytes completely; no live load was attempted.
+    Route preparation supplies the loader's map definition before joining;
+    ordinary readiness sends text/audio languages in client 423. Server 1036
+    requires loader READY, while the default-view ID-1061 callback is empty.
     See [re/209026-mission-transfer.md](re/209026-mission-transfer.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion

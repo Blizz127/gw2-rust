@@ -69,6 +69,15 @@ from the empty ID-1061 message alone.
 
 ## Load command and result callbacks
 
+For a nonzero redirect type, the shared join helper `0x141417b80` first
+calls view slot +0x188 with the route's map-definition key, before constructing
+the binary game-join transaction. That slot resolves to `0x14094e620`, which
+switches the view to state 0xd and calls `0x140953670` on its embedded loader.
+The latter logs **MapLoader: BeginMap**, resolves the key through content
+slot +0x1a8, stores the definition at loader +0x2b8, requires it to be nonnull,
+and sets loader state 1. Redirect type zero uses the separate creation slot
++0x148 instead. This establishes where the prepared definition originates.
+
 ID 1060's handler converts its Byte to `2 * value * pi / 255` using float
 constants at `0x14193fc84` and `0x14192bb9c`. This establishes a full-turn
 angular scale; the world axis and orientation convention remain unknown.
@@ -105,6 +114,24 @@ remainder. The vectors and scalars are handwritten placeholders. These
 mode-0600 fixtures were never sent and do not represent an established
 message sequence or valid map content.
 
+Two adjacent messages must not be mistaken for substitutes for content
+loading. ID 1061's view callback at slot +0x198 resolves to `0x140163990`,
+a bare return, in this default view. Its inspected handler then logs
+OnRecvLoadAgents and returns; it does not itself create agents. Empty server
+ID 1036 calls view slot +0x170 (`0x14094dfd0`), which explicitly asserts
+`m_mapLoader.State() == CMapLoader::STATE_READY` (loader state 0xd), switches
+the view to state 0x10 and invokes game-system callbacks. That assertion
+means ID 1036 cannot be treated as proof that earlier loading completed.
+
+The ordinary readiness branch also differs from creation: when context
++0x150 has both masks 0x40/0x80 and lacks mask 0x1, `0x141418df0` retrieves
+text/audio language preferences, checks `LanguageIsPermitted`, then calls
+`0x141418bb0`. It sends client **ID 423**, two Bytes in text-then-audio order,
+with named upper-bound assertions `< LANGUAGES` (6). Language enum labels
+are not mapped here. The mask-0x1 branch remains creation's empty ID 410.
+These dependencies are static; a complete successful runtime order is still
+unverified.
+
 Load callback evidence is exported separately in
 `~/re/gw2/notes/209026-map-load-static-1.json`:
 
@@ -116,6 +143,16 @@ Load callback evidence is exported separately in
 | `ev_4900a13621ebc86e2a06a4a8e532b40d2dd8b6a8832666c4eee65dc0d4111cf2` | View forwarding to embedded loader. |
 | `ev_b161b3bb7781e754b9aad87db2da91bbd9acfb794648b3e863fea218fe88ffee` | Interface +8 construction, loader state/definition guards and parameter storage. |
 | `ev_a6c13ee541b2de04a5aaeb178f3b4b9a4f0b33f6aae533b1852323b3a71e777b` | Both fixture censuses and named loader assertions. |
+
+The preparation extension is exported in
+`~/re/gw2/notes/209026-map-prepare-static-1.json`:
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_3a8901d6ec7732fec73afaed7f5245fa339541ee5f74d66f40157843530e7cb3` | Ordinary readiness branch, LoadAgents view slot and begin-playing guard. |
+| `ev_ea8d980df947dcbe42a9a1b63b65cf3e0e8e071fdf771c4b3df3df145601204e` | View preparation, ID-423 sender, STATE_READY assertion and bare-return callback. |
+| `ev_4ec6d9e3879a472b685c34931c0ef61f01c3fd828c9c36f785ccad9b14ef50d1` | Join-to-view call, prepared map-definition storage and language assertions. |
+| `ev_3651de70b6ea102950ddec91148374a90825f439d59be5aa82d4afe728c377b4` | Complete join argument flow, BeginMap diagnostic and ID-1061 handler. |
 
 ## Boundary check and evidence
 
