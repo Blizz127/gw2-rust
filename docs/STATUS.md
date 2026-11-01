@@ -102,7 +102,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     tests/build/clippy pass and the run-58 capture parses completely. See
     [re/209026-character-protocol.md](re/209026-character-protocol.md).
     Named consumers also establish summary level/profession and its required
-    map-definition key. The new `gw2-summary-check` checks version-11 structure
+    map-definition key. Frozen-content tracing resolves key 15 to a type-45
+    data-ID record referencing Queensdale file 192711; runtime registration
+    remains untested ([map-definition content](re/209026-map-definition-content.md)).
+    The new `gw2-summary-check` checks version-11 structure
     without printing values or claiming content/preview validity; two focused
     tests, checker/census builds and six CLI smoke cases pass.
     Static refresh mapping identifies client ID 25, pending ID-17 list records,

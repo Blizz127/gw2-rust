@@ -190,8 +190,11 @@ Specifically, it uses the service at `0x1409b1fb0()` +0xe0 and virtual slot
 stores the returned object, and asserts `m_mapDef` from `GameLoad.cpp`.
 The summary's +1 Word is therefore a map-definition lookup key. The character
 detail consumer at `0x140433685` performs the same lookup from the normalized
-summary and passes the result to its display path. No particular numeric key's
-presence in the frozen client's loaded content has yet been demonstrated.
+summary and passes the result to its display path. The later
+[map-definition content trace](209026-map-definition-content.md) establishes
+that this is a type-45 data-ID lookup and locates key 15 in the base archive,
+with a reference to Queensdale map file 192711. Runtime registration remains
+untested.
 The preview consumer below establishes the appearance substructure and its
 race/sex fields. Other field names require separate consumer evidence; matching
 a numeric range alone is insufficient.
