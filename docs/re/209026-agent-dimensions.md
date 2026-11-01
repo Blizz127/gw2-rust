@@ -25,14 +25,16 @@ observed uses, not proposed names for all eight values.
 | Array 2 | +0x140 | Stored; not passed to the collision factory here. |
 | Array 3 | +0x144 | Height input; after factory adjustment and /32, collision +0x29c. |
 | Array 4 | +0x148 | /32 to collision +0x2ac; participates in a second height minimum and an auxiliary shape's height. |
-| Array 5 | +0x14c | -value/64 to collision +0x2a8. Full meaning unresolved. |
+| Array 5 | +0x14c | -value/64 to collision +0x2a8; contributes to body/character vertical-origin conversion. |
 | Array 6 | +0x150 | /32 to collision +0x2a4; used as another shape parameter on a flagged branch. |
-| Array 7 | +0x154 | -value/32 to collision +0x454. Full meaning unresolved. |
+| Array 7 | +0x154 | -value/32 to collision +0x454; offsets the water level passed to movement. |
 | Final float | +0x80 | /32 to collision +0x2a0, the radius used by the capsule and six-point ray sample. |
 
 The subsequent [movement-parameter trace](209026-agent-movement-parameters.md)
 establishes the first two roles and records the third scalar's limited
-consumer evidence without assigning it a semantic name.
+consumer evidence without assigning it a semantic name. The [dimension-offset
+trace](209026-agent-dimension-offsets.md) follows arrays 5 and 7 into
+body-position conversion and movement water-level checks.
 
 `0x14109ca00` receives flags, height, radius and array 6 in the four
 register argument slots. Stack arguments include constant 50, array 4,
@@ -85,7 +87,10 @@ capsule extends from local Z=0 to Z=height_collision, not equally above
 and below the origin. The [resolved/clamped packet position](209026-agent-position.md)
 is passed into the character controller construction. This establishes
 the bottom-relative shape convention on this branch, not successful
-standing contact at an arbitrary triangle intersection.
+standing contact at an arbitrary triangle intersection. The later
+[body-backed position trace](209026-agent-dimension-offsets.md) also shows
+a mode-dependent vertical origin offset; shape-local coordinates must not
+be substituted for the body or packet position without that conversion.
 
 The flagged branch can instead call `0x1410b60f0` → `0x141096310` →
 `0x1416c3a60`, whose RTTI names `hkpCylinderShape`. Its supplied endpoints
