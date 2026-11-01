@@ -6,7 +6,9 @@
 //! missing arrays read as empty. Version 16 decodes on build 209026 Queensdale;
 //! index checks pass. Its collision bounds and prop translations use different
 //! coordinate scales. 4,113 matched prop translations equal render positions
-//! exactly; mesh units, rotation order and runtime transforms remain unknown.
+//! exactly. Prop translations apply the map matrix, then divide XYZ by 32
+//! and negate Z for the collision scene. Mesh units and rotation order remain
+//! unknown.
 //! See `docs/re/209026-map-coordinate-spaces.md`.
 //!
 //! Server use: collision triangles give ground height, line-of-sight and
@@ -58,6 +60,25 @@ pub struct ModelPlacement {
     pub translate: [f32; 3],
     pub rotate: [f32; 3],
     pub geometry_index: u32,
+}
+
+impl ModelPlacement {
+    /// Convert a `propModels` placement origin to build-209026 collision space.
+    ///
+    /// `map_transform` is the map's row-major 3×4 affine matrix. The primary
+    /// map uses identity on the traced default-view load path. Apply that
+    /// matrix before dividing by 32 and reversing Z. The model's own scale
+    /// and rotation do not change its placement origin.
+    ///
+    /// This operation does not transform mesh vertices or rotations, and has
+    /// not been established for other placement tables or mission packets.
+    pub fn prop_physics_translation_209026(&self, map_transform: [[f32; 4]; 3]) -> [f32; 3] {
+        let [x, y, z] = self.translate;
+        let [tx, ty, tz] = map_transform.map(|row| {
+            row[0] * x + row[1] * y + row[2] * z + row[3]
+        });
+        [tx * 0.03125, ty * 0.03125, -tz * 0.03125]
+    }
 }
 
 fn bad(what: &str) -> Error {
@@ -293,6 +314,21 @@ mod tests {
         let tris: Vec<_> = meshes[0].triangles().collect();
         assert_eq!(tris[1], [[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]);
         assert_eq!(m.geometry_meshes(5).count(), 0);
+    }
+
+    #[test]
+    fn prop_translation_applies_map_transform_before_collision_units() {
+        let prop = ModelPlacement {
+            translate: [32.0, 64.0, -96.0],
+            scale: 7.0,
+            rotate: [0.3, 0.7, 1.2],
+            ..Default::default()
+        };
+        let identity = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]];
+        assert_eq!(prop.prop_physics_translation_209026(identity), [1.0, 2.0, 3.0]);
+        // Rotate XY, scale Z and translate in map units. Model scale is separate.
+        let affine = [[0.0, -1.0, 0.0, 32.0], [1.0, 0.0, 0.0, 64.0], [0.0, 0.0, 2.0, 96.0]];
+        assert_eq!(prop.prop_physics_translation_209026(affine), [-1.0, 3.0, 3.0]);
     }
 
     #[test]

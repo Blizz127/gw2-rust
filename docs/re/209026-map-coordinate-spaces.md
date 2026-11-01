@@ -80,20 +80,62 @@ For example, both tables store
 `[22945.0859375, -2267.200439453125, -1821.687744140625]` for one matched
 placement. This is equality of decoded float values, without a scale,
 translation or axis flip. Instance-array transforms and unmatched props
-were not included. Mesh-local vertex units, bounds units, rotations and
-runtime transform composition remain unresolved.
+were not included. The runtime prop translation conversion is traced below;
+mesh-local vertex units and rotation conventions remain unresolved.
 
 The nine `msn` interest points also have coordinates on the larger scale;
 their descriptive labels do not establish exact correspondence to cached
 API landmarks. They are not proven player spawn positions.
 
+## Prop translation into the collision scene
+
+`CoScene.cpp` loader `0x1410b5b8c` obtains the `havk` chunk. It reads
+the stored bounds directly, while multiplying map-rectangle XY values by
+the float at `0x14192df28`: **0.03125 = 1/32**. It passes the chunk and
+the map's virtual +0x180 matrix to `0x1410b8180`.
+
+That consumer iterates `propModels` using count +0x5c, pointer +0x60 and
+48-byte records. This matches the schema: token +0, sequence +8, scale
++0x10, translation +0x14, rotation +0x20, geometry index +0x2c.
+It tests the map matrix with `0x140c915e0`, which compares all twelve
+elements against the identity matrix.
+
+For identity, `0x1410b8648` loads translation XYZ, flips Z's sign using
+`0x80000000` at `0x141936e00`, multiplies all three by 1/32, and packs
+`[x/32, y/32, -z/32, 0]` into XMM7. For a nonidentity matrix,
+`0x1410b868b` first computes each row's affine product:
+
+```
+t[i] = M[i][0]*x + M[i][1]*y + M[i][2]*z + M[i][3]
+collision_translation = [t[0]/32, t[1]/32, -t[2]/32]
+```
+
+At `0x1410b87f2` it writes this translation into the transform passed
+to prop constructor `0x1410be5e0`; model scale is passed separately.
+Consequently the prop's own scale does not multiply its placement origin.
+This is a traced conversion for **prop translations**, not permission to
+apply the same operation indiscriminately to all `havk` fields. The stored
+bounds are already in the collision scene's smaller units. Rotations and
+mesh-local vertex conversion still require their own traces.
+
+`ModelPlacement::prop_physics_translation_209026` accepts the map matrix
+explicitly and implements only this translation operation. Its focused
+test exercises identity and a matrix with axis mixing, translation and
+Z scaling; the prop's own scale and rotation do not alter the origin.
+All four focused map-reader tests and the library/inspector build pass.
+
+A REA smoke of the compiled Rust helper converts all **8,301** Queensdale
+prop origins to finite collision translations. All 8,301 lie within the
+stored collision bounds. Origin containment is a diagnostic consistency
+check; it does not prove mesh containment or ground-height accuracy.
+The same smoke repeats the 4,113 exact render/collision placement joins.
+
 ## Implementation consequence and evidence
 
 Keep the API continent↔map conversion as it is. Do not add a blanket
 map↔collision/world conversion based on rectangle size or bounds alone.
-Next useful evidence is the physics placement consumer, an exact API/archive
-point correspondence, or a controlled mission-position capture after the UI
-hold clears.
+An exact API/archive point correspondence or a controlled mission-position
+capture after the UI hold clears is still needed for packet coordinates.
 
 Private helper: `~/re/gw2/notes/check-map-placement-scale.rs`; its compiled
 binary was run through REA. It asserts all 4,113 joins are exact and that
@@ -125,3 +167,16 @@ Transform follow-up bundle:
 | `ev_b7f592b1b831252d35b4f2987aff84dcb0f174af058e36e2da0f2abb755f334a` | Primary-map entry append and request loop. |
 | `ev_f4b580baacc50c6857eb0613ff81e8f6033706819d4f58d5ebb775c24e91f989` | Matrix initializer and current map-file reference. |
 | `ev_95aa39f8ddb37cb09250ee69e8776c3cfdaad5dccbbb3556f6363ccb0596e5a0` | Identity global and VdfLoad source string. |
+
+Collision follow-up bundle: `~/re/gw2/notes/209026-collision-translation-1.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_5e8a5c481b15697130b86c484322cb6e2af21518143085df672f9e3c03c84cf3` | Hash-guarded helper finds direct `havk` references after two shell-pipeline search timeouts. |
+| `ev_6f618d0905bba6b6a1012cff1ba8db72dca0111f9cef32302c24090ed2128294` | Chunk load, bounds handling and map-matrix forwarding. |
+| `ev_3a70f5f8783f3711888330d64b76f1460883f7cef73814642da3fdb0d441c928` | 1/32 constant, CoScene source path and prop-array layout. |
+| `ev_90ec0300bde93c5e8ad461056de49fc7afb50f847cf6a56c27cd4482aa323eff` | Identity test, affine translation conversion, Z sign mask and prop construction. |
+
+Rust smoke bundle: `~/re/gw2/notes/209026-collision-translation-rust-1.json`;
+record `ev_baac54c10b9c703d6690afc00ac8a24333959dc4da93ecdbcaa0e63004b9177b`.
+Private helper source: `~/re/gw2/notes/check-map-prop-translation-rust.rs`.
