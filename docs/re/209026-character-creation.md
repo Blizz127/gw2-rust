@@ -129,7 +129,25 @@ the 28-byte address to +0x78 and scalar to +0x94. Unlike the generic completion
 reply, this path populates the destination before completion event 0x5d.
 The inspected constructor zeroes the GUID at +0x68, and this callback does not
 fill it; the meaning/use of that zero GUID in subsequent code remains unresolved.
-No additional reply or subsequent world-join behavior is claimed here.
+No additional reply or completed world join is claimed here.
+
+Completion event 0x5d is dispatched by `0x140950d40`: the byte table at
+`0x140950f78` maps index `0x5d - 0x16` to 6, whose target is `0x140950eba`.
+On zero error it looks up the character record by the result's name through
+`0x14023c3c0`; on error it zeroes the local 0x258-byte record. It then calls
+`0x14094db50` with the result, GUID, name and the looked-up summary length/blob.
+
+That routine emits success event `0x10000009`, copies the result GUID to mission
+context +0x20 and name to +0x30, and normalizes the summary into +0x58 through
+the existing character-blob validator. Failure emits event `0x10000008` instead.
+On success, its continuation tests mission-context +0x228 bit 1 (the connected
+flag) and view state 0–3. If both hold, `0x141410f30` asserts context mode +0x1b4
+is zero and the GUID is nonzero, then sends empty mission client **ID 430**
+through `0x1414188d0`. Otherwise `0x14094f4d0` chooses content/map parameters
+and calls `0x141410e80`, the general auth route-request path already mapped in
+the mission-join notes. The ID-3 destination address is not directly consumed
+by these inspected branches. Their exact runtime selection after creation,
+including how the GUID becomes nonzero, remains unresolved.
 
 Server ID 1051 has four Dwords; handler `0x1414128f0` takes their low Words
 and emits event `0x10000002`. The creation scene subscribes to that event and
@@ -171,10 +189,15 @@ Evidence: `ev_327f5b54412d9d00b8209f927420c279eaeab8de5fc4c054b8933f5a5d8e4473`
 ## Evidence
 
 Private REA bundles: `~/re/gw2/notes/209026-character-static-6.json` and
-`~/re/gw2/notes/209026-mission-static-7.json`.
+`~/re/gw2/notes/209026-mission-static-9.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_09e232402b8a05219e98e2ad793867b579fe3c93208808b37709215f35b0de3f` | Event-0x5d jump-table target and summary lookup. |
+| `ev_d7c2fb6ab5e99ff4468933a5e53124f904539e3c7377502ec21c5fa8fc9a7252` | Success/error view handler and name-keyed record lookup. |
+| `ev_f28d1f111fc74ae907d8417864a4f63cd0283754d60ada3c22bf6578bf83eeb1` | Context GUID/name/blob writes and continuation assertions. |
+| `ev_68b3ead132e5a61a3981f51709a52d54380cf5af16d9a6795784f58873c39d4e` | Empty mission ID-430 sender; ID-18 separate-list consumer. |
+| `ev_f8cba293563c4e1f39e149922c827a1a8287cbcb273f00cc0de0820ae725ceb1` | Connected-flag predicate and fallback to general route request. |
 | `ev_35fdff9c75b433cd3a66f5ee398b84fc49287908bc440ac0a999949f14e00f97` | Auth server descriptor/handler registration table. |
 | `ev_e29a621ac3cbca0f315653e262e655bf1400d9d14f7c4ff08985078ae38bf341` | ID-3 argument unpacking. |
 | `ev_115e86141cb6171624bfeb21b25970739e8efbcbf6bbefd08151a6f110fb95d2` | Request/state guard and address-result completion callback. |
