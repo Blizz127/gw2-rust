@@ -71,7 +71,8 @@ event's runtime subscribers remain unexhausted. After that event:
   which sets manager +0x1b0 bit 0, registers its +8 interface with the
   input service, and tail-calls `0x14121a710`. That routine immediately
   dereferences owner coreStats and reads virtual +0x28/+0x38/+0x48.
-  Its content enumeration and broader effects remain unexhausted.
+  Its complete refresh loops are followed below; downstream input-service
+  behavior remains unexhausted.
 - The controlled player's reward-track manager refreshes all four slot
   records, as documented in the reward-track trace.
 - Helper `0x1411e9440` operates on embedded player +0x18c8. It checks
@@ -94,8 +95,10 @@ or that 248 is the only way to supply it. No bootstrap sequence is replayed.
 
 The [bounded player-tail follow-up](209026-player-startup-tail.md) resolves
 several later getters to embedded account/achievement/progress objects
-and identifies an explicitly optional pointer. Content evaluation and
-callbacks remain open.
+and identifies an explicitly optional pointer. Its later content census
+resolves the achievement lists and progress definitions, and distinguishes
+stored change flags from immediate dispatch. Other context subscribers
+remain open.
 
 The later [ordinary model trace](209026-character-model-inputs.md) finds
 an earlier conditional requirement: finalization's view creation can

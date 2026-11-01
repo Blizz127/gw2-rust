@@ -224,8 +224,8 @@ missing object does not clear an already-set bit.
 The tail compares old/new values through conversion helpers and ORs
 change bits into context +0x278: masks 2, 4, 8, 0x10, 0x20, 0x40 and 1
 for +0x268, account-backed +0x26c, the three +0x270 bits, +0x274 and
-+0x264 respectively. This records pending changes; it is not proof of
-when their downstream listeners run.
++0x264 respectively. These bits are also serialized state, as traced below; their updates
+do not by themselves establish an immediate listener dispatch.
 
 Even absent key-409 runtime progress does not skip conversion helper
 `0x1411c6380`. That helper requires GUID Dwords
@@ -261,6 +261,53 @@ No progress messages were transmitted and no client smoke was run.
 | `ev_aef4a9634be7ac79cb12c53592fcbf2fc156c284a1d8acbeb599cc683ae29281` | Progress-manager table entries. |
 | `ev_4a4584f17c3f18c98be9b1e5685fe9f8b9c0edc77d520c60aedaa2844de1ceaa` | Complete GUID lookup and required-definition assertion. |
 | `ev_b4c5aca40c616a96a4bca4d284fdcc1c5e33edd4f9708ca4d6cf7ee21fe16bd5` | Float literal backing the key-576 conversion. |
+
+## Change-mask storage and reset path
+
+A bounded scan of `0x1411b0000..0x1411d0000` for displacement +0x278
+located serialization, restoration and explicit clearing in addition to
+the startup writes. This scan is not an exhaustive whole-program caller
+or alias analysis.
+
+`0x1411b7810` packs context +0x278 into a Dword at record offset **0x0f**.
+The same record includes the startup scalars, category values and at
+most three child-cache entries; unused child slots are zero-filled.
+It passes the record to the supplied object's virtual +0xa0 with tag
+**`0x73726c70` (`plrs`)** and descriptor `0x14217d560`.
+`0x1411b7b30` obtains that tag via supplied-object +0x58 and restores
+record +0x0f directly to context +0x278. Thus this flag word is part of
+stored player state, not merely a transient notification parameter.
+The storage object's final I/O implementation and other consumers are
+not established by this bounded trace.
+
+If the supplied storage object or its `plrs` result is null, restoration
+tail-calls reset helper **`0x1411b7aa0`**. That helper zeroes context
++0x260 through +0x290, frees/resets the child cache at +0x298, clears
++0x2b8/+0x2bc/+0x2c0/+0x2c8/+0x2cc and sets +0x2c4 to **1**. It has
+no player-component getter or allocation call. These are observed reset
+values, not proof that this branch was taken in a live startup.
+
+The independent clear method **`0x1411b4520`**, at context primary
+virtual +0x118 (`0x14215e118`), writes zero to +0x278 and tail-calls the
+shared preferences scheduler with `(0, 0)`. It does not dispatch a
+character listener in its body. Direct-call candidates for packing and
+restoration were validated at `0x1411b6eed` and `0x1411b7031`; their
+wrappers first require selector zero and adjust the interface pointer
+by -0x10 before passing the context to these helpers.
+
+Private bundle: `~/re/gw2/notes/209026-player-startup-state-1.json`.
+Only executable instructions were inspected. No saved-state, preferences
+or credential-cache file was opened, and none of these routines was run.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_bf97c45d9eaa079cf9d94a2bdf6b9ecaa72e2a6a198d8fdc6e4b3c07d36265f3` | Bounded field-use census. |
+| `ev_54370a7856d0ff0a395cd2d4364ceb5d7a98e311c720e9d1ac2af78bad51025f` | Unwind boundaries used to select deeper reads; split regions are not complete functions. |
+| `ev_42a352eb9c2c172bb53d354e14302f39db062ff033843348f8743ae6c9128e23` | Packed field offsets, restoration, full reset and full explicit clear method. |
+| `ev_2cea704fe8f23c7922b324f86e7df77ac37cb64ccca30cdefdf4b351b6aa8fbd` | Packing call/tag, zero fill and restoration's null-to-reset branch. |
+| `ev_1bec9f7ba93f297a94fe0267fbcffa538ee800e3568aa98ac692d4876be2a0d6` | Clear-method context table entry. |
+| `ev_a0132759adec20eceb5417e7dc65bf4b256235f6bd3437ae0d78cf250ea753f1` | Direct-call candidates, subsequently validated. |
+| `ev_206792577019d29998b81fd5480983405a14a20423b79a0b79cecbf32208b1e6` | Packing/restoration wrapper call sites and selector checks. |
 
 ## Shared preferences callback
 
