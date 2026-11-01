@@ -58,7 +58,9 @@ The inspected dispatch loop loads a nonnull listener from a list node,
 passes it as RCX and the whole character as RDX, then calls the supplied
 thunk. These are listener notifications, not direct character-primary
 virtual +0x450/+0x448 calls. Actual listener registrations, implementations
-and their rendering dependencies require further tracing. Agent REVEALED
+and their rendering dependencies require further tracing; the subsequent
+[view-listener trace](209026-character-view-reveal.md) resolves one active
+subscriber and its ordinary allocation path. Agent REVEALED
 is already changed before these notifications execute.
 
 ## Listener registration and two resolved subscribers
