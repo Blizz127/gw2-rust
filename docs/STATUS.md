@@ -158,6 +158,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     The final 24 Dwords map to item-color selections for six equipment slots;
     content validity and runtime creation remain unverified. See
     [re/209026-creation-colors.md](re/209026-creation-colors.md).
+    Race/sex content also supplies 18 equipment-template references each,
+    sharing nine level-1 templates across all races/sexes. Their three armor
+    entries for slots 2/3/6 resolve to concrete type-66 skins; later preview
+    overrides remain unverified. See
+    [re/209026-creation-equipment.md](re/209026-creation-equipment.md).
     New `gw2-creation-check` inspects a complete ID-415 frame with a 250-byte
     bound and no field-value output. Two focused parser tests, checker/census
     builds and six CLI smoke cases pass; this does not validate game content.
