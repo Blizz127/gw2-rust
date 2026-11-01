@@ -24,7 +24,7 @@ Server **37**, descriptor `0x1425b3a00`, handler `0x1410335c0`, has:
 | 6 | Dword | Character identity/classification value; high nibble 3 identifies a player character on the type-0 path (see below). |
 | 7–9 | Byte each | Separate agent flags, collision-path bits and creation options; see [flag trace](209026-agent-creation-flags.md). |
 | 10 | Point3 | Three raw float words plus a variable-length Dword; details below. |
-| 11–12 | Word each | Interpreted as signed values for angular conversion, with 0x7fff as a special value. Full semantics unresolved. |
+| 11–12 | Word each | Signed pitch/yaw scaled by pi/32766; either 0x7fff produces a zero vector that fails the creation-path unit assertion. See [facing trace](209026-agent-facing.md). |
 | 13 | ArrayFixed(8), Float | Eight raw float words; element 3 supplies height. See [dimension trace](209026-agent-dimensions.md) for the remaining observed uses. |
 | 14 | Float | Collision radius in map units; constructor asserts greater than zero. |
 
