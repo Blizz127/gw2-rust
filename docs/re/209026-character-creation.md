@@ -92,7 +92,9 @@ check alone is therefore insufficient to select a valid profession.
 After these checks, `0x1411ca000` loops over 45 bytes and calls
 `0x1411ca0d0` for each. That helper immediately accepts a zero byte; nonzero
 values use race/sex-dependent content lookups and field-specific validation.
-Those content IDs and the remaining appearance fields are not yet mapped.
+The follow-up [appearance validation trace](209026-appearance-validation.md)
+maps the race/sex content keys and per-byte branch constraints; archive
+defaults and individual cosmetic labels remain unresolved.
 The three remaining wire bytes (45–47) are outside these inspected loops;
 their meaning and any other validation remain unresolved. Passing a local
 zero-byte shortcut is not evidence that an all-zero appearance is a valid
