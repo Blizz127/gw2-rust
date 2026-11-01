@@ -39,12 +39,15 @@ values at +0x100 and +0x118 from static `0x1425be660`. Its complete body
 does not register this interface with the character context.
 
 Registration occurs conditionally in helper `0x141201540`: an already-set
-+0xf0 mask 1 skips its initialization block; otherwise it performs owner
-initialization and service subscriptions, and registers quest +0x18
++0xf0 mask 1 skips its initialization block; otherwise it notifies player listeners
+and performs service subscriptions, and registers quest +0x18
 when +0xf0 mask 8 is clear, then sets mask 8. Another path at
 `0x14120291e` registers when quest refresh is waiting for the player's
 owned character. Neither constructor state nor the callback address alone
 proves that this listener is present at a particular server-431 event.
+The [content-direction follow-up](209026-content-direction-startup.md)
+identifies server 538 as the report/initialization message and establishes
+a reported-quest prerequisite for another registered startup listener.
 
 When invoked, `0x141200450`:
 
