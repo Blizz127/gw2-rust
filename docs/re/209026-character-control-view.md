@@ -90,8 +90,15 @@ matching type-150 indirection record: file 1282848, offset 0x2cc60.
 Its declared type is 64; following its +0x38 reference reaches type-64
 data key **1080** in file 1282842 at offset **0x434a88**. The target has
 one effect-list entry pointing to type 183, file 1282860, offset 0x86628.
-This establishes the recorded reference and content presence; runtime
-indirection selection and the global effect loader are not exhausted.
+The complete indirection helper `0x1412e3d60` checks the discriminator
+at its input against 64 and copies input +8 to the output when equal,
+otherwise writing null. Its caller supplies type-150 record +0x30, so
+the observed discriminator 64 selects exactly the +0x38 reference to
+key 1080. There is no further runtime selector in this helper. This
+resolves the branch for the observed frozen record, conditional on the
+registry lookup returning it; the global effect loader remains open.
+Evidence: `ev_c0bf4d43a907e3fbc1f1d4d95dd1b4141c1829c01489a7679d4ad702631bc76d`,
+private bundle `~/re/gw2/notes/209026-control-levelup-indirection-1.json`.
 
 The outer helper then reads the current map definition without a null
 guard and compares its +0x28 against five table entries. Matching
