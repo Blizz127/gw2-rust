@@ -112,9 +112,16 @@ observations, not tested fixture recommendations.
 | +0x21 | Race Byte < 5 |
 | +0x22 | Byte <= 15 |
 | +0x23 | Sex Byte < 3; preview has the stricter check below |
-| +1 | u16 accepted by callback `0x141419e40` |
+| +1 | u16 map-definition lookup key accepted by callback `0x141419e40` |
 
 The callback requires a non-null lookup result from a content interface.
+Specifically, it uses the service at `0x1409b1fb0()` +0xe0 and virtual slot
++0x1a8. The game-loading scene at `0x1402a7d5a` uses that same service/slot,
+stores the returned object, and asserts `m_mapDef` from `GameLoad.cpp`.
+The summary's +1 Word is therefore a map-definition lookup key. The character
+detail consumer at `0x140433685` performs the same lookup from the normalized
+summary and passes the result to its display path. No particular numeric key's
+presence in the frozen client's loaded content has yet been demonstrated.
 The preview consumer below establishes the appearance substructure and its
 race/sex fields. Other field names require separate consumer evidence; matching
 a numeric range alone is insufficient.
@@ -178,6 +185,8 @@ Private REA bundle: `~/re/gw2/notes/209026-summary-preview-static-1.json`.
 
 | REA evidence | Observation |
 | --- | --- |
+| `ev_98dda9015045a29b72c47324bc6172e03a7bc1eca6a9b8c74a2f3514167e275a` | Same content-interface lookup in game loading and summary consumers. |
+| `ev_c7b50f54c6c3b7c7d500d2941168acee814fa44fb2dbcdae74aaccaa793dc938` | GameLoad.cpp / m_mapDef strings and summary +1 display lookup. |
 | `ev_9ea072dfbda42d47c47fa2173c27d7392050dad322d172fef426848bdc4d68eb` | Name-selected summary's numeric/text property writes and content lookup callback. |
 | `ev_fae013ac7a9d9db5d3dac41c2a54e1a073208029d211696f6403228247d1d033` | Literal character/level/profession keys and profession-name conversion. |
 | `ev_075501fef02b9043e9e85f87ceff4893bce8822d81dcee000084bca8de407b0d` | Character-item normalization, preview construction and display consumers. |
