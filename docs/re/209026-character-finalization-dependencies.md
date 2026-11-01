@@ -93,6 +93,11 @@ Private bundle: `~/re/gw2/notes/209026-core-construction-dependencies-1.json`
 
 ## Minimum known ordering constraints
 
+The [chatter-registration follow-up](209026-character-profession.md) adds
+a separate **profession component** prerequisite for player finalization.
+This is character +0x510, distinct from the profession scalar in coreStats.
+Nine alternative creation handlers are mapped in that follow-up.
+
 These are dependencies, not a complete playable bootstrap or an exhaustive
 ordering of event listeners and content setup.
 
@@ -102,7 +107,7 @@ ordering of event listeners and content setup.
 | Server 182 or 183: coreStats | Character exists; component not already created. |
 | Server 443: owned-character assignment | Player entry and character exist. |
 | Server 151: attitude | Character exists; an earlier update would be ignored. |
-| Server 170: fresh owned-player finalization | Player association, attitude, owned-character pointer, owned coreStats, and inventory for the finalized coreStats. |
+| Server 170: fresh owned-player finalization | Player association, attitude, owned-character pointer, owned coreStats, inventory and a profession component. |
 | Server 444: equal-ID controlled assignment | Player entry and finalized character exist. |
 
 Appearance/content validity and further component dependencies remain open.
