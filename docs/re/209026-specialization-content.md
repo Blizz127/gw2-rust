@@ -38,8 +38,9 @@ The Guardian consumer previously traced in
 [profession initialization](209026-character-profession.md#specialization-dependent-byte-check)
 compares specialization discriminator +0xc8 against 3 and 5; its fallback
 is 1. The following shipped records have discriminator values 1..5, all
-in file 1282840. The grouping does not assign display names or prove
-profession membership independently of the profession-definition array.
+in file 1282840. The profession-definition follow-up below independently
+confirms all nine belong to profession 1, Guardian. Display names remain
+unassigned.
 
 | Specialization key | Discriminator | Flags +0x38 | Type-353 progress-reference key |
 | --- | --- | --- | --- |
@@ -75,13 +76,62 @@ specialization is already present. Content flag +0x38 bit 0 restricts the
 specialization to slot 2. It obtains the owned coreStats profession, resolves
 the profession definition through character-context virtual 0, and searches
 that definition's +0xb8 pointer array, count +0xc0, for membership. This
-profession-definition membership has not yet been reconstructed offline.
+profession-definition membership is now reconstructed offline below.
 
 The level helper uses three content-setting selectors at `0x142160978`
 and compares the supplied level with a resolved threshold. Conditional
 runtime paths can substitute zero for that threshold. This trace does not
 assign fixed unlock levels. These client request predicates do not replace
 the distinct effects and prerequisites of incoming 640–643 messages.
+
+## Profession membership
+
+Loader `0x1411b3c90` enumerates **type 315 (0x13b)** through content virtual
++0x48. It indexes character-context +0x310 with record +0xa8, guarded by
+`professionDef->GetType() < arrsize(m_professionLookup)` (bound 11).
+The getter `0x1411b5270` returns this indexed pointer. This connects the
+profession enum to the exact definition used by assignment eligibility.
+
+A complete 32-container scan finds nine type-315 records, one for each
+profession 1..9. Their metadata has **no numeric content-key offset**
+(`0xffffffff`); the enum at +0xa8 is not a message content key. Each
++0xb8/+0xc0 array contains nine type-386 pointers. Across the nine records,
+the 81 referenced specialization keys cover the complete catalog exactly
+once, with no duplicate or omitted membership.
+
+The lists below preserve content-array order. Profession labels follow
+the already mapped [profession enum](209026-character-creation.md).
+
+| Profession | Specialization keys |
+| --- | --- |
+| 1 Guardian | 42, 16, 13, 49, 46, 27, 62, 65, 81 |
+| 2 Warrior | 4, 36, 22, 11, 51, 18, 61, 68, 74 |
+| 3 Engineer | 6, 38, 47, 29, 21, 43, 57, 70, 75 |
+| 4 Ranger | 8, 30, 33, 25, 32, 5, 55, 72, 78 |
+| 5 Thief | 28, 35, 20, 54, 44, 7, 58, 71, 77 |
+| 6 Elementalist | 31, 41, 26, 17, 37, 48, 56, 67, 80 |
+| 7 Mesmer | 10, 1, 45, 23, 24, 40, 59, 66, 73 |
+| 8 Necromancer | 53, 39, 2, 19, 50, 34, 60, 64, 76 |
+| 9 Revenant | 14, 9, 12, 3, 15, 52, 63, 69, 79 |
+
+Guardian's definition resides in file 1282842, content offset 3831408.
+This proves profession membership; it does not bypass level, unlock,
+slot, trait or runtime-state eligibility. No build selection was made.
+
+Private follow-up outputs:
+`profession-specializations-209026-{0-8,8-16,16-24,24-32}.json`.
+Bundle `~/re/gw2/notes/209026-profession-specialization-membership-1.json`
+contains 1,126 records, 24,224,037 bytes.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_76fe447668780dce7970d4a334fc5cabcd9b5790127b1513b95a40205b5811b9` | Bounded context-table search and level-setting selectors. |
+| `ev_f2f762d3d4909500ca4e3ac30d9436480a1fa906c2c776e4080b5313d4a24255` | Full profession-definition loader and named bound assertion. |
+| `ev_44f4e76a3bd9ff588018bec64ce3e467cd2c2219c5ba6506b1a843c920ee455d` | Definition scan 0..7, six profession lists. |
+| `ev_de0722b86e1726b2dd8247afd4e7a8cb28f5cff0da1cc0a5cb039bf143944db2` | Definition scan 8..15, Guardian and Mesmer lists. |
+| `ev_65b608ed3921003ce70dedac6112e5b2db1abc5b7ce5f794037f60345b8290dc` | Definition scan 16..23, no additional records. |
+| `ev_a4aedf50407f919ceede159fd89e11491e8d3cf01fbc426e7e90b1812babc441` | Definition scan 24..31, Revenant list. |
+| `ev_6a2120a8717e08b6ae286cd6aae8bece977c6b39276fc5f3410d8b49281d8d8b` | Exact nine-profession/81-specialization coverage audit. |
 
 ## Evidence
 

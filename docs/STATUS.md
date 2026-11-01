@@ -251,6 +251,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     recalculation needs the owned character and conditionally its reward-track
     manager; initial content selections remain unresolved. See
     [re/209026-specialization-messages.md](re/209026-specialization-messages.md).
+    The base-content census maps all 81 specialization keys, 2,425 trait keys
+    and 729 major-trait membership references. Nine profession definitions
+    partition all 81 specializations exactly once, confirming the Guardian
+    list; level/unlock/runtime eligibility remains separate. See
+    [re/209026-specialization-content.md](re/209026-specialization-content.md).
     Appearance validation now has a 45-byte branch map and ten race/sex
     content keys (type 137). All 90 shipped defaults have since been extracted
     and parsed; full content-dependent validation remains unresolved. See
