@@ -88,8 +88,9 @@ Messages 605/609/613 and their ordering are documented in
 If membership does not succeed, the slot predicate can reach
 `0x1411c85d0`, which resolves configurable level thresholds rather than
 using literal level constants. The table maps slots 0/1/2/3/4 to setting
-IDs 0x271/0x27c/0x27d/0x27e/0x270. Their configured values are not read in
-this note. These fallback settings are distinct from entry +0x1c.
+IDs 0x271/0x27c/0x27d/0x27e/0x270. The [settings follow-up](209026-skill-slot-levels.md) resolves their frozen
+archive values to 0/11/15/19/31, distinct from executable defaults and
+entry +0x1c.
 
 ## Bounded reader scope
 
