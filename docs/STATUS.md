@@ -90,6 +90,11 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
   - **Run 59 owner-decision gate:** Play opens a User Agreement / I ACCEPT panel.
     It remains untouched; explicit owner direction requested through the coordinator.
     Further UI progression waits. Independent character-protocol RE continues.
+  - **Static character-list path:** server ID 17 populates records consumed by
+    the character-select scene. Its summary blob remains to map. The new
+    `gw2-capture-census` reports IDs/boundaries without field values; focused
+    tests/build/clippy pass and the run-58 capture parses completely. See
+    [re/209026-character-protocol.md](re/209026-character-protocol.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
