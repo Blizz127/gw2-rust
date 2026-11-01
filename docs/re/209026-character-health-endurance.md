@@ -114,6 +114,51 @@ Private follow-up bundle: `~/re/gw2/notes/209026-health-state-rate-1.json`
 | `ev_fc3266bc7f314d2716af71db173b8151482758dc209ff85fb1f8fdb52769c872` | Meter initialization, accumulation, pause and local world-clock getter. |
 | `ev_77f3e77f7848b6bc933cf37fec5f22e2f9794e878b5db867bd800cde67453063` | Rate conversion constant and all three state strings. |
 
+### Creation callback ordering and component prerequisites
+
+The allocation branch of `0x1411d6310` stores the new health pointer,
+then dispatches character +0x1e0 listeners through trampoline `0x14026df60`
+(listener virtual +0x130). **Only after that dispatch** does it store the
+supplied state at character +0x188. Listeners invoked by this event therefore
+cannot assume that this message's new state is already installed.
+
+After the state store, character +8 virtual +0x68 (`0x1411d9be0`) checks
+identity high nibble 3. On that player branch, virtual +0x30 (`0x1411d8e50`)
+checks whether the newly stored state is zero/alive. A non-alive player
+causes character flags +0x178 mask 2 to be set. This tail only sets that
+bit; it does not clear it for an alive state. It is not a general death or
+revival state-transition implementation.
+
+Health constructor `0x1412071e0` initializes its two meters using local
+world time, initializes its listener collection, stores its owner, and
+sets the supplied meter fields. The direct allocation/constructor path
+does not retrieve coreStats, inventory, profession, skill bar or player
+components. The character event's runtime-dependent listeners remain an
+untraced boundary, so this is not a proof that health can safely be sent
+at every point after character creation.
+
+Endurance allocation `0x1411d6240` constructs and stores its component
+without a character-component event. The constructor's `0x141411670`
+call registers the secondary interface (component +8) with a global
+settings listener list at TLS +0x1c8, object +0x460. The helper inserts a
+listener node and returns; it does not invoke the listener during insertion.
+Its secondary vtable `0x14216ae48` has no-op entries at 0/+0x10 and callback
+`0x141223180` at +8. That callback rereads the named
+`CharEnableEnduranceDeficitTracking` setting and changes component +0x30
+bit 0. Both construction and callback use `0x141414340` with fallback 1.
+This settings registration adds no direct dependency on another character
+component. The global settings service and allocator still must exist.
+
+Private bundle: `~/re/gw2/notes/209026-health-endurance-initialization-order-1.json`
+(1,133 records, 24,287,322 bytes). Static REA only; no client launch.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_bf45f05696e4b6c0c0846ccd242619d898b7b3d8d109ec9016ccbf5be3d9ad0c` | Full creation helpers and endurance constructor. |
+| `ev_ffe07dc7133a7d6c5ee70d5abf1a8ca8a3ca0a73f1e92896b000e7d89bf95106` | Health constructor, event trampoline and global listener insertion. |
+| `ev_aee1f98c302b3aee0ee219dfb6c27a804ed09bac25725181ec7e6359ab78e1e0` | Insertion tail, player predicate and endurance secondary vtable. |
+| `ev_62028d8964304b3709d6150008afa6df7171e803dee85c5bc440a779b533bf44` | Settings callback, fallback lookup and alive getter binding. |
+
 ## Existing-health messages 257–260
 
 The consecutive registrations following 256 identify four further messages:
