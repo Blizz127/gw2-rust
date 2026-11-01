@@ -81,8 +81,8 @@ the offline probe's deliberately inclusive interval; the probe remains an
 independent geometry diagnostic.
 
 The hit-list collector appends through `0x141097a10`; the nearest path uses
-a caller-provided 0x58-byte output. Full output field semantics, movement
-caller masks and scene-bound clipping behavior remain to be traced.
+a caller-provided 0x58-byte output. The [clipping and generic result layout](209026-ray-results.md) are now
+traced. Movement caller masks and type-specific metadata remain open.
 
 ## Evidence
 
