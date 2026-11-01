@@ -41,6 +41,10 @@ is `0x1425acd60`; the Dword element descriptor is `0x1425ace00`. Dwords use the
 existing variable-length integer encoder. In particular, the last array's
 96-byte decoded representation is **not** a fixed 96-byte wire payload.
 
+This evidence permits the capture census to admit one level of `ArrayFixed`
+with an explicit count and verified primitive elements, subject to its existing
+65,536-element limit. Nested and implicit TypeName elements remain rejected.
+
 The sender's packed decoded offsets, relative to its message ID, are:
 name pointer +2, appearance pointer +0xa, two Bytes +0x12/+0x13, flags
 +0x14, answer count +0x18, answer pointer +0x19, final array pointer +0x21.

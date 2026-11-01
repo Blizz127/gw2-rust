@@ -1,5 +1,6 @@
 //! Metadata-only inspection of decrypted build-209026 captures.
-//! Wire evidence and limits: docs/re/209026-character-protocol.md.
+//! Wire evidence and limits: docs/re/209026-character-protocol.md,
+//! docs/re/209026-character-creation.md, docs/re/209026-mission-join.md.
 use std::{
     collections::HashSet,
     fs::File,
@@ -36,6 +37,7 @@ fn verified_primitive(field: &Field) -> bool {
                 | "Qword"
                 | "Dword"
                 | "Guid"
+                | "Address"
                 | "String"
                 | "BufferFixed"
                 | "BufferVarSmall"
@@ -45,7 +47,7 @@ fn verified_primitive(field: &Field) -> bool {
 
 fn verified_field(field: &Field) -> bool {
     verified_primitive(field)
-        || (matches!(field.kind.as_str(), "ArrayVarSmall" | "ArrayVarLarge")
+        || (matches!(field.kind.as_str(), "ArrayFixed" | "ArrayVarSmall" | "ArrayVarLarge")
             && field.type_name.is_none()
             && field.size.is_some_and(|n| n <= dynamic::MAX_ELEMENTS as u32)
             && !field.fields.is_empty()
@@ -153,6 +155,57 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn creation_and_route_fields_preserve_boundaries_without_values() {
+        let schema = schema::parse(r#"<Protocols BuildId="209026"><Protocol Name="0"><Messages Name="39"><Client><Message Id="415"><String Size="20"/><ArrayFixed Size="48"><Byte/></ArrayFixed><Byte/><Byte/><Dword/><ArrayVarSmall Size="32"><Byte/></ArrayVarSmall><ArrayFixed Size="24"><Dword/></ArrayFixed></Message></Client></Messages></Protocol><Protocol Name="3"><Messages Name="40"><Server><Message Id="20"><Dword/><Dword/><Dword/><Dword/><Address/><Dword/></Message></Server></Messages></Protocol></Protocols>"#).unwrap();
+        let creation = &schema.protocols[0].groups[0].client;
+        let route = &schema.protocols[1].groups[0].server;
+        let mut create_frame = vec![0x9f, 1, b'A', 0, 0, 0];
+        create_frame.extend_from_slice(&[0; 48]);
+        create_frame.extend_from_slice(&[0, 1, 8, 3, 0, 0x80, 0xff]);
+        // The first of 24 Dwords is 300, consuming two wire bytes.
+        create_frame.extend_from_slice(&[0xac, 2]);
+        create_frame.extend_from_slice(&[0; 23]);
+        assert_eq!(create_frame.len(), 86);
+
+        let mut route_frame = vec![20, 0, 1, 0x80, 1, 7, 0];
+        route_frame.extend_from_slice(&[2, 0, 0x17, 0xe0, 127, 1, 0, 2]);
+        route_frame.extend_from_slice(&[0; 20]);
+        route_frame.push(0);
+        assert_eq!(route_frame.len(), 36);
+
+        for (messages, frame, id) in [(creation, &create_frame, 415), (route, &route_frame, 20)] {
+            for end in 1..frame.len() {
+                assert!(census(messages, &frame[..end], &mut Vec::new()).is_err());
+            }
+            let mut pair = frame.clone();
+            pair.extend_from_slice(frame);
+            let mut output = Vec::new();
+            assert_eq!(census(messages, &pair, &mut output).unwrap(), 2);
+            let size = frame.len();
+            assert_eq!(
+                String::from_utf8(output).unwrap(),
+                format!(
+                    "offset=0 id={id} bytes={size}\noffset={size} id={id} bytes={size}\nmessages=2 bytes={} complete=true\n",
+                    size * 2
+                )
+            );
+        }
+
+        // An invalid family must be rejected without exposing address bytes.
+        route_frame[7] = 0xff;
+        let error = census(route, &route_frame, &mut Vec::new()).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "cannot decode ID 20 at offset 0: InvalidData"
+        );
+        for size in [None, Some(65_537)] {
+            let mut malformed = creation.clone();
+            malformed[0].fields[1].size = size;
+            assert!(census(&malformed, &create_frame, &mut Vec::new()).is_err());
+        }
+    }
 
     #[test]
     fn arrays_keep_record_boundaries_and_reject_bad_counts_or_elements() {

@@ -71,6 +71,18 @@ truncation and preservation of the following field. `gw2-game-observe` and
 No claim is made here about
 independent verification of nonzero IPv6 flow-info or scope fields.
 
+The fixed 28-byte copy also permits the metadata-only capture census to admit
+Address fields using the corrected codec. This extension reports message
+boundaries and IDs only; it must not print destinations or other field values.
+The census extension passes all three focused tests and builds. Handwritten
+creation (86-byte) and route (36-byte) fixtures parse in consecutive pairs;
+every nonempty truncation, invalid address family, and absent/oversize fixed
+array count is rejected. The saved run-58 capture still consumes all six
+messages and 233 bytes, with unchanged boundaries
+(`ev_a5c47782ac3dec6276661ad3601ab52dfbe9930a5a3435178fd97383117437a5`).
+This is fixture/capture analysis, not runtime mission validation. The added
+evidence is exported privately in `209026-mission-static-2.json`.
+
 ## Evidence
 
 Private bundle: `~/re/gw2/notes/209026-mission-static-1.json`.
