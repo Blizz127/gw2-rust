@@ -53,7 +53,7 @@ with bounded file reads and no field-value output. It requires BuildId 209026,
 an unambiguous group and unique message IDs, and rejects unverified kinds even
 when the historical dynamic codec supports them. A focused test checks complete
 boundaries, every truncation of a string-bearing message, rejection of an
-unverified Qword field, and absence of the test string from output. Build and
+unverified Float field, and absence of the test string from output. Build and
 clippy pass.
 
 Applied through REA to run 58's saved decrypted capture:
@@ -78,7 +78,7 @@ The earlier inference for ID 17 is now supported by a direct static chain.
 iterates `0x14023c2f0`. That accessor copies records from the same vector at
 `0x14266bf98` populated by ID 17. For each record the scene passes its blob
 length (+4) and blob bytes (+0x40) to `0x141419e80`. This is a thunk to
-`0x1417f4d90` with descriptor `0x142610190`. The blob format remains to map.
+`0x1417f4d90` with callback object `0x142610190`. The blob format is described below.
 The character-select item widget also copies a 0x258-byte record.
 
 ID 17 therefore supplies records used by character selection. ID 18 uses the
@@ -141,3 +141,51 @@ The census can now admit Word/Qword without guessing their boundaries.
 Evidence: `ev_c3c2675a9c93befe6907945a0bf79699042f712d6a5c97247c1bff743d89c048`,
 `ev_601a5ec89d41392a0dffc67e88e90cd3436486bd703461c791667ba236d77cf7`,
 `ev_3d15c6d1bc295e724e111250e88d32644d6534696b01798023d1fa966cfc3413`.
+
+## Account scalar consumers
+
+The ID-8 handler `0x140240850` reorders decoded fields when calling
+`0x14023a770`; parameter order is not wire order. That helper stores them on
+the matching login transaction. Successful completion at `0x14023d8f0` then
+copies them to globals. Field numbers below are the zero-based schema names,
+including request field 0 and GUID fields 1/2. Structure offsets are decoded
+memory offsets, **not wire byte offsets**: Dwords use varints on the wire.
+
+| Schema field | Decoded offset | Transaction offset | Global | Established use |
+| --- | --- | --- | --- | --- |
+| 3 | +0x26 | +0x1b4 | `0x14266bf3c` | Account/billing category enum |
+| 4 | +0x2a | +0x1e8 | `0x14266bee4` | Low byte retained; meaning unresolved |
+| 5 | +0x2e | +0x1ec | `0x14266bf68` | Auth base time |
+| 6 | +0x32 | +0x1a8 | `0x14266c154` | Home shard ID |
+| 7 | +0x36 | +0x1a4 | `0x14266c150` | Shard-related scalar; precise role unresolved |
+| 8 | +0x3a | +0x1ac | `0x14266c158` | Getter `0x14023b9f0`; meaning unresolved |
+| 9 | +0x3e | +0x1f8 | `0x14266c0a8` | Meaning unresolved |
+| 10 (Byte) | +0x42 | +0x1fc | `0x14266c0ac` | Normalized to a nonzero boolean |
+
+Getter `0x14023b9c0` returns the home-shard global. Its caller at
+`0x140868ef4` tests zero and otherwise asserts
+`NetGameClientAccountGetHomeShardId() == 0`, in `SsdFirstDialog.cpp`.
+Completion can force this global to zero under a mode/option condition, even
+when the reply contains a nonzero value.
+
+Getter `0x14023cd30` asserts nonzero `s_authBaseTime` and `s_localBaseTime`,
+then returns current local time minus local base plus auth base. This establishes
+field 5's role; its epoch and units have not been independently confirmed.
+
+Getter `0x14023cd90` returns field 3. A billing-info consumer at
+`0x1404d5c75`, with jump table `0x1404d5ee4`, maps 0..7 to `None`, `ArenaUser`,
+`RetailUser`, `PressDemo`, `NcsoftUser`, `AlphaTester`, `PlayNC`, and
+`OmegaTester`. These are observed enum labels, not recommended fixture values.
+
+No scalar is yet identified as character-slot capacity. These findings do not
+change runtime fixtures or advance the held agreement screen.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_a4a12ba015117b96055f66575d4924a1a4f95af448e51a4f4503ab8d24f856f6` | ID-8 handler arguments and named home-shard assertion. |
+| `ev_766e87c2f9a9bfa4236f7628c48689d81c9557c937fb724aa1290e1a82f8ca48` | Transaction storage, time getter, billing labels. |
+| `ev_d9c526462863fc165b19e39320fd55e47c8bd36e54641d29f0037f75d99fd222` | Successful completion copies globals. |
+| `ev_3a74c0253ad157d5973c6731132f187343bb4de6865033ee76bee16f3cbf3ffd` | Scalar getters and alternate writers. |
+| `ev_2dea93800e503720dbae7d529dce66284ba223ccc074beb6deff31e214027891` | Home-shard getter consumers. |
+| `ev_56c9d0205b0c447dbbd4645b9585881f9513dfaf46814d5dac486b56fa7f0a00` | Time assertion names and billing dispatch. |
+| `ev_583635912adeebb12523ef94de3e9a53f4bc4875e9729ba17d7cf9b7379e782c` | Billing jump table and remaining enum labels. |
