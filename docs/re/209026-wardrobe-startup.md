@@ -5,6 +5,10 @@ Static REA analysis, 2026-11-01, on the frozen executable identified in
 or User Agreement interaction. This continues the
 [reward-track consumer trace](209026-reward-track-messages.md).
 
+The [numeric-index follow-up](209026-content-numeric-ids.md) confirms
+that this message path uses data keys at record +0x28 through content
+virtual +0x70, distinct from specialization wire UIDs at +0x14.
+
 ## Lazy wardrobe allocation
 
 Character +0xb00 is **m_wardrobeMgr**, named by assertion `0x141acbc60`.

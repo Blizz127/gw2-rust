@@ -87,6 +87,8 @@ fn run(path: &str) -> io::Result<()> {
     let mut professions = BTreeSet::new();
     let mut specializations = BTreeSet::new();
     let mut traits = BTreeSet::new();
+    let mut specialization_uids = BTreeSet::new();
+    let mut trait_uids = BTreeSet::new();
     let mut specialization_references = 0u64;
     let mut trait_references = 0u64;
     let mut profession_records = Vec::new();
@@ -108,12 +110,14 @@ fn run(path: &str) -> io::Result<()> {
                     let record = SpecializationDefinition209026::read(index, entry.offset)?;
                     trait_references += u64::from(record.major_traits.count);
                     specialization_records.insert(location, record);
-                    specializations.insert(record.key)
+                    record.uid != 0
+                        && specialization_uids.insert(record.uid)
+                        && specializations.insert(record.key)
                 }
                 77 => {
                     let record = TraitDefinition209026::read(index, entry.offset)?;
                     trait_records.insert(location, record);
-                    traits.insert(record.key)
+                    record.uid != 0 && trait_uids.insert(record.uid) && traits.insert(record.key)
                 }
                 353 => {
                     progress_records.insert(location);
@@ -125,7 +129,7 @@ fn run(path: &str) -> io::Result<()> {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!(
-                        "duplicate type-{} key/enum in file {file_id}",
+                        "duplicate type-{} key/enum/UID or zero UID in file {file_id}",
                         entry.content_type
                     ),
                 ));
@@ -145,7 +149,7 @@ fn run(path: &str) -> io::Result<()> {
                 ));
             }
             if profession.profession == 1 {
-                guardian.push(specialization.key);
+                guardian.push((specialization.key, specialization.uid));
             }
         }
     }
@@ -187,7 +191,9 @@ fn run(path: &str) -> io::Result<()> {
     println!(
         "resolved all membership/trait targets; exact profession coverage; three choices per tier; progress_refs={progress_references}"
     );
-    println!("Guardian specialization keys: {guardian:?}; gameplay eligibility not validated");
+    println!(
+        "Guardian specialization (data key, wire UID): {guardian:?}; gameplay eligibility not validated"
+    );
     Ok(())
 }
 

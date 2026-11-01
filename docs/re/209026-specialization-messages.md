@@ -14,9 +14,9 @@ wire count prefix; nested descriptor `0x1425ace00` contains one Dword.
 
 | ID | Descriptor | Handler | Fields after player index |
 | --- | --- | --- | --- |
-| 640 | `0x1425db4d0` | `0x14125c8b0` | Dword specialization key, Byte specialization slot |
-| 641 | `0x1425db670` | `0x14125c920` | Dword trait key, Byte specialization slot, Byte major-trait slot |
-| 642 | `0x1425db830` | `0x14125c990` | ArrayFixed(3) Dword specialization keys, ArrayFixed(9) Dword trait keys, Byte notification value |
+| 640 | `0x1425db4d0` | `0x14125c8b0` | Dword specialization UID, Byte specialization slot |
+| 641 | `0x1425db670` | `0x14125c920` | Dword trait UID, Byte specialization slot, Byte major-trait slot |
+| 642 | `0x1425db830` | `0x14125c990` | ArrayFixed(3) Dword specialization UIDs, ArrayFixed(9) Dword trait UIDs, Byte notification value |
 | 643 | `0x1425db9c0` | `0x14125ca00` | Byte first specialization slot, Byte second specialization slot |
 
 The registration pairs are at `0x142170bd0..0x142170c08`. The 642 trait
@@ -28,7 +28,7 @@ its semantic name and valid values remain unresolved.
 ## Single-slot updates
 
 640 calls `0x141225b80`, asserting specialization slot < 3. It resolves
-the key through content virtual +0x58 with **type 386 (0x182)**, dispatches
+the UID through content virtual +0x58 with **type 386 (0x182)**, dispatches
 a pre-update event, stores the pointer at component +0x58 + slot*8, clears
 the slot's pending pointer at +0x40 + slot*8 and its three trait pointers
 at +0x78 + slot*24, then calls `0x141226390` to recalculate the slot byte
@@ -53,10 +53,10 @@ remain unresolved.
 641 calls `0x141225750`. Named assertions independently require
 `specializationSlot < CHAR_SPECIALIZATION_SLOTS` and
 `majorTraitSlot < CHAR_SPECIALIZATION_MAJOR_TRAIT_SLOTS`, both bound 3.
-It resolves the key as **type 77 (0x4d)**, stores the result in the selected
+It resolves the UID as **type 77 (0x4d)**, stores the result in the selected
 trait pointer, and dispatches a change event. Its direct path does not
 rebuild the skill bar or perform the progress recalculation above. Listener
-behavior is not exhaustively traced. These are content keys, not three-way
+behavior is not exhaustively traced. These are content UIDs, not three-way
 trait-choice indexes.
 
 ## Bulk update and swap
@@ -79,9 +79,10 @@ Event listeners may have further effects.
 
 Content virtual +0x58 resolves to `0x1412e1b30`, forwarding to generic
 lookup `0x1412e6820`. The setters do not assert non-null lookup results.
-This trace does not establish a usable catalog, a zero-key clearing
-convention, valid specialization/trait combinations, or safe arbitrary
-message order.
+The [numeric-index follow-up](209026-content-numeric-ids.md) confirms that
+this is the UID field at record +0x14, distinct from data key +0x28.
+The index builder skips zero. This does not establish a safe clearing
+operation, valid combinations, or arbitrary message order.
 
 ## Neighboring player flags: 644
 
@@ -92,21 +93,21 @@ bits do not affect that setter. The flags' names remain unresolved. This
 message is distinct from the four specialization/trait layouts above.
 
 The [complete base-content census](209026-specialization-content.md) now
-maps 81 specialization keys and 2,425 trait keys, with all 729 major-trait
+maps 81 specialization data keys and 2,425 trait data keys, with all 729 major-trait
 membership references resolved. Content membership, tier and runtime
 eligibility remain separate from this framing layer.
 
 ## Typed framing scope
 
 `gw2_proto::specialization::SpecializationFrame209026` covers 640–643 only,
-preserving raw slots, keys and the 642 notification byte. It uses fixed
-arrays for the three specializations and three-by-three trait keys, with
+preserving raw slots, UIDs and the 642 notification byte. It uses fixed
+arrays for the three specializations and three-by-three trait UIDs, with
 transactional one-frame decoding. It does not validate content combinations,
 choose defaults, update server state or send messages. Out-of-range slots
 are useful framing inputs but are not valid client state transitions.
 
 Three focused tests and the library build pass. Four hand-authored fixtures
-cover the layouts with distinct varint widths, zero/MAX keys, a raw slot
+cover the layouts with distinct varint widths, zero/MAX UIDs, a raw slot
 255 and notification 254. The bulk fixture distinguishes every trait
 position and verifies specialization-slot-major ordering without array
 length prefixes. Output prefixes and consecutive frame boundaries are

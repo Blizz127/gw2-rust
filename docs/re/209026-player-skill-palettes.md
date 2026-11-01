@@ -4,6 +4,10 @@ Static REA findings, 2026-11-01, on the frozen executable identified in
 [client-build.md](../client-build.md). This follows the [skill-bar palette
 routes](209026-character-skillbar.md). No client replay occurred.
 
+The [numeric-index follow-up](209026-content-numeric-ids.md) confirms
+that this message path uses data keys at record +0x28 through content
+virtual +0x70, distinct from specialization wire UIDs at +0x14.
+
 ## Server 612 selects a palette
 
 Registration pair `0x142170950` connects descriptor `0x1425d7ab0` to

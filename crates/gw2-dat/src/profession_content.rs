@@ -23,6 +23,9 @@ pub struct ProfessionDefinition209026 {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SpecializationDefinition209026 {
+    /// Content UID at +0x14, used by specialization/trait wire messages.
+    pub uid: u32,
+    /// Data key at +0x28; distinct from the wire UID.
     pub key: u32,
     pub flags: u32,
     pub discriminator: u32,
@@ -32,6 +35,9 @@ pub struct SpecializationDefinition209026 {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TraitDefinition209026 {
+    /// Content UID at +0x14, used by specialization/trait wire messages.
+    pub uid: u32,
+    /// Data key at +0x28; distinct from the wire UID.
     pub key: u32,
     /// Major-trait consumers compare this with the selected slot plus one.
     pub tier: u32,
@@ -118,6 +124,7 @@ impl SpecializationDefinition209026 {
     pub fn read(index: &ContentIndex<'_>, offset: u32) -> Result<Self> {
         let bytes = record(index, offset, 0xcc, 386)?;
         Ok(Self {
+            uid: word(bytes, 0x14),
             key: word(bytes, 0x28),
             flags: word(bytes, 0x38),
             discriminator: word(bytes, 0xc8),
@@ -131,6 +138,7 @@ impl TraitDefinition209026 {
     pub fn read(index: &ContentIndex<'_>, offset: u32) -> Result<Self> {
         let bytes = record(index, offset, 0x74, 77)?;
         Ok(Self {
+            uid: word(bytes, 0x14),
             key: word(bytes, 0x28),
             tier: word(bytes, 0x70),
         })
@@ -217,6 +225,7 @@ mod tests {
 
         data.fill(0);
         put(&mut data, 0x30, 386);
+        put(&mut data, 0x34, 15);
         put(&mut data, 0x48, u32::MAX);
         put(&mut data, 0x58, 0x80000001);
         put(&mut data, 0xe8, 5);
@@ -226,8 +235,8 @@ mod tests {
         let index = ContentIndex::parse(&pf).unwrap();
         let spec = SpecializationDefinition209026::read(&index, 0x20).unwrap();
         assert_eq!(
-            (spec.key, spec.flags, spec.discriminator),
-            (u32::MAX, 0x80000001, 5)
+            (spec.uid, spec.key, spec.flags, spec.discriminator),
+            (15, u32::MAX, 0x80000001, 5)
         );
         assert_eq!(
             spec.progress_reference,
@@ -242,12 +251,14 @@ mod tests {
         );
 
         put(&mut data, 0x30, 77);
+        put(&mut data, 0x34, 2373);
         put(&mut data, 0x90, u32::MAX);
         let pf = pack(&data, &[], &[], &[]);
         let index = ContentIndex::parse(&pf).unwrap();
         assert_eq!(
             TraitDefinition209026::read(&index, 0x20).unwrap(),
             TraitDefinition209026 {
+                uid: 2373,
                 key: u32::MAX,
                 tier: u32::MAX
             }

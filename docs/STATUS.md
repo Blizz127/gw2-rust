@@ -241,6 +241,12 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     several later getters to embedded account/achievement/progress objects
     and confirms a guard around optional player +0x97b8. Content/category
     evaluation and runtime callbacks remain unresolved.
+    The [numeric-ID audit](re/209026-content-numeric-ids.md) corrects
+    specialization wire values to UIDs (+0x14), distinct from data keys
+    (+0x28). The raw codec fields now say UID; catalog views expose both.
+    Six focused tests, library/binary builds and the 32-container Rust
+    smoke pass, including the independently checked Guardian mapping.
+    Palette, availability, reward-track and wardrobe paths use data keys.
     See [re/209026-character-control.md](re/209026-character-control.md).
     Server 428 populates player entries; server 170 finalizes an existing
     character with player/monster and association checks. A three-message

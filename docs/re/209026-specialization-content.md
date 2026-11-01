@@ -5,6 +5,10 @@ client identified in [mission transfer](209026-mission-transfer.md).
 This supplies content evidence for the [640–643 message layouts](209026-specialization-messages.md),
 without choosing a playable build or sending client messages.
 
+The tables below use **data keys at +0x28**, not the UIDs carried in
+640–642. The [numeric-ID correction](209026-content-numeric-ids.md) maps
+Guardian keys to wire UIDs at +0x14; do not send these table keys directly.
+
 ## Complete base-container census
 
 All 32 base content containers, file IDs 1282830..1282861, were scanned.
@@ -21,16 +25,18 @@ Every specialization's pointer array at +0x58, count +0x60, contains
 **nine non-null references to type-77 traits**. All 729 references resolve.
 Each specialization has three traits with +0x70 tier 1, three with tier 2,
 and three with tier 3. That is 243 references per tier across the catalog.
-This array contains choices; it is not the three selected keys supplied
+This array contains choices; it is not the three selected UIDs supplied
 for one specialization slot in server 642.
 
 The generic content lookup `0x1412e6820` constructs a hash key from content
-type and the input key's low 22 bits, searches up to two runtime sources,
+type and the input UID's low 22 bits, searches up to two runtime sources,
 and returns null if neither resolves. Its call to `0x1412e9680` checks the
 high bits, but the inspected caller does not branch on that result. The
 base census's lack of key zero does not establish that every runtime
 source lacks it, or authorize using zero as a universal clearing convention.
-The wire codec therefore preserves raw u32 keys and supplies no default.
+The wire codec preserves raw u32 UIDs and supplies no default. The index
+builder follow-up confirms that zero record IDs are skipped; safe clearing
+still depends on the consuming operation.
 
 ## Discriminators used by Guardian
 

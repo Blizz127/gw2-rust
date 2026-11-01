@@ -5,6 +5,10 @@ Static REA findings, 2026-11-01, on the frozen executable identified in
 found during the [skill-palette census](209026-skill-palette-content.md).
 No messages were sent and the runtime User Agreement hold remains.
 
+The [numeric-index follow-up](209026-content-numeric-ids.md) confirms
+that this message path uses data keys at record +0x28 through content
+virtual +0x70, distinct from specialization wire UIDs at +0x14.
+
 ## Wire layouts and effects
 
 These protocol 0/group 0 messages address a **player index**, resolved

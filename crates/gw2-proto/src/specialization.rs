@@ -1,4 +1,5 @@
 //! Build-209026 specialization/major-trait messages 640–643.
+//! Wire IDs are content UIDs (+0x14), not data keys (+0x28).
 //! See `docs/re/209026-specialization-messages.md` for state prerequisites.
 
 use std::io::{Error, ErrorKind, Result};
@@ -10,18 +11,18 @@ use crate::{Decode, Encode};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpecializationOperation209026 {
     Assign {
-        specialization_key: u32,
+        specialization_uid: u32,
         slot: u8,
     },
     AssignMajorTrait {
-        trait_key: u32,
+        trait_uid: u32,
         specialization_slot: u8,
         major_trait_slot: u8,
     },
     Replace {
-        specialization_keys: [u32; 3],
+        specialization_uids: [u32; 3],
         /// Indexed by specialization slot, then major-trait slot.
-        trait_keys: [[u32; 3]; 3],
+        trait_uids: [[u32; 3]; 3],
         /// Raw final byte passed to notifications; meaning unresolved.
         notification: u8,
     },
@@ -38,7 +39,7 @@ pub struct SpecializationFrame209026 {
 }
 
 impl SpecializationFrame209026 {
-    /// Append a frame, preserving raw keys, slots and notification values.
+    /// Append a frame, preserving raw UIDs, slots and notification values.
     pub fn encode_frame(&self, output: &mut BytesMut) {
         use SpecializationOperation209026::*;
         let id: u16 = match self.operation {
@@ -51,32 +52,32 @@ impl SpecializationFrame209026 {
         self.player_index.encode(output);
         match self.operation {
             Assign {
-                specialization_key,
+                specialization_uid,
                 slot,
             } => {
-                specialization_key.encode(output);
+                specialization_uid.encode(output);
                 slot.encode(output);
             }
             AssignMajorTrait {
-                trait_key,
+                trait_uid,
                 specialization_slot,
                 major_trait_slot,
             } => {
-                trait_key.encode(output);
+                trait_uid.encode(output);
                 specialization_slot.encode(output);
                 major_trait_slot.encode(output);
             }
             Replace {
-                specialization_keys,
-                trait_keys,
+                specialization_uids,
+                trait_uids,
                 notification,
             } => {
-                for key in specialization_keys {
-                    key.encode(output);
+                for uid in specialization_uids {
+                    uid.encode(output);
                 }
-                for row in trait_keys {
-                    for key in row {
-                        key.encode(output);
+                for row in trait_uids {
+                    for uid in row {
+                        uid.encode(output);
                     }
                 }
                 notification.encode(output);
@@ -105,28 +106,28 @@ impl SpecializationFrame209026 {
         let player_index = u32::decode(&mut cursor)?;
         let operation = match id {
             640 => Assign {
-                specialization_key: u32::decode(&mut cursor)?,
+                specialization_uid: u32::decode(&mut cursor)?,
                 slot: u8::decode(&mut cursor)?,
             },
             641 => AssignMajorTrait {
-                trait_key: u32::decode(&mut cursor)?,
+                trait_uid: u32::decode(&mut cursor)?,
                 specialization_slot: u8::decode(&mut cursor)?,
                 major_trait_slot: u8::decode(&mut cursor)?,
             },
             642 => {
-                let mut specialization_keys = [0; 3];
-                for key in &mut specialization_keys {
-                    *key = u32::decode(&mut cursor)?;
+                let mut specialization_uids = [0; 3];
+                for uid in &mut specialization_uids {
+                    *uid = u32::decode(&mut cursor)?;
                 }
-                let mut trait_keys = [[0; 3]; 3];
-                for row in &mut trait_keys {
-                    for key in row {
-                        *key = u32::decode(&mut cursor)?;
+                let mut trait_uids = [[0; 3]; 3];
+                for row in &mut trait_uids {
+                    for uid in row {
+                        *uid = u32::decode(&mut cursor)?;
                     }
                 }
                 Replace {
-                    specialization_keys,
-                    trait_keys,
+                    specialization_uids,
+                    trait_uids,
                     notification: u8::decode(&mut cursor)?,
                 }
             }
@@ -155,7 +156,7 @@ mod tests {
                 "80 02 ff ff ff ff 0f 80 80 01 ff",
                 u32::MAX,
                 Assign {
-                    specialization_key: 16_384,
+                    specialization_uid: 16_384,
                     slot: 255,
                 },
             ),
@@ -163,7 +164,7 @@ mod tests {
                 "81 02 00 ff ff ff ff 0f 02 01",
                 0,
                 AssignMajorTrait {
-                    trait_key: u32::MAX,
+                    trait_uid: u32::MAX,
                     specialization_slot: 2,
                     major_trait_slot: 1,
                 },
@@ -174,8 +175,8 @@ mod tests {
                  02 ff 01 80 80 04 fe",
                 300,
                 Replace {
-                    specialization_keys: [1, 128, 16_384],
-                    trait_keys: [[0, 127, 129], [16_383, 16_385, u32::MAX], [2, 255, 65_536]],
+                    specialization_uids: [1, 128, 16_384],
+                    trait_uids: [[0, 127, 129], [16_383, 16_385, u32::MAX], [2, 255, 65_536]],
                     notification: 254,
                 },
             ),
