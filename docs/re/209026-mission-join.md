@@ -65,6 +65,41 @@ This traces prerequisites for the separately documented
 [creation request](209026-character-creation.md); it does not prove a complete
 mission bootstrap or successful character creation.
 
+### Observer preparation
+
+The connection job copies exactly the supplied preamble length into its queued
+buffer (`0x140243320`). The mission callback obtains the 136-byte parameter blob
+at `0x142111220` through `0x140ff45b0`, then uses the same `0x140fefb00`
+factory as the auth transport. The factory emits the type-0 key record with
+two-byte header and at most 64 public-value bytes, aligned to four bytes. This
+supports reusing the observer's cipher exchange after consuming the mission
+preamble; runtime mission interoperability is still untested.
+
+An explicit mission observer mode can therefore consume 84 bytes, validate the
+four established Dwords (kind, build, product and length field), and leave the
+remaining preamble opaque. It must not infer identities from those bytes or
+apply the protocol-3 auth reply fixture to a protocol-0 connection. The default
+16-byte auth preamble behavior stays available for existing replay wrappers.
+No mission connection is launched while the User Agreement decision is pending.
+
+Implemented as `gw2-game-observe --mission-preamble`, using a separately chosen
+loopback listener and the existing explicit local identity. The option rejects
+`--auth-reply-body`. Focused checks pass: all truncated prefixes, exact
+consumption before a following key record, invalid established header fields,
+and synthetic loopback DH/RC4 exchanges for both prefix modes. The loopback
+check receives a compressed server frame, sends encrypted client bytes and
+verifies that only their plaintext reaches a mode-0600 capture. The existing
+fragmented auth-reply test also passes (three tests total), the observer builds,
+and the CLI fixture-conflict check rejects before identity loading/binding.
+These are local test peers, not a frozen-client mission replay.
+
+REA evidence: `ev_5509884917cbe400b5ce9e7327858c44e7a105edaa5643ba53eb9d8513914105`
+(queued preamble and protocol-0 factory call),
+`ev_a13e50a1dd75cbeb1662c654e568c897886de17e5ca3e5461039782f916c5273`
+(shared parameter getter and key-record construction),
+`ev_1bc91ab7300f8203dfc5c4984c745b3d2137796b2c1c7b2ad5fa7759bc13d743`
+(84-byte preamble construction). Private export: `209026-mission-static-8.json`.
+
 ## Small mission control group
 
 Protocol-0 group 40 is registered at `0x1401a6f90`, with two client descriptors

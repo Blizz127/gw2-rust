@@ -117,7 +117,10 @@ Lead: Codex, session `claude-gw2-rust` (owner handoff 9acee8ca7cde4358bbdf0fb61f
     mission control group are mapped. Address encoding
     copies 28 raw bytes with a big-endian port; the Rust port codec is corrected.
     Exact-byte IPv4/IPv6 test and observer/census builds pass. Mission bootstrap
-    remains untested. See [re/209026-mission-join.md](re/209026-mission-join.md).
+    remains untested. The observer now accepts an explicit `--mission-preamble`
+    mode for the 84-byte prefix; three focused tests (including auth/mission
+    loopback cipher exchanges), build and CLI fixture-conflict check pass.
+    See [re/209026-mission-join.md](re/209026-mission-join.md).
     The game is not yet connectable; character selection remains pending.
   - Scope and ordering for the time-locked progression, plus the core-game completion
     matrix: [SCOPE.md](SCOPE.md).
