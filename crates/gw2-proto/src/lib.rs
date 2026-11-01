@@ -18,6 +18,7 @@ pub mod character_summary;
 pub mod core_stats;
 pub mod dynamic;
 pub mod endurance;
+pub mod guardian;
 pub mod health;
 pub mod player_creation;
 pub mod schema;

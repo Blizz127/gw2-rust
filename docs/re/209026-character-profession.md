@@ -157,6 +157,23 @@ Private bundle: `~/re/gw2/notes/209026-guardian-meter-1.json`.
 | `ev_cf4a421cf1d4d3c282942d5fd292d206107f44f0cd0ce3aff9541b61d69fd2be` | timeGetTime import, update/removal handlers, five-float 479 descriptor and raw-byte getters. |
 | `ev_cd25a14fbd23545b97767a6fc979e04256188b2c2d71ea706dbc62213f5407ea` | 480 descriptor, 0.001 constant, removal body and bounded clock-reference search. |
 
+## Typed Guardian framing check
+
+`gw2_proto::guardian::GuardianFrame209026` covers 477–480 with an explicit
+character index and operation enum. The meter names describe observed
+arithmetic; the two bytes remain `values`, and 479's unused wire floats
+remain `trailing`. All floats retain their original bits. The codec selects
+no defaults and does not validate profession type, lifetime or gameplay
+values. Input advances only after a complete frame succeeds.
+
+Three focused tests and `cargo build -p gw2-proto --lib` pass. Hand-authored
+fixtures exercise all four layouts, distinct maximum/rate/current values,
+raw bytes 0/128/255, output prefixes, and negative-zero/NaN trailing bits.
+A concatenated stream verifies the next frame begins after all five 479
+floats. All truncations, invalid neighboring IDs and overflowing/overlong
+character-index varints are rejected without advancing input. No client
+messages were sent.
+
 ## Scope and evidence
 
 For a fresh player, profession creation must precede server 170's chatter
