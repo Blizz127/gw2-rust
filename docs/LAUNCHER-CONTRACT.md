@@ -99,6 +99,14 @@ relay (`sandbox/bubble-relay.py`) forwarded its Unix sockets to our servers on B
 port numbers. The real client went through login, auth and Play to the agreement panel.
 Not covered: the device-only uid-0/setpriv wrapper (AppArmor refuses it on the devbox).
 
+**Prefix needs DXVK.** Every passing run used DXVK. The runner's default `d3d11,dxgi=n`
+means native only, so a prefix without the DLLs fails at D3D11 load.
+- Provision: on first use, copy GE-Proton's `files/lib/wine/dxvk/x86_64-windows/`
+  d3d11, dxgi, d3d10core and d3d9 into `drive_c/windows/system32`, as the sandbox's
+  `prepare_prefix` does with DXVK 3.1.1.
+- `--no-dxvk` (wined3d) is untested.
+- Our runs used Debian Wine on lavapipe. GE-Proton's Wine and a real GPU are untested.
+
 Sandbox run 63b used the **live** Banshee server. The pieces:
 - the shipped runner package (its identity and gdb script) and the launcher's `bridge.py`
 - the host-side relay over `ssh -L`, with `BUBBLE_UPSTREAM=external`, and no local servers
