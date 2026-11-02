@@ -176,6 +176,16 @@ fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
 }
 
 #[test]
+fn only_credential_safe_service_mode_binds_beyond_loopback() {
+    let tailnet: SocketAddr = "100.74.44.12:6112".parse().unwrap();
+    assert!(bind_allowed(&"127.1.0.3:6112".parse().unwrap(), false));
+    assert!(!bind_allowed(&tailnet, false));
+    assert!(bind_allowed(&tailnet, true));
+    assert!(!bind_allowed(&"0.0.0.0:6112".parse().unwrap(), true));
+    assert!(!bind_allowed(&"[::]:6112".parse().unwrap(), true));
+}
+
+#[test]
 fn play_phase_extends_but_bounds_the_read_timeout() {
     assert_eq!(read_timeout(false), Duration::from_secs(30));
     assert_eq!(read_timeout(true), Duration::from_secs(600));

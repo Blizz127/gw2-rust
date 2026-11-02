@@ -197,6 +197,13 @@ fn observe(
     Ok(())
 }
 
+/// Loopback is always allowed. Any other address is a service listener: it
+/// must run credential-safe (`--no-capture`) and name a specific interface,
+/// never the unspecified address.
+fn bind_allowed(listen: &SocketAddr, no_capture: bool) -> bool {
+    listen.ip().is_loopback() || (no_capture && !listen.ip().is_unspecified())
+}
+
 fn main() -> io::Result<()> {
     let mut listen: SocketAddr = "127.1.0.2:6112".parse().unwrap();
     let (mut params, mut private, mut logs) = (None, None, None);
@@ -299,8 +306,10 @@ fn main() -> io::Result<()> {
             }
         }
     }
-    if !listen.ip().is_loopback() {
-        return Err(invalid("offline observer requires loopback"));
+    if !bind_allowed(&listen, no_capture) {
+        return Err(invalid(
+            "non-loopback listen requires --no-capture and a specific address",
+        ));
     }
     if preamble == Preamble::Mission && (auth_body.is_some() || character.is_some()) {
         return Err(invalid(

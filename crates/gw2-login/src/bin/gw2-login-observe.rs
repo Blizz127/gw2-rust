@@ -121,8 +121,10 @@ fn main() {
 
     let mut handles = Vec::new();
     for addr in listen {
-        if !addr.ip().is_loopback() {
-            eprintln!("warning: {addr} is not loopback; make sure this runs in the offline sandbox");
+        // Loopback is always allowed; any other bind is a service listener and
+        // must be credential-safe and name a specific interface.
+        if !addr.ip().is_loopback() && (capture || addr.ip().is_unspecified()) {
+            die(&format!("{addr}: non-loopback listen requires --no-capture and a specific address"));
         }
         let listener = TcpListener::bind(addr).unwrap_or_else(|e| die(&format!("bind {addr}: {e}")));
         let addr = listener.local_addr().unwrap_or(addr);

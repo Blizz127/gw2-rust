@@ -154,6 +154,15 @@ def main(no_capture=False):
                 observer.wait()
 
 
+def bind_guard():
+    binary = str(ROOT / "target/debug/gw2-login-observe")
+    for args in (["--listen", "192.0.2.1:6112"], ["--no-capture", "--listen", "0.0.0.0:6112"]):
+        done = subprocess.run([binary, *args], capture_output=True, text=True, timeout=10)
+        assert done.returncode == 2 and "requires --no-capture" in done.stderr, (args, done.stderr)
+    print("Bind guard: non-loopback without --no-capture and the unspecified address are refused: PASS")
+
+
 if __name__ == "__main__":
+    bind_guard()
     main()
     main(no_capture=True)
