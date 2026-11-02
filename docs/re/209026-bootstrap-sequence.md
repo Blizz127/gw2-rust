@@ -50,7 +50,7 @@ READY.
 | 3b | server 1060, OnRecvLoadMap | Sets the command-received flag +0x2c4, which SERVER_WAIT requires | Stated: needed to leave state 3 | mission transfer, map ready |
 | 3c | client 420, MapLoaded | Sent on MAP_STREAM success (418 on failure) | Stated: precedes READY; "too early" as a readiness signal | map ready, mission transfer |
 | 3d | client 423, language prefs | Ordinary branch: masks 0x40 (join completion) + 0x80 (1063) set, 0x1 clear | Stated: sent once both 2d and 3a happened, in either order | [mission entry](209026-mission-entry.md) |
-| 3e | (no message) AGENT_STREAM | Waits for a **nonnull controlled character** plus streaming conditions | Stated. Phase 4 must complete here. Other prerequisites are open. | map ready |
+| 3e | (no message) AGENT_STREAM | Waits, without a timeout, for a **nonnull controlled character**. It then requests streaming around the 1060 Float3 and waits for world readiness for at most 120 s by default before continuing | Stated. Phase 4 must complete here. | map ready |
 | 3f | client 412, AgentsLoaded | Loader READY, ctx +0x228 mask 0x2, view state 0xd | Stated (implementation inference in the note) | map ready |
 | 3g | server 1036, BeginPlaying | Asserts loader READY; view state → 0x10 | Candidate: send after 412 | map ready |
 
@@ -132,7 +132,7 @@ and phase 2 for Play are open.**
 ## Highest-value open RE items
 
 1. ~~The existing-character Play route~~ (traced in [play route](209026-play-route.md)); Queensdale's map type → game type remains.
-2. AGENT_STREAM `0x140951ce0`: its full conditions beyond a controlled character.
-3. Whether population (phase 4) and world entry (phase 5) must precede 1060, or only precede AGENT_STREAM.
+2. ~~AGENT_STREAM `0x140951ce0` conditions~~ (traced in [map ready](209026-map-ready.md)): the controlled character is the only untimed wait; world readiness waits at most 120 s (5 s with setting 0x3d), then continues.
+3. Whether population (phase 4) and world entry (phase 5) must precede 1060. The loader only needs them by AGENT_STREAM, which polls every tick. Whether the handlers themselves depend on map state (scene bounds for 37/46) is still open.
 4. The position of 431 relative to 1036 and READY.
 5. Valid default values (attitude, flags, 46 option bits). The individual notes list these as open.

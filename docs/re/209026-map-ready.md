@@ -57,6 +57,47 @@ every state or every failure condition. The full model/agent streaming
 prerequisites remain open. Empty server ID 1061 reaches a no-op default-view callback;
 it cannot stand in for whatever population data those services require.
 
+## AGENT_STREAM conditions (`0x140951ce0`)
+
+Traced 2026-11-02. Each tick, the stage function does the following, in order:
+
+1. **Hard wait: controlled character.** It calls the charContext getter
+   (thread-local +0x98, virtual +0x68) and returns at once while the result is
+   null (`0x140951d59`). There is **no timeout** on this wait. Population that
+   produces a finalized controlled character is the only way through.
+2. **One-time streaming request.** On the first tick with a character
+   (`+0x2d0` == 0), it calls service `0x14110f0a0` slot +0xf8 with the loader's
+   +0x2a8 Float3 and the constant 1536.0, then sets +0x2d0. +0x2a8 is the
+   Float3 from server 1060 ([mission transfer](209026-mission-transfer.md)).
+   *Inferred:* this asks for world streaming around the 1060 position within
+   that radius.
+3. **Soft wait: world readiness, with a timeout.**
+   - **Countdown.** The countdown is loader +0x2fc. It is copied from +0x2f8 on
+     entry from MAP_ASSET_STREAM (`0x140951af5`). The loader initializer sets
+     +0x2f8 to **120000**, or **5000** when client setting 0x3d is on
+     (`0x140953d6b`). Each tick subtracts the stage's elapsed argument;
+     milliseconds is inferred.
+   - **Before it expires.** The stage continues only when `0x1409539c0`
+     (loader +0x268) returns nonzero **and** service slot +0x40 returns 0.
+   - **After it expires.** It logs the UTF-16 diagnostic `Map load hang on
+     STATE_AGENT_STREAM detected: IsWorldReady: %d, CharLoadingCount %d`, with
+     those two values, and **continues anyway**.
+4. **Completion.** It runs the per-subsystem completion loops, logs `MapLoader:
+   Completed STATE_AGENT_STREAM`, and sets **state 12 (READY_WAIT)**.
+
+**Consequences:**
+- Only the controlled character blocks indefinitely.
+- A placeholder 1060 position that never becomes "world ready" costs at most
+  the countdown, about 2 minutes by default.
+- Statically, the loader polls for the character on every tick. Population can
+  therefore arrive before or after 1060, as long as it produces a finalized
+  controlled character. Whether the population handlers depend on map state
+  themselves (for example, scene bounds for 37/46) was not examined here.
+
+Evidence: `ev_d0556c8a75844d68557a107d01cad69724fdac3af5616cba522ddc9887698865`
+(Rizin-run `agent-stream-windows.py`, SHA-checked), in the private
+`~/re/gw2/notes/209026-agent-stream-1.json`.
+
 ## Controlled-character prerequisite
 
 The service at thread-local context +0x98 is named **charContext** by the
