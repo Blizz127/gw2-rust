@@ -66,9 +66,11 @@ DNS_SINK=0 ADD_HOSTS="cligate.101.ncplatform.net=127.1.0.1 cligate.101.ncplatfor
 1. **Owner decision (Run59 hold):** run 59 shows the User Agreement panel after the
    launcher's Play and before character select. Its code path is untraced. No progress
    past it without explicit owner direction.
-2. **Game server:** route result 20, the game join and the map-load opening (1063, placeholder
-   1060) exist as offline observer fixtures only. Valid 1060 values, character population
-   (428…444), world entry (46), 412 → BeginPlaying (1036) and a deployable service remain.
+2. **Game server:** route result 20, the game join, the map-load opening (1063, placeholder
+   1060), a candidate character population (428…444, 46) and 412 → BeginPlaying (1036) exist
+   as opt-in offline observer fixtures only, never run against the client. Remaining: valid
+   1060 values and a valid spawn position, the many placeholder population values, player
+   startup (431) and everything after 1036, and a deployable service.
 3. **Launcher runner:** host mapping, the guarded memory substitutions, and stdin ticket
    handoff on the owner's device. D2 (per-process network restriction) is unanswered.
 4. **Accounts:** Banshee ticket verification and character storage.

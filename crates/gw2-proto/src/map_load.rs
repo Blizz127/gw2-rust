@@ -57,8 +57,10 @@ pub fn decode_empty(input: &mut &[u8], id: u16) -> Result<()> {
 /// meaning is unknown.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MapData1063 {
-    /// Stored at mission context +0x22c; meaning unknown.
-    pub context_value: u32,
+    /// Stored at mission context +0x22c, which the client reads back as
+    /// `MissionCliGetPlayerId()` (`0x141411190`, named by the assertion
+    /// `m_ownerPlayerId == MissionCliGetPlayerId()`): the local player ID.
+    pub player_id: u32,
     /// The full raw Dword; the client masks it, see [`Self::map_id`].
     pub map: u32,
     /// Copied to a client global; meaning unknown.
@@ -81,7 +83,7 @@ impl MapData1063 {
             return None;
         }
         Some(Self {
-            context_value: 0,
+            player_id: 0,
             map: map_id,
             global_value: 0,
             context_value_2: 0,
@@ -95,7 +97,7 @@ impl MapData1063 {
         let mut cursor = *input;
         expect_id(&mut cursor, Self::MESSAGE_ID, "map data message 1063")?;
         let decoded = Self {
-            context_value: u32::decode(&mut cursor)?,
+            player_id: u32::decode(&mut cursor)?,
             map: u32::decode(&mut cursor)?,
             global_value: u32::decode(&mut cursor)?,
             context_value_2: u32::decode(&mut cursor)?,
@@ -108,7 +110,7 @@ impl MapData1063 {
 
     pub fn encode_frame(&self, output: &mut BytesMut) {
         Self::MESSAGE_ID.encode(output);
-        self.context_value.encode(output);
+        self.player_id.encode(output);
         self.map.encode(output);
         self.global_value.encode(output);
         self.context_value_2.encode(output);
@@ -293,7 +295,7 @@ mod tests {
 
     fn sample_1063() -> MapData1063 {
         MapData1063 {
-            context_value: 0x1234,
+            player_id: 0x1234,
             map: 0xc000_0000 | 15,
             global_value: 300,
             context_value_2: 7,
@@ -334,7 +336,7 @@ mod tests {
         assert!(census.is_empty());
         let Value::Struct(fields) = value else { panic!() };
         assert_eq!(fields.len(), 6);
-        assert_eq!(fields[0].1, Value::U32(frame.context_value));
+        assert_eq!(fields[0].1, Value::U32(frame.player_id));
         assert_eq!(fields[1].1, Value::U32(frame.map));
         assert_eq!(fields[2].1, Value::U32(frame.global_value));
         assert_eq!(fields[3].1, Value::U32(frame.context_value_2));
@@ -358,7 +360,7 @@ mod tests {
         assert_eq!(
             plain,
             MapData1063 {
-                context_value: 0,
+                player_id: 0,
                 map: 0x3fff_ffff,
                 global_value: 0,
                 context_value_2: 0,

@@ -183,13 +183,20 @@ impl MissionPhase {
         self.enabled
     }
 
-    /// Server 1063 then 1060, sent right after the type-1 key reply. Only the
-    /// 1063 map ID is meaningful; every other value is a placeholder.
+    /// Server 1063 then 1060, sent right after the type-1 key reply. 1063
+    /// carries the map ID and, with population enabled, the local player ID
+    /// (`MissionCliGetPlayerId()`) set to the plan's player index (inferred to
+    /// be the same index space); every other value is a placeholder.
     pub fn opening(&self) -> Bytes {
         let mut out = BytesMut::new();
-        MapData1063::for_map(self.map_key)
-            .expect("validated in new")
-            .encode_frame(&mut out);
+        MapData1063 {
+            player_id: self
+                .population
+                .as_ref()
+                .map_or(0, |fixture| fixture.plan.player_index),
+            ..MapData1063::for_map(self.map_key).expect("validated in new")
+        }
+        .encode_frame(&mut out);
         LoadMap1060 {
             position: [0.0; 3],
             vectors: [[0.0; 2]; 2],
@@ -336,6 +343,8 @@ pub(crate) mod tests {
         // 412 before population: never 1036.
         assert!(phase.respond(&agents).unwrap().is_none());
         assert!(phase.respond(&Seen::Other(2)).unwrap().is_none());
+        let mut opening = &phase.opening()[..];
+        assert_eq!(MapData1063::decode_frame(&mut opening).unwrap().player_id, 1);
         let sent = phase.respond(&loaded).unwrap().unwrap();
         let plan = phase.population.as_ref().unwrap().plan.clone();
         assert_eq!(sent, population::population_stream(&plan).unwrap());

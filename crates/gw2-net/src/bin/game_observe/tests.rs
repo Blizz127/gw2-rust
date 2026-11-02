@@ -259,6 +259,11 @@ fn mission_population_loopback_follows_client_420_and_412() {
     ));
     let record = mission::tests::guardian_record(15, 1);
     let fixture = mission::PopulationFixture::new(&record, [0.0; 3]).unwrap();
+    let expected_opening = mission::MissionPhase::new(15)
+        .unwrap()
+        .with_population(fixture.clone())
+        .unwrap()
+        .opening();
     // Public toy group for this local test; no stored identities are loaded.
     let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
     let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
@@ -289,7 +294,7 @@ fn mission_population_loopback_follows_client_420_and_412() {
         assert_ne!(n, 0);
         pending.extend_from_slice(&chunk[..n]);
     };
-    assert_eq!(next(&mut client, &mut codec), mission::MissionPhase::new(15).unwrap().opening());
+    assert_eq!(next(&mut client, &mut codec), expected_opening);
     let send = |client: &mut TcpStream, codec: &mut ClientCodec, id: u16| {
         let mut wire = BytesMut::new();
         codec

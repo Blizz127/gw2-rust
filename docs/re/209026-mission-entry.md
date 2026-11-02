@@ -52,10 +52,10 @@ Id: %i` at `0x1422dd7e8`. Fields as decoded (after the u16 ID):
 
 | Field | Wire | Client effect |
 | --- | --- | --- |
-| f0 | Dword | ctx+0x22c (meaning unknown) |
+| f0 | Dword | ctx+0x22c, the **local player ID**: getter `0x141411190` is named `MissionCliGetPlayerId()` by the vote assertion `m_ownerPlayerId == MissionCliGetPlayerId()` |
 | f1 | Dword | `f1 & 0x3fffffff` → ctx+0x1f0, the **context map ID**. Bit 31 sets ctx+0x150 flag 0x200 and bit 30 sets 0x400 (meanings unknown). The masked ID is resolved through content slot +0x1a8 into **ctx+0x1e8**, the map definition. |
 | f2 | Dword | ctx+0x1f4 and global `0x14266c150` (via `0x14023bfe0`), meaning unknown |
-| f3 | Dword | ctx+0x1d0 (meaning unknown; the context constructor initializes it to -1) |
+| f3 | Dword | ctx+0x1d0 (meaning unknown; the context constructor initializes it to -1). Its only reader in the client, through getter `0x1414110a0`, copies it into a record (`0x1411a6d68`); no index comparison was found |
 | b4 | Byte | nonzero → ctx+0x228 bit 0x20 |
 | b5 | Byte | nonzero → ctx+0x228 bit 0x10 |
 
@@ -162,6 +162,21 @@ adds the candidate population sequence (`gw2_proto::population`).
   reply → opening; 420 → sequence starting with 428; 412 → 1036).
 
 Not run against the client.
+
+### Player ID in 1063 (2026-11-02)
+
+The readers of `MissionCliGetPlayerId()` are:
+- vote code (`VoteCliVote.cpp`, `DlgGenericVote.cpp`), which compares a vote
+  owner or candidate against it
+- the Play-route map-record check
+
+No population or control handler on the traced path reads it. So a zero f0
+does not stop population. With population enabled, the observer now sends f0
+= the plan's player index. That the player ID and 428's player index share
+one index space is **inferred**.
+
+Evidence: `ev_2dd3d867eb8f375c5343d4c07ea73c800a7e1592b990de7d3cbb087d56dda899`,
+private `~/re/gw2/notes/209026-mission-player-id-1.json`.
 
 ## Open
 
