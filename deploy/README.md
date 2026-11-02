@@ -16,30 +16,36 @@ Always-on and bound to the tailnet address only. stackd treats it as **readiness
 Every server runs `--no-capture`. Nothing typed into the client is stored or printed,
 and the binaries refuse a non-loopback listener otherwise.
 
-## Layout
+## Layout (systemd --user, Banshee convention)
 
 ```
-/srv/gw2/bin/         gw2-assetcdn, gw2-login-observe, gw2-game-observe (release build)
-/srv/gw2/deploy/      gw2-server.sh, gw2-probe.py
-/srv/gw2/data/        latest.txt, cdn-files/, startsso.xml, accounts.xml, token.xml,
-                      auth2f.xml, empty.xml, auth-ready.bin, auth-account-body.bin,
-                      character-record.bin
-/srv/gw2/id/          PRIVATE identity (0700), created ON THE HOST:
-                      tools/gw2-runner/make-identity.py <frozen exe> /srv/gw2/id <runner-public-dir>
-/srv/gw2/run/         pids.json (0700)
-/srv/gw2/gw2.conf     GW2_BIN, GW2_DATA, GW2_ID, GW2_RUN, GW2_BIND=100.74.44.12, GW2_SPAWN=0,0,7.4
+/home/blizz/gw2-rust-<sha>/          pinned kit (read-only by convention)
+  bin/                               gw2-assetcdn, gw2-login-observe, gw2-game-observe (static musl)
+  deploy/                            gw2-server.sh, gw2-probe.py, gw2-server.service
+  tools/                             gw2-runner/make-identity.py, gen-test-cert.sh, dh-block.bin
+  data/                              latest.txt, cdn-files/, startsso.xml, accounts.xml, token.xml,
+                                     auth2f.xml, empty.xml, auth-ready.bin, auth-account-body.bin,
+                                     character-record.bin
+/home/blizz/gw2-rust-current         symlink to the kit in service
+/home/blizz/gw2-rust-state/          0700
+  gw2.conf                           GW2_BIN, GW2_DATA, GW2_ID, GW2_RUN, GW2_BIND=100.74.44.12, GW2_SPAWN=0,0,7.4
+  id/                                PRIVATE identity, created ON THE HOST:
+                                     make-identity.py --dh-block <kit>/tools/dh-block.bin id runner-public
+  runner-public/                     PUBLIC values for the launcher's runner package
+  run/                               pids.json, server.log
+~/.config/systemd/user/gw2-server.service
 ```
 
-The private identity never leaves the host. Only the runner-public directory (our TLS
-modulus and DH public block) goes into the launcher's runner package.
+`dh-block.bin` is the client's public 136-byte DH parameter block (SHA-256 pinned in
+make-identity.py), so the host never needs a copy of the client.
 
 ## stackd probes (read-only, under 5 s, one JSON line)
 
-- health: `/srv/gw2/deploy/gw2-probe.py health /srv/gw2/run`
+- health: `/home/blizz/gw2-rust-current/deploy/gw2-probe.py health /home/blizz/gw2-rust-state/run`
   - Ready only when each process in `pids.json` is alive, runs its recorded exe, and
     owns its listener (socket inode under `/proc/<pid>/fd`).
   - Needs to read our processes' `/proc` entries (stackd wraps it in `sg`).
-- humans: `/srv/gw2/deploy/gw2-probe.py humans /srv/gw2/run`
+- humans: `/home/blizz/gw2-rust-current/deploy/gw2-probe.py humans /home/blizz/gw2-rust-state/run`
   - Counts ESTABLISHED connections on the game port owned by the game process.
   - Exits non-zero when the count can't be determined.
 

@@ -2,6 +2,12 @@
 """Create a fresh GW2 server identity for one deployment.
 
     make-identity.py FROZEN_GW2_64_EXE SERVER_DIR RUNNER_DIR
+    make-identity.py --dh-block DH_ORIGINAL_136 SERVER_DIR RUNNER_DIR
+
+The second form takes only the client's public 136-byte DH parameter block
+(SHA-256 pinned below; write it on a machine holding the frozen exe with
+--extract-dh-block EXE OUT). The server host can then create its identity
+without a copy of the client.
 
 SERVER_DIR (mode 0700, stays on the server, never shipped) receives
 cligate-101.key.pem, cligate-101.cert.der (via tools/gen-test-cert.sh),
@@ -18,6 +24,7 @@ from pathlib import Path
 
 EXE_SHA256 = '99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621'
 DH_VA, DH_LEN = 0x142111220, 136
+DH_BLOCK_SHA256 = '8016327fa2ca9ac2e1be5c99ee9f169a2604c72483687a4d0ff57d01162679aa'
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -40,11 +47,34 @@ def write(path, data):
         out.write(data)
 
 
-def main():
-    exe_path, server, runner = map(Path, sys.argv[1:4])
-    exe = exe_path.read_bytes()
+def frozen_exe(path):
+    exe = Path(path).read_bytes()
     if hashlib.sha256(exe).hexdigest() != EXE_SHA256:
         sys.exit('not the frozen build 209026 executable')
+    return exe
+
+
+def main():
+    args = sys.argv[1:]
+    if len(args) == 3 and args[0] == '--extract-dh-block':
+        out = Path(args[2])
+        if out.exists():
+            sys.exit(f'{out} already exists')
+        os.umask(0o077)
+        write(out, file_bytes(frozen_exe(args[1]), DH_VA, DH_LEN))
+        print('wrote public DH block', out)
+        return
+    if len(args) == 4 and args[0] == '--dh-block':
+        original = Path(args[1]).read_bytes()
+        if hashlib.sha256(original).hexdigest() != DH_BLOCK_SHA256:
+            sys.exit('not the build 209026 DH parameter block')
+        args = args[2:]
+    elif len(args) == 3:
+        original = file_bytes(frozen_exe(args[0]), DH_VA, DH_LEN)
+        args = args[1:]
+    else:
+        sys.exit(__doc__)
+    server, runner = map(Path, args)
     for d in (server, runner):
         if d.exists():
             sys.exit(f'{d} already exists; refusing to overwrite an identity')
@@ -58,7 +88,6 @@ def main():
     modulus = bytes.fromhex(modulus.strip().split('=', 1)[1])
     if len(modulus) != 128:
         sys.exit('unexpected modulus size')
-    original = file_bytes(exe, DH_VA, DH_LEN)
     p = int.from_bytes(original[8:72], 'little')
     g = int.from_bytes(original[4:8], 'little')
     if int.from_bytes(original[0:4], 'little') != 1 or g != 4:

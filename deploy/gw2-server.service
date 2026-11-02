@@ -1,21 +1,23 @@
 # GW2 build-209026 server on bansheerealm (stackd readiness_only, always-on).
-# Install root and user are placeholders until the coordinator assigns them.
+# systemd --user unit for blizz (linger on), Banshee convention. Install:
+#   ~/.config/systemd/user/gw2-server.service ; systemctl --user enable --now gw2-server
+# KIT is /home/blizz/gw2-rust-current (symlink to the pinned kit); state is
+# /home/blizz/gw2-rust-state (gw2.conf, id/ 0700, run/ 0700).
 [Unit]
 Description=GW2 build-209026 server (Banshee, readiness_only)
-After=network-online.target tailscaled.service
-Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/srv/gw2/deploy/gw2-server.sh /srv/gw2/gw2.conf
+ExecStart=/usr/bin/env -i HOME=/home/blizz USER=blizz LOGNAME=blizz LANG=C.UTF-8 PATH=/usr/bin:/bin /bin/bash /home/blizz/gw2-rust-current/deploy/gw2-server.sh /home/blizz/gw2-rust-state/gw2.conf
 Restart=on-failure
 RestartSec=5
+KillMode=control-group
+TimeoutStopSec=15
 UMask=0077
 NoNewPrivileges=yes
-PrivateTmp=yes
-ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=/srv/gw2/run
+MemoryMax=1G
+StandardOutput=append:/home/blizz/gw2-rust-state/run/server.log
+StandardError=append:/home/blizz/gw2-rust-state/run/server.log
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
