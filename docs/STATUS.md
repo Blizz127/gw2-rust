@@ -213,6 +213,16 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     mission phase (after the key reply: 1063 for KEY + placeholder 1060; client frames
     logged by ID; never 1267/1036). 13 observer tests pass, including a loopback
     exchange. The loader will stop at AGENT_STREAM until population exists.
+  - **Population sequence (2026-11-02):** `gw2_proto::population` composes the candidate
+    order 428 → 37 → 443 → 183 → 282 → 477 → 151 → 247/248 → 565 → 538 → 605 → 170 → 618
+    → 444 (A == B) → 46 from existing encoders. Every value either cites a docs/re constraint or is marked
+    `placeholder:`. The caller supplies identities, spawn position/facing and 45 appearance
+    bytes. 8 tests (order, decoder round-trips, census decode, index consistency, plan
+    validation, determinism). Open: whether agent index = character index, 183 vs 182,
+    and where 46 falls. Not exchanged with the client.
+  - **Build dependency:** `gw2-game-observe` and the play_route/map_load/population tests
+    `include_str!` the client-extracted schemas in gitignored `data/protocol/209026/`.
+    A clean checkout without that private directory will not build them.
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small

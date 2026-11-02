@@ -29,6 +29,7 @@ pub mod map_load;
 pub mod play_route;
 pub mod player_creation;
 pub mod player_startup;
+pub mod population;
 pub mod progress;
 pub mod quest;
 pub mod reward_track;
