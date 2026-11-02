@@ -233,9 +233,10 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     Open bug: with the launcher's bubble layout (hosts file; cligate 127.1.0.2; auth
     127.1.0.3) the real client aborts TLS with alert 10 before certificate handling
     (runs 60, 60b, 60c). Run 59's layout with the same new static no-capture binaries
-    passes through Play (run 60d). Run 60e (hosts file with run 59's IPs) decides between
-    hosts-file resolution and cligate's address; its result is in
-    ~/gw2-sandbox/runs/run60e-hosts-run59ips/orchestrator.out.
+    passes through Play (run 60d). Run 60e (hosts file with run 59's IPs) also fails, so the cause is
+    **hosts-file name resolution**, not cligate's address. The bubble needs a DNS stub
+    that answers like run 59's sink (gw2-dns-observe), or the reason the client's TLS
+    depends on how the name was resolved must be found.
     Next steps, in order:
     1. Read 60e and fix the layout with banshee-realm-client.
     2. Run 61, the runner end to end (prepared in ~/gw2-sandbox/runs/run61-runner-e2e).
