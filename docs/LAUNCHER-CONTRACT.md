@@ -72,7 +72,25 @@ gdb run as mapped uid 0 through `setpriv` with all capabilities dropped and no_n
 | 127.1.0.4:6112 | address our auth server returns in route result 20 | Game / mission |
 | 127.1.0.9 (no listener) | DNS: cms-live, exchange-live, gemstore-live, tradingpost-live (`.ncplatform.net`), `www.guildwars2.com`, `a.cdn.ua.ncsoft.com`, `update.googleapis.com`, `wpad` | Must stay unreachable (connection refused, as in the tested runs) |
 
-Real server host:ports on bansheerealm are added when the server is deployed.
+**Deployed 2026-11-02** on bansheerealm as `gw2-server.service` (systemd --user, kit
+`/home/blizz/gw2-rust-33ce1bf`, readiness_only in stackd). The relay maps:
+
+| Inside the bubble | Banshee (tailnet only) |
+| --- | --- |
+| 127.1.0.1:80 | 100.74.44.12:6115 (CDN) |
+| 127.1.0.2:6112 | 100.74.44.12:6114 (login) |
+| 127.1.0.3:6112 | 100.74.44.12:6113 (auth) |
+| 127.1.0.4:6112 | 100.74.44.12:6112 (game) |
+
+The runner package (public identity matching the server's) is
+`/home/blizz/gw2-runner-pkg-098ced7/` on the devbox. Sandbox run 61b used the deployed
+argv and data and reached the agreement panel. **Everything past the agreement is untested**:
+- what I ACCEPT sends (an STS path with no fixture gets no reply; the server log names it)
+- character select / Play route 20
+- mission join, 1063/1060
+- population, and the placeholder spawn 0,0,7.4
+
+The devbox reaches only port 22 on Banshee, so reachability from the owner's device is still unconfirmed.
 
 **Service mode:** a server facing a person runs `gw2-login-observe --no-capture` and
 `gw2-game-observe --no-capture`.

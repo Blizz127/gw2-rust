@@ -234,6 +234,13 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     the agreement himself on his own device; automation never clicks it. Next: run 62,
     the launcher's own bwrap bubble shape (uid 0 mapped, its DNS responder, runner
     under setpriv with no caps) on the devbox, then DIT shas and the deploy.
+    **Deployed** (same day): `gw2-server.service` on Banshee, kit `gw2-rust-33ce1bf`, all
+    four listeners on 100.74.44.12:6112-6115. The probes pass under stackd's `sg docker`
+    view, and a killed child restarts the set. DIT has the probe argv and sha. Run 61b
+    (deployed argv and data, runner shape) reaches the agreement panel. Open items:
+    - reachability from the owner's device (the devbox reaches only port 22)
+    - run 62 (the launcher's real bubble)
+    - the owner's first test past the agreement, which nothing has exercised
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
     Done, local commits only, nothing deployed:
     - no-capture servers and bind guard (71ffe34, c76ce60)
