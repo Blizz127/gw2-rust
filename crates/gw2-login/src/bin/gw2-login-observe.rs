@@ -15,6 +15,11 @@
 //! `--reply-xml /PATH=FILE` adds an explicit synthetic XML reply fixture inside TLS.
 //! These fixtures are protocol experiments, not account authentication.
 //!
+//! `--no-capture` is the service mode for any client a person types into: it
+//! creates no capture files and writes nothing derived from message content
+//! except STS request paths and sizes to the console. Login requests can carry
+//! whatever email/password was typed; this mode never stores or prints them.
+//!
 //! Defaults: listens on 127.0.0.1:6112 and 127.0.0.1:6600 (portal/game ports in the
 //! public notes, unverified). Logs to `./capture/`. Use it inside the
 //! `--network none` sandbox. For build 209026, bind 127.1.0.1 and use the sandbox
@@ -39,8 +44,13 @@ fn main() {
     let mut key = None;
     let mut cert = None;
     let mut replies: Vec<(String, Vec<u8>)> = Vec::new();
+    let mut capture = true;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
+        if a == "--no-capture" {
+            capture = false;
+            continue;
+        }
         match (a.as_str(), args.next()) {
             ("--listen", Some(v)) => match v.parse() {
                 Ok(addr) => listen.push(addr),
@@ -79,7 +89,7 @@ fn main() {
                 }
                 replies.push((path.into(), body));
             }
-            _ => die("usage: gw2-login-observe [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER] [--answer-gethostname HOST] [--reply-xml /PATH=FILE]..."),
+            _ => die("usage: gw2-login-observe [--no-capture] [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER] [--answer-gethostname HOST] [--reply-xml /PATH=FILE]..."),
         }
     }
     let tls_config = match (key, cert) {
@@ -102,8 +112,11 @@ fn main() {
     if listen.is_empty() {
         listen = vec!["127.0.0.1:6112".parse().unwrap(), "127.0.0.1:6600".parse().unwrap()];
     }
-    if let Err(e) = std::fs::create_dir_all(&log_dir) {
+    if capture && let Err(e) = std::fs::create_dir_all(&log_dir) {
         die(&format!("cannot create {}: {e}", log_dir.display()));
+    }
+    if !capture && !greet.is_empty() {
+        die("--greet-hex is an experiment and is not available with --no-capture");
     }
 
     let mut handles = Vec::new();
@@ -113,7 +126,11 @@ fn main() {
         }
         let listener = TcpListener::bind(addr).unwrap_or_else(|e| die(&format!("bind {addr}: {e}")));
         let addr = listener.local_addr().unwrap_or(addr);
-        println!("observing {addr} -> {}", log_dir.display());
+        if capture {
+            println!("observing {addr} -> {}", log_dir.display());
+        } else {
+            println!("serving {addr} (no capture)");
+        }
         let dir = log_dir.clone();
         let greet = greet.clone();
         let starttls = starttls.clone();
@@ -128,6 +145,7 @@ fn main() {
                         let starttls = starttls.clone();
                         let tls_config = tls_config.clone();
                         let replies = replies.clone();
+                        let dir = capture.then_some(dir);
                         std::thread::spawn(move || observe(s, addr, dir, greet, starttls, tls_config, replies));
                     }
                     Err(e) => eprintln!("{addr}: accept failed: {e}"),
@@ -149,22 +167,33 @@ fn unix_ms() -> u128 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis())
 }
 
-fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8>, starttls: Option<String>, tls_config: Option<Arc<tls::ServerConfig>>, replies: Arc<Vec<(String, Vec<u8>)>>) {
+/// `dir` is `None` in `--no-capture` mode: every capture write then goes to
+/// `io::sink()` and no file is created.
+fn observe(mut stream: TcpStream, local: SocketAddr, dir: Option<PathBuf>, greet: Vec<u8>, starttls: Option<String>, tls_config: Option<Arc<tls::ServerConfig>>, replies: Arc<Vec<(String, Vec<u8>)>>) {
     let id = CONN_ID.fetch_add(1, Ordering::Relaxed);
     let peer = stream.peer_addr().map_or("?".into(), |p| p.to_string());
-    let path = dir.join(format!("{}-conn{id}-port{}.log", unix_ms(), local.port()));
-    let mut options = std::fs::OpenOptions::new();
-    options.write(true).create_new(true);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt;
-        options.mode(0o600);
-    }
-    let Ok(mut log) = options.open(&path) else {
-        eprintln!("cannot create {}", path.display());
-        return;
+    let mut log: Box<dyn Write> = match dir {
+        None => {
+            println!("conn {id}: {peer} -> {local} (no capture)");
+            Box::new(std::io::sink())
+        }
+        Some(dir) => {
+            let path = dir.join(format!("{}-conn{id}-port{}.log", unix_ms(), local.port()));
+            let mut options = std::fs::OpenOptions::new();
+            options.write(true).create_new(true);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::OpenOptionsExt;
+                options.mode(0o600);
+            }
+            let Ok(file) = options.open(&path) else {
+                eprintln!("cannot create {}", path.display());
+                return;
+            };
+            println!("conn {id}: {peer} -> {local}, logging to {}", path.display());
+            Box::new(file)
+        }
     };
-    println!("conn {id}: {peer} -> {local}, logging to {}", path.display());
     let _ = writeln!(log, "# conn {id} peer={peer} local={local} start_unix_ms={}", unix_ms());
 
     let start = Instant::now();
@@ -209,7 +238,7 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
                         let _ = log.write_all(&reply);
                         if r.is_err() { return; }
                         if let Some(cfg) = &tls_config {
-                            observe_tls(stream, cfg, buf, &mut log, start, &replies);
+                            observe_tls(stream, cfg, buf, log.as_mut(), start, &replies);
                             println!("conn {id}: TLS capture closed");
                             return;
                         }
@@ -241,7 +270,7 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: PathBuf, greet: Vec<u8
     println!("conn {id}: closed");
 }
 
-fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut std::fs::File, start: Instant, replies: &[(String, Vec<u8>)]) {
+fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut dyn Write, start: Instant, replies: &[(String, Vec<u8>)]) {
     // Preserve bytes read beyond the plaintext STS message (possibly a ClientHello).
     let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
     let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));

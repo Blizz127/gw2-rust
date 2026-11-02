@@ -15,7 +15,10 @@ import time
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
-def main():
+MARKER = b"dummy-secret-7f3a9c"
+
+
+def main(no_capture=False):
     tmp = ROOT / "target" / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="starttls-smoke-", dir=tmp) as name:
@@ -30,7 +33,8 @@ def main():
         fixture = work / "fixture.xml"
         fixture.write_bytes(fixture_body)
         observer = subprocess.Popen([
-            str(ROOT / "target/debug/gw2-login-observe"), "--listen", "127.0.0.1:0",
+            str(ROOT / "target/debug/gw2-login-observe"), *(["--no-capture"] if no_capture else []),
+            "--listen", "127.0.0.1:0",
             "--log", str(work / "capture"), "--tls-key", str(work / "cligate-101.key.pem"),
             "--tls-cert", str(cert),
             "--answer-gethostname", "cligate.101.ncplatform.net.",
@@ -39,7 +43,7 @@ def main():
         try:
             assert select.select([observer.stdout], [], [], 10)[0], "observer startup timeout"
             line = observer.stdout.readline()
-            match = re.search(r"observing 127\.0\.0\.1:(\d+)", line)
+            match = re.search(r"(?:observing|serving) 127\.0\.0\.1:(\d+)", line)
             assert match, "observer did not report its bound loopback address"
             with socket.create_connection(("127.0.0.1", int(match[1])), timeout=5) as sock:
                 ctx = ssl.create_default_context()
@@ -78,6 +82,9 @@ def main():
                         assert packet, "server closed during handshake"
                         incoming.write(packet)
                 assert peer.version() == "TLSv1.2" and peer.cipher()[0] == "AES128-SHA"
+                login = b"<Request><LoginName>someone@example.invalid</LoginName><Password>" + MARKER + b"</Password></Request>"
+                peer.write(b"P /Auth/StartSsoLogin STS/1.0\r\ns:40\r\nl:%d\r\n\r\n" % len(login) + login)
+                sock.sendall(outgoing.read())
                 first = b"P /Smoke/Split STS/1.0\r\ns:43\r\nl:8\r\n\r\n<Probe/>"
                 second = b"P /Smoke/Next STS/1.0\r\ns:44\r\n\r\n"
                 for part in (first[:17], first[17:] + second):
@@ -114,6 +121,17 @@ def main():
                     sock.sendall(outgoing.read())
                     incoming.write(sock.recv(65536))
                     peer.unwrap()
+            if no_capture:
+                time.sleep(0.5)
+                observer.terminate()
+                out, err = observer.communicate(timeout=5)
+                out = line + out
+                assert not (work / "capture").exists(), "no-capture mode created a capture directory"
+                assert not any(work.rglob("*.log")), "no-capture mode wrote a log file"
+                assert MARKER.decode() not in out + err and "someone@example.invalid" not in out + err
+                assert "/Auth/StartSsoLogin" in out, "expected path-only console line"
+                print("StartTls smoke (--no-capture): login served, no files, typed values never printed: PASS")
+                return
             deadline = time.monotonic() + 5
             while True:
                 logs = list((work / "capture").glob("*.log"))
@@ -123,7 +141,7 @@ def main():
                 assert time.monotonic() < deadline, "capture did not finish"
                 time.sleep(0.05)
             assert "# TLS established: TLS1.2 AES128-SHA" in text
-            assert text.count("decrypted STS") == 4
+            assert text.count("decrypted STS") == 5
             assert "/Smoke/Split" in text and "/Smoke/Next" in text and "<Probe/>" in text
             assert all(p.stat().st_mode & 0o777 == 0o600 for p in logs)
             print("StartTls smoke: trusted TLS1.2, pipelined ClientHello, split/coalesced STS, GetHostname and XML fixture replies, private logs: PASS")
@@ -138,3 +156,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    main(no_capture=True)

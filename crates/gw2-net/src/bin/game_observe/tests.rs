@@ -316,3 +316,57 @@ fn mission_population_loopback_follows_client_420_and_412() {
 fn stream_of(listener: TcpListener) -> TcpStream {
     listener.accept().unwrap().0
 }
+
+#[test]
+fn no_capture_mode_serves_without_writing_files() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let epoch = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "gw2-observe-nocapture-{}-{epoch}.bin",
+        std::process::id()
+    ));
+    // Public toy group for this local test; no stored identities are loaded.
+    let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+    let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
+    let server_path = path.clone();
+    let server = std::thread::spawn(move || {
+        let fixtures = Fixtures {
+            mission_map_key: Some(15),
+            no_capture: true,
+            ..Fixtures::default()
+        };
+        observe(stream_of(listener), &key, &server_path, fixtures, Preamble::Mission)
+    });
+    let mut client = TcpStream::connect(address).unwrap();
+    client.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    let mut input = preamble::fixture(Preamble::Mission);
+    input.extend_from_slice(&[0, 6, 0, 4, 0, 0]);
+    client.write_all(&input).unwrap();
+    let mut reply = [0u8; 22];
+    client.read_exact(&mut reply).unwrap();
+    let mut codec = ClientCodec::new(&session_secret(&shared, &reply[2..].try_into().unwrap()));
+    let mut pending = BytesMut::new();
+    let opening = loop {
+        if let Some(frame) = codec.decode(&mut pending).unwrap() {
+            break frame;
+        }
+        let mut chunk = [0u8; 256];
+        let n = client.read(&mut chunk).unwrap();
+        assert_ne!(n, 0);
+        pending.extend_from_slice(&chunk[..n]);
+    };
+    assert_eq!(opening, mission::MissionPhase::new(15).unwrap().opening());
+    let mut wire = BytesMut::new();
+    codec
+        .encode(Bytes::copy_from_slice(&420u16.to_le_bytes()), &mut wire)
+        .unwrap();
+    client.write_all(&wire).unwrap();
+    client.shutdown(Shutdown::Both).unwrap();
+    server.join().unwrap().unwrap();
+    assert!(!path.exists(), "no-capture mode created a capture file");
+    assert!(!path.with_extension("preamble.bin").exists());
+}

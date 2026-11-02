@@ -73,6 +73,10 @@ struct Fixtures<'a> {
     play: Option<auth::PlayRoute>,
     mission_map_key: Option<u32>,
     population: Option<mission::PopulationFixture>,
+    /// Service mode: create no capture or preamble files. The auth stream can
+    /// carry account strings typed into the client, so a server facing a
+    /// person must run with this set.
+    no_capture: bool,
 }
 
 fn observe(
@@ -88,6 +92,7 @@ fn observe(
         play,
         mission_map_key,
         population,
+        no_capture,
     } = fixtures;
     let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
         (Some(phase), Some(fixture)) => Some(phase.with_population(fixture)?),
@@ -115,10 +120,14 @@ fn observe(
     let mut block = [0u8; 20];
     getrandom::fill(&mut block).map_err(io::Error::other)?;
     let mut codec = ServerCodec::new(&session_secret(&shared, &block));
-    let mut prefix_capture = private_file(&log.with_extension("preamble.bin"))?;
-    prefix_capture.write_all(&preamble)?;
-    prefix_capture.flush()?;
-    let mut capture = private_file(log)?;
+    let mut capture: Box<dyn Write> = if no_capture {
+        Box::new(io::sink())
+    } else {
+        let mut prefix_capture = private_file(&log.with_extension("preamble.bin"))?;
+        prefix_capture.write_all(&preamble)?;
+        prefix_capture.flush()?;
+        Box::new(private_file(log)?)
+    };
     stream.write_all(&[1, 22])?;
     stream.write_all(&block)?;
     eprintln!("Game key reply sent; client public length {}", public.len());
@@ -136,8 +145,14 @@ fn observe(
     }
     let mut chunk = [0u8; 8192];
     let mut total = 0;
-    while total < CAPTURE_LIMIT {
-        let available = chunk.len().min(CAPTURE_LIMIT - total);
+    // The 1 MiB cap bounds capture files; without capture the session is
+    // bounded only by the read timeout.
+    while no_capture || total < CAPTURE_LIMIT {
+        let available = if no_capture {
+            chunk.len()
+        } else {
+            chunk.len().min(CAPTURE_LIMIT - total)
+        };
         let n = match stream.read(&mut chunk[..available]) {
             Ok(n) => n,
             Err(e)
@@ -192,6 +207,7 @@ fn main() -> io::Result<()> {
     let mut play_address: Option<SocketAddr> = None;
     let mut mission_map_key: Option<u32> = None;
     let mut population_record: Option<Vec<u8>> = None;
+    let mut no_capture = false;
     let mut spawn: Option<[f32; 3]> = None;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -218,6 +234,7 @@ fn main() -> io::Result<()> {
                         .map_err(|_| invalid("invalid mission map key"))?,
                 )
             }
+            "--no-capture" => no_capture = true,
             "--mission-population" => {
                 let path = args
                     .next()
@@ -277,7 +294,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z]]]",
+                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z]]]",
                 ));
             }
         }
@@ -355,7 +372,9 @@ fn main() -> io::Result<()> {
     }
     let key = Arc::new(key);
     let logs = logs.ok_or_else(|| invalid("missing --log"))?;
-    fs::create_dir_all(&logs)?;
+    if !no_capture {
+        fs::create_dir_all(&logs)?;
+    }
     let listener = TcpListener::bind(listen)?;
     eprintln!("Game observer listening on {}", listener.local_addr()?);
     let epoch = SystemTime::now()
@@ -376,6 +395,7 @@ fn main() -> io::Result<()> {
                 play,
                 mission_map_key,
                 population,
+                no_capture,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {
                 eprintln!("Game observation ended: {e}");

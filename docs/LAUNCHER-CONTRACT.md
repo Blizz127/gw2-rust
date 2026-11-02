@@ -34,6 +34,32 @@ thread. The sandbox uses:
 DNS_SINK=0 ADD_HOSTS="cligate.101.ncplatform.net=127.1.0.1 cligate.101.ncplatform.net.=127.1.0.1 assetcdn.101.arenanetworks.com=127.1.0.2"
 ```
 
+## Owner launch path: network bubble (agreed 2026-11-02)
+
+The owner approved running the client in a network sandbox that can reach only our
+server ("yes to bubble it"). The launcher (banshee-realm-client) runs the client and the
+GW2 runner inside `bwrap --unshare-net`, so the namespace has loopback only. An in-sandbox
+bridge relays each endpoint below over a Unix socket to the launcher. The launcher
+connects only to the matching real server endpoint. TCP only; no UDP has been seen.
+
+| Inside the bubble | Client source | Role |
+| --- | --- | --- |
+| 127.1.0.1:80 | hosts: `assetcdn.101.arenanetworks.com` | Patch CDN |
+| 127.1.0.2:6112 | hosts: `cligate.101.ncplatform.net` (and its trailing-dot form) | Portal / login (STS + TLS) |
+| 127.1.0.3:6112 | client arg `-authsrv 127.1.0.3` | Binary auth |
+| 127.1.0.4:6112 | address our auth server returns in route result 20 | Game / mission |
+| 127.1.0.9 (no listener) | hosts: cms-live, exchange-live, gemstore-live, tradingpost-live (`.ncplatform.net`), `www.guildwars2.com`, `a.cdn.ua.ncsoft.com`, `update.googleapis.com`, `wpad` | Must stay unreachable (connection refused, as in the tested runs) |
+
+Real server host:ports on bansheerealm are added when the server is deployed.
+
+**Service mode:** a server facing a person runs `gw2-login-observe --no-capture` and
+`gw2-game-observe --no-capture`.
+- Neither creates capture files.
+- The console shows only STS request paths, message IDs and sizes, never typed values.
+- `tools/test-starttls.py` sends a login carrying a marker password and checks that
+  no-capture mode writes no file and never prints it.
+- Players sign in with **made-up** credentials only.
+
 ## Arguments and redirection
 
 - `-authsrv host[:6112]` exists in build 209026 and sets the later AuthSrv hop
