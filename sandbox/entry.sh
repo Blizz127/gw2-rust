@@ -29,11 +29,14 @@ prepare_prefix() {
   if [[ ! -f "$WINEPREFIX/.dxvk-installed" ]]; then
     "$WINE" wineboot -i >/sandbox/logs/wineboot.log 2>&1 || true
     local sys="$WINEPREFIX/drive_c/windows/system32"
+    # DXVK_SRC picks the DXVK build (default: the image's DXVK; e.g. GE-Proton's own
+    # /opt/proton/files/lib/wine/dxvk/x86_64-windows, as the Banshee launcher provisions).
+    local dxvk="${DXVK_SRC:-/opt/dxvk/x64}"
     for dll in d3d11 dxgi d3d10core d3d9; do
-      cp "/opt/dxvk/x64/$dll.dll" "$sys/$dll.dll"
+      cp "$dxvk/$dll.dll" "$sys/$dll.dll"
       "$WINE" reg add 'HKCU\Software\Wine\DllOverrides' /v "$dll" /d native /f >/dev/null 2>&1
     done
-    touch "$WINEPREFIX/.dxvk-installed"
+    echo "$dxvk" > "$WINEPREFIX/.dxvk-installed"
   fi
 }
 

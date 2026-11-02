@@ -105,7 +105,9 @@ means native only, so a prefix without the DLLs fails at D3D11 load.
   d3d11, dxgi, d3d10core and d3d9 into `drive_c/windows/system32`, as the sandbox's
   `prepare_prefix` does with DXVK 3.1.1.
 - `--no-dxvk` (wined3d) is untested.
-- Our runs used Debian Wine on lavapipe. GE-Proton's Wine and a real GPU are untested.
+- Run 64 covered the GE-Proton11-6 Wine and GE's own DXVK (the client logs "v3.10") in a fresh
+  prefix provisioned this way, against the live Banshee server. It reached the agreement
+  panel. A real GPU (all runs used lavapipe) and the device's namespace shape are untested.
 
 Sandbox run 63b used the **live** Banshee server. The pieces:
 - the shipped runner package (its identity and gdb script) and the launcher's `bridge.py`
