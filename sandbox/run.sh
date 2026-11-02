@@ -91,7 +91,7 @@ case "$mode" in
       host_args+=(--add-host "$h:$ip"); done
     exec docker run --rm --network none --name "gw2-sandbox-$build" \
       --user "$(id -u):$(id -g)" -e HOME=/sandbox/home -v "$STATE/home:/sandbox/home" \
-      --dns 127.0.0.1 --dns-search . -e DNS_SINK="${DNS_SINK:-1}" -e DNS_ANSWER="${DNS_ANSWER:-127.1.0.1}" -e DNS_MAP="${DNS_MAP:-}" -e WINEDEBUG="${WINEDEBUG:--all}" -e GDB_STACKDUMP="${GDB_STACKDUMP:-0}" -e GDB_SCRIPT="${GDB_SCRIPT:-}" -e UI_CMD="${UI_CMD:-}" -e UI_DELAY="${UI_DELAY:-60}" \
+      --dns 127.0.0.1 --dns-search . -e DNS_SINK="${DNS_SINK:-1}" -e DNS_ANSWER="${DNS_ANSWER:-127.1.0.1}" -e DNS_MAP="${DNS_MAP:-}" -e BUBBLE_DIR="${BUBBLE_DIR:-}" -e BUBBLE_UPSTREAM="${BUBBLE_UPSTREAM:-}" -e WINEDEBUG="${WINEDEBUG:--all}" -e GDB_STACKDUMP="${GDB_STACKDUMP:-0}" -e GDB_SCRIPT="${GDB_SCRIPT:-}" -e UI_CMD="${UI_CMD:-}" -e UI_DELAY="${UI_DELAY:-60}" \
       --hostname gw2-sandbox --add-host gw2-sandbox:127.0.0.1 "${host_args[@]}" \
       --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$prefix:/sandbox/prefix" "${runtime_args[@]}" -v "$logs:/sandbox/logs" \
       -v "${SERVER_BIN:-$HERE/../target/debug}:/server:ro" -e SERVER="${SERVER:-}" \

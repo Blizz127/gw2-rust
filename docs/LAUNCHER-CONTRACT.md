@@ -90,7 +90,14 @@ argv and data and reached the agreement panel. **Everything past the agreement i
 - mission join, 1063/1060
 - population, and the placeholder spawn 0,0,7.4
 
-The devbox reaches only port 22 on Banshee, so reachability from the owner's device is still unconfirmed.
+The devbox reaches only port 22 on Banshee. The launcher lead confirmed headlessly that
+the owner's device reaches all four ports.
+
+Sandbox run 62 ran the launcher's generated `bridge.py` (branch cdaf52d9, sha256
+c9515fdb…) as the only DNS responder and listener, using `sandbox/run.sh` with `BUBBLE_DIR`. A stand-in
+relay (`sandbox/bubble-relay.py`) forwarded its Unix sockets to our servers on Banshee's
+port numbers. The real client went through login, auth and Play to the agreement panel.
+Not covered: the device-only uid-0/setpriv wrapper (AppArmor refuses it on the devbox).
 
 **Service mode:** a server facing a person runs `gw2-login-observe --no-capture` and
 `gw2-game-observe --no-capture`.

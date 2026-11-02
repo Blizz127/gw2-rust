@@ -54,6 +54,15 @@ case "$mode" in
     [[ -f /client/Gw2-64.exe ]] || { echo "no /client/Gw2-64.exe mounted"; exit 2; }
     start_x
     prepare_prefix
+    if [[ -n "${BUBBLE_DIR:-}" ]]; then
+      # The launcher's own bridge.py (DNS + 127.1.0.x listeners) and a stand-in for the
+      # launcher's relay to the servers on ${BUBBLE_UPSTREAM}:6112-6115 (docs/LAUNCHER-CONTRACT.md).
+      python3 -I /sandbox/logs/bubble-relay.py "$BUBBLE_DIR/bridge.json" "${BUBBLE_UPSTREAM:-127.1.1.1}" >/sandbox/logs/relay.log 2>&1 &
+      python3 -I "$BUBBLE_DIR/bridge.py" "$BUBBLE_DIR/bridge.json" >/sandbox/logs/bridge.log 2>&1 &
+      for _ in $(seq 50); do [[ -e "$BUBBLE_DIR/ready" && -e "$BUBBLE_DIR/relay-ready" ]] && break; sleep .1; done
+      [[ -e "$BUBBLE_DIR/ready" ]] || { echo "bubble bridge not ready"; cat /sandbox/logs/bridge.log; exit 2; }
+      echo "bubble bridge ready: $(cat "$BUBBLE_DIR/ready")"
+    fi
     if [[ "${DNS_SINK:-0}" == 1 && -x /server/gw2-dns-observe ]]; then
       # 127.1.0.1, not 127.0.0.x: the client's StsLib lookup recurses forever on 127.0.0.0/24
       # when the host has only loopback (docs/re/209026-connect-path.md).

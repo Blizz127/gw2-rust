@@ -25,6 +25,9 @@ RUN curl -fsSL -o /tmp/dxvk.tgz \
  && mkdir -p /opt && tar -C /opt -xzf /tmp/dxvk.tgz && rm /tmp/dxvk.tgz \
  && ln -s /opt/dxvk-${DXVK_VERSION} /opt/dxvk
 
+# python3 only runs the launcher's generated bubble bridge in sandbox runs (BUBBLE_DIR).
+RUN apt-get update && apt-get install -y --no-install-recommends python3-minimal && rm -rf /var/lib/apt/lists/*
+
 COPY entry.sh /usr/local/bin/entry.sh
 RUN chmod 755 /usr/local/bin/entry.sh && mkdir -p /sandbox && chmod 1777 /sandbox
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entry.sh"]

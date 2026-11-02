@@ -238,9 +238,10 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     four listeners on 100.74.44.12:6112-6115. The probes pass under stackd's `sg docker`
     view, and a killed child restarts the set. DIT has the probe argv and sha. Run 61b
     (deployed argv and data, runner shape) reaches the agreement panel. Open items:
-    - reachability from the owner's device (the devbox reaches only port 22)
-    - run 62 (the launcher's real bubble)
     - the owner's first test past the agreement, which nothing has exercised
+    Closed:
+    - device reachability: the launcher lead's headless check reached all four ports
+    - run 62: the launcher's bridge.py with the real client reached the agreement panel
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
     Done, local commits only, nothing deployed:
     - no-capture servers and bind guard (71ffe34, c76ce60)
