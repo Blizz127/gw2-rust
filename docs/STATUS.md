@@ -209,6 +209,10 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     follows once both the join and 1063 landed. Typed frames (`gw2_proto::map_load`:
     1063/1060/1061/1036, client 423/420/418/412) pass 13 focused tests against
     `mission.xml` group 39; nothing was exchanged with the client.
+    `gw2-game-observe --mission-preamble --mission-map-key KEY` adds the opt-in offline
+    mission phase (after the key reply: 1063 for KEY + placeholder 1060; client frames
+    logged by ID; never 1267/1036). 13 observer tests pass, including a loopback
+    exchange. The loader will stop at AGENT_STREAM until population exists.
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small

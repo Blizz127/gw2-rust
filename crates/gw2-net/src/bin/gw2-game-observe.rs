@@ -19,6 +19,8 @@ use tokio_util::codec::{Decoder, Encoder};
 
 #[path = "game_observe/auth.rs"]
 mod auth;
+#[path = "game_observe/mission.rs"]
+mod mission;
 #[path = "game_observe/preamble.rs"]
 mod preamble;
 use preamble::Preamble;
@@ -57,27 +59,41 @@ fn read_exact_file(path: &Path, size: usize) -> io::Result<Vec<u8>> {
 
 /// The client idles on the auth connection between login and Play (news
 /// panel, User Agreement, character select); run 59 shows a 30 s timeout drops
-/// it and forces a re-login. The Play phase therefore waits longer, but still
-/// bounded.
-fn read_timeout(play_enabled: bool) -> Duration {
-    Duration::from_secs(if play_enabled { 600 } else { 30 })
+/// it and forces a re-login. The Play and mission phases (the latter waits
+/// through map loading) therefore wait longer, but still bounded.
+fn read_timeout(long_phase: bool) -> Duration {
+    Duration::from_secs(if long_phase { 600 } else { 30 })
+}
+
+/// Opt-in synthetic fixtures for one connection. All default to off.
+#[derive(Default)]
+struct Fixtures<'a> {
+    reply: Option<&'a Bytes>,
+    auth_body: Option<auth::ReplyFixture>,
+    play: Option<auth::PlayRoute>,
+    mission_map_key: Option<u32>,
 }
 
 fn observe(
     mut stream: TcpStream,
     key: &ServerKey,
     log: &Path,
-    reply: Option<&Bytes>,
-    auth_body: Option<auth::ReplyFixture>,
-    play: Option<auth::PlayRoute>,
+    fixtures: Fixtures,
     preamble: Preamble,
 ) -> io::Result<()> {
+    let Fixtures {
+        reply,
+        auth_body,
+        play,
+        mission_map_key,
+    } = fixtures;
+    let mut mission = mission_map_key.map(mission::MissionPhase::new).transpose()?;
     let mut auth = match (auth_body.map(auth::AuthProbe::new), play) {
         (Some(probe), Some(route)) => Some(probe.with_play_route(route)?),
         (probe, _) => probe,
     };
     let play_enabled = auth.as_ref().is_some_and(auth::AuthProbe::play_enabled);
-    stream.set_read_timeout(Some(read_timeout(play_enabled)))?;
+    stream.set_read_timeout(Some(read_timeout(play_enabled || mission.is_some())))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
     let preamble = preamble.read(&mut stream)?;
     let mut header = [0u8; 2];
@@ -106,6 +122,12 @@ fn observe(
         codec.encode(reply.clone(), &mut wire)?;
         stream.write_all(&wire)?;
         eprintln!("Explicit game reply sent: {} plaintext bytes", reply.len());
+    }
+    if let Some(mission) = &mission {
+        let mut wire = BytesMut::new();
+        codec.encode(mission.opening(), &mut wire)?;
+        stream.write_all(&wire)?;
+        eprintln!("Mission phase sent server 1063 MapData and 1060 LoadMap");
     }
     let mut chunk = [0u8; 8192];
     let mut total = 0;
@@ -140,6 +162,9 @@ fn observe(
                 stream.write_all(&wire)?;
                 eprintln!("Explicit correlated auth fixture sent");
             }
+            if let Some(mission) = &mut mission {
+                mission.push(&decoded);
+            }
         }
     }
     eprintln!("Game capture complete: {total} bytes");
@@ -154,6 +179,7 @@ fn main() -> io::Result<()> {
     let mut character = None;
     let mut preamble = Preamble::Auth;
     let mut play_address: Option<SocketAddr> = None;
+    let mut mission_map_key: Option<u32> = None;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -171,6 +197,14 @@ fn main() -> io::Result<()> {
                 character = Some(Bytes::from(bytes));
             }
             "--mission-preamble" => preamble = Preamble::Mission,
+            "--mission-map-key" => {
+                mission_map_key = Some(
+                    args.next()
+                        .ok_or_else(|| invalid("missing mission map key"))?
+                        .parse()
+                        .map_err(|_| invalid("invalid mission map key"))?,
+                )
+            }
             "--auth-play-route" => {
                 play_address = Some(
                     args.next()
@@ -207,7 +241,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble]",
+                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY]]",
                 ));
             }
         }
@@ -219,6 +253,15 @@ fn main() -> io::Result<()> {
         return Err(invalid(
             "mission connections cannot use auth reply fixtures",
         ));
+    }
+    if mission_map_key.is_some() && (preamble != Preamble::Mission || reply.is_some()) {
+        return Err(invalid(
+            "--mission-map-key requires --mission-preamble and excludes --reply-frame",
+        ));
+    }
+    if let Some(key) = mission_map_key {
+        // Validate before binding; each connection builds its own phase.
+        mission::MissionPhase::new(key)?;
     }
     if character.is_some() && auth_body.is_none() {
         return Err(invalid(
@@ -276,7 +319,13 @@ fn main() -> io::Result<()> {
         let auth_body = auth_body.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
-            if let Err(e) = observe(stream, &key, &log, reply.as_ref(), auth_body, play, preamble) {
+            let fixtures = Fixtures {
+                reply: reply.as_ref(),
+                auth_body,
+                play,
+                mission_map_key,
+            };
+            if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {
                 eprintln!("Game observation ended: {e}");
             }
         });

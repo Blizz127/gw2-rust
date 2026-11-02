@@ -74,9 +74,11 @@ fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
                 stream,
                 &key,
                 &server_path,
-                Some(&Bytes::from_static(&[0x19, 4])),
-                auth_fixture,
-                None,
+                Fixtures {
+                    reply: Some(&Bytes::from_static(&[0x19, 4])),
+                    auth_body: auth_fixture,
+                    ..Fixtures::default()
+                },
                 mode,
             )
         });
@@ -177,4 +179,68 @@ fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
 fn play_phase_extends_but_bounds_the_read_timeout() {
     assert_eq!(read_timeout(false), Duration::from_secs(30));
     assert_eq!(read_timeout(true), Duration::from_secs(600));
+}
+
+#[test]
+fn mission_phase_loopback_sends_map_data_then_load_map_after_key_reply() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let epoch = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "gw2-observe-mission-{}-{epoch}.bin",
+        std::process::id()
+    ));
+    // Public toy group for this local test; no stored identities are loaded.
+    let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+    let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
+    let server_path = path.clone();
+    let server = std::thread::spawn(move || {
+        let (stream, _) = listener.accept().unwrap();
+        let fixtures = Fixtures {
+            mission_map_key: Some(15),
+            ..Fixtures::default()
+        };
+        observe(stream, &key, &server_path, fixtures, Preamble::Mission)
+    });
+    let mut client = TcpStream::connect(address).unwrap();
+    client.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    let mut input = preamble::fixture(Preamble::Mission);
+    input.extend_from_slice(&[0, 6, 0, 4, 0, 0]);
+    client.write_all(&input).unwrap();
+    let mut reply = [0u8; 22];
+    client.read_exact(&mut reply).unwrap();
+    assert_eq!(&reply[..2], &[1, 22]);
+    let mut codec = ClientCodec::new(&session_secret(&shared, &reply[2..].try_into().unwrap()));
+    let mut pending = BytesMut::new();
+    let received = loop {
+        if let Some(frame) = codec.decode(&mut pending).unwrap() {
+            break frame;
+        }
+        let mut chunk = [0u8; 32];
+        let n = client.read(&mut chunk).unwrap();
+        assert_ne!(n, 0);
+        pending.extend_from_slice(&chunk[..n]);
+    };
+    assert_eq!(received, mission::MissionPhase::new(15).unwrap().opening());
+    let mut answer = BytesMut::new();
+    423u16.encode(&mut answer);
+    answer.extend_from_slice(&[0, 0]);
+    420u16.encode(&mut answer);
+    let mut wire = BytesMut::new();
+    codec.encode(Bytes::copy_from_slice(&answer), &mut wire).unwrap();
+    client.write_all(&wire).unwrap();
+    client.shutdown(Shutdown::Both).unwrap();
+    server.join().unwrap().unwrap();
+    assert_eq!(fs::read(&path).unwrap(), answer);
+    fs::remove_file(&path).unwrap();
+    fs::remove_file(path.with_extension("preamble.bin")).unwrap();
+}
+
+#[test]
+fn mission_map_key_is_bounded() {
+    assert!(mission::MissionPhase::new(0x3fff_ffff).is_ok());
+    assert!(mission::MissionPhase::new(0x4000_0000).is_err());
 }

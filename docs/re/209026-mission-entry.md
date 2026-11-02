@@ -113,6 +113,29 @@ equal the map key the server returned in route result 20 field 3.
    asserts loader STATE_READY, so sending it early triggers that client
    assertion. It is not a harmless no-op.
 
+### Offline implementation
+
+`gw2-game-observe --mission-preamble --mission-map-key KEY` implements steps 1–4.
+KEY must equal the map key the auth phase echoed in route result 20.
+- **Sends:** one server frame with 1063 for KEY, followed by an all-zero 1060.
+- **Client traffic:** framed through `mission.xml` groups 39/40 and logged by
+  message ID only.
+- **Never sends:** 1267 or 1036.
+- **Phase cutoff:** an unframeable message ends the phase, and capture
+  continues.
+- **Read timeout:** 600 s, because the client may stay silent while it loads.
+- **Arguments:** the option requires `--mission-preamble` and rejects
+  `--reply-frame`. Both checks run before the identity is loaded.
+
+Tests:
+- loopback: key exchange, then the encrypted opening, then captured
+  423+420
+- every-split client framing
+- unframeable input disables the phase
+- map-key bound
+
+Not run against the client (Run59 hold).
+
 ## Open
 
 - Meanings of 1063 f0/f2/f3/b4/b5 and of the bit-30/31 flags.
