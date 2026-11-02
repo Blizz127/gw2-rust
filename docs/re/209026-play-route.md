@@ -168,8 +168,43 @@ connection and forced a re-login. Unit tests cover every split point and
 decode each reply against `auth.xml`. **Nothing has been sent to the client.**
 The zero values and the address are synthetic; their semantics are unresolved.
 
+## Queensdale's map type and game type (2026-11-02)
+
+The map-type lookup works as follows.
+
+1. `0x1412e19c0` calls `0x1412e2cd0` on the table object at `0x1428aeb00`.
+2. Key 0 returns 1.
+3. Otherwise, on first use the routine loads the archive file named by the
+   encoded reference at `0x14220e59c`. The words `0x0a9d`, `0x0103` decode
+   with the repository's formula to **archive file 198302**.
+4. It takes that file's `Main` chunk (`0x6e69614d`): a u32 count, then a
+   pointer to packed 3-byte records.
+5. It binary-searches the records by their u16 key and returns the record's
+   byte +2 as the map type.
+
+A missing key falls through at `0x1412e2e85`; that path was not traced.
+
+Archive file 198302, read without modifying `Gw2.dat` via `gw2-dat-cat`:
+- 3,788 bytes, SHA-256
+  `d0f758fa69a37e1c10a9e4e90ab2707c4e1fb9ebf9ef282eba05ac44c632b333`
+- packfile type `mMet`, chunk `Main`
+- 1,244 records, sorted, with unique keys
+
+Results:
+- **Key 15 (Queensdale) has map type 5.**
+- The pair table at `0x1422dda10` maps type 5 to **game type 3**, so the
+  Queensdale Play route request (client 29) carries game type 3.
+
+Map-type histogram over all keys: 4 (1037 keys), 5 (103), 16 (47), 2 (38),
+7 (7), 10/11/12 (2 each), and 0/1/9/14/15/18 (1 each). Type names are not
+mapped.
+
+Evidence: `ev_5a1a408f342af6390a2b7eba5e383aa2d51c4f1baeef4dd2498684c0f725c7a9`
+(Rizin-run `map-type-lookup.py`, SHA-checked executable), private bundle
+`~/re/gw2/notes/209026-map-type-1.json`. The archive bytes are bound only by
+the hash printed above. Rizin evidence doesn't cover external inputs.
+
 Still open:
-- Queensdale's map type, and therefore its game-type value; the content field read by `0x1412e2cd0` is not decoded.
 - The source of ctx +0xdd and of the hashed string.
 - The User Agreement panel's code path and its position relative to client 22.
 - The meaning of the override settings (0x31 gate, bits 0x13–0x15).

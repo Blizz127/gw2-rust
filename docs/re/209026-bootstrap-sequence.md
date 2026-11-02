@@ -34,8 +34,8 @@ plus a parsed fixture ([character protocol](209026-character-protocol.md)).
 | 2d | (no message) join completion | Stated: the client completes the join itself on the type-1 key reply (constant success result) and sets PLAYER_FLAG_CONNECTED (ctx+0x228 bit 0x2). No server acknowledgement; 1267 is unnecessary (it matches no state-3 transaction) | [mission entry](209026-mission-entry.md) |
 
 The [Play route](209026-play-route.md) closes the main phase-2 gap. Still
-open: Queensdale's map type (and so its game-type value), the ctx +0xdd
-source, and the hashed string.
+open: the ctx +0xdd source and the hashed string.
+Queensdale's route uses game type 3 (map type 5).
 
 ## Phase 3: map load (loader states)
 
@@ -131,7 +131,7 @@ and phase 2 for Play are open.**
 
 ## Highest-value open RE items
 
-1. ~~The existing-character Play route~~ (traced in [play route](209026-play-route.md)); Queensdale's map type → game type remains.
+1. ~~The existing-character Play route~~ (traced in [play route](209026-play-route.md)); Queensdale is map type 5 → game type 3 (resolved in play route).
 2. ~~AGENT_STREAM `0x140951ce0` conditions~~ (traced in [map ready](209026-map-ready.md)): the controlled character is the only untimed wait; world readiness waits at most 120 s (5 s with setting 0x3d), then continues.
 3. Whether population (phase 4) and world entry (phase 5) must precede 1060. The loader only needs them by AGENT_STREAM, which polls every tick. Whether the handlers themselves depend on map state (scene bounds for 37/46) is still open.
 4. The position of 431 relative to 1036 and READY.

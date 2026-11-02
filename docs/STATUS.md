@@ -194,7 +194,7 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     and nothing was replayed. The [Play route](re/209026-play-route.md) is now traced statically. Play runs the
     name transaction (client 22 → server 8 → server 3), whose completion then sends auth 29 with a game type derived from
     the summary map's type (18-pair table), the summary map key, a hash and a 16-byte context value (wire
-    layout mapped). Queensdale's map type remains open.
+    layout mapped). Queensdale (key 15) is map type 5 → game type 3, from archive file 198302's `mMet` table.
     Typed Play-path frames (`gw2_proto::play_route`: client 22/29, server 3/20) pass
     three focused tests cross-checked against `auth.xml`; nothing was exchanged with the client.
     `gw2-game-observe --auth-play-route` adds an opt-in offline Play phase (22 → 8+3, 29 → 20);
