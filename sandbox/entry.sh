@@ -57,7 +57,9 @@ case "$mode" in
     if [[ "${DNS_SINK:-0}" == 1 && -x /server/gw2-dns-observe ]]; then
       # 127.1.0.1, not 127.0.0.x: the client's StsLib lookup recurses forever on 127.0.0.0/24
       # when the host has only loopback (docs/re/209026-connect-path.md).
-      /server/gw2-dns-observe --answer "${DNS_ANSWER:-127.1.0.1}" --log /sandbox/logs/dns.log >/sandbox/logs/dns.out 2>&1 &
+      # DNS_MAP="name=ip ..." gives per-name answers; every other name gets DNS_ANSWER.
+      map_args=(); for m in ${DNS_MAP:-}; do map_args+=(--map "$m"); done
+      /server/gw2-dns-observe --answer "${DNS_ANSWER:-127.1.0.1}" "${map_args[@]}" --log /sandbox/logs/dns.log >/sandbox/logs/dns.out 2>&1 &
       echo "dns sinkhole started (all names -> ${DNS_ANSWER:-127.1.0.1}, log /sandbox/logs/dns.log)"
     fi
     if [[ -n "${SERVER:-}" ]]; then

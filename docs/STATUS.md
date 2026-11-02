@@ -222,6 +222,18 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     and where 46 falls. Not exchanged with the client.
     The observer's opt-in `--mission-population RECORD --mission-spawn X,Y,Z` sends it after
     client 420 and sends 1036 + 431 only after a later client 412 (431's direct body checks no loader/view state) (17 observer tests, incl. loopback).
+  - **Resumed 2026-11-02 ~14:10Z (pool hold lifted).** Bubble bug fixed: `gw2-dns-observe
+    --map NAME=IPV4` gives per-name answers (sandbox `DNS_MAP`). Run 60g, the bubble layout
+    resolved by DNS (cligate .2, auth .3, sink .9), passes login TLS, auth and Play
+    and stops at the untouched User Agreement panel. A hosts file with no DNS responder
+    still fails (60e); the client-side cause is untraced. Run 61 (`tools/gw2-runner`
+    gdb script with a fresh `make-identity.py` identity, same DNS layout) applies both
+    guarded patches and also reaches the agreement panel. After editing `sandbox/entry.sh`, run
+    `sandbox/run.sh build`. Otherwise the stale image ignores `DNS_MAP`, `dns.out` says
+    "0 mapped names", and every name goes to the sink (run 60f). B3 answered: the owner accepts
+    the agreement himself on his own device; automation never clicks it. Next: run 62,
+    the launcher's own bwrap bubble shape (uid 0 mapped, its DNS responder, runner
+    under setpriv with no caps) on the devbox, then DIT shas and the deploy.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
     Done, local commits only, nothing deployed:
     - no-capture servers and bind guard (71ffe34, c76ce60)

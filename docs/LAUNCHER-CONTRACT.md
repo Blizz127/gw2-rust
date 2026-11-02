@@ -28,11 +28,23 @@ GW2 server. The launcher entry must show **unavailable / not deployed**, with PL
 
 **Name mapping rule:** resolve these names into **127.1.0.x, never 127.0.0.0/24**.
 In the 127.0.0.0/24 range the client's address lookup recurses and kills its socket
-thread. The sandbox uses:
+thread.
+
+**Resolve through DNS, not a hosts file.** With cligate resolved from `/etc/hosts`
+and no DNS responder running, the real client aborts TLS with alert 10 before its certificate check (runs 60, 60b,
+60c, 60e). The same layout answered by a DNS responder passes login, auth and Play
+(run 60g; run 61 also passes with the `tools/gw2-runner` patcher). The cause inside the client is not traced. The sandbox uses
+`gw2-dns-observe` on 127.0.0.1:53 UDP with resolv.conf `nameserver 127.0.0.1`:
 
 ```
-DNS_SINK=0 ADD_HOSTS="cligate.101.ncplatform.net=127.1.0.1 cligate.101.ncplatform.net.=127.1.0.1 assetcdn.101.arenanetworks.com=127.1.0.2"
+DNS_SINK=1 DNS_ANSWER=127.1.0.9 DNS_MAP="assetcdn.101.arenanetworks.com=127.1.0.1 cligate.101.ncplatform.net=127.1.0.2"
 ```
+
+It answers A queries only (AAAA gets an empty answer) and forwards nothing. Names
+queried in run 60g: the two mapped names, plus `wpad`, `www.guildwars2.com`,
+`a.cdn.ua.ncsoft.com`, `cms-live`/`exchange-live`/`gemstore-live`/`tradingpost-live`
+(`.ncplatform.net`) and `update.googleapis.com`. The auth and game hops use IP
+addresses and resolve no name.
 
 ## Owner launch path: network bubble (agreed 2026-11-02)
 
@@ -40,15 +52,25 @@ The owner approved running the client in a network sandbox that can reach only o
 server ("yes to bubble it"). The launcher (banshee-realm-client) runs the client and the
 GW2 runner inside `bwrap --unshare-net`, so the namespace has loopback only. An in-sandbox
 bridge relays each endpoint below over a Unix socket to the launcher. The launcher
-connects only to the matching real server endpoint. TCP only; no UDP has been seen.
+connects only to the matching real server endpoint. TCP only, except the in-bubble
+DNS responder on 127.0.0.1:53 UDP, which never forwards. The bubble's hosts file holds
+localhost only.
+
+Sandbox run 60g verified this exact layout with the real client: login TLS on .2, auth on
+.3, through Play to the User Agreement panel. The owner accepts the agreement himself on
+his own device; automation never clicks it.
+
+Uid split on the owner's device (launcher lead's probes): the outer bubble maps uid 0, so
+the bridge and DNS can bind 53/80. Nested user namespaces are refused there, so wine and
+gdb run as mapped uid 0 through `setpriv` with all capabilities dropped and no_new_privs.
 
 | Inside the bubble | Client source | Role |
 | --- | --- | --- |
-| 127.1.0.1:80 | hosts: `assetcdn.101.arenanetworks.com` | Patch CDN |
-| 127.1.0.2:6112 | hosts: `cligate.101.ncplatform.net` (and its trailing-dot form) | Portal / login (STS + TLS) |
+| 127.1.0.1:80 | DNS: `assetcdn.101.arenanetworks.com` | Patch CDN |
+| 127.1.0.2:6112 | DNS: `cligate.101.ncplatform.net` (the client uses the trailing-dot form; the query arrives without the dot) | Portal / login (STS + TLS) |
 | 127.1.0.3:6112 | client arg `-authsrv 127.1.0.3` | Binary auth |
 | 127.1.0.4:6112 | address our auth server returns in route result 20 | Game / mission |
-| 127.1.0.9 (no listener) | hosts: cms-live, exchange-live, gemstore-live, tradingpost-live (`.ncplatform.net`), `www.guildwars2.com`, `a.cdn.ua.ncsoft.com`, `update.googleapis.com`, `wpad` | Must stay unreachable (connection refused, as in the tested runs) |
+| 127.1.0.9 (no listener) | DNS: cms-live, exchange-live, gemstore-live, tradingpost-live (`.ncplatform.net`), `www.guildwars2.com`, `a.cdn.ua.ncsoft.com`, `update.googleapis.com`, `wpad` | Must stay unreachable (connection refused, as in the tested runs) |
 
 Real server host:ports on bansheerealm are added when the server is deployed.
 
