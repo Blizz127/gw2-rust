@@ -99,6 +99,14 @@ relay (`sandbox/bubble-relay.py`) forwarded its Unix sockets to our servers on B
 port numbers. The real client went through login, auth and Play to the agreement panel.
 Not covered: the device-only uid-0/setpriv wrapper (AppArmor refuses it on the devbox).
 
+Sandbox run 63b used the **live** Banshee server. The pieces:
+- the shipped runner package (its identity and gdb script) and the launcher's `bridge.py`
+- the host-side relay over `ssh -L`, with `BUBBLE_UPSTREAM=external`, and no local servers
+
+It reached the agreement panel. Banshee's log shows login, auth and the play-phase
+messages, and the marker password is absent. This is the owner's device path minus his
+display and the setpriv wrapper.
+
 **Service mode:** a server facing a person runs `gw2-login-observe --no-capture` and
 `gw2-game-observe --no-capture`.
 - Neither creates capture files.

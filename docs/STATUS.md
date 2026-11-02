@@ -242,6 +242,9 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     Closed:
     - device reachability: the launcher lead's headless check reached all four ports
     - run 62: the launcher's bridge.py with the real client reached the agreement panel
+    - run 63b: the shipped identity + bridge against the LIVE Banshee server reached it too
+    Owner-gated before his first test: the 83 GiB client upload to the device and the
+    GW2 signing prefix (the coordinator holds both).
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
     Done, local commits only, nothing deployed:
     - no-capture servers and bind guard (71ffe34, c76ce60)

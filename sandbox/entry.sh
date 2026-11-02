@@ -57,7 +57,10 @@ case "$mode" in
     if [[ -n "${BUBBLE_DIR:-}" ]]; then
       # The launcher's own bridge.py (DNS + 127.1.0.x listeners) and a stand-in for the
       # launcher's relay to the servers on ${BUBBLE_UPSTREAM}:6112-6115 (docs/LAUNCHER-CONTRACT.md).
-      python3 -I /sandbox/logs/bubble-relay.py "$BUBBLE_DIR/bridge.json" "${BUBBLE_UPSTREAM:-127.1.1.1}" >/sandbox/logs/relay.log 2>&1 &
+      # BUBBLE_UPSTREAM=external: the relay runs on the host (sockets via the bind mount).
+      if [[ "${BUBBLE_UPSTREAM:-}" != external ]]; then
+        python3 -I /sandbox/logs/bubble-relay.py "$BUBBLE_DIR/bridge.json" "${BUBBLE_UPSTREAM:-127.1.1.1}" >/sandbox/logs/relay.log 2>&1 &
+      fi
       python3 -I "$BUBBLE_DIR/bridge.py" "$BUBBLE_DIR/bridge.json" >/sandbox/logs/bridge.log 2>&1 &
       for _ in $(seq 50); do [[ -e "$BUBBLE_DIR/ready" && -e "$BUBBLE_DIR/relay-ready" ]] && break; sleep .1; done
       [[ -e "$BUBBLE_DIR/ready" ]] || { echo "bubble bridge not ready"; cat /sandbox/logs/bridge.log; exit 2; }
