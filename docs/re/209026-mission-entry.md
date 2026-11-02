@@ -178,6 +178,28 @@ one index space is **inferred**.
 Evidence: `ev_2dd3d867eb8f375c5343d4c07ea73c800a7e1592b990de7d3cbb087d56dda899`,
 private `~/re/gw2/notes/209026-mission-player-id-1.json`.
 
+### Server 431 timing (2026-11-02)
+
+Handler `0x141255010` passes charContext to `0x1411b7700`. That body:
+- dereferences the controlled character (charContext +0x98) without a null
+  check
+- runs the skill-bar and wardrobe helpers
+- asserts `m_rewardTrackMgr` (player +0x9a60, from `ChCliPlayer.h`)
+- sets charContext +0x208 bit 1
+- tail-calls the listener notifier `0x1411b9680`
+
+The direct body contains **no loader or view-state check**, so statically 431
+depends on the populated player (444, 618, 247/248, 565, 538), not on READY or
+1036. Listener-level dependencies remain as documented in the
+[startup subscriber notes](209026-startup-subscribers.md).
+
+The observer's population step now appends 431 to the 1036 reply after client
+412. This keeps the bootstrap candidate order (1036 then 431); that order is a
+choice, not traced.
+
+Evidence: `ev_d77030d72abab0298fe697eb8d8bb281a87427ae4bd3500e0bf95e267c761522`,
+private `~/re/gw2/notes/209026-startup-431-1.json`.
+
 ## Open
 
 - Meanings of 1063 f0/f2/f3/b4/b5 and of the bit-30/31 flags.

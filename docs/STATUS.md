@@ -221,7 +221,7 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     validation, determinism). Open: whether agent index = character index, 183 vs 182,
     and where 46 falls. Not exchanged with the client.
     The observer's opt-in `--mission-population RECORD --mission-spawn X,Y,Z` sends it after
-    client 420 and sends 1036 only after a later client 412 (17 observer tests, incl. loopback).
+    client 420 and sends 1036 + 431 only after a later client 412 (431's direct body checks no loader/view state) (17 observer tests, incl. loopback).
   - **Build dependency:** `gw2-game-observe` and the play_route/map_load/population tests
     `include_str!` the client-extracted schemas in gitignored `data/protocol/209026/`.
     A clean checkout without that private directory will not build them.

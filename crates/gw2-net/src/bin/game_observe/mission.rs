@@ -11,8 +11,11 @@
 //!
 //! With an explicit [`PopulationFixture`] the phase additionally sends the
 //! candidate population sequence (`gw2_proto::population`) once client 420
-//! MapLoaded arrives, and empty server 1036 BeginPlaying once client 412
-//! AgentsLoaded arrives after that. Both are candidates from static analysis
+//! MapLoaded arrives, and empty server 1036 BeginPlaying followed by the
+//! payload-free 431 player startup once client 412 AgentsLoaded arrives after
+//! that. 431's direct body needs the populated player but checks no loader or
+//! view state (docs/re/209026-mission-entry.md); its order after 1036 follows
+//! the bootstrap candidate order. Both are candidates from static analysis
 //! (docs/re/209026-bootstrap-sequence.md), not a validated bootstrap.
 use bytes::{Bytes, BytesMut};
 use gw2_proto::{
@@ -20,6 +23,7 @@ use gw2_proto::{
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
+    player_startup::PlayerStartupFrame209026,
     population::{self, PopulationPlan},
     schema::{self, Message},
 };
@@ -169,9 +173,10 @@ impl MissionPhase {
             }
             Seen::Map(ClientMapEvent::AgentsLoaded) if self.populated && !self.began => {
                 self.began = true;
-                eprintln!("Mission phase: sending server 1036 BeginPlaying");
+                eprintln!("Mission phase: sending server 1036 BeginPlaying and 431 player startup");
                 let mut out = BytesMut::new();
                 map_load::encode_empty(map_load::BEGIN_PLAYING_1036, &mut out);
+                PlayerStartupFrame209026.encode_frame(&mut out);
                 Ok(Some(out.freeze()))
             }
             _ => Ok(None),
@@ -349,7 +354,7 @@ pub(crate) mod tests {
         let plan = phase.population.as_ref().unwrap().plan.clone();
         assert_eq!(sent, population::population_stream(&plan).unwrap());
         assert!(phase.respond(&loaded).unwrap().is_none(), "population is sent once");
-        assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04]);
+        assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04, 0xaf, 0x01]);
         assert!(phase.respond(&agents).unwrap().is_none(), "1036 is sent once");
     }
 

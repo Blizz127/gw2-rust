@@ -109,7 +109,9 @@ From [world entry](209026-agent-world-entry.md),
 | Reward-track manager | 565 (after 428) | Consumed by 431 | [reward-track messages](209026-reward-track-messages.md) |
 | Quest manager reported | 538 (after 428) | Stated: before 431 reaches the content-direction callback | [content direction](209026-content-direction-startup.md) |
 
-**Open:** where 431 falls relative to 1036; its frame is two bytes,
+**Statically**, 431's direct body checks no loader or view state, so it needs the
+populated player rather than 1036 ([mission entry](209026-mission-entry.md)). Its
+exact runtime position relative to 1036 is still open. Its frame is two bytes,
 `af 01` ([player startup frame](209026-player-startup-frame.md)). Per the
 [quest-store chain](209026-quest-store-subscription-flag.md), the store
 request reached from 431's quest callback needs no answer for startup,

@@ -306,7 +306,7 @@ fn mission_population_loopback_follows_client_420_and_412() {
     let population = next(&mut client, &mut codec);
     assert_eq!(&population[..2], &428u16.to_le_bytes());
     send(&mut client, &mut codec, 412);
-    assert_eq!(&next(&mut client, &mut codec)[..], &[0x0c, 0x04]);
+    assert_eq!(&next(&mut client, &mut codec)[..], &[0x0c, 0x04, 0xaf, 0x01]);
     client.shutdown(Shutdown::Both).unwrap();
     server.join().unwrap().unwrap();
     fs::remove_file(&path).unwrap();
