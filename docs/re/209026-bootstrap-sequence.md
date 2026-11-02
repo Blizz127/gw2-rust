@@ -34,7 +34,7 @@ plus a parsed fixture ([character protocol](209026-character-protocol.md)).
 | 2d | (no message) join completion | Stated: the client completes the join itself on the type-1 key reply (constant success result) and sets PLAYER_FLAG_CONNECTED (ctx+0x228 bit 0x2). No server acknowledgement; 1267 is unnecessary (it matches no state-3 transaction) | [mission entry](209026-mission-entry.md) |
 
 The [Play route](209026-play-route.md) closes the main phase-2 gap. Still
-open: the ctx +0xdd source and the hashed string.
+open: the hashed string (ctx +0xdd is the summary's +0x85 scene GUID).
 Queensdale's route uses game type 3 (map type 5).
 
 ## Phase 3: map load (loader states)

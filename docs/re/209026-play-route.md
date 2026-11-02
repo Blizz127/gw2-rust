@@ -113,7 +113,7 @@ Transaction payload, at offsets in the new object:
 | +0x4c | Second argument (0 on this path) |
 | +0x54 | 16 bytes from ctx +0x20 |
 | +0x64 | Hash |
-| +0x68 | 16 bytes from ctx +0xdd |
+| +0x68 | 16 bytes from ctx +0xdd (summary scene GUID, summary +0x85) |
 
 Send method `0x14023e490` serializes the transaction through sender
 `0x140241f40` (message Word `0x1d`):
@@ -204,8 +204,24 @@ Evidence: `ev_5a1a408f342af6390a2b7eba5e383aa2d51c4f1baeef4dd2498684c0f725c7a9`
 `~/re/gw2/notes/209026-map-type-1.json`. The archive bytes are bound only by
 the hash printed above. Rizin evidence doesn't cover external inputs.
 
+## Source of the 16-byte value (ctx +0xdd)
+
+The Play request passes the `[tls+0x1c8]` mission context to general route
+setup (`0x141410f0c` → `0x141417d50`). That routine copies 16 bytes from
+**ctx +0xdd** (`0x141417d9e`) and gives them to the builder. The summary getter
+`0x141410bf0` returns ctx +0x58 as the normalized character summary, or null
+when its first byte is 0xff. So ctx +0xdd is **normalized summary +0x85**, the
+scene GUID that the [character protocol](209026-character-protocol.md) notes
+say the preview reads and skips when all bytes are zero.
+
+Client 29's trailing 16 bytes therefore echo the selected character's summary
+scene GUID. That is zero in the current fixture. A server can ignore it.
+Evidence: `ev_316b275af215e66a85282774e97cf77dea750e10ae8f27ac168f81a90666ee1b`
+(Rizin-run `route-context-windows.py`), in the private
+`~/re/gw2/notes/209026-route-context-1.json`.
+
 Still open:
-- The source of ctx +0xdd and of the hashed string.
+- The source of the hashed string.
 - The User Agreement panel's code path and its position relative to client 22.
 - The meaning of the override settings (0x31 gate, bits 0x13–0x15).
 
