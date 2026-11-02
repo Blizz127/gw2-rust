@@ -1,0 +1,21 @@
+# GW2 build-209026 server on bansheerealm (stackd readiness_only, always-on).
+# Install root and user are placeholders until the coordinator assigns them.
+[Unit]
+Description=GW2 build-209026 server (Banshee, readiness_only)
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/srv/gw2/deploy/gw2-server.sh /srv/gw2/gw2.conf
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/srv/gw2/run
+
+[Install]
+WantedBy=multi-user.target
