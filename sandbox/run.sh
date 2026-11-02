@@ -32,7 +32,7 @@ case "$mode" in
   selftest)
     (cd "$HERE/.." && cargo build -q -p gw2-login --bin gw2-login-observe)
     exec docker run --rm --network none --name gw2-sandbox-selftest \
-      -v "$HERE/../target/debug:/server:ro" --entrypoint bash "$IMAGE" -c '
+      -v "${SERVER_BIN:-$HERE/../target/debug}:/server:ro" --entrypoint bash "$IMAGE" -c '
         set -euo pipefail
         ifs=$(awk -F: "NR>2 {gsub(/ /,\"\",\$1); print \$1}" /proc/net/dev | grep -v "^lo$" || true)
         [[ -z "$ifs" ]] || { echo "FAIL: not isolated ($ifs)"; exit 1; }
@@ -94,7 +94,7 @@ case "$mode" in
       --dns 127.0.0.1 --dns-search . -e DNS_SINK="${DNS_SINK:-1}" -e DNS_ANSWER="${DNS_ANSWER:-127.1.0.1}" -e WINEDEBUG="${WINEDEBUG:--all}" -e GDB_STACKDUMP="${GDB_STACKDUMP:-0}" -e GDB_SCRIPT="${GDB_SCRIPT:-}" -e UI_CMD="${UI_CMD:-}" -e UI_DELAY="${UI_DELAY:-60}" \
       --hostname gw2-sandbox --add-host gw2-sandbox:127.0.0.1 "${host_args[@]}" \
       --cpuset-cpus "${CPUS:-0-15}" -v "$src:/client" -v "$prefix:/sandbox/prefix" "${runtime_args[@]}" -v "$logs:/sandbox/logs" \
-      -v "$HERE/../target/debug:/server:ro" -e SERVER="${SERVER:-}" \
+      -v "${SERVER_BIN:-$HERE/../target/debug}:/server:ro" -e SERVER="${SERVER:-}" \
       "$IMAGE" client "$@" ;;
   *) echo "usage: $0 build|preflight|selftest|prepare <build>|restore <build>|client <build> [args]"; exit 2 ;;
 esac

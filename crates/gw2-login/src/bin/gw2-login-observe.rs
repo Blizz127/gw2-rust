@@ -279,6 +279,8 @@ fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &m
     let mut secure = match tls::accept(stream, cfg, pre) {
         Ok(s) => s,
         Err(e) => {
+            // Structural error text only (record/handshake types and sizes).
+            eprintln!("TLS handshake failed: {e}");
             let _ = writeln!(log, "\n# TLS handshake failed: {e}");
             return;
         }
@@ -291,6 +293,7 @@ fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &m
             Ok(b) if b.is_empty() => break,
             Ok(b) => b,
             Err(e) => {
+                eprintln!("TLS read ended: {e}");
                 let _ = writeln!(log, "# TLS read ended: {e}");
                 break;
             }
@@ -321,6 +324,7 @@ fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &m
                 }
                 Ok(None) => break,
                 Err(_) => {
+                    eprintln!("decrypted non-STS data ({} bytes)", pending.len());
                     let _ = writeln!(log, "## decrypted non-STS {} bytes\n{}", pending.len(), hexdump(&pending));
                     pending.clear();
                     raw = true;
