@@ -79,6 +79,10 @@ transaction in state 3, sets state 1, copies the eight-byte result and succeeds
 only when the error Word is zero. On success, the callback attaches the
 connection and sets the connected flags. Join completion emits event 0x25.
 
+[Mission entry](209026-mission-entry.md) traces the callback's input: the
+type-1 key reply passes a constant success result, so the join completes without
+any server message, and server 1267 cannot match afterwards.
+
 This traces prerequisites for the separately documented
 [creation request](209026-character-creation.md); it does not prove a complete
 mission bootstrap or successful character creation.

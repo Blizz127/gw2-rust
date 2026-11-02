@@ -201,6 +201,14 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     8 observer tests pass, including every-split replies. The run-58/59 captures replay without
     disabling the phase (client 4 and 34 parsed). The Play phase's read timeout is 600 s, because
     run 59 showed the 30 s timeout forcing a re-login. Client replay waits on the Run59 hold.
+  - **Mission entry (2026-11-02):** [re/209026-mission-entry.md](re/209026-mission-entry.md).
+    The client completes the game join by itself on the type-1 key reply (constant
+    success result → PLAYER_FLAG_CONNECTED), so no server acknowledgement exists; 1267
+    must not be sent. Server 1063 is MapData (field roles mapped); it must precede
+    1060 and its map ID must equal route result 20 field 3 (inferred). Client 423
+    follows once both the join and 1063 landed. Typed frames (`gw2_proto::map_load`:
+    1063/1060/1061/1036, client 423/420/418/412) pass 13 focused tests against
+    `mission.xml` group 39; nothing was exchanged with the client.
   - **Static mission join:** auth request 29 and reply 20 lead through a
     correlated route transaction to the protocol-0 game join. Creation uses
     route mode 1 (`GAME_TYPE_CHARCREATE`); its scene call path and the small

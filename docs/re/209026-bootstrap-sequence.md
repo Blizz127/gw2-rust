@@ -31,6 +31,7 @@ plus a parsed fixture ([character protocol](209026-character-protocol.md)).
 | 2a | client auth 29, route request | Creation route: `[req, 1, 0,0,0,0]` + zero GUID. **Play route traced:** game type from the summary map's type, map key, the character's 16-byte value and 20-byte string | [mission join](209026-mission-join.md), [play route](209026-play-route.md) |
 | 2b | server auth 20, route result (address, params) | Stated: follows 29 | mission join |
 | 2c | protocol-0 game join, 84-byte preamble | Stated: follows 20. Observer support exists; untested | mission join |
+| 2d | (no message) join completion | Stated: the client completes the join itself on the type-1 key reply (constant success result) and sets PLAYER_FLAG_CONNECTED (ctx+0x228 bit 0x2). No server acknowledgement; 1267 must not be sent | [mission entry](209026-mission-entry.md) |
 
 The [Play route](209026-play-route.md) closes the main phase-2 gap. Still
 open: Queensdale's map type (and so its game-type value), the ctx +0xdd
@@ -45,10 +46,10 @@ READY.
 
 | Step | Message | Effect / prerequisite | Order status | Source |
 | --- | --- | --- | --- | --- |
-| 3a | server 1063, map-load setup | Stores the map ID (ctx +0x1f0) and the map definition (+0x1e8); sets readiness mask 0x80 | Inferred before 3b: LOAD_CONTENT needs the prepared definition. Route preparation also supplies one. | [mission transfer](209026-mission-transfer.md), map ready |
+| 3a | server 1063, MapData | Stores the map ID (ctx +0x1f0) and the map definition (+0x1e8); sets readiness mask 0x80 | **Stated before 3b:** 1063 is the only nonzero writer of ctx+0x1e8, which LoadMap asserts equals the loader's definition. Route preparation (BeginMap) sets the loader's own definition, not ctx+0x1e8. Inferred: the map ID must equal route result 20 field 3 | [mission entry](209026-mission-entry.md), [mission transfer](209026-mission-transfer.md) |
 | 3b | server 1060, OnRecvLoadMap | Sets the command-received flag +0x2c4, which SERVER_WAIT requires | Stated: needed to leave state 3 | mission transfer, map ready |
 | 3c | client 420, MapLoaded | Sent on MAP_STREAM success (418 on failure) | Stated: precedes READY; "too early" as a readiness signal | map ready, mission transfer |
-| 3d | client 423, language prefs | Ordinary branch: masks 0x40+0x80 set, 0x1 clear | Runtime order unverified | mission transfer |
+| 3d | client 423, language prefs | Ordinary branch: masks 0x40 (join completion) + 0x80 (1063) set, 0x1 clear | Stated: sent once both 2d and 3a happened, in either order | [mission entry](209026-mission-entry.md) |
 | 3e | (no message) AGENT_STREAM | Waits for a **nonnull controlled character** plus streaming conditions | Stated. Phase 4 must complete here. Other prerequisites are open. | map ready |
 | 3f | client 412, AgentsLoaded | Loader READY, ctx +0x228 mask 0x2, view state 0xd | Stated (implementation inference in the note) | map ready |
 | 3g | server 1036, BeginPlaying | Asserts loader READY; view state → 0x10 | Candidate: send after 412 | map ready |
@@ -116,8 +117,8 @@ statically.
 
 ## Candidate order (for fixture design, not a validated sequence)
 
-1. Phase 2: 22 → (server 8) → server 3 → 29 → 20 → join.
-2. 1063 → 1060.
+1. Phase 2: 22 → (server 8) → server 3 → 29 → 20 → join (completes on the key exchange).
+2. 1063 → (client 423) → 1060.
 3. 428 → 37 → 443 → 182/183 → 282 → profession → 151 → 247/248 → 565 → 538 → 605 → 170 → 618 → 444.
 4. 46.
 5. Client 420 / 423 / 412.
