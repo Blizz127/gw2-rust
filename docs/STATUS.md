@@ -222,6 +222,25 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     and where 46 falls. Not exchanged with the client.
     The observer's opt-in `--mission-population RECORD --mission-spawn X,Y,Z` sends it after
     client 420 and sends 1036 + 431 only after a later client 412 (431's direct body checks no loader/view state) (17 observer tests, incl. loopback).
+  - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
+    Done, local commits only, nothing deployed:
+    - no-capture servers and bind guard (71ffe34, c76ce60)
+    - bubble runner and identity generator (80a3433)
+    - deploy bundle with stackd readiness_only probes (38c1f83); ports 6112–6115 on
+      100.74.44.12 agreed with DIT
+    - TLS errors printed to the console, plus the sandbox SERVER_BIN override and static
+      musl builds (4a2a2dd)
+    Open bug: with the launcher's bubble layout (hosts file; cligate 127.1.0.2; auth
+    127.1.0.3) the real client aborts TLS with alert 10 before certificate handling
+    (runs 60, 60b, 60c). Run 59's layout with the same new static no-capture binaries
+    passes through Play (run 60d). Run 60e (hosts file with run 59's IPs) decides between
+    hosts-file resolution and cligate's address; its result is in
+    ~/gw2-sandbox/runs/run60e-hosts-run59ips/orchestrator.out.
+    Next steps, in order:
+    1. Read 60e and fix the layout with banshee-realm-client.
+    2. Run 61, the runner end to end (prepared in ~/gw2-sandbox/runs/run61-runner-e2e).
+    3. Send the shas to DIT and deploy via the coordinator.
+    Open owner question: B3 (agreement click-through).
   - **Build dependency:** `gw2-game-observe` and the play_route/map_load/population tests
     `include_str!` the client-extracted schemas in gitignored `data/protocol/209026/`.
     A clean checkout without that private directory will not build them.
