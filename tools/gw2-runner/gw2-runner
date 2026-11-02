@@ -1,0 +1,44 @@
+#!/bin/bash
+# GW2 build-209026 client runner for the launcher's network bubble.
+#
+#   gw2-runner --wine WINE --prefix PREFIX --exe Gw2-64.exe [--identity DIR]
+#              [--cpus LIST] [--dxvk|--no-dxvk] -- [client args]
+#
+# Runs INSIDE the launcher's `bwrap --unshare-net` sandbox. It uses no network of
+# its own. Before Wine starts, the GDB script checks the exe's SHA-256. At runtime it
+# applies exactly two in-memory patches, each only after the original bytes in
+# memory match the exe file: our TLS trust modulus and our DH public value. Files
+# are never modified. On any mismatch it kills the client and exits non-zero.
+#
+# --identity DIR holds the PUBLIC values only: own-modulus.bin (128 bytes) and
+# dh-params.bin (136 bytes). Private keys never ship. Default: the directory of
+# this script. --cpus defaults to 0-15 (see docs/client-build.md).
+set -euo pipefail
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+wine= prefix= exe= identity=$here cpus=0-15 dxvk=1
+die() { echo "gw2-runner: $*" >&2; exit 2; }
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --wine) wine=${2:?}; shift 2 ;;
+    --prefix) prefix=${2:?}; shift 2 ;;
+    --exe) exe=${2:?}; shift 2 ;;
+    --identity) identity=${2:?}; shift 2 ;;
+    --cpus) cpus=${2:?}; shift 2 ;;
+    --dxvk) dxvk=1; shift ;;
+    --no-dxvk) dxvk=0; shift ;;
+    --) shift; break ;;
+    *) die "unknown argument $1" ;;
+  esac
+done
+[[ -x $wine ]] || die "--wine must be an executable Wine binary"
+[[ -d $prefix ]] || die "--prefix must be an existing Wine prefix directory"
+[[ -f $exe ]] || die "--exe must be the frozen Gw2-64.exe"
+for f in own-modulus.bin dh-params.bin; do [[ -f $identity/$f ]] || die "missing $identity/$f"; done
+command -v gdb >/dev/null || die "gdb is required"
+command -v taskset >/dev/null || die "taskset is required"
+export WINEPREFIX=$prefix WINEDEBUG=${WINEDEBUG:--all}
+if [[ $dxvk == 1 ]]; then
+  export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:+$WINEDLLOVERRIDES;}d3d11,dxgi=n"
+fi
+export GW2_RUNNER_EXE=$exe GW2_RUNNER_IDENTITY=$identity
+exec taskset -c "$cpus" gdb -q -batch -x "$here/gw2-runner.gdb" --args "$wine" "$exe" "$@"
