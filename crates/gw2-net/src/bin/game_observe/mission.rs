@@ -5,7 +5,7 @@
 //! the phase opens with server 1063 (MapData) for the route's map key, then
 //! 1060 (LoadMap) with placeholder values. Client frames are then framed
 //! through the mission schema and logged by ID only. It never sends 1267
-//! (the join transaction has already completed) and never sends 1036
+//! (unnecessary: the join transaction has already completed) and never sends 1036
 //! BeginPlaying: the client asserts loader READY on it, and READY needs
 //! population data this phase does not provide.
 use bytes::{Bytes, BytesMut};
@@ -48,7 +48,8 @@ pub struct MissionPhase {
 
 impl MissionPhase {
     /// `map_key` must equal the map key the auth phase returned in route
-    /// result 20 field 3; the client asserts both resolve to one definition.
+    /// result 20 field 3 (normally the character summary's +1 Word); the
+    /// client asserts both resolve to one definition.
     pub fn new(map_key: u32) -> io::Result<Self> {
         if MapData1063::for_map(map_key).is_none() {
             return Err(io::Error::new(

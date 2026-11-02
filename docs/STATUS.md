@@ -204,7 +204,7 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
   - **Mission entry (2026-11-02):** [re/209026-mission-entry.md](re/209026-mission-entry.md).
     The client completes the game join by itself on the type-1 key reply (constant
     success result → PLAYER_FLAG_CONNECTED), so no server acknowledgement exists; 1267
-    must not be sent. Server 1063 is MapData (field roles mapped); it must precede
+    is unnecessary (it would match no state-3 transaction). Server 1063 is MapData (field roles mapped); it must precede
     1060 and its map ID must equal route result 20 field 3 (inferred). Client 423
     follows once both the join and 1063 landed. Typed frames (`gw2_proto::map_load`:
     1063/1060/1061/1036, client 423/420/418/412) pass 13 focused tests against

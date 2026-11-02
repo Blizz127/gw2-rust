@@ -31,7 +31,7 @@ plus a parsed fixture ([character protocol](209026-character-protocol.md)).
 | 2a | client auth 29, route request | Creation route: `[req, 1, 0,0,0,0]` + zero GUID. **Play route traced:** game type from the summary map's type, map key, the character's 16-byte value and 20-byte string | [mission join](209026-mission-join.md), [play route](209026-play-route.md) |
 | 2b | server auth 20, route result (address, params) | Stated: follows 29 | mission join |
 | 2c | protocol-0 game join, 84-byte preamble | Stated: follows 20. Observer support exists; untested | mission join |
-| 2d | (no message) join completion | Stated: the client completes the join itself on the type-1 key reply (constant success result) and sets PLAYER_FLAG_CONNECTED (ctx+0x228 bit 0x2). No server acknowledgement; 1267 must not be sent | [mission entry](209026-mission-entry.md) |
+| 2d | (no message) join completion | Stated: the client completes the join itself on the type-1 key reply (constant success result) and sets PLAYER_FLAG_CONNECTED (ctx+0x228 bit 0x2). No server acknowledgement; 1267 is unnecessary (it matches no state-3 transaction) | [mission entry](209026-mission-entry.md) |
 
 The [Play route](209026-play-route.md) closes the main phase-2 gap. Still
 open: Queensdale's map type (and so its game-type value), the ctx +0xdd

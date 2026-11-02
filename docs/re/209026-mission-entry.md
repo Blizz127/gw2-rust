@@ -40,9 +40,10 @@ unchanged.
 **Consequences for a server:**
 - After the 84-byte preamble and the key records, the join is complete. The
   server doesn't need to send any join acknowledgement.
-- Mission control server **1267** also feeds `0x14023b5c0`, but once the
-  transaction has left state 3 it can no longer match. A fixture must not send
-  it.
+- Mission control server **1267** also feeds `0x14023b5c0`. Once the
+  transaction has left state 3 it matches nothing, and the handler
+  `0x14023eeb0` ignores the helper's result and returns 1. A late 1267 is
+  therefore an unnecessary no-op, not a hazard. The fixture does not send it.
 
 ## 2. Server 1063 is MapData
 
@@ -116,7 +117,12 @@ equal the map key the server returned in route result 20 field 3.
 ### Offline implementation
 
 `gw2-game-observe --mission-preamble --mission-map-key KEY` implements steps 1–4.
-KEY must equal the map key the auth phase echoed in route result 20.
+KEY must equal the map key the auth phase echoed in route result 20. That
+echo is the client's own route-29 map key, which normally comes from the
+character summary inside `--auth-character-record`: the summary's Word at
++1, read little-endian ([play route](209026-play-route.md)). Settings
+overrides or a failed record check change that choice. A mismatch would trip
+the loader's `m_mapDef == mapDef` assertion.
 - **Sends:** one server frame with 1063 for KEY, followed by an all-zero 1060.
 - **Client traffic:** framed through `mission.xml` groups 39/40 and logged by
   message ID only.

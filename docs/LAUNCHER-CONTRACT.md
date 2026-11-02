@@ -24,7 +24,7 @@ GW2 server. The launcher entry must show **unavailable / not deployed**, with PL
 | Patch / asset CDN | `assetcdn.101.arenanetworks.com` | TCP 80 (`GET /latest64/101`, then files) | `gw2-assetcdn` + `gw2-manifest-gen` | Works offline. The launcher reaches READY / PLAYABLE (run 35). |
 | Portal (STS) | `cligate.101.ncplatform.net.` (trailing dot) | TCP 6112 | `gw2-login-observe` (STS + minimal TLS 1.2) | Synthetic fixtures through news panel and Play (runs 44–58) |
 | Auth (binary) | Second TCP connection after the game token | per portal reply | `gw2-game-observe` | Synthetic fixtures: IDs 2/8/10/7 accepted (runs 52–58) |
-| Game / mission | Address from auth route result 20 | — | none | **Not implemented**; static RE only ([bootstrap sequence](re/209026-bootstrap-sequence.md)) |
+| Game / mission | Address from auth route result 20 | per route result | `gw2-game-observe --mission-preamble --mission-map-key KEY` | Synthetic offline opening only: join via key exchange, then 1063 + placeholder 1060 ([mission entry](re/209026-mission-entry.md)). Not deployed, not run against the client; no population |
 
 **Name mapping rule:** resolve these names into **127.1.0.x, never 127.0.0.0/24**.
 In the 127.0.0.0/24 range the client's address lookup recurses and kills its socket
@@ -66,8 +66,9 @@ DNS_SINK=0 ADD_HOSTS="cligate.101.ncplatform.net=127.1.0.1 cligate.101.ncplatfor
 1. **Owner decision (Run59 hold):** run 59 shows the User Agreement panel after the
    launcher's Play and before character select. Its code path is untraced. No progress
    past it without explicit owner direction.
-2. **Game server:** route result 20, then the game join, map load (1063/1060), character
-   population (428…444) and BeginPlaying (1036) have no server implementation yet.
+2. **Game server:** route result 20, the game join and the map-load opening (1063, placeholder
+   1060) exist as offline observer fixtures only. Valid 1060 values, character population
+   (428…444), world entry (46), 412 → BeginPlaying (1036) and a deployable service remain.
 3. **Launcher runner:** host mapping, the guarded memory substitutions, and stdin ticket
    handoff on the owner's device. D2 (per-process network restriction) is unanswered.
 4. **Accounts:** Banshee ticket verification and character storage.
