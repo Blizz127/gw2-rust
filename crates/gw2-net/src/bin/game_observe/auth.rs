@@ -103,6 +103,12 @@ fn name_select_8(server8: &Message, request: u32, character: Guid) -> io::Result
 }
 
 fn validate_character(bytes: &[u8]) -> io::Result<()> {
+    character_parts(bytes).map(|_| ())
+}
+
+/// Parse a server-17 character record body (see `validate_character`) into
+/// its name and summary blob. Values are never logged.
+pub fn character_parts(bytes: &[u8]) -> io::Result<(String, Vec<u8>)> {
     let invalid = || io::Error::new(ErrorKind::InvalidData, "invalid character record fixture");
     if bytes.len() > CHARACTER_BODY_LIMIT {
         return Err(invalid());
@@ -145,7 +151,7 @@ fn validate_character(bytes: &[u8]) -> io::Result<()> {
     {
         return Err(invalid());
     }
-    Ok(())
+    Ok((name.clone(), summary.clone()))
 }
 
 fn field(kind: &str, size: Option<u32>) -> Field {

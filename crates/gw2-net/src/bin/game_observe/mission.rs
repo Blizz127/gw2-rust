@@ -5,13 +5,22 @@
 //! the phase opens with server 1063 (MapData) for the route's map key, then
 //! 1060 (LoadMap) with placeholder values. Client frames are then framed
 //! through the mission schema and logged by ID only. It never sends 1267
-//! (unnecessary: the join transaction has already completed) and never sends 1036
-//! BeginPlaying: the client asserts loader READY on it, and READY needs
-//! population data this phase does not provide.
+//! (unnecessary: the join transaction has already completed). It never sends
+//! 1036 BeginPlaying before client 412 AgentsLoaded: the client asserts loader
+//! READY on it, and READY needs population data, which is opt-in (below).
+//!
+//! With an explicit [`PopulationFixture`] the phase additionally sends the
+//! candidate population sequence (`gw2_proto::population`) once client 420
+//! MapLoaded arrives, and empty server 1036 BeginPlaying once client 412
+//! AgentsLoaded arrives after that. Both are candidates from static analysis
+//! (docs/re/209026-bootstrap-sequence.md), not a validated bootstrap.
 use bytes::{Bytes, BytesMut};
 use gw2_proto::{
+    Guid,
+    character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
-    map_load::{ClientMapEvent, LoadMap1060, MapData1063},
+    map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
+    population::{self, PopulationPlan},
     schema::{self, Message},
 };
 use std::io::{self, ErrorKind};
@@ -39,11 +48,59 @@ pub enum Seen {
     Other(u16),
 }
 
+/// Explicit synthetic population input, built from the same server-17
+/// character record the auth phase serves. No Debug: it holds a name.
+#[derive(Clone)]
+pub struct PopulationFixture {
+    plan: PopulationPlan,
+    map_key: u16,
+}
+
+impl PopulationFixture {
+    /// `spawn` is an operator-chosen packet-space position; valid spawn
+    /// coordinates are not established (docs/re/209026-map-coordinate-spaces.md).
+    pub fn new(record: &[u8], spawn: [f32; 3]) -> io::Result<Self> {
+        let invalid = |message: &str| io::Error::new(ErrorKind::InvalidInput, message.to_owned());
+        let (name, summary) = super::auth::character_parts(record)?;
+        let summary = SummaryV11::parse(&summary)?;
+        // Only the Guardian (profession 1) creator, server 477, is implemented.
+        if summary.profession() != 1 {
+            return Err(invalid("population fixture supports only profession 1 (Guardian)"));
+        }
+        let plan = PopulationPlan {
+            player_index: 1,        // placeholder: valid value not established
+            character_index: 1,     // placeholder: valid value not established
+            name,
+            portal_user_id: Guid([0; 16]), // placeholder: synthetic identity
+            position: spawn,
+            facing: [1.0, 0.0, 0.0], // placeholder: unit vector, direction unestablished
+            appearance: summary
+                .appearance()
+                .try_into()
+                .map_err(|_| invalid("summary appearance is not 45 bytes"))?,
+        };
+        plan.validate()?;
+        population::population_stream(&plan)?;
+        Ok(Self {
+            plan,
+            map_key: summary.map_definition_key(),
+        })
+    }
+
+    /// The summary's map key, which the client also sends in route 29.
+    pub fn map_key(&self) -> u16 {
+        self.map_key
+    }
+}
+
 pub struct MissionPhase {
     map_key: u32,
     client: Vec<Message>,
     pending: BytesMut,
     enabled: bool,
+    population: Option<PopulationFixture>,
+    populated: bool,
+    began: bool,
 }
 
 impl MissionPhase {
@@ -77,7 +134,48 @@ impl MissionPhase {
             client,
             pending: BytesMut::new(),
             enabled: true,
+            population: None,
+            populated: false,
+            began: false,
         })
+    }
+
+    /// Enable the population step. Its summary map key must equal the
+    /// phase's map key: the client derives both from the same summary, and a
+    /// mismatch would trip the loader's `m_mapDef == mapDef` assertion.
+    pub fn with_population(mut self, fixture: PopulationFixture) -> io::Result<Self> {
+        if u32::from(fixture.map_key()) != self.map_key {
+            return Err(io::Error::new(
+                ErrorKind::InvalidInput,
+                "character summary map key differs from --mission-map-key",
+            ));
+        }
+        self.population = Some(fixture);
+        Ok(self)
+    }
+
+    /// Server frames owed for one framed client message: population after
+    /// MapLoaded (once), then BeginPlaying after AgentsLoaded (once, and only
+    /// after population). Nothing without a population fixture.
+    pub fn respond(&mut self, seen: &Seen) -> io::Result<Option<Bytes>> {
+        let Some(fixture) = &self.population else {
+            return Ok(None);
+        };
+        match seen {
+            Seen::Map(ClientMapEvent::MapLoaded) if !self.populated => {
+                self.populated = true;
+                eprintln!("Mission phase: sending candidate population sequence");
+                Ok(Some(population::population_stream(&fixture.plan)?.freeze()))
+            }
+            Seen::Map(ClientMapEvent::AgentsLoaded) if self.populated && !self.began => {
+                self.began = true;
+                eprintln!("Mission phase: sending server 1036 BeginPlaying");
+                let mut out = BytesMut::new();
+                map_load::encode_empty(map_load::BEGIN_PLAYING_1036, &mut out);
+                Ok(Some(out.freeze()))
+            }
+            _ => Ok(None),
+        }
     }
 
     #[cfg(test)]
@@ -145,9 +243,9 @@ impl MissionPhase {
                 Seen::Map(ClientMapEvent::FailedToLoad) => {
                     eprintln!("Mission phase: client 418 FailedToLoad")
                 }
-                Seen::Map(ClientMapEvent::AgentsLoaded) => eprintln!(
-                    "Mission phase: client 412 AgentsLoaded (BeginPlaying is not implemented)"
-                ),
+                Seen::Map(ClientMapEvent::AgentsLoaded) => {
+                    eprintln!("Mission phase: client 412 AgentsLoaded")
+                }
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
@@ -162,7 +260,7 @@ impl MissionPhase {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use gw2_proto::{Encode, map_load::LanguagePrefs423};
 
@@ -205,6 +303,65 @@ mod tests {
             assert_eq!(seen, expected, "split {split}");
             assert!(phase.enabled());
         }
+    }
+
+    /// Synthetic server-17 record: Guardian, Queensdale key 15, zero appearance.
+    pub(crate) fn guardian_record(map_key: u16, profession: u8) -> Vec<u8> {
+        let mut record = vec![0; 16]; // Synthetic character GUID.
+        record.push(0); // Opaque Dword.
+        record.extend_from_slice(&[0; 16]); // Opaque Qwords.
+        for unit in "Fixture".encode_utf16().chain(std::iter::once(0)) {
+            record.extend_from_slice(&unit.to_le_bytes());
+        }
+        record.extend_from_slice(&159u16.to_le_bytes());
+        let mut summary = [0u8; 159];
+        summary[0] = 11;
+        summary[1..3].copy_from_slice(&map_key.to_le_bytes());
+        summary[4] = 1;
+        summary[5] = profession;
+        record.extend_from_slice(&summary);
+        record
+    }
+
+    fn populated_phase() -> MissionPhase {
+        let fixture = PopulationFixture::new(&guardian_record(15, 1), [0.0, 0.0, 0.0]).unwrap();
+        MissionPhase::new(15).unwrap().with_population(fixture).unwrap()
+    }
+
+    #[test]
+    fn population_follows_map_loaded_and_begin_playing_follows_agents_loaded() {
+        let mut phase = populated_phase();
+        let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
+        let loaded = Seen::Map(ClientMapEvent::MapLoaded);
+        // 412 before population: never 1036.
+        assert!(phase.respond(&agents).unwrap().is_none());
+        assert!(phase.respond(&Seen::Other(2)).unwrap().is_none());
+        let sent = phase.respond(&loaded).unwrap().unwrap();
+        let plan = phase.population.as_ref().unwrap().plan.clone();
+        assert_eq!(sent, population::population_stream(&plan).unwrap());
+        assert!(phase.respond(&loaded).unwrap().is_none(), "population is sent once");
+        assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04]);
+        assert!(phase.respond(&agents).unwrap().is_none(), "1036 is sent once");
+    }
+
+    #[test]
+    fn without_population_the_phase_never_replies() {
+        let mut phase = MissionPhase::new(15).unwrap();
+        for seen in [
+            Seen::Map(ClientMapEvent::MapLoaded),
+            Seen::Map(ClientMapEvent::AgentsLoaded),
+        ] {
+            assert!(phase.respond(&seen).unwrap().is_none());
+        }
+    }
+
+    #[test]
+    fn population_fixture_checks_profession_map_key_and_spawn() {
+        assert!(PopulationFixture::new(&guardian_record(15, 2), [0.0; 3]).is_err());
+        assert!(PopulationFixture::new(&guardian_record(15, 1), [f32::NAN, 0.0, 0.0]).is_err());
+        assert!(PopulationFixture::new(&guardian_record(15, 1)[..40], [0.0; 3]).is_err());
+        let other_map = PopulationFixture::new(&guardian_record(16, 1), [0.0; 3]).unwrap();
+        assert!(MissionPhase::new(15).unwrap().with_population(other_map).is_err());
     }
 
     #[test]

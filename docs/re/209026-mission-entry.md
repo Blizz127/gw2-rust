@@ -142,6 +142,27 @@ Tests:
 
 Not run against the client (Run59 hold).
 
+**Population step (opt-in).** `--mission-population RECORD --mission-spawn X,Y,Z`
+adds the candidate population sequence (`gw2_proto::population`).
+- **RECORD:** the same server-17 character record body the auth phase serves.
+  It supplies the name and the 45 appearance bytes. Only profession 1 is
+  accepted, because only the Guardian creator, 477, is implemented.
+- **Map-key check:** RECORD's summary map key must equal `--mission-map-key`,
+  so the coupling above is now checked rather than just documented.
+- **Spawn:** an operator choice. Packet-space spawn coordinates are not
+  established.
+- **When frames go out:** the sequence is sent once, after client 420
+  MapLoaded. Server 1036 BeginPlaying is sent once, only after client 412
+  AgentsLoaded, and only if population was already sent.
+- **Inferred ordering:** sending population after 420 is a conservative choice
+  (the map has streamed by then). AGENT_STREAM itself polls for the controlled
+  character, so it would accept population earlier too
+  ([map ready](209026-map-ready.md)).
+- **Tests:** unit tests for the response rules, plus a loopback exchange (key
+  reply → opening; 420 → sequence starting with 428; 412 → 1036).
+
+Not run against the client.
+
 ## Open
 
 - Meanings of 1063 f0/f2/f3/b4/b5 and of the bit-30/31 flags.

@@ -31,7 +31,7 @@ A request/response match or a parsed frame is never counted as visible playback.
 | Character creation (UI, cinematics, answers) | HEADLESS | Creation frame checker, answer/color/equipment notes | Creation cutscenes NOT RUN |
 | Play → route → game join | HEADLESS | [play route](re/209026-play-route.md); observer `--auth-play-route` unit tests (22 → 8+3, 29 → 20) | Not run against the client (hold); no game/mission server |
 | Map load / loading screen | HEADLESS | [map ready](re/209026-map-ready.md) states; [mission entry](re/209026-mission-entry.md); observer `--mission-map-key` loopback test (key reply → 1063 + 1060; 423/420 framed) | Not run against the client (hold); population (phase 4) missing, so READY/412/1036 unreachable |
-| Spawn, camera and control return | NOT RUN | Agent/character codecs | Needs game server |
+| Spawn, camera and control return | HEADLESS | Candidate population sequence (`gw2_proto::population`); observer `--mission-population` loopback (420 → population, 412 → 1036) | Not run against the client (hold); spawn position, many values placeholder |
 | Cutscenes / dialogue / choices | NOT RUN | — | Needs game server and content |
 | Movement / combat | NOT RUN | Collision and terrain readers (offline) | — |
 | Inventory / rewards | NOT RUN | Inventory create codec only | — |

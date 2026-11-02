@@ -72,6 +72,7 @@ struct Fixtures<'a> {
     auth_body: Option<auth::ReplyFixture>,
     play: Option<auth::PlayRoute>,
     mission_map_key: Option<u32>,
+    population: Option<mission::PopulationFixture>,
 }
 
 fn observe(
@@ -86,8 +87,12 @@ fn observe(
         auth_body,
         play,
         mission_map_key,
+        population,
     } = fixtures;
-    let mut mission = mission_map_key.map(mission::MissionPhase::new).transpose()?;
+    let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
+        (Some(phase), Some(fixture)) => Some(phase.with_population(fixture)?),
+        (phase, _) => phase,
+    };
     let mut auth = match (auth_body.map(auth::AuthProbe::new), play) {
         (Some(probe), Some(route)) => Some(probe.with_play_route(route)?),
         (probe, _) => probe,
@@ -163,7 +168,13 @@ fn observe(
                 eprintln!("Explicit correlated auth fixture sent");
             }
             if let Some(mission) = &mut mission {
-                mission.push(&decoded);
+                for seen in mission.push(&decoded) {
+                    if let Some(reply) = mission.respond(&seen)? {
+                        let mut wire = BytesMut::new();
+                        codec.encode(reply, &mut wire)?;
+                        stream.write_all(&wire)?;
+                    }
+                }
             }
         }
     }
@@ -180,6 +191,8 @@ fn main() -> io::Result<()> {
     let mut preamble = Preamble::Auth;
     let mut play_address: Option<SocketAddr> = None;
     let mut mission_map_key: Option<u32> = None;
+    let mut population_record: Option<Vec<u8>> = None;
+    let mut spawn: Option<[f32; 3]> = None;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -204,6 +217,29 @@ fn main() -> io::Result<()> {
                         .parse()
                         .map_err(|_| invalid("invalid mission map key"))?,
                 )
+            }
+            "--mission-population" => {
+                let path = args
+                    .next()
+                    .ok_or_else(|| invalid("missing population character record"))?;
+                let mut bytes = Vec::new();
+                File::open(path)?
+                    .take((auth::CHARACTER_BODY_LIMIT + 1) as u64)
+                    .read_to_end(&mut bytes)?;
+                population_record = Some(bytes);
+            }
+            "--mission-spawn" => {
+                let text = args.next().ok_or_else(|| invalid("missing spawn X,Y,Z"))?;
+                let parts: Vec<f32> = text
+                    .split(',')
+                    .map(str::parse)
+                    .collect::<Result<_, _>>()
+                    .map_err(|_| invalid("invalid spawn X,Y,Z"))?;
+                spawn = Some(
+                    parts
+                        .try_into()
+                        .map_err(|_| invalid("spawn needs exactly X,Y,Z"))?,
+                );
             }
             "--auth-play-route" => {
                 play_address = Some(
@@ -241,7 +277,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record)]]",
+                    "usage: gw2-game-observe --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z]]]",
                 ));
             }
         }
@@ -259,9 +295,23 @@ fn main() -> io::Result<()> {
             "--mission-map-key requires --mission-preamble and excludes --reply-frame",
         ));
     }
+    if population_record.is_some() != spawn.is_some()
+        || (population_record.is_some() && mission_map_key.is_none())
+    {
+        return Err(invalid(
+            "--mission-population and --mission-spawn go together and require --mission-map-key",
+        ));
+    }
+    let population = match (&population_record, spawn) {
+        (Some(record), Some(spawn)) => Some(mission::PopulationFixture::new(record, spawn)?),
+        _ => None,
+    };
     if let Some(key) = mission_map_key {
         // Validate before binding; each connection builds its own phase.
-        mission::MissionPhase::new(key)?;
+        let phase = mission::MissionPhase::new(key)?;
+        if let Some(fixture) = &population {
+            phase.with_population(fixture.clone())?;
+        }
     }
     if character.is_some() && auth_body.is_none() {
         return Err(invalid(
@@ -317,6 +367,7 @@ fn main() -> io::Result<()> {
         let key = Arc::clone(&key);
         let reply = reply.clone();
         let auth_body = auth_body.clone();
+        let population = population.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
             let fixtures = Fixtures {
@@ -324,6 +375,7 @@ fn main() -> io::Result<()> {
                 auth_body,
                 play,
                 mission_map_key,
+                population,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {
                 eprintln!("Game observation ended: {e}");

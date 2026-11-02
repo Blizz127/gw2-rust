@@ -244,3 +244,70 @@ fn mission_map_key_is_bounded() {
     assert!(mission::MissionPhase::new(0x3fff_ffff).is_ok());
     assert!(mission::MissionPhase::new(0x4000_0000).is_err());
 }
+
+#[test]
+fn mission_population_loopback_follows_client_420_and_412() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let epoch = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "gw2-observe-population-{}-{epoch}.bin",
+        std::process::id()
+    ));
+    let record = mission::tests::guardian_record(15, 1);
+    let fixture = mission::PopulationFixture::new(&record, [0.0; 3]).unwrap();
+    // Public toy group for this local test; no stored identities are loaded.
+    let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+    let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
+    let server_path = path.clone();
+    let server = std::thread::spawn(move || {
+        let fixtures = Fixtures {
+            mission_map_key: Some(15),
+            population: Some(fixture),
+            ..Fixtures::default()
+        };
+        observe(stream_of(listener), &key, &server_path, fixtures, Preamble::Mission)
+    });
+    let mut client = TcpStream::connect(address).unwrap();
+    client.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    let mut input = preamble::fixture(Preamble::Mission);
+    input.extend_from_slice(&[0, 6, 0, 4, 0, 0]);
+    client.write_all(&input).unwrap();
+    let mut reply = [0u8; 22];
+    client.read_exact(&mut reply).unwrap();
+    let mut codec = ClientCodec::new(&session_secret(&shared, &reply[2..].try_into().unwrap()));
+    let mut pending = BytesMut::new();
+    let mut next = |client: &mut TcpStream, codec: &mut ClientCodec| loop {
+        if let Some(frame) = codec.decode(&mut pending).unwrap() {
+            break frame;
+        }
+        let mut chunk = [0u8; 256];
+        let n = client.read(&mut chunk).unwrap();
+        assert_ne!(n, 0);
+        pending.extend_from_slice(&chunk[..n]);
+    };
+    assert_eq!(next(&mut client, &mut codec), mission::MissionPhase::new(15).unwrap().opening());
+    let send = |client: &mut TcpStream, codec: &mut ClientCodec, id: u16| {
+        let mut wire = BytesMut::new();
+        codec
+            .encode(Bytes::copy_from_slice(&id.to_le_bytes()), &mut wire)
+            .unwrap();
+        client.write_all(&wire).unwrap();
+    };
+    send(&mut client, &mut codec, 420);
+    let population = next(&mut client, &mut codec);
+    assert_eq!(&population[..2], &428u16.to_le_bytes());
+    send(&mut client, &mut codec, 412);
+    assert_eq!(&next(&mut client, &mut codec)[..], &[0x0c, 0x04]);
+    client.shutdown(Shutdown::Both).unwrap();
+    server.join().unwrap().unwrap();
+    fs::remove_file(&path).unwrap();
+    fs::remove_file(path.with_extension("preamble.bin")).unwrap();
+}
+
+fn stream_of(listener: TcpListener) -> TcpStream {
+    listener.accept().unwrap().0
+}
