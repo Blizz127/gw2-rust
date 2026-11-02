@@ -146,7 +146,9 @@ pub struct LoadMap1060 {
     /// The client converts it to radians as `2 * value * pi / 255`, see
     /// [`Self::angle_radians`].
     pub angle: u8,
-    /// Stored at loader +0x318.
+    /// Stored at loader +0x318: the map decryption key. Required (nonzero) only
+    /// for map definitions flagged 0x20000000 at +0x98; Queensdale is not
+    /// (docs/re/209026-mission-entry.md).
     pub loader_value: u64,
     /// Passed to a client function that is not yet resolved.
     pub final_value: u32,

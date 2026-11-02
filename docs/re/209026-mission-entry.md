@@ -178,6 +178,25 @@ one index space is **inferred**.
 Evidence: `ev_2dd3d867eb8f375c5343d4c07ea73c800a7e1592b990de7d3cbb087d56dda899`,
 private `~/re/gw2/notes/209026-mission-player-id-1.json`.
 
+### 1060's Qword is the map decryption key (2026-11-02)
+
+LoadMap stores the 1060 Qword at loader +0x318 (`0x14095397a`). In
+MAP_DOWNLOAD (`0x140952166`), the loader checks the map definition. If the
+definition's +0x98 flags have **0x20000000** set and +0x318 is zero, it logs
+`MapLoader: Completed STATE_MAP_DOWNLOAD with error (tried to enter an
+encrypted map without a key)` and moves to state 6 (error). Otherwise the
+Qword is passed with the map resource to `0x140c342a0`.
+
+Queensdale's map-definition record has flags `0x50000200`: key 15, content
+container 1282830 (SHA-256 `e5d11e4f…`), offset 3754040. **It is not
+encrypted, so a zero key is valid for Queensdale.** Only 1 of the 1,554
+type-45 map definitions has the encryption bit. Field 1060.loader_value
+should be read as the map key.
+
+Evidence: `ev_c9e5aba013435a64e4cd05d97f249e2a8fd65dff3d003d5e682bbe8a8b383ecc`
+(Rizin-run `map-encryption-flag.py`, which also reads the content container),
+private `~/re/gw2/notes/209026-map-key-1.json`.
+
 ### Server 431 timing (2026-11-02)
 
 Handler `0x141255010` passes charContext to `0x1411b7700`. That body:
@@ -203,7 +222,7 @@ private `~/re/gw2/notes/209026-startup-431-1.json`.
 ## Open
 
 - Meanings of 1063 f0/f2/f3/b4/b5 and of the bit-30/31 flags.
-- Physical roles of the 1060 vectors, Qword and final Dword.
+- Physical roles of the 1060 vectors and final Dword. The Qword is the map decryption key (zero is valid for unencrypted maps such as Queensdale). The Float3 is the AGENT_STREAM streaming centre ([map ready](209026-map-ready.md)). The final Dword is exchanged into global `0x1425b99f8`, which is read in the CoScene code, meaning unknown.
 - Whether the client sends any protocol-0 message before 423. Mission control
   server 3 makes the client send client 2, but nothing requires a server to
   send it.
