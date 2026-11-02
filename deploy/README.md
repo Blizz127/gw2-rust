@@ -41,11 +41,12 @@ make-identity.py), so the host never needs a copy of the client.
 
 ## stackd probes (read-only, under 5 s, one JSON line)
 
-- health: `/home/blizz/gw2-rust-current/deploy/gw2-probe.py health /home/blizz/gw2-rust-state/run`
+- health: `/usr/bin/sg blizz -c "exec /usr/bin/python3 -I /home/blizz/gw2-rust-<sha>/deploy/gw2-probe.py health /home/blizz/gw2-rust-state/run"`
   - Ready only when each process in `pids.json` is alive, runs its recorded exe, and
     owns its listener (socket inode under `/proc/<pid>/fd`).
-  - Needs to read our processes' `/proc` entries (stackd wraps it in `sg`).
-- humans: `/home/blizz/gw2-rust-current/deploy/gw2-probe.py humans /home/blizz/gw2-rust-state/run`
+  - Needs to read our processes' `/proc` entries. stackd runs with gid docker, so the
+    `sg blizz` wrap is required. DIT pins the real kit path, not the `current` symlink.
+- humans: the same with `humans`; prints `{"humans":N,"bots":0}`
   - Counts ESTABLISHED connections on the game port owned by the game process.
   - Exits non-zero when the count can't be determined.
 

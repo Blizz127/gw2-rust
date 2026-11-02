@@ -2,7 +2,7 @@
 """stackd readiness_only probes for the GW2 server.
 
     gw2-probe.py health RUN_DIR   -> {"ready":bool,"running":bool,"detail":str}
-    gw2-probe.py humans RUN_DIR   -> {"humans":int,"bots":null}
+    gw2-probe.py humans RUN_DIR   -> {"humans":int,"bots":0}  (GW2 has no bots)
 
 Read-only. Readiness requires every process in RUN_DIR/pids.json to be alive,
 to run the recorded executable, and to own (by /proc/<pid>/fd socket inode) a
@@ -100,7 +100,7 @@ def main():
         except Exception as e:  # unknown count: never report 0
             print(json.dumps({'error': type(e).__name__}))
             sys.exit(1)
-        print(json.dumps({'humans': count, 'bots': None}))
+        print(json.dumps({'humans': count, 'bots': 0}))
         sys.exit(0)
     sys.exit('usage: gw2-probe.py health|humans RUN_DIR')
 
