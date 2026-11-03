@@ -598,6 +598,37 @@ mod tests {
         }
     }
 
+    /// Every frame the auth server sends (the login reply 8/10/17/7 and the play replies
+    /// 8+3 and 20) decodes to its exact length under the client's own auth server table
+    /// (0x141923fe0, extracted from its registration tables), not only under auth.xml.
+    /// Uses the DEPLOYED fixtures: set GW2_AUTH_FIXTURE_DIR to a kit's data/ directory
+    /// (auth-account-body.bin, character-record.bin) and run with `--ignored`.
+    #[test]
+    #[ignore]
+    fn every_auth_reply_frame_matches_the_client_auth_table() {
+        let dir = std::path::PathBuf::from(std::env::var("GW2_AUTH_FIXTURE_DIR").expect("GW2_AUTH_FIXTURE_DIR"));
+        let body = Bytes::from(std::fs::read(dir.join("auth-account-body.bin")).unwrap());
+        let deployed_record = Bytes::from(std::fs::read(dir.join("character-record.bin")).unwrap());
+        const SERVER_TABLES: &str = include_str!("../../../../../data/protocol/209026/server-tables.xml");
+        let tables = schema::parse(SERVER_TABLES).unwrap().protocols[0].groups.clone();
+        let table = tables.iter().find(|g| g.name == "table-0x141923fe0").expect("client auth table");
+        let fixture = ReplyFixture::new(body, Some(deployed_record)).unwrap();
+        let route = PlayRoute::new("127.1.0.4:6112".parse().unwrap(), Guid([0x55; 16])).unwrap();
+        let mut probe = AuthProbe::new(fixture).with_play_route(route).unwrap();
+        let login = probe.push(&login_input()).unwrap().unwrap();
+        let play = probe.push(&play_input()).unwrap().unwrap();
+        let mut ids = Vec::new();
+        for (name, bytes) in [("login", login), ("play", play)] {
+            let mut cursor = &bytes[..];
+            while !cursor.is_empty() {
+                let (message, _) = dynamic::decode_frame(&table.server, &census_rules(), &mut cursor)
+                    .unwrap_or_else(|e| panic!("{name} reply frame misfits the client auth table: {e}"));
+                ids.push(message.id);
+            }
+        }
+        assert_eq!(ids, vec![8, 10, 17, 7, 8, 3, 20]);
+    }
+
     #[test]
     fn play_phase_disables_on_undecodable_frame_and_is_opt_in() {
         let mut probe = play_probe();
