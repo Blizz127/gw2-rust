@@ -406,6 +406,37 @@ pub(crate) mod tests {
         }
     }
 
+    /// Agent traffic between 420 MapLoaded and 412 AgentsLoaded (the client's
+    /// delay report can start before 412) must not disable the phase: before the
+    /// agent schema was loaded it did, and 1036 was then never sent.
+    #[test]
+    fn agent_traffic_between_map_loaded_and_agents_loaded_still_begins_playing() {
+        let mut input = BytesMut::new();
+        map_load::encode_empty(map_load::MAP_LOADED_420, &mut input);
+        input.extend_from_slice(&agent_frame(17));
+        input.extend_from_slice(&agent_frame(18));
+        map_load::encode_empty(map_load::AGENTS_LOADED_412, &mut input);
+        for split in 0..=input.len() {
+            let mut phase = populated_phase();
+            let mut replies = Vec::new();
+            for part in [&input[..split], &input[split..]] {
+                for seen in phase.push(part) {
+                    if let Some(reply) = phase.respond(&seen).unwrap() {
+                        replies.push((seen, reply));
+                    }
+                }
+            }
+            assert!(phase.enabled(), "split {split}");
+            assert_eq!(replies.len(), 2, "population once, then 1036 + 431 once (split {split})");
+            assert_eq!(replies[0].0, Seen::Map(ClientMapEvent::MapLoaded), "split {split}");
+            assert_eq!(replies[1].0, Seen::Map(ClientMapEvent::AgentsLoaded), "split {split}");
+            let mut begin = BytesMut::new();
+            map_load::encode_empty(map_load::BEGIN_PLAYING_1036, &mut begin);
+            PlayerStartupFrame209026.encode_frame(&mut begin);
+            assert_eq!(replies[1].1, begin.freeze(), "split {split}");
+        }
+    }
+
     #[test]
     fn unverified_optional_field_disables_explicitly() {
         // Client 4 carries a kind-15 (Optional) field whose encoding is unverified.
