@@ -339,6 +339,12 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       - A guarded stop left the unit `failed` (exit 143 on SIGTERM). The installed unit now
         has `SuccessExitStatus=143` (sha256 02d7ca0f…, daemon-reload only; the previous unit
         is kept as `gw2-server.service.prev-9716fb8e`). The next kit's `deploy/` carries it.
+    - **Banshee kit 56945a9, deployed 07:45Z** with DIT's ack.
+      - Descriptor kind 15 is verified as Optional, so agent clients 4/7/9/10/11 frame.
+      - The kit's unit has `SuccessExitStatus=143`; the guarded stop left the unit
+        `inactive`.
+      - start→ready 3.3 s. **`server.log` baseline for the owner's next run: line 107.**
+      - Rollback: link to cf490a8.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
