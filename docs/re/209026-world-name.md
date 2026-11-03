@@ -154,3 +154,19 @@ and return False). If a pure byte patch is preferred:
 - Sending a different world id. **There is no evidence in the binary that any content-373 id carries the name "Banshee Realm"**:
   names live in Gw2.dat as text ids and are not visible statically. The discovery breakpoint at `0x1403123a9` (see above) would
   dump the `+0x2c` text id for each id; resolving each to a string would settle it. Until that is known, assume the client patch is needed.
+
+## Implemented in tools/gw2-runner/gw2-runner.gdb (2026-11-03)
+- The jmp-stub variant is the one implemented: `apply_world_name()` runs right after the patch points arm (first IPv4 connect, before any UI).
+  - It needs no breakpoint at run time, so it adds no per-call cost.
+  - Stub at `0x141913040` in the `.text` zero tail; the string is at stub+40.
+- Guards: the first 24 entry bytes must equal the file, and the 0x60-byte stub area must be zero.
+  - The stub is written and read back first; the entry jump goes in last and is read back too.
+  - Any failure skips the patch (or restores the prologue) and the run continues. A cosmetic patch never stops the client.
+- `GW2_RUNNER_WORLD_NAME=0` turns it off.
+- Offline: written into a scratch copy and disassembled with rizin. The result is
+  `cmp ecx,0x3e9; jnz; lea rax,[u"Banshee Realm"]; ret; <prologue>; jmp 0x14031233c` and entry `jmp 0x141913040`.
+  - The bytes are identical for a relocated image: every displacement is relative.
+- **Run 73** (local, the run 71 stack plus this script) logged "world-name patch applied". The trust and DH patches applied, and the client reached the same User Agreement panel as run 71.
+  - Frozen hashes unchanged; no capture.
+  - The world list itself is only reachable after I ACCEPT, so the owner's device is the first visual check.
+- Not covered: the chat/party-style path at `0x1409a70d0` (secondary hook, above).

@@ -121,6 +121,56 @@ class DhPatch(gdb.Breakpoint):
         self.enabled = False
         return False
 
+# World 1001 reads "Banshee Realm" (owner request; docs/re/209026-world-name.md). The
+# world-id-to-name function 0x140312330 gets a jump to a stub in the zero tail of .text:
+#   cmp ecx, 1001 / jne L / lea rax, [rip+name] / ret / L: the 12 original prologue bytes
+#   / jmp 0x14031233c. Cosmetic only: any mismatch skips it and the run goes on unchanged.
+NAME_FN, NAME_PROLOGUE, NAME_GUARD_LEN = 0x140312330, 12, 24
+NAME_STUB, NAME_STUB_AREA = 0x141913040, 0x60
+NAME_WORLD = 1001
+NAME_TEXT = 'Banshee Realm'
+
+def world_name_bytes(slide):
+    fn, stub = NAME_FN + slide, NAME_STUB + slide
+    original = file_bytes(NAME_FN, NAME_GUARD_LEN)
+    text = (NAME_TEXT + '\0').encode('utf-16-le')
+    code = b'\x81\xf9' + struct.pack('<I', NAME_WORLD) + b'\x75\x08'      # cmp ecx, id; jne +8
+    text_at = stub + 40
+    code += b'\x48\x8d\x05' + struct.pack('<i', text_at - (stub + 15)) + b'\xc3'  # lea rax,[rip+t]; ret
+    code += original[:NAME_PROLOGUE]
+    code += b'\xe9' + struct.pack('<i', fn + NAME_PROLOGUE - (stub + 33))  # jmp fn+12
+    code = code.ljust(40, b'\xcc') + text
+    entry = b'\xe9' + struct.pack('<i', stub - (fn + 5)) + b'\x90' * (NAME_PROLOGUE - 5)
+    return original, code, entry
+
+def apply_world_name(inf, slide):
+    if os.environ.get('GW2_RUNNER_WORLD_NAME', '1') == '0':
+        print('GW2_RUNNER: world-name patch off')
+        return
+    try:
+        original, code, entry = world_name_bytes(slide)
+        fn, stub = NAME_FN + slide, NAME_STUB + slide
+        if inf.read_memory(fn, NAME_GUARD_LEN).tobytes() != original:
+            print('GW2_RUNNER: world-name guard failed; skipped')
+            return
+        if inf.read_memory(stub, NAME_STUB_AREA).tobytes() != bytes(NAME_STUB_AREA):
+            print('GW2_RUNNER: world-name stub area not empty; skipped')
+            return
+        inf.write_memory(stub, code)
+        if inf.read_memory(stub, len(code)).tobytes() != code:
+            inf.write_memory(stub, bytes(len(code)))
+            print('GW2_RUNNER: world-name stub write failed; skipped')
+            return
+        # The jump goes in last, so the function is either untouched or fully redirected.
+        inf.write_memory(fn, entry)
+        if inf.read_memory(fn, NAME_GUARD_LEN).tobytes() != entry + original[NAME_PROLOGUE:]:
+            inf.write_memory(fn, original[:NAME_PROLOGUE])
+            print('GW2_RUNNER: world-name entry write failed; restored')
+            return
+        print('GW2_RUNNER: world-name patch applied')
+    except (gdb.MemoryError, gdb.error, ValueError):
+        print('GW2_RUNNER: world-name patch skipped (memory)')
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -155,6 +205,7 @@ class Arm(gdb.Breakpoint):
         TrustPatch('*%#x' % (0x14158b740 + slide), internal=True)
         DhPatch('*%#x' % (0x140ff4480 + slide), internal=True)
         print('GW2_RUNNER: patch points armed (image %s)' % ('at its preferred base' if slide == 0 else 'relocated'))
+        apply_world_name(inf, slide)
         self.enabled = False
         return False
 
