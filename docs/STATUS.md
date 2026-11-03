@@ -324,8 +324,13 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       traffic should be the auth play phase (client 22/29 → server 8/3/20) and the game
       server on route 20, both already handled.
       For the owner's b107 log: read Banshee's `server.log` from the recorded baseline. A
-      stall right after ACCEPT with no new auth or game lines points client-side. Still
-      unanswered: client 1, 4 and 34.
+      stall right after ACCEPT with no new auth or game lines points client-side.
+    - Auth clients 1, 4 and 34 need no reply while the client sits at the agreement panel.
+      Banshee conn 2 (2026-11-02, play route enabled) sent 4 and 34 unanswered, then kept the
+      auth connection open through about eight `/Sts/Ping`s plus another client-1
+      heartbeat, until that run ended.
+      The re-logins in local-server runs 66 and 71 come from the observer's shorter
+      no-play-route read timeout closing the session, not from the client giving up.
     - **Banshee kit cf490a8, deployed 2026-11-03 07:16Z** with DIT's ack while nobody was
       on.
       - Only `gw2-game-observe` changed. The mission phase now frames the group-0 agent
