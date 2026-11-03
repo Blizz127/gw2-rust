@@ -35,6 +35,10 @@ const MISSION_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/m
 /// ~/re/gw2/notes/extract-agent-client.py; kind 15 is Optional (a presence
 /// byte, then the nested fields), verified from the client's field codec.
 const AGENT_CLIENT_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/agent-client.xml");
+/// Every client registration table of the frozen client (one group per table;
+/// ~/re/gw2/notes/extract-client-tables.py). The owner's first map load sent client 278,
+/// which no loaded group framed, so the phase disabled and the population was never sent.
+const CLIENT_TABLES_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/client-tables.xml");
 const PENDING_LIMIT: usize = 65536;
 
 fn rules() -> Rules {
@@ -153,6 +157,32 @@ impl MissionPhase {
             }
             client.push(message);
         }
+        // Then every other client table: add ids not yet framed. An id that other tables
+        // define with different layouts is left out (framing it wrongly is worse).
+        let tables = schema::parse(CLIENT_TABLES_SCHEMA).map_err(invalid)?;
+        let mut extra: Vec<Message> = Vec::new();
+        let mut ambiguous: Vec<u16> = Vec::new();
+        for group in tables.protocols.into_iter().flat_map(|p| p.groups) {
+            for message in group.client {
+                if client.iter().any(|m| m.id == message.id) || ambiguous.contains(&message.id) {
+                    continue;
+                }
+                if let Some(seen) = extra.iter().position(|m| m.id == message.id) {
+                    if extra[seen].fields != message.fields {
+                        extra.remove(seen);
+                        ambiguous.push(message.id);
+                    }
+                    continue;
+                }
+                extra.push(message);
+            }
+        }
+        eprintln!(
+            "Mission phase: {} more client ids from all client tables; ambiguous ids left unframed: {:?}",
+            extra.len(),
+            ambiguous
+        );
+        client.extend(extra);
         Ok(Self {
             map_key,
             client,
@@ -378,7 +408,11 @@ pub(crate) mod tests {
             "Float4" => V::Floats(vec![0.0, 0.0, 0.0, 1.0]),
             "Point3" => V::Point3(gw2_proto::Point3([1.0, 2.0, 7.4], 0)),
             "Guid" => V::Guid(Guid([0x5a; 16])),
-            "String" => V::Text("Fixture".into()),
+            // Short enough for the smallest Size (terminator included).
+            "String" => V::Text("Fixture"[..f.size.map_or(7, |n| (n as usize).saturating_sub(1).min(7))].into()),
+            "CString" => V::Bytes(b"Fixture"[..f.size.map_or(7, |n| (n as usize).saturating_sub(1).min(7))].to_vec()),
+            "Float2" => V::Floats(vec![1.0, 2.0]),
+            "Address" => V::Address("127.0.0.1:6112".parse().unwrap()),
             "BufferFixed" => V::Bytes(vec![0; f.size.unwrap_or(0) as usize]),
             "BufferVarSmall" | "BufferVarLarge" => V::Bytes(vec![1, 2, 3]),
             "ArrayFixed" => V::Array((0..f.size.unwrap_or(0)).map(|_| element(f)).collect()),
@@ -405,7 +439,7 @@ pub(crate) mod tests {
     fn every_loaded_client_message_is_dispatched_under_its_own_id() {
         let phase = MissionPhase::new(15).unwrap();
         let ids: Vec<u16> = phase.client.iter().map(|m| m.id).collect();
-        assert_eq!(ids.len(), 66);
+        assert!(ids.len() > 66 && ids.contains(&278), "all client tables are loaded ({})", ids.len());
         for present in [false, true] {
             for &id in &ids {
                 let frame = schema_frame(&phase.client, id, present);
@@ -491,6 +525,31 @@ pub(crate) mod tests {
             map_load::encode_empty(map_load::BEGIN_PLAYING_1036, &mut begin);
             PlayerStartupFrame209026.encode_frame(&mut begin);
             assert_eq!(replies[1].1, begin.freeze(), "split {split}");
+        }
+    }
+
+    /// The owner's first map load (2026-11-03 17:07Z): client 278 arrived right after the
+    /// opening, no loaded group framed it, the phase disabled and the population was never
+    /// sent. It is in table 0x14223bf20 (client-tables.xml) and must now keep the phase.
+    #[test]
+    fn client_278_during_the_map_load_keeps_the_phase_and_the_population_follows() {
+        let phase = MissionPhase::new(15).unwrap();
+        let mut input = schema_frame(&phase.client, 278, false);
+        map_load::encode_empty(map_load::MAP_LOADED_420, &mut input);
+        map_load::encode_empty(map_load::AGENTS_LOADED_412, &mut input);
+        for split in 0..=input.len() {
+            let mut live = populated_phase();
+            let mut seen_all = Vec::new();
+            let mut replies = 0;
+            for part in [&input[..split], &input[split..]] {
+                for seen in live.push(part) {
+                    replies += live.respond(&seen).unwrap().is_some() as usize;
+                    seen_all.push(seen);
+                }
+            }
+            assert!(live.enabled(), "split {split}");
+            assert_eq!(seen_all[0], Seen::Other(278), "split {split}");
+            assert_eq!(replies, 2, "population, then 1036 + 431 (split {split})");
         }
     }
 
