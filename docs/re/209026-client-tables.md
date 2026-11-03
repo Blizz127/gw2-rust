@@ -61,3 +61,8 @@ Static extraction from the frozen `Gw2-64.exe` by `~/re/gw2/notes/extract-client
 - **Open:** which of these client messages are requests that wait for a server reply. Framing only keeps the connection alive.
   - A missing reply shows up as a UI that waits, not as a disconnect.
   - The owner-run report lists each in-world client id with its table and module, so the first unanswered request can be read off his log.
+
+**Requests and replies:** see [request/reply](209026-request-reply.md).
+- Only the auth connection has a verified request-id completion list.
+- Client 278 waits on nothing.
+- Game-side waits found so far are Mission state steps, already handled by the mission phase.
