@@ -413,6 +413,23 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
         - Each auth and game connection logs a sizes-only byte timeline (`net +Nms: up/down
           N B`, client EOF); `tools/owner-run-report.py` prints it.
         - Rollback: link to a9624d8.
+    - **First full device login (16:22Z, kit 8f3af5b).**
+      - Auth worked: the 30 B key reply in one read, then login messages and the play
+        phase.
+      - The client then reached character select with "no home world". Our auth server 8
+        account record has 7 zero Dwords and an EMPTY world array.
+      - It also sent unanswered STS `/Mail/SetOptIn`, `/Presence/SetWatch` and
+        `/Game.com.Wallet/SetWatch`, plus auth clients 15, 39 and 11. It never sent 22 or 29.
+      - Our login server's 30 s idle read timeout dropped cligate (16:23:08Z).
+    - Kit 7941b0f (empty replies for those STS paths, 600 s idle) crash-looped: the
+      `--reply-xml` validator rejected the dotted path. Rolled back by hand to 8f3af5b,
+      down ~6.5 min with 0 humans.
+    - Fixed in b9b83c3 (validator plus test), smoke-ran the real `gw2-server.sh` locally
+      first, and `watched-cycle.sh` now rolls back by itself.
+    - Deployed 16:36Z (DIT ack), ready after 3.4 s.
+    - Next: the home world, i.e. which server-8 field it is and the world-array entry
+      meaning (RE of handler 0x140240850 → 0x14023a770, world list 13 →
+      0x14023a8f0).
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
