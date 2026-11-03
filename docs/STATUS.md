@@ -427,9 +427,15 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     - Fixed in b9b83c3 (validator plus test), smoke-ran the real `gw2-server.sh` locally
       first, and `watched-cycle.sh` now rolls back by itself.
     - Deployed 16:36Z (DIT ack), ready after 3.4 s.
-    - Next: the home world, i.e. which server-8 field it is and the world-array entry
-      meaning (RE of handler 0x140240850 → 0x14023a770, world list 13 →
-      0x14023a8f0).
+    - Home world (static, 16:45Z): auth server 13 is NOT a world list.
+      - Handler 0x1402409c0 → 0x14023a8f0 stores 16-byte entries (Word key, Word value,
+        3 Dwords) in a global table (`[0x14266c008]`, count `0x14266c014`) and posts event
+        0x1d.
+      - Lookup 0x14023ceb0 returns an entry's Word1 for Word0 == key. It is called with
+        small constant keys (1, 0x4b, 0x51, 0x58) whose results are tested as flags, so this
+        is a key→value account flag table.
+      - The home-world field is still unidentified (server 8 → 0x14023a770). I asked the
+        owner whether PLAY works despite "no home world".
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
