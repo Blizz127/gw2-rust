@@ -565,6 +565,39 @@ mod tests {
         }
     }
 
+    /// The client's later play-phase traffic, with the sizes Banshee logged on
+    /// 2026-11-02: heartbeat 1 (6 bytes, a 4-byte varint clock), 4 (115 bytes:
+    /// BufferVarSmall 96 + Guid) and 34 (3 bytes, a 1-byte varint).
+    fn play_tail() -> BytesMut {
+        let mut input = BytesMut::new();
+        1u16.encode(&mut input);
+        0x0fff_ffffu32.encode(&mut input);
+        4u16.encode(&mut input);
+        input.extend_from_slice(&[96]);
+        input.extend_from_slice(&[0x61; 96]);
+        Guid([0x77; 16]).encode(&mut input);
+        34u16.encode(&mut input);
+        3u32.encode(&mut input);
+        input
+    }
+
+    #[test]
+    fn play_phase_tail_after_route_gets_no_reply_and_stays_enabled() {
+        let tail = play_tail();
+        assert_eq!(tail.len(), 6 + 115 + 3, "frame sizes match the live log");
+        for cut in 0..=tail.len() {
+            let mut probe = play_probe();
+            assert!(probe.push(&play_input()).unwrap().is_some(), "22/29 answered");
+            for part in [&tail[..cut], &tail[cut..]] {
+                assert!(probe.push(part).unwrap().is_none(), "no reply to 1/4/34 (cut {cut})");
+            }
+            assert!(probe.play_enabled(), "tail must not disable the phase (cut {cut})");
+            // A second route request after the tail is still answered.
+            let again = probe.push(&play_input()).unwrap();
+            assert!(again.is_some(), "phase still live after the tail (cut {cut})");
+        }
+    }
+
     #[test]
     fn play_phase_disables_on_undecodable_frame_and_is_opt_in() {
         let mut probe = play_probe();
