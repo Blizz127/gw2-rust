@@ -6,9 +6,13 @@
 
 Read-only. Readiness requires every process in RUN_DIR/pids.json to be alive,
 to run the recorded executable, and to own (by /proc/<pid>/fd socket inode) a
-TCP listener on its recorded bind address and port. humans counts ESTABLISHED
-connections on the game port owned by the game process (one per connected
-client); if that cannot be determined it exits non-zero instead of reporting 0.
+TCP listener on its recorded bind address and port. humans counts distinct
+remote peers with an ESTABLISHED connection to the login (6114), auth (6113) or
+game (6112) listener, owned by that process: a player at the login screen keeps
+cligate open (/Sts/Ping every 30 s), so the game port alone would read 0 while
+someone is logging in. A server whose processes are all gone reports 0 (it is
+stopped); a partly running one, or anything unreadable, exits non-zero instead
+of reporting 0.
 """
 import ipaddress, json, os, socket, sys
 
@@ -30,7 +34,7 @@ def tcp_sockets():
                 ip = socket.inet_ntop(socket.AF_INET, raw[::-1])
             else:
                 ip = socket.inet_ntop(socket.AF_INET6, b''.join(raw[i:i + 4][::-1] for i in range(0, 16, 4)))
-            rows.append((ip, int(port, 16), f[3], f[9]))
+            rows.append((ip, int(port, 16), f[3], f[9], f[2]))
     return rows
 
 
@@ -72,20 +76,37 @@ def health(run):
         owned = inodes(pid)
         bind = str(ipaddress.ip_address(state['bind']))
         if not any(ip == bind and port == p['port'] and st == LISTEN and ino in owned
-                   for ip, port, st, ino in sockets):
+                   for ip, port, st, ino, _ in sockets):
             problems.append(f'{role} not listening on {bind}:{p["port"]}')
     if problems:
         return False, running, '; '.join(problems)
     return True, True, 'all 4 listeners bound by their own processes'
 
 
+def alive(p):
+    # The recorded pid still runs the recorded executable (not a reused pid).
+    try:
+        return os.path.realpath(os.readlink(f'/proc/{p["pid"]}/exe')) == os.path.realpath(p['exe'])
+    except OSError:
+        return False
+
+
 def humans(run):
     state = load(run)
-    game = next(p for p in state['processes'] if p['role'] == 'game')
-    owned = inodes(game['pid'])
+    procs = state['processes']
+    if not any(alive(p) for p in procs):
+        return 0  # stopped (asleep): nobody can be connected
     bind = str(ipaddress.ip_address(state['bind']))
-    return sum(1 for ip, port, st, ino in tcp_sockets()
-               if ip == bind and port == game['port'] and st == ESTABLISHED and ino in owned)
+    sockets = tcp_sockets()
+    peers = set()
+    for p in procs:
+        if p['role'] not in ('login', 'auth', 'game'):
+            continue
+        owned = inodes(p['pid'])  # raises if this process died: count unknown
+        for ip, port, st, ino, remote in sockets:
+            if ip == bind and port == p['port'] and st == ESTABLISHED and ino in owned:
+                peers.add(remote.split(':')[0])
+    return len(peers)
 
 
 def main():
