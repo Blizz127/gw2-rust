@@ -467,6 +467,14 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
             descriptors plus a null) and now wins clashes.
           - Result: 428 ids, none ambiguous. Only auth 29 (route request) is unframed on 6112.
           - Kit 0edbe1f deployed 17:24:19Z (DIT ack, smoke-run first), ready after 3.3 s.
+    - **Retries on 0edbe1f (18:47Z, then b114 at 21:17Z): the loading screen still hangs.** Login, world select, PLAY and 278 are fine.
+      - The client answers 1063/1060 with 278, 424 and 423, then stays silent.
+      - The asset CDN gets no request, and the only unrouted DNS name is loading-live.ncplatform.net (loading-screen web content).
+      - **b114's runner stage trace** (runner a8fdb4e): the loader goes LOAD_CONTENT → LOAD_MANIFEST → SERVER_WAIT (all at 21:18:29), and 1060 then moves it to **MAP_DOWNLOAD at 21:18:30**. It never leaves that stage.
+        - MAP_DOWNLOAD (`0x1409520b0`) waits, with no timeout, on loader +0x218, the MapPortalLoader request created in BeginMap. Its +0x48 is the sum of its child map-file loaders' +0x38 ([map ready](re/209026-map-ready.md)).
+        - The cause is being traced.
+      - The a8fdb4e trace hooked the profiler's per-frame marker (about 1,600 hits/s). It is being moved to the loader's 22 call sites.
+      - "Banshee Realm": the world-name patch applied on his device.
         - Regression test: `client_278_during_the_map_load_keeps_the_phase_and_the_population_follows`.
       - Kit 7b051e4 deployed 17:15:31Z (DIT ack, smoke-run first), ready after 3.5 s. The
         owner was told he can retry.
