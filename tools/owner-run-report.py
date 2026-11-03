@@ -126,7 +126,10 @@ def main():
         text = open(path, errors='replace').read()
         print(f'client log: {os.path.basename(path)}')
         for pattern in (r'MsgConnDispatch failed on message (\d+)', r'Forcing disconnect on \{[^}]*\}, reason: (\d+)',
-                        r'^Assertion: .*', r'^File: .*', r'^When: .*', r'DISCONNECT_[A-Z_]+'):
+                        r'^Assertion: .*', r'^File: .*', r'^When: .*', r'DISCONNECT_[A-Z_]+',
+                        # Loading screen (docs/re/209026-map-ready.md): the world-readiness
+                        # timeout (about 120 s, then it continues) and the loader's stage lines.
+                        r'Map load hang on STATE_[A-Z_]+ detected[^\n]*', r'MapLoader: [^\n]*'):
             for m in re.finditer(pattern, text, re.M):
                 print('  ', m.group(0)[:160])
         failed = re.findall(r'MsgConnDispatch failed on message (\d+)', text)

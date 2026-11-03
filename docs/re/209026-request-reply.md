@@ -90,3 +90,14 @@ These are what a UI "stuck waiting" on map load most plausibly traces to: 420 wi
 - **Concrete next step for the 107 unresolved client senders:** the size-2 send at `0x14023f620` (inside `0x14023f5d0`) looks like the generic empty-message sender. Find its callers (`call 0x14023f5d0`) and read the immediate loaded into the id argument; that should resolve most Mission empty ids.
 - Not followed: virtual/indirect dispatch from game handlers (`call r9`, `call [rax+0x48]`, event callbacks via `0x14026cfa0`), so any pending-callback store reached only through a vtable is unseen.
 - Sender map used a byte scan for `mov word [rsp+x], id`; 107 client ids unresolved (generic empty-message senders and unusual encodings, e.g. 278 was patched in by hand).
+
+## Loading-screen path: waits beyond the direct-call scan (lead, 2026-11-03)
+The loader was traced earlier, including its vtable and service calls, in [map ready](209026-map-ready.md) and [bootstrap sequence](209026-bootstrap-sequence.md). On that path the waits are these, and none is a request-id reply:
+- **SERVER_WAIT:** needs 1060; it is sent.
+- **AGENT_STREAM:** waits with **no timeout** for a finalized controlled character. That character comes from the population sequence after 420 (428 … 170, 618, 444).
+- **World readiness:** a soft wait. It times out after about **120 s** (5 s with client setting 0x3d), then logs `Map load hang on STATE_AGENT_STREAM detected: IsWorldReady: %d, CharLoadingCount %d` and continues.
+- **READY_WAIT countdown, then READY:** after READY, 412 is sent, and the server answers with 1036 and 431.
+
+So after 0edbe1f, a loading screen that clears after about 2 minutes is the world-readiness timeout, not a hang. One that never clears means the controlled character was never finalized, which is a population problem.
+
+`tools/owner-run-report.py` prints both diagnostics if the client writes them to ArenaNet.log (whether it does is not verified).
