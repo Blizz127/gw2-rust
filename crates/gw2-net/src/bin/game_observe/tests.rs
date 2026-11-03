@@ -489,3 +489,55 @@ fn key_reply_and_first_frame_arrive_in_one_read() {
     client.shutdown(Shutdown::Both).unwrap();
     server.join().unwrap().unwrap();
 }
+
+/// Two client events in one read (420 MapLoaded + 412 AgentsLoaded) are answered by ONE
+/// write: the client's next single read holds both the population and 1036 + 431.
+#[test]
+fn replies_owed_for_one_read_arrive_in_one_read() {
+    let record = mission::tests::guardian_record(15, 1);
+    let fixture = mission::PopulationFixture::new(&record, [0.0, 0.0, 7.4]).unwrap();
+    let mut expect = mission::MissionPhase::new(15).unwrap().with_population(fixture.clone()).unwrap();
+    let population = expect.respond(&mission::Seen::Map(gw2_proto::map_load::ClientMapEvent::MapLoaded)).unwrap().unwrap();
+    let begin = expect.respond(&mission::Seen::Map(gw2_proto::map_load::ClientMapEvent::AgentsLoaded)).unwrap().unwrap();
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let path = std::env::temp_dir().join(format!("gw2-observe-coalesce-{}.bin", std::process::id()));
+    // Public toy group for this local test; no stored identities are loaded.
+    let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+    let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
+    let (server_path, server_fixture) = (path.clone(), fixture);
+    let server = std::thread::spawn(move || {
+        let fixtures = Fixtures { mission_map_key: Some(15), population: Some(server_fixture), no_capture: true, ..Fixtures::default() };
+        observe(stream_of(listener), &key, &server_path, fixtures, Preamble::Mission)
+    });
+    let mut client = TcpStream::connect(address).unwrap();
+    client.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    let mut input = preamble::fixture(Preamble::Mission);
+    input.extend_from_slice(&[0, 6, 0, 4, 0, 0]);
+    client.write_all(&input).unwrap();
+    let mut reply = [0u8; 22];
+    client.read_exact(&mut reply).unwrap();
+    let mut codec = ClientCodec::new(&session_secret(&shared, &reply[2..].try_into().unwrap()));
+    // Drain the opening frame.
+    let mut pending = BytesMut::new();
+    while codec.decode(&mut pending).unwrap().is_none() {
+        let mut chunk = [0u8; 4096];
+        let n = client.read(&mut chunk).unwrap();
+        pending.extend_from_slice(&chunk[..n]);
+    }
+    assert!(pending.is_empty(), "opening and nothing else so far");
+    let mut plain = BytesMut::new();
+    gw2_proto::map_load::encode_empty(gw2_proto::map_load::MAP_LOADED_420, &mut plain);
+    gw2_proto::map_load::encode_empty(gw2_proto::map_load::AGENTS_LOADED_412, &mut plain);
+    let mut wire = BytesMut::new();
+    codec.encode(Bytes::copy_from_slice(&plain), &mut wire).unwrap();
+    client.write_all(&wire).unwrap();
+    // ONE read must carry both replies.
+    let mut chunk = [0u8; 8192];
+    let n = client.read(&mut chunk).unwrap();
+    let mut once = BytesMut::from(&chunk[..n]);
+    assert_eq!(codec.decode(&mut once).unwrap().as_deref(), Some(&population[..]), "population in the first read");
+    assert_eq!(codec.decode(&mut once).unwrap().as_deref(), Some(&begin[..]), "1036 + 431 in the same read");
+    client.shutdown(Shutdown::Both).unwrap();
+    server.join().unwrap().unwrap();
+}
