@@ -75,6 +75,22 @@ def main():
                 print('  (stopping here is normal until the owner clicks I ACCEPT then PLAY)')
         else:
             print('  reached in-world agent traffic')
+        # In-world client messages seen, annotated with the client's own descriptor layout
+        # (data/protocol/209026/agent-client.xml, from its AgMsg.cpp client table).
+        seen = []
+        for ts, text in lines:
+            m = re.search(r'Mission phase: client message (\d+) \((\d+) bytes\)', text)
+            if m and m.group(1) not in [x[0] for x in seen]:
+                seen.append((m.group(1), m.group(2), ts))
+        if seen:
+            layouts = {}
+            schema = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'protocol', '209026', 'agent-client.xml')
+            if os.path.exists(schema):
+                for mm in re.finditer(r'<Message Id="(\d+)"[^>]*>(.*?)</Message>', open(schema).read(), re.S):
+                    layouts[mm.group(1)] = ' '.join(re.findall(r'<(\w+) Name', mm.group(2)))
+            print('  in-world client messages (first seen):')
+            for mid, size, ts in seen:
+                print(f'    {ts} client {mid} ({size} bytes): {layouts.get(mid, "not in the agent client table")}')
         bad = [(ts, text) for ts, text in lines if any(re.search(p, text, re.I) for p in FAILURES)]
         for ts, text in bad[:15]:
             print(f'  ! {ts} {text[:140]}')
