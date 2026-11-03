@@ -30,6 +30,11 @@ use gw2_proto::{
 use std::io::{self, ErrorKind};
 
 const MISSION_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/mission.xml");
+/// Group 0 (AgMsg.cpp) client messages: the agent traffic the client sends once
+/// in the world, e.g. client 17 (delay report). Extracted by
+/// ~/re/gw2/notes/extract-agent-client.py; kind-15 (Optional) fields stay
+/// unverified and fail framing explicitly.
+const AGENT_CLIENT_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/agent-client.xml");
 const PENDING_LIMIT: usize = 65536;
 
 fn rules() -> Rules {
@@ -132,6 +137,21 @@ impl MissionPhase {
             .collect::<Vec<_>>();
         if client.is_empty() {
             return Err(io::Error::new(ErrorKind::InvalidData, "mission schema lacks client messages"));
+        }
+        let mut client = client;
+        let agent = schema::parse(AGENT_CLIENT_SCHEMA).map_err(invalid)?;
+        let agent_client = agent
+            .protocols
+            .into_iter()
+            .find(|p| p.name == "0")
+            .and_then(|p| p.groups.into_iter().find(|g| g.name == "0"))
+            .ok_or_else(|| io::Error::new(ErrorKind::InvalidData, "agent schema lacks group 0"))?
+            .client;
+        for message in agent_client {
+            if client.iter().any(|m| m.id == message.id) {
+                return Err(io::Error::new(ErrorKind::InvalidData, "agent and mission client IDs collide"));
+            }
+            client.push(message);
         }
         Ok(Self {
             map_key,
@@ -338,6 +358,63 @@ pub(crate) mod tests {
     fn populated_phase() -> MissionPhase {
         let fixture = PopulationFixture::new(&guardian_record(15, 1), [0.0, 0.0, 0.0]).unwrap();
         MissionPhase::new(15).unwrap().with_population(fixture).unwrap()
+    }
+
+    /// One group-0 client frame built from the extracted schema with zero values.
+    fn agent_frame(id: u16) -> BytesMut {
+        let parsed = schema::parse(AGENT_CLIENT_SCHEMA).unwrap();
+        let message = parsed.protocols[0].groups[0]
+            .client
+            .iter()
+            .find(|m| m.id == id)
+            .unwrap()
+            .clone();
+        let values = message
+            .fields
+            .iter()
+            .map(|f| {
+                let value = match f.kind.as_str() {
+                    "Byte" => dynamic::Value::U8(0),
+                    "Word" => dynamic::Value::U16(250),
+                    "Dword" => dynamic::Value::U32(0x1234),
+                    "Float" => dynamic::Value::F32(1.5),
+                    "Float3" => dynamic::Value::Floats(vec![1.0, 2.0, 7.4]),
+                    other => panic!("test fixture lacks kind {other}"),
+                };
+                (f.name.clone(), value)
+            })
+            .collect();
+        let mut out = BytesMut::new();
+        id.encode(&mut out);
+        dynamic::encode_message(&message, &rules(), &dynamic::Value::Struct(values), &mut out).unwrap();
+        out
+    }
+
+    #[test]
+    fn in_world_agent_messages_frame_for_every_split_and_keep_the_phase() {
+        // Client 17 (delay report, one Word) and 18 (Dword Dword Float3 Dword Byte x3).
+        let mut input = agent_frame(17);
+        input.extend_from_slice(&agent_frame(18));
+        input.extend_from_slice(&agent_frame(17));
+        for split in 0..=input.len() {
+            let mut phase = populated_phase();
+            let mut seen = phase.push(&input[..split]);
+            seen.extend(phase.push(&input[split..]));
+            assert_eq!(seen, vec![Seen::Other(17), Seen::Other(18), Seen::Other(17)], "split {split}");
+            assert!(phase.enabled(), "split {split}");
+            assert!(phase.respond(&Seen::Other(17)).unwrap().is_none(), "no reply to agent traffic");
+        }
+    }
+
+    #[test]
+    fn unverified_optional_field_disables_explicitly() {
+        // Client 4 carries a kind-15 (Optional) field whose encoding is unverified.
+        let mut phase = populated_phase();
+        let mut input = BytesMut::new();
+        4u16.encode(&mut input);
+        input.extend_from_slice(&[0; 16]);
+        assert!(phase.push(&input).is_empty());
+        assert!(!phase.enabled());
     }
 
     #[test]
