@@ -289,3 +289,213 @@ Log lines in the client log or debug output that would discriminate. They are al
 - "Raw file 0x%08x:0x%08x has CRC 0x%08x." (0x1419228e0), "File 0x%08x not found in main archive." (0x141922990), "Failed loading file 0x%08x for CRC-computation." (0x141922930) are the CRC path in MainCli.
 - "[0x%08x] Existing exe in archive has size %u (expected %u)." (0x1420a7600) means the local root manifest record was rejected.
 - An assert on `state == MOUNT_STATE_INITIALIZED_NEEDS_PATCHING || state == MOUNT_STATE_PATCHED` (0x1420a74c0, MultiManifest.cpp:814) would mean `+0x70` was called on a state-7 preparer. That would support hypothesis 1 directly.
+
+---
+
+## Round 3 (manifest persistence, self-restart, the null request)
+
+By a read-only helper, 2026-11-03. **Lead's note:** the deployed fix (kit cd93d58, root 2130706520) adds `MapValleyHill` and `RegionValley`. The latter is "Region" + mapDef +0x110 = "Valley", decoded from content. A mention of "RegionValleyHill" below is the helper's typo. On the device, the state-6 error exit *is* the hang, because the dispatcher has no case for state 6.
+
+
+Read-only. Frozen `Gw2-64.exe` (base 0x140000000), rizin disassembly plus PE scans. No client run, no repo edits.
+**[V]** = read in disassembly at the cited address. **[E]** = observed on disk or in a log in the sandbox. **[I]** = inferred.
+Rounds 1-2 are `docs/re/209026-map-download.md`. Where this note disagrees with them, this note wins.
+
+## 0. Bottom line
+
+1. **The exe fields do not cause the restart.** With reply build == 209026 the client never touches the exe-patch path.
+   - `exeFileId` and `exeFileSize` are read only in the build-mismatch branch.
+   - "209026 0 0 <manifestId> <manifestSize>" already means "my exe is current". Leave those fields alone.
+2. **Gw2-64.tmp touched at 0 bytes is not evidence of a self-update.** It is created empty at every normal startup.
+   - [V] code at `0x1410d9c60` → `0x1410da0b0`.
+   - [E] the local sandbox dir has a 0-byte `Gw2-64.tmp` with mtime 22:54:14, minutes before `debug.log` at 22:54:22. Those runs stop at the User Agreement panel and do not restart.
+   - The cause of the exit about 2 minutes later is **not found statically** (§1.4).
+3. **Persistence is Local.dat.** The "installed" table that decides fetch-or-not is built only from Local.dat's file table (§2).
+   - The manifest ids that the client sees as present are matched by `baseId` and size. The CDN-supplied fileId must also equal the stored one.
+4. **Our root manifest 2130706510 has no `Map<name>`/`Region<name>` entry.**
+   - [E] the 160 B root has only `Launcher64` and `English`.
+   - run79's root `2130706520` (268 B) has `Launcher64`, `English`, `MapValleyHill`, `RegionValleyHill`.
+   - [V] with no matching entry, the MAP_DOWNLOAD request factory returns NULL and the stage goes to state 6 at once (§3.3). That is the error exit, not a stall.
+   - So the device's run-2 stall is **not explained** by the 160 B root. §3.3 lists what must differ, and the runtime check that separates them.
+   - Either way, the CDN must serve a root with the map's `Map`/`Region` entries.
+5. **Smallest fix (§4):** serve the run79-style root (it contains the map manifests) under **fresh ids on every change**. Keep the `/latest64` exe fields `0 0`. Make the client re-fetch by changing the manifest id, or delete Local.dat before the run.
+
+## 1. Q1: restart / exe self-update
+
+### 1.1 `/latest64` parse [V]
+`0x140d8c630(client, out)` reads the body (at most 127 bytes) and tokenizes it 5 times with `0x1409ba140`. A bad or missing token gives 0.
+
+| out offset | value |
+|---|---|
+| +0x00 | build |
+| +0x04 | exeFileId |
+| +0x08 | exeFileSize |
+| +0x0c | manifestFileId |
+| +0x10 | manifestFileSize |
+
+Callers are `0x140fdf1d5` (inside 0x140fdf100, the `/latest64` variant) and `0x140fe1c87`.
+
+### 1.2 The comparison [V]
+The state machine in MainCli (`0x140236180`, 10 states, switch table 0x1402366e8) starts the exe patcher in state 0.
+- State 0 (`0x1402361c5`..`0x140236234`) builds a "PatchExeThread" object with `0x140fded50`. Vtable `0x14210e760`, thread name string at 0x14210e7b0.
+  - Field +0x84 = `(GetParam(0x28) == 0)`, so "patching allowed" unless param 0x28 is set.
+  - Field +0x98 = callback `0x140238640`.
+- The worker is `0x140fdf470`:
+  1. `0x140fdf100` fetches `/latest64`. It is tried twice. The result is stored at `[rsp+0x48..0x58]`.
+  2. `0x140fdf4c8`: `call 0x1409afcc0`. That function is `mov eax, 0x33082`, the client's compiled-in build **0x33082 = 209026**. The comparison is client vs `latest.build` (0x140fdf4cf).
+  3. `0x140fdf4f3`..`0x140fdf4fe`: `cmp client, latest.build; jz 0x140fdf5fd`.
+  4. **Equal build → `0x140fdf5fd`.** It copies manifestFileId into `[obj+0x8c]` and manifestFileSize into `[obj+0x90]`, then finishes. exeId and exeSize are ignored.
+  5. Different build: if `[obj+0x84] != 0` and the client build is not greater than `latest.build` (`bl = client > latest`):
+     - `0x140fdf511`..`0x140fdf53f` calls the exe patcher `0x140fdee60` with `r8d = exeFileId` and `r9d = exeFileSize` (AssetDownloadExe.cpp).
+     - Otherwise (patching disabled, or the client is newer) it takes the `0x140fdf54c` path and fetches the program manifest `0x140fdeb80`/`0x140fdf220`. It then reads the `baseId 0x1005` record from it via `0x14156f4b0` (`0x140fdf5b5`..`0x140fdf5d0`).
+- MainCli state 1 (`0x14023626b`) then:
+  - calls vt+0x38 on the thread object (nonzero means failed → `[this+4]=1`, `0x140236f00`);
+  - otherwise calls vt+0x30 to store the two values into `this+0x18` and `this+0x1c`.
+- State 2 (`0x14023638f`) creates `ApManifest(baseId=0x1005, fileId=[this+0x18], size=[this+0x1c])` through `0x140fdd5f0`.
+
+**Answer to "what values make the client treat its exe as current":** `build == 209026` is sufficient and the safe value. (A client newer than the CDN, or param 0x28 set, also skip the exe download, but do not rely on that.) exeFileId and exeFileSize are ignored in that case. A reply of "209026 0 0 …" is already right.
+
+**If build differs:**
+- Greater than 209026 with patching enabled → exe download via exeId/exeSize, a restart, and an empty or failed exe.
+- Smaller than 209026 → the client takes the `0x140fdf54c` path.
+- Do not do either.
+
+### 1.3 Where "Existing exe in archive has size %u (expected %u)" really is [V]
+It is the string at 0x1420a7600, logged from `0x140d92b40` at `0x140d92bdd`.
+- `0x140d92b40(baseId, fileId, size, &request)` is the **root-manifest** "is the local copy current" check.
+- It is called by the ApManifest loader `0x140fdd6e0` with `[obj+0x78/0x7c/0x80]` = baseId 0x1005, manifestFileId, manifestFileSize.
+- The word "exe" is a naming leftover. There is no exe record in this check. (The log arguments are fileId, existing size, expected size.)
+- Behaviour:
+  1. `0x140d943b0(baseId, 0, &installedFileId, &size, &flag)` looks up the install table.
+     - If there is no record at all it **asserts** `rootManifestExists` (0x140d92ba7, line 0x3ff).
+     - `0x140fdd6e0` calls `0x140d95170(baseId, fileId, size)` first, which inserts the record with `target = fileId`.
+  2. `flag = (target == installed)`.
+     - If `flag != 0` and the stored size equals the expected size → **return 0: nothing to fetch.**
+     - If the sizes differ → log the line, remove the record with `0x140d94160`, and build a download request registered through `0x140d88140`.
+     - If `flag == 0` → build the download request.
+- So a root is "local" iff the Local.dat-derived table says installed fileId == `latest.manifestFileId` **and** stored size == `latest.manifestFileSize`.
+
+### 1.4 What `Gw2-64.tmp` really is, and what exits [V/E/I]
+- `0x1410d9c60(0)` is called from main at `0x1402375ef`. If the module name ends in ".exe" it builds the sibling name with ".tmp" (`0x14212b9f8`) and calls `0x1410da0b0(path, 0)`.
+- With `edx == 0`, `0x1410da0b0` does: GetFileAttributesW, clear read-only, CreateFile, `WriteFile(h, buf, 0 bytes)`, SetEndOfFile, CloseHandle (0x1410da0e3-0x1410da1b0). **[V] That is a zero-byte touch.**
+- [E] The sandbox shows exactly that: `Gw2-64.tmp`, 0 bytes, mtime 2026-11-03 22:54:14. The runs that stop at the User Agreement panel do the same.
+- [I] (branch not fully read) If the exe is run as `<name>.tmp` instead of `.exe` (`0x1410d9e29` branch), the same function appears to copy back over the `.exe` and relaunch. That would be the self-update relaunch; the callback `0x140238640` → `0x1410d9a20` writes the downloaded exe bytes to the `.tmp`. Run 1 shows a 0-byte tmp, which matches the plain startup touch.
+- **Cause of the exit ~2 min after start: [I], not found statically.** Candidates, in order:
+  1. An assertion crash in the Wine client.
+     - [E] `prefix/.../Guild Wars 2/ArenaNet.log` from the sandbox (2026-11-01) shows `Assertion: s_configDataError != NET_PENDING`, GcApi.cpp(2621), `Uptime 0:01:00`, build 209026.
+     - It is the same kind of "dies about a minute after start". If the device log shows the same, no patcher change is needed.
+     - **Concrete next step: read the device's `ArenaNet.log` and `Crash.dmp` from run 1.**
+  2. The launcher bubble (not the client) relaunched it. Run 1's own "logged out" line is outside what I traced.
+  3. MainCli state 1 saw the PatchExeThread report failure (`0x14023627a`: vt+0x38 nonzero → `0x140236f00` → quit). That needs both `/latest64` attempts to fail. Not what run 1 shows ("GET /latest64 succeeded").
+
+## 2. Q2: where the fetched manifests go and why run 2 skips the fetch
+
+### 2.1 Two archives [V]
+- **Local.dat = `s_localArchive` (global 0x1427fb140).**
+  - Main (`0x140237190`) builds `Local.dat` paths. The name string is `L"Local.dat"` at 0x1419226a0, loaded through the pointer at 0x142554000 (see `0x140237745`/`0x140237778`).
+  - It opens the archive with `0x140239520` (`0x1402377fd`) and installs it through `0x140d8f770` → `0x140d94580` (`0x140237877`).
+  - `0x140d94580` stores a **baseId limit 0xfff** at 0x1427fb148, reads the archive's file table, and builds the install table through `0x140d94910` (its only call site is `0x140d946cd`, with `r9 = [0x1427fb140]`).
+  - Install table: 16-byte records at `[0x1427fb0f8]`, keyed by baseId through the dictionary at 0x1427fb110/0x1427fb118.
+    - `+4` = target fileId, `+8` = installed fileId, `+0xc` = size.
+    - Source of the fields from the earlier doc item 10; [V] for the offsets via `0x140d943b0`.
+- **Gw2.dat = `s_mainArchive` (0x1427fadc0).**
+  - It is opened in `0x140238560` and installed through the setter `0x140d8fcb0` at `0x140238603`.
+  - That happens in the state-1 transition (`0x140236353`) **after** the exe-patch thread has finished.
+  - It is not what feeds the install table.
+
+### 2.2 Writing and reading manifests
+- A successful download callback `0x140d95270` calls `0x140d953a0(table, baseId, fileId, size, flag=1)` and marks the record installed. `0x140d95170` (flag 0) sets the target. [V]
+- `0x140d94540(baseId, …)` (the preparer's read) goes through `[0x1427fb140]` vtable +0x78. **Manifest bytes are read from the local archive (Local.dat).** [V]
+- [I] The sandbox prefix's `Local.dat` is 26,886,304 bytes (mtime 11-03 05:01). It has an ANet header and `MFST` blobs at 0x208/0x20c. I do not know which run wrote it, so it only suggests that Local.dat holds fetched content. Gw2.dat's mtime in the client dir (11-01 00:34) is older than the local runs.
+- **Caveat, contradicts earlier docs:** `209026-patcher.md` item 4 says manifests were cached in Gw2.dat (run 26), and item 13 says a Launcher64 manifest listing every Gw2.dat asset produced no downloads (run 34). That does not fit an install table built from Local.dat only.
+  - Possible explanations: in those sandbox runs the local archive path resolved to Gw2.dat's directory/name; or `0x140d94160`/`0x140d953a0` add main-archive records somewhere I did not trace. I did not run the xref pass on writers of `0x1427fb0f8`/`0x1427fb118`.
+  - The baseId limit 0xfff (0x1427fb148) versus root baseId 0x1005 is also unexplained. `0x140d94160` branches on it (`0x140d9416f`), but both branches do a dictionary lookup (`0x140d9429f`); I did not decode the difference.
+  - The device's own behaviour (fresh Local.dat → fetch, existing → no fetch) is the strongest evidence that Local.dat state decides it.
+- Therefore (assuming the table is the decision):
+  - Run 1 (fresh `Local.dat`): empty table → fetch root, then the root's children (the 13 MB, the 112 B).
+  - Run 2: the table was built from Local.dat. A record with baseId 0x1005, installed fileId == 2130706510 and size 160 satisfied the check in §1.3, so there was no fetch. The same for the children (`0x140d92980`, installed != fileId test).
+- **[I] The device's Local.dat is 5,349,904 bytes, much smaller than the 13 MB manifest it should hold.**
+  - Either the manifest data is compressed in the archive.
+  - Or the table has records without data.
+  - I cannot separate the two statically.
+  - A cheap check on the device is to list Local.dat's file table (does it have records for fileIds 2130706510/11/12?).
+
+### 2.3 If the 13 MB manifest is not stored
+- Nothing in the Map/Region lookup reads it. `0x140d92d00` scans only the **root** (`m_root`, 0x1427fb0e0).
+- The 13 MB `Launcher64` manifest is only read by its own preparer. It matters only for file-level downloads, not for finding the Map/Region manifest ids.
+
+## 3. Q3: MAP_DOWNLOAD in run 2
+
+### 3.1 Why there is no registration [V]
+- Registration `0x140d88140` has three callers on the paths in question:
+  - `0x140d92c98`, the root fetch request (§1.3);
+  - the root-children batch built from `0x140d92980`;
+  - preparer `+0x70` (`0x140d91cda`), which is reached from the child pump `0x1417ea980` when the preparer is in state 4.
+- Run 1 had two registrations (the root request, then the children batch). Run 2 skipped both because the table said "installed". Zero registrations is exactly what a fully-local startup should show. It does not by itself mean a stall.
+- State 5 ("PATCHED") preparers register nothing and are complete.
+  - `+0xdc == +0xe4` makes the child's +0x48 true.
+  - MAP_DOWNLOAD would then pass.
+  - So a **stall with zero registrations means the Map or Region preparer is not in state 4, 5 or 6.** It is in 1-3, or 7.
+
+### 3.2 State of the preparer when the root is "local but not loaded"
+- Preparers are created per root entry by `0x140d93070` from `m_root`. This is independent of whether the root came from the network. [V]
+- In preparer state 1 (`0x140d91fc0`) the manifest is looked up in the install table (`0x140d943b0`) and read from Local.dat (`0x140de2280`/`0x140d94540`). [V]
+- If the lookup fails, the code logs "Manifest 0x%08x is missing." and reports a fatal error, which is not a stall.
+- State 2 waits on the read handle (`+0x30`, vtable +0x30). If the read handle never completes, the state never advances. [I] this is a candidate stall (record present in the table, bytes absent or unreadable in Local.dat).
+- I found **no root-manifest mount or patch step that runs only in the fetch path.** The map preparers do not wait on one. [V by §3.1/§3.2 code: nothing branches on "root was downloaded"].
+
+### 3.3 The Map id is 0 with our 160 B root (important mismatch)
+- `0x1413fe2a0` builds `L"Map" + name` and `0x1413fe340` builds `L"Region" + name`, each through `0x140d92d00`, which scans the root's 24-byte entries (names at `entry+0x10`).
+- The factory `0x1417e9630` calls `[sub-object]+0x10` (Map) first. **If it returns 0 → `0x1417e972a`: returns NULL.** [V]
+  - If only Region returns 0, the request has one child (the Map child).
+- `0x1409536fe` stores the factory result at `loader+0x218`. MAP_DOWNLOAD then takes the NULL path (`0x140952130` → `0x14095262c`, "Completed STATE_MAP_DOWNLOAD with error"). [V]
+- [E] The 160 B root `2130706510` has only `Launcher64` and `English`. run79's 268 B root `2130706520` has `MapValleyHill` and `RegionValleyHill` too.
+- Checked after review:
+  - The "error" call at `0x140952646` is `0x1409bafd0`, a **no-op stub** (it spills its arguments and returns). So the NULL exit is not a blocking reporter. It falls straight through to `mov [rbx+0x2c0], 6` at `0x14095264b`. [V]
+  - Slots: the owner sub-object vtable 0x1422dbc28 has +0x10 = `0x1413fe2a0` (Map) and +0x18 = `0x1413fe340` (Region) (qword refs at 0x1422dbc38/0x1422dbc40). `0x1413fe2a0` returns the `0x140d92d00` result directly, with no fallback id. [V]
+  - `0x1417e9630` sits in a vtable slot at 0x14235d4b0, which is vt+0x8 if that vtable starts at 0x14235d4a8. I did not decode which object `0x1413fe030` returns, so "vt+0x8 of that object is the factory" is still borrowed from round 1. [I]
+- So **statically, a 160 B two-entry root must leave state 5 at once (state 6), not stall.** The device stalls, so one of these must hold. All [I]:
+  1. The stage trace or the owner's observation does not mean what we think. Runtime discriminator: a live +0x48 wait ticks `0x140952139` every frame and calls `0x140d8f620` every 10 s. The error exit hits neither and writes state 6 once.
+  2. The device was not using the 160 B root content we serve today (CDN files under ids 2130706510/11/12 changed between run 1 and run 2, or between devices). **Unlikely via Local.dat alone:** a stored root accepted under id 2130706510 must also be exactly 160 bytes (§1.3 size check). A root with Map/Region entries is larger (268 B in run79), so the size check would reject it and refetch. Stale content of that size would only have two short names.
+  3. The device client used a different `latest` reply than the one reported, or a different map definition path.
+  4. The tail of MAP_DOWNLOAD after `0x14095215b` (not decoded) contains a wait that I did not see.
+- **Cheap discriminator for the lead.** At MAP_DOWNLOAD, read `[0x1427fb0e0]` (the `m_root`). Its entry count is at `+4` and the array at `+8`, 24 bytes per entry, name pointer at `entry+0x10`. A second read: `[0x1427fb140]`'s table for baseId 0x1005 (`0x140d943b0`). That shows which root content the device is actually using, and whether the Map entry exists.
+
+## 4. Q4: smallest fix
+
+1. **Exe fields: change nothing.** Keep `/latest64/101` = `209026 0 0 <rootId> <rootSize>`. [V §1.2]
+2. **Serve the run79-style root** (Launcher64, English, `Map<name>`, `Region<name>` with their small manifests).
+   [V] Without a `Map<name>` entry the request factory returns NULL and MAP_DOWNLOAD errors (§3.3).
+3. **Never reuse a root or child manifest fileId for different content.**
+   - The only freshness test is the installed fileId, plus the size (§1.3). A matching id and size means the client trusts Local.dat's bytes without refetching.
+   - Mint new ids whenever content changes. Bump both the root id and each child id.
+   - To make every start behave like run 1 (always fetch), return a **fresh root id per CDN start** and fresh child ids in that root. Then `target != installed` → refetch root (flag == 0, §1.3) and children.
+   - Cost: Local.dat grows with each unique set of ids.
+4. **Equivalent without any CDN change: delete the device's Local.dat before launching.** That is what every local sandbox run does implicitly. [E: local runs have no Local.dat and always fetch.]
+5. **Do not** try to make the exe look "different" to force the downloader. Round-1 hypothesis 1 (downloader not started) was already retracted. The exe path is a different risk (§1.2).
+
+## 5. What I did not do or could not settle
+- The cause of the exit at ~2 min (§1.4). Needs the device's `ArenaNet.log`/`Crash.dmp`, or a breakpoint at `0x140236f00`.
+- Whether Local.dat stores the 13 MB manifest compressed (§2.2). Needs the file table.
+- The tail of MAP_DOWNLOAD after `0x14095215b` (not decoded).
+- Whether Local.dat is looked up in the exe directory or in AppData on the device (`0x141090e20` kinds 1 and 2 near `0x14023772e`; not decoded).
+- Preparer state timing for the Map/Region children at run 2. Only the discriminator in §3.3 settles it.
+
+## 6. Addresses used
+
+| Item | Address |
+|---|---|
+| `/latest` parse | 0x140d8c630 |
+| PatchExeThread ctor / vtable / worker / `/latest64` fetch | 0x140fded50 / 0x14210e760 / 0x140fdf470 / 0x140fdf100 |
+| Exe patch / program-manifest path | 0x140fdee60 / 0x140fdeb80, 0x140fdf220 |
+| Client build constant | 0x1409afcc0 (`mov eax, 0x33082`) |
+| MainCli patch state machine / state setter | 0x140236180 / 0x1402387e0 |
+| ApManifest ctor / loader / local check | 0x140fdd5f0 / 0x140fdd6e0 / 0x140d92b40 |
+| Install table add / lookup / remove | 0x140d95170, 0x140d953a0 / 0x140d943b0 / 0x140d94160 |
+| Local.dat open and install | 0x140237190 (main), 0x140239520, 0x140d8f770, 0x140d94580, 0x140d94910 |
+| Main archive open and install | 0x140238560, 0x140d8fcb0 |
+| Zero-byte touch | 0x1410d9c60, 0x1410da0b0 |
+| Map/Region by-name lookup / factory | 0x140d92d00 / 0x1417e9630 (NULL at 0x1417e972a) |
+| MAP_DOWNLOAD NULL/error exit | 0x140952130 → 0x14095262c |
+| Globals | `s_localArchive` 0x1427fb140; limit 0x1427fb148; table 0x1427fb0f8; dictionary 0x1427fb110/118; `m_root` 0x1427fb0e0; `s_mainArchive` 0x1427fadc0 |
+| Sandbox evidence | `client-work-209026/Gw2-64.tmp` (0 B, 22:54:14), `prefix/.../Local.dat` (26,886,304 B), `prefix/.../ArenaNet.log` (GcApi.cpp:2621 assertion), `runs/run79-map-manifests/cdn-files/2130706520` (268 B root with MapValleyHill/RegionValleyHill) |
