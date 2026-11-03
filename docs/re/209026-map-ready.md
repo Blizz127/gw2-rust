@@ -67,6 +67,8 @@ When every slot is done, the loader calls `0x140953450` and logs `MapLoader: Com
 
 There is **no timeout and no server input** here. A stop in MAP_STREAM means a streamer stuck in status 1–3 (map file data on the client), which the server cannot answer. Verified by disassembly of `0x140952720` (rizin, frozen exe).
 
+See [map download](209026-map-download.md) for what the MAP_DOWNLOAD request waits on (manifest preparers through the AssetDownloader).
+
 ## AGENT_STREAM conditions (`0x140951ce0`)
 
 Traced 2026-11-02. Each tick, the stage function does the following, in order:
