@@ -94,9 +94,10 @@ def main():
                 tables = re.findall(r'<Messages Name="(ctable-0x[0-9a-f]+)">(.*?)</Messages>', open(os.path.join(proto, 'client-tables.xml')).read(), re.S)
                 tables.sort(key=lambda t: t[0] != 'ctable-0x14216e260')
                 sources += [(n, b) for n, b in tables if n != 'ctable-0x141923f00']
+            modules = {'ctable-0x141923b70': 'GcApi.cpp', 'ctable-0x141923f00': 'GcAuthCmd.cpp', 'ctable-0x141927cc0': 'PlWatch.cpp', 'ctable-0x141b7b9b0': 'VendCliContext.cpp', 'ctable-0x141b812f0': 'VoteCliVote.cpp', 'ctable-0x141b8e2e0': 'WvwCommon.cpp', 'ctable-0x14211bdb0': 'AgMsg.cpp', 'ctable-0x1421590f0': 'GaeCliContext.cpp', 'ctable-0x14215dce0': 'BigbCliContext.cpp', 'ctable-0x14216e260': 'CharForce.cpp', 'ctable-0x1421800a0': 'CtCliMsg.cpp', 'ctable-0x142183680': 'ClmCliClaimableGuild.cpp', 'ctable-0x142239a50': 'ConFunContext.cpp', 'ctable-0x14223a5b0': 'ConvCliContext.cpp', 'ctable-0x14223bf20': 'DiCliContext.cpp', 'ctable-0x1422518c0': 'GldCommon.cpp', 'ctable-0x1422557f0': 'HsCliHomestead.cpp', 'ctable-0x14225b6a0': 'InsConst.cpp', 'ctable-0x1422d6a08': 'LbCliContext.cpp', 'ctable-0x1422d7368': 'LfgCliContext.cpp', 'ctable-0x1422d9290': 'LootCliContext.cpp', 'ctable-0x1422d9df0': 'MailConst.cpp', 'ctable-0x1422db6f0': 'MlCache.cpp', 'ctable-0x1422ddaa0': 'MsCliContext.cpp', 'ctable-0x1422e7490': 'PexCliContext.cpp', 'ctable-0x1422e96c0': 'PvpCliContext.cpp', 'ctable-0x1422eab98': 'QaCliContext.cpp', 'ctable-0x1422ee6a0': 'SquadCliContext.cpp', 'ctable-0x1422ef300': 'TournamentConst.cpp'}
             for table, body in sources:
                 for mm in re.finditer(r'<Message Id="(\d+)"[^>]*?(?:/>|>(.*?)</Message>)', body, re.S):
-                    layouts.setdefault(mm.group(1), f"{table}: {' '.join(re.findall(r'<(\w+) Name', mm.group(2) or '')) or '(no fields)'}")
+                    layouts.setdefault(mm.group(1), f"{(table + ' ' + modules.get(table, '')).strip()}: {' '.join(re.findall(r'<(\w+) Name', mm.group(2) or '')) or '(no fields)'}")
             print('  in-world client messages (first seen):')
             for mid, size, ts in seen:
                 print(f'    {ts} client {mid} ({size} bytes): {layouts.get(mid, "not in any client table")}')
