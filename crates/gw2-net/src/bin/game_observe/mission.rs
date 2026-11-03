@@ -446,6 +446,59 @@ pub(crate) mod tests {
 
     /// Kind 15 is Optional (docs/re/209026-agent-client-messages.md): one presence byte,
     /// then the nested fields only when present. Client 4 nests two more Optionals.
+    /// Every server frame the deployed mission phase emits (opening 1063/1060, the
+    /// population sequence, 1036 + 431) must be a message the client registers a handler
+    /// for and must decode to its exact length under the client's own descriptors (groups
+    /// 0, 39 and 40 extracted from its handler tables). An unregistered id is
+    /// DISCONNECT_MISSING_HANDLER on the client; a misfit frame desynchronizes the stream.
+    #[test]
+    fn every_emitted_server_frame_matches_a_client_handler_descriptor() {
+        // Every server registration table the client has (one group per table).
+        const SERVER_TABLES: &str = include_str!("../../../../../data/protocol/209026/server-tables.xml");
+        let tables = schema::parse(SERVER_TABLES).unwrap().protocols[0].groups.clone();
+        assert!(tables.len() >= 40);
+        let mut phase = populated_phase();
+        let streams = [
+            ("opening", phase.opening()),
+            ("population", phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap()),
+            ("begin", phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().unwrap()),
+        ];
+        let mut census = Vec::new();
+        for (name, bytes) in streams {
+            let mut cursor = &bytes[..];
+            while !cursor.is_empty() {
+                let before = cursor.len();
+                let id = u16::from_le_bytes([cursor[0], cursor[1]]);
+                // Every table that registers this id; the frame must decode exactly under one,
+                // and the frame boundary is taken from that decode.
+                let fits: Vec<(String, Option<String>, usize)> = tables
+                    .iter()
+                    .filter_map(|t| {
+                        let mut probe = cursor;
+                        let (m, _) = dynamic::decode_frame(&t.server, &rules(), &mut probe).ok()?;
+                        Some((t.name.clone(), m.addr.clone(), before - probe.len()))
+                    })
+                    .collect();
+                assert!(!fits.is_empty(), "{name}: server {id} at +{} decodes under no client table", bytes.len() - before);
+                // The game connection's own tables, in the order prior RE attributes them: the
+                // 624-entry group-0 table, AgMsg.cpp's server table, mission groups 39 and 40.
+                // Ids also present in another table (other protocols) are only reported.
+                const GAME: [&str; 4] = ["table-0x14216e940", "table-0x14211be70", "table-0x1422ddbf0", "table-0x141923b80"];
+                let (table, addr, len) = GAME
+                    .iter()
+                    .find_map(|g| fits.iter().find(|f| f.0 == *g).cloned())
+                    .unwrap_or_else(|| panic!("{name}: server {id} is registered only outside the game tables: {fits:?}"));
+                let others: Vec<String> = fits.iter().filter(|f| f.0 != table).map(|f| format!("{}@{}", f.0, f.2)).collect();
+                census.push((name, id, addr, len, table, others));
+                cursor = &cursor[len..];
+            }
+        }
+        for (name, id, addr, len, table, others) in &census {
+            eprintln!("audit {name}: server {id} ({len} bytes) {table} handler {} also {others:?}", addr.as_deref().unwrap_or("?"));
+        }
+        assert!(census.iter().any(|c| c.1 == 1063) && census.iter().any(|c| c.1 == 1036) && census.iter().any(|c| c.1 == 431));
+    }
+
     #[test]
     fn optional_fields_frame_absent_and_present_for_every_split() {
         let absent = agent_frame_with(4, false);

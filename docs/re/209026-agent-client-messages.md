@@ -61,3 +61,31 @@ with kind 15 emitted as Optional. The first extraction, with kind 15 unverified,
 - No replies are sent to it.
 - Field roles beyond these layouts are unverified, and nothing here has been seen
   from a live client yet.
+
+## Server registration tables and the emitted-frame audit
+
+`~/re/gw2/notes/extract-server-tables.py` scans the image's .rdata and .data for runs of
+(descriptor, handler) pairs, where the descriptor starts with a message-id field and the
+handler points into .text.
+- It finds **50 tables, 1253 server messages**. Two use an unknown field kind 26.
+- It writes them to `data/protocol/209026/server-tables.xml` (local, gitignored), one
+  group per table: 225671 bytes, sha256 `22c9c0d1…7ffd3`, evidence
+  `ev_990e99019bdabf1946c8651848b3668ee21b8240c06e6a0b02c44ce3e841dcfd`.
+
+The game connection's group-0 server messages are split across tables:
+- the 624-entry table `0x14216e940`;
+- AgMsg.cpp's `0x14211be70` (ids 31–88, e.g. 37 agent creation and 46 world entry);
+- mission groups 39 (`0x1422ddbf0`) and 40 (`0x141923b80`).
+
+Ids are not unique across all tables. Server 444 is also registered in `0x1422e03b0`
+(ids 444–1139) with another layout, apparently a different protocol.
+
+The test `every_emitted_server_frame_matches_a_client_handler_descriptor` decodes every
+frame the deployed mission phase sends against those game tables, in that order. It
+requires a registered handler and exact length. All 20 frames pass:
+- opening: 1063, 1060;
+- population: 428, 37, 443, 183, 282, 477, 151, 247, 248, 565, 538, 605, 170, 618, 444, 46;
+- begin: 1036, 431.
+
+So on the client side none of them can hit DISCONNECT_MISSING_HANDLER or BAD_COUNT through
+framing. Handler-level dispatch failures (value checks) are not covered by this audit.
