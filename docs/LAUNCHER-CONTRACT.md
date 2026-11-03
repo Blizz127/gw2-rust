@@ -105,9 +105,27 @@ means native only, so a prefix without the DLLs fails at D3D11 load.
   d3d11, dxgi, d3d10core and d3d9 into `drive_c/windows/system32`, as the sandbox's
   `prepare_prefix` does with DXVK 3.1.1.
 - `--no-dxvk` (wined3d) is untested.
-- Run 64 covered the GE-Proton11-6 Wine and GE's own DXVK (the client logs "v3.10") in a fresh
-  prefix provisioned this way, against the live Banshee server. It reached the agreement
-  panel. A real GPU (all runs used lavapipe) and the device's namespace shape are untested.
+- Correction: run 64 used GE's DXVK (the client logs "v3.10") but Debian's `wine64` under
+  gdb, not GE-Proton's Wine. The sandbox's gdb mode hard-coded `/usr/lib/wine/wine64`.
+  The owner's first device runs (b104, 2026-11-03 02:00Z) showed what GE-Proton 11's Wine
+  does differently:
+  - `files/bin/wine` starts a 32-bit `start.exe /exec`, which double-forks the 64-bit
+    Gw2-64.exe process.
+  - It maps the client at a random base, not 0x140000000.
+  The old runner script raised in the 32-bit stage, so gdb stopped and the run ended in
+  about 20 s with no window and no network.
+  - The revised `gw2-runner.gdb` never raises, relocates every address, and says when the
+    client image was never seen.
+  - It still requires the client to run in the traced process.
+  - A fork-following variant armed under GE-Proton 11 but was fragile, and was reverted
+    after run 66.
+  - Separately, under GE-Proton11-6's own Wine (runs 65j–65p) a CEF thread overflows its
+    stack right after the login click, and the client goes silent. It opens cligate and
+    never sends `/Auth/StartTls`. This happens with no gdb, with C or C.UTF-8 locale, and
+    with Proton-style font links, so it is not the runner.
+  - The relocated trust and DH patch paths have never executed.
+  - **GE-Proton 11 is not a usable GW2 runtime.**
+  A real GPU (all runs used lavapipe) and the device's namespace shape are untested.
 
 Sandbox run 63b used the **live** Banshee server. The pieces:
 - the shipped runner package (its identity and gdb script) and the launcher's `bridge.py`

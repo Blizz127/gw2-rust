@@ -98,9 +98,19 @@ case "$mode" in
       ( sleep "${UI_DELAY:-60}"; bash -c "$UI_CMD" >/sandbox/logs/ui.log 2>&1 ) &
     fi
     cd /client
+    if [[ -n "${RUNNER_DIR:-}" ]]; then
+      # The shipping runner package exactly as the launcher starts it (device argv).
+      runner_wine=/usr/lib/wine/wine64; [[ "$WINE" == /* ]] && runner_wine=$WINE
+      exec "$RUNNER_DIR/gw2-runner" --wine "$runner_wine" --prefix "$WINEPREFIX" \
+        --exe /client/Gw2-64.exe --identity "$RUNNER_DIR/identity" -- "$@" \
+        2> >(tee /sandbox/logs/wine.err >&2)
+    fi
     if [[ -n "${GDB_SCRIPT:-}" ]]; then
       # Debug aid: run the client under gdb with a caller-supplied script (it must end in `run`).
-      exec gdb -q -batch -x "$GDB_SCRIPT" --args /usr/lib/wine/wine64 /client/Gw2-64.exe "$@" \
+      # An absolute WINE (e.g. GE-Proton's files/bin/wine, which starts through its i386
+      # preloader) runs as given; the system default "wine" is a shell wrapper gdb cannot load.
+      gdb_wine=/usr/lib/wine/wine64; [[ "$WINE" == /* ]] && gdb_wine=$WINE; gdb_wine=${GDB_WINE:-$gdb_wine}
+      exec gdb -q -batch -x "$GDB_SCRIPT" --args "$gdb_wine" "${GDB_EXE:-/client/Gw2-64.exe}" "$@" \
         2> >(tee /sandbox/logs/wine.err >&2)
     fi
     if [[ "${GDB_STACKDUMP:-0}" == 1 ]]; then

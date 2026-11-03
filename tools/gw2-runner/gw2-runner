@@ -31,6 +31,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 [[ -x $wine ]] || die "--wine must be an executable Wine binary"
+# The patches need the 64-bit client in the traced process itself. A classic Wine layout's
+# bin/wine is the 32-bit loader (it would re-exec into wine64), so use its sibling wine64.
+[[ $(od -An -c -N4 "$wine" | tr -d ' ') == 177ELF ]] || die "--wine must be a Wine loader ELF binary, not a wrapper script ($wine)"
+elf_class=$(od -An -tx1 -j4 -N1 "$wine" | tr -d ' ')
+if [[ $elf_class != 02 && -x $(dirname "$wine")/wine64 ]]; then wine=$(dirname "$wine")/wine64; fi
 [[ -d $prefix ]] || die "--prefix must be an existing Wine prefix directory"
 [[ -f $exe ]] || die "--exe must be the frozen Gw2-64.exe"
 for f in own-modulus.bin dh-params.bin; do [[ -f $identity/$f ]] || die "missing $identity/$f"; done

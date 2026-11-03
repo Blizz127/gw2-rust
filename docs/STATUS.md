@@ -245,6 +245,60 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
     - run 63b: the shipped identity + bridge against the LIVE Banshee server reached it too
     Owner-gated before his first test: the 83 GiB client upload to the device and the
     GW2 signing prefix (the coordinator holds both).
+  - **Owner device runs, 2026-11-03.** Nothing has reached Banshee yet.
+    - b103 (01:24Z): bubblewrap 0.12 refused to bind over the symlinked `/etc/resolv.conf`.
+      The launcher fixed it in b104.
+    - b104 (02:00Z): the sandbox starts, then the runner's gdb ends within ~20 s.
+      - Cause: GE-Proton 11's `bin/wine` runs a 32-bit `start.exe /exec` that double-forks
+        the 64-bit client, and the old script detached from that fork.
+      - Its connect handler also raised on the i386 frame.
+      - Wine 11 also maps the client at a random base, not 0x140000000.
+      - Runs 61–64 had used Debian's `wine64` under gdb (the sandbox gdb mode hard-coded
+        it), so this was never tested.
+    - `gw2-runner.gdb` now:
+      - checks the frame's architecture, and its handlers never raise;
+      - finds the client's base from `/proc/<pid>/maps` (by inode or path) and relocates
+        every address;
+      - arms only when the header page and trust bytes match the exe;
+      - prints a line when the client image was never seen.
+      Following forks (`detach-on-fork off`) armed the patches under GE-Proton 11, but it
+      was fragile: a short-lived fork's exit left gdb's all-stop state with running
+      threads, and run 66 never armed under Debian Wine. It was reverted. The client must
+      run in the traced process, as it does under Wine 10-class loaders.
+    - Run 66 (Debian Wine 10, local servers, the revised script) passes:
+      - armed at the preferred base;
+      - trust and DH patches applied;
+      - login TLS, auth and Play;
+      - six post-auth screenshots.
+    - `sandbox/run.sh` now honours an absolute `WINE` in gdb mode (plus `GDB_WINE`,
+      `GDB_EXE`, `WINEDLLOVERRIDES`, `LANG_OVERRIDE`).
+    - Second blocker, separate from the runner: under GE-Proton 11's own Wine (Wine 11.0)
+      the client's worker thread overflows its stack right after the login click
+      (`virtual_setup_exception stack overflow`).
+      - It reaches cligate and never sends `/Auth/StartTls`.
+      - This reproduces with no gdb and local servers (run 65j). The overflowing stack is
+        full of DirectWrite and "Tahoma" data.
+      - `dwrite=d` is not a test: libcef.dll then fails to load ("Failed to load CEF
+        DLL. Error code: 0x7e").
+      - The device bubble passes no LANG (C locale), the same as the sandbox.
+    - Narrowing so far:
+      - +seh shows no exception storm on the overflowing thread. Its only exception is the
+        Chromium `network_change_notifier_win` log line, so this is a genuine recursion.
+      - Not the trigger:
+        - the C.UTF-8 locale (65p);
+        - Proton-style font links (65m);
+        - hiding Proton's bundled fonts (65r).
+        Wine also rewrites the Tahoma SystemLink at every start, and Debian's prefix has the
+        same chain.
+      - GE-Proton10-34 (Wine 10 base, run 67) fails the same way, so it is Proton, not
+        Wine 11.
+      - Debian Wine 10.0 passes (run 66).
+      - Kron4ek's vanilla Wine 10.0 tarball hangs in wineboot inside the sandbox image, so it
+        is not yet usable.
+    - Open:
+      - the runtime for the device (launcher lead and owner): a non-Proton Wine 10.x;
+      - or the Proton recursion's root cause, which has no stable return addresses in the
+        stack dump so far.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
     Done, local commits only, nothing deployed:
     - no-capture servers and bind guard (71ffe34, c76ce60)

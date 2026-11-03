@@ -3,6 +3,9 @@
 set pagination off
 set confirm off
 set follow-fork-mode parent
+# Forks are detached: the client must run in the traced process itself, as it does under a
+# Wine 10-class loader (runs 61-64). GE-Proton 11's Wine instead runs a 32-bit start.exe
+# that double-forks the client, so nothing is ever armed there; the script then says so.
 set detach-on-fork on
 handle all nostop noprint pass
 set breakpoint pending on
@@ -39,6 +42,40 @@ if len(OWN_TRUST) != TRUST_LEN or len(OWN_DH) != DH_LEN or OWN_DH[:DH_PUBLIC_AT]
     print('GW2_RUNNER: identity files do not fit this client; nothing started')
     gdb.execute('quit 3')
 
+ARMED_INFERIOR = [None]
+SLIDE = [0]
+PREFERRED_BASE = 0x140000000
+EXE_INODE = os.stat(os.environ['GW2_RUNNER_EXE']).st_ino
+EXE_REALPATH = os.path.realpath(os.environ['GW2_RUNNER_EXE'])
+
+def image_base(pid):
+    # Newer Wine (GE-Proton 11) maps the dynamic-base client at a random address; only its
+    # header page stays file-backed. Find that page (offset 0) by inode or path: on btrfs the
+    # device in /proc/pid/maps differs from stat's, so the device is not compared.
+    try:
+        lines = open('/proc/%d/maps' % pid).read().splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        fields = line.split(None, 5)
+        if len(fields) < 6 or int(fields[2], 16) != 0:
+            continue
+        if int(fields[4]) == EXE_INODE or fields[5] == EXE_REALPATH:
+            return int(fields[0].split('-')[0], 16)
+    return None
+
+def in_client():
+    return gdb.selected_inferior().num == ARMED_INFERIOR[0]
+
+def is_x86_64():
+    # GE-Proton's files/bin/wine starts in its i386 preloader and only later execs the
+    # 64-bit loader (same pid; gdb follows the exec). A stop in that 32-bit phase has no
+    # 64-bit registers, so every handler checks the frame's architecture first.
+    try:
+        return gdb.selected_frame().architecture().name() == 'i386:x86-64'
+    except gdb.error:
+        return False
+
 def abort(what):
     print('GW2_RUNNER: %s guard failed; stopping the client' % what)
     gdb.execute('kill')
@@ -46,13 +83,20 @@ def abort(what):
 
 class TrustPatch(gdb.Breakpoint):
     def stop(self):
-        if int(gdb.parse_and_eval('$r8')) & 255 != 11:
+        if not in_client():
+            return False
+        try:
+            selector = int(gdb.parse_and_eval('$r8'))
+        except gdb.error:
+            abort('trust register')
+        if selector & 255 != 11:
             return False
         inf = gdb.selected_inferior()
-        if inf.read_memory(TRUST_VA, TRUST_LEN).tobytes() != ORIGINAL_TRUST:
+        trust = TRUST_VA + SLIDE[0]
+        if inf.read_memory(trust, TRUST_LEN).tobytes() != ORIGINAL_TRUST:
             abort('trust')
-        inf.write_memory(TRUST_VA, OWN_TRUST)
-        if inf.read_memory(TRUST_VA, TRUST_LEN).tobytes() != OWN_TRUST:
+        inf.write_memory(trust, OWN_TRUST)
+        if inf.read_memory(trust, TRUST_LEN).tobytes() != OWN_TRUST:
             abort('trust write')
         print('GW2_RUNNER: trust patch applied')
         self.enabled = False
@@ -60,10 +104,15 @@ class TrustPatch(gdb.Breakpoint):
 
 class DhPatch(gdb.Breakpoint):
     def stop(self):
+        if not in_client():
+            return False
         inf = gdb.selected_inferior()
-        ptr = int(gdb.parse_and_eval('$rdx'))
-        size = int(gdb.parse_and_eval('$ecx'))
-        if size != DH_LEN or ptr != DH_VA or inf.read_memory(ptr, size).tobytes() != ORIGINAL_DH:
+        try:
+            ptr = int(gdb.parse_and_eval('$rdx'))
+            size = int(gdb.parse_and_eval('$ecx'))
+        except gdb.error:
+            abort('DH register')
+        if size != DH_LEN or ptr != DH_VA + SLIDE[0] or inf.read_memory(ptr, size).tobytes() != ORIGINAL_DH:
             abort('DH')
         inf.write_memory(ptr + DH_PUBLIC_AT, OWN_DH[DH_PUBLIC_AT:])
         if inf.read_memory(ptr, size).tobytes() != OWN_DH:
@@ -75,20 +124,42 @@ class DhPatch(gdb.Breakpoint):
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
+        # A Python exception here would make gdb stop (and -batch then ends the run),
+        # so anything unexpected means "not this connect", never a stop.
+        if not is_x86_64():
+            return False
         try:
             inf = gdb.selected_inferior()
             if int.from_bytes(inf.read_memory(int(gdb.parse_and_eval('$rsi')), 2).tobytes(), 'little') != 2:
                 return False
-            if inf.read_memory(0x140000000, 2).tobytes() != b'MZ':
+            # The client image, not another 64-bit Wine process: its header page is the exe's
+            # own and its trust bytes are mapped and still original.
+            base = image_base(inf.pid)
+            if base is None:
                 return False
-        except gdb.MemoryError:
+            header = inf.read_memory(base, 0x400).tobytes()
+            # The loader may rewrite ImageBase in a relocated header, so compare the DOS
+            # header and the PE signature + COFF header (machine, timestamp) only.
+            pe = struct.unpack_from('<I', exe, 0x3c)[0]
+            if header[:0x40] != exe[:0x40] or header[pe:pe + 24] != exe[pe:pe + 24]:
+                return False
+            slide = base - PREFERRED_BASE
+            if inf.read_memory(TRUST_VA + slide, TRUST_LEN).tobytes() != ORIGINAL_TRUST:
+                return False
+        except (gdb.MemoryError, gdb.error):
             return False
-        TrustPatch('*0x14158b740', internal=True)
-        DhPatch('*0x140ff4480', internal=True)
-        print('GW2_RUNNER: patch points armed')
+        ARMED_INFERIOR[0] = inf.num
+        SLIDE[0] = slide
+        TrustPatch('*%#x' % (0x14158b740 + slide), internal=True)
+        DhPatch('*%#x' % (0x140ff4480 + slide), internal=True)
+        print('GW2_RUNNER: patch points armed (image %s)' % ('at its preferred base' if slide == 0 else 'relocated'))
         self.enabled = False
         return False
 
 Arm('connect', internal=True)
 end
 run
+python
+if ARMED_INFERIOR[0] is None:
+    print('GW2_RUNNER: the client image was never seen in the traced process; no patch was applied')
+end
