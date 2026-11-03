@@ -95,7 +95,15 @@ Generator command:
 
 - **Base and file ids:** confirmed by run 34. 304,885 entries have two ids
   (`base = smaller`), 514,462 have one.
-- **`Map<name>` / `Region<name>` manifests** will be needed when maps load (`MhHelper`,
-  `MpQuery`). Not exercised yet.
+- **`Map<name>` / `Region<name>` manifests are required at map load (confirmed 2026-11-03).**
+  - The names come from the map definition: `"Map"` + the content string at mapDef +0xb0 (`0x1413fe2a0`) and `"Region"` + the string at +0x110 (`0x1413fe340`).
+  - Both strings are content string references in the container's array at header +0x70.
+  - Queensdale (key 15): **`MapValleyHill`**, **`RegionValley`**. Other maps decode the same way, e.g. `AlpineTimberland`/`Alpine`.
+  - Without them, MAP_DOWNLOAD's request (loader +0x218) is null, so the stage errors out at once into state 6, which has no dispatcher case. The owner's b115 trace shows exactly this: entry and exit in the same second, no MAP_STREAM ([map download](209026-map-download.md)).
+  - **Fix:** root 2130706520 = `Launcher64` (every local asset, byte-identical to 2130706511) + `English:8` + `MapValleyHill` + `RegionValley`. The latter three each repeat one installed record.
+    - Command: `gw2-manifest-gen --out DIR --root-id 2130706520 --manifest Launcher64 --manifest English:8 --manifest MapValleyHill --manifest RegionValley --from-dat <frozen Gw2.dat>`.
+    - It prints the latest line `209026 0 0 2130706520 268`.
+    - Run 79: the client fetches all five and reaches the agreement panel with no assert.
+  - Other maps need their own pair; each new pair needs a fresh root id.
 - **Exe self-update:** the latest-reply exe fields (1, 2) are 0. No exe download has been
   observed so far.

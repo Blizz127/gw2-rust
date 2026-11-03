@@ -67,7 +67,9 @@ STAGE_TRIAGE = {
 
 
 def stage_report(text):
-    stages = re.findall(r'GW2_RUNNER: stage (\S+) (.+?) \((-?\d+)\)\s*$', text, re.M)
+    stages = re.findall(r'GW2_RUNNER: stage (\S+) (.+?) \((-?\d+)\)(?: at 0x[0-9a-f]+)?\s*$', text, re.M)
+    if re.search(r'MapLoader: STATE_MAP_DOWNLOAD \(5\) at 0x(14095219d|140952646)', text):
+        print('  MAP_DOWNLOAD ERROR EXIT (state 6): 0x14095219d = encrypted map without a 1060 key; 0x140952646 = no map request (root manifest lacks Map<name>/Region<name>) or a request error')
     if 'GW2_RUNNER: stage trace armed' in text:
         print('  stage trace: armed')
     elif 'stage trace' in text:

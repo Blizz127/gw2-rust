@@ -472,7 +472,9 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       - The asset CDN gets no request, and the only unrouted DNS name is loading-live.ncplatform.net (loading-screen web content).
       - **b114's runner stage trace** (runner a8fdb4e): the loader goes LOAD_CONTENT → LOAD_MANIFEST → SERVER_WAIT (all at 21:18:29), and 1060 then moves it to **MAP_DOWNLOAD at 21:18:30**. It never leaves that stage.
         - MAP_DOWNLOAD (`0x1409520b0`) waits, with no timeout, on loader +0x218, the MapPortalLoader request created in BeginMap. Its +0x48 is the sum of its child map-file loaders' +0x38 ([map ready](re/209026-map-ready.md)).
-        - The cause is being traced.
+        - **Corrected after b115 (22:38Z):** with a fresh Local.dat the client did fetch the manifests (13 MB), but MAP_DOWNLOAD still entered and exited in the same second. That is an error exit to state 6, not a wait.
+        - **Cause:** our root manifest had no `MapValleyHill` / `RegionValley` (Queensdale's map/region manifest names), so the map request is null. Fixed in the CDN data with root 2130706520 ([patcher](re/209026-patcher.md)); run 79 OK.
+        - The earlier Local.dat theory was only part of it.
       - The a8fdb4e trace hooked the profiler's per-frame marker (about 1,600 hits/s). It is being moved to the loader's 22 call sites.
       - "Banshee Realm": the world-name patch applied on his device.
         - Regression test: `client_278_during_the_map_load_keeps_the_phase_and_the_population_follows`.

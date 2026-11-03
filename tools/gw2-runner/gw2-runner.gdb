@@ -193,7 +193,10 @@ class StageTrace(gdb.Breakpoint):
             state = int(gdb.parse_and_eval('$ecx'))
             raw = inf.read_memory(int(gdb.parse_and_eval('$rdx')), 64).tobytes().split(b'\0', 1)[0]
             name = raw.decode('ascii', 'replace') if all(32 <= b < 127 for b in raw) else '?'
-            print('GW2_RUNNER: stage %s %s (%d)' % (time.strftime('%H:%M:%SZ', time.gmtime()), name, state))
+            # The site tells entry, success exit and error exit apart (e.g. MAP_DOWNLOAD:
+            # 0x140951a8c entry, 0x1409525e0 done, 0x14095219d / 0x140952646 error -> state 6).
+            site = int(gdb.parse_and_eval('$pc')) - SLIDE[0]
+            print('GW2_RUNNER: stage %s %s (%d) at %#x' % (time.strftime('%H:%M:%SZ', time.gmtime()), name, state, site))
         except (gdb.MemoryError, gdb.error):
             pass
         return False
