@@ -663,6 +663,33 @@ mod tests {
         }
     }
 
+    /// The login phase frames clients 1, 2, 3 and 10 with its own hand-written schema
+    /// (`messages()`). Frames encoded from the client-extracted auth.xml layouts must be
+    /// accepted by it: no reply for 1, 2 and 3, exactly one reply once 10 is complete,
+    /// for every split of the stream, and the hand-written field kinds must match auth.xml.
+    #[test]
+    fn login_phase_schema_matches_the_client_layouts() {
+        let group = schema::parse(AUTH_SCHEMA).unwrap().protocols.into_iter().find(|p| p.name == "3").unwrap().groups.remove(0);
+        for own in messages() {
+            let client = group.client.iter().find(|m| m.id == own.id).unwrap();
+            let kinds = |m: &Message| m.fields.iter().map(|f| (f.kind.clone(), f.size)).collect::<Vec<_>>();
+            assert_eq!(kinds(&own), kinds(client), "hand-written schema for client {} differs from auth.xml", own.id);
+        }
+        let mut input = BytesMut::new();
+        for id in [2u16, 3, 1, 10] {
+            input.extend_from_slice(&crate::mission::tests::schema_frame(&group.client, id, false));
+        }
+        for cut in 0..=input.len() {
+            let fixture = ReplyFixture::new(Bytes::from_static(&[0x44; 2]), None).unwrap();
+            let mut probe = AuthProbe::new(fixture);
+            let replies = [&input[..cut], &input[cut..]]
+                .into_iter()
+                .filter_map(|part| probe.push(part).unwrap())
+                .count();
+            assert_eq!(replies, 1, "cut {cut}");
+        }
+    }
+
     /// Every auth client message the play phase loads (auth.xml protocol 3) is framed
     /// without disabling the phase; only 22 and 29 get replies.
     #[test]
