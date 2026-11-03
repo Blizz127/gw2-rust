@@ -35,6 +35,10 @@ const MISSION_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/m
 /// ~/re/gw2/notes/extract-agent-client.py; kind 15 is Optional (a presence
 /// byte, then the nested fields), verified from the client's field codec.
 const AGENT_CLIENT_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/agent-client.xml");
+/// The auth connection's client table (it precedes the auth server table 0x141923fe0).
+const AUTH_CLIENT_TABLE: &str = "ctable-0x141923f00";
+/// The game connection's main client table (it precedes server table 0x14216e940).
+const GAME_CLIENT_TABLE: &str = "ctable-0x14216e260";
 /// Every client registration table of the frozen client (one group per table;
 /// ~/re/gw2/notes/extract-client-tables.py). The owner's first map load sent client 278,
 /// which no loaded group framed, so the phase disabled and the population was never sent.
@@ -157,14 +161,30 @@ impl MissionPhase {
             }
             client.push(message);
         }
-        // Then every other client table: add ids not yet framed. An id that other tables
-        // define with different layouts is left out (framing it wrongly is worse).
+        // Then every other client table: add ids not yet framed. The auth connection's own
+        // table is skipped, and the game's main table (next to its 624-entry server table
+        // 0x14216e940) goes first, so it wins the ids it shares with smaller tables. An id
+        // that the remaining tables define with different layouts is left out (framing it
+        // wrongly is worse).
         let tables = schema::parse(CLIENT_TABLES_SCHEMA).map_err(invalid)?;
+        let mut groups: Vec<_> = tables
+            .protocols
+            .into_iter()
+            .flat_map(|p| p.groups)
+            .filter(|g| g.name != AUTH_CLIENT_TABLE)
+            .collect();
+        groups.sort_by_key(|g| g.name != GAME_CLIENT_TABLE);
         let mut extra: Vec<Message> = Vec::new();
         let mut ambiguous: Vec<u16> = Vec::new();
-        for group in tables.protocols.into_iter().flat_map(|p| p.groups) {
+        let before = client.len();
+        for group in groups {
+            let authoritative = group.name == GAME_CLIENT_TABLE;
             for message in group.client {
                 if client.iter().any(|m| m.id == message.id) || ambiguous.contains(&message.id) {
+                    continue;
+                }
+                if authoritative {
+                    client.push(message);
                     continue;
                 }
                 if let Some(seen) = extra.iter().position(|m| m.id == message.id) {
@@ -178,8 +198,8 @@ impl MissionPhase {
             }
         }
         eprintln!(
-            "Mission phase: {} more client ids from all client tables; ambiguous ids left unframed: {:?}",
-            extra.len(),
+            "Mission phase: {} more client ids from the client tables; ambiguous ids left unframed: {:?}",
+            client.len() - before + extra.len(),
             ambiguous
         );
         client.extend(extra);
@@ -526,6 +546,30 @@ pub(crate) mod tests {
             PlayerStartupFrame209026.encode_frame(&mut begin);
             assert_eq!(replies[1].1, begin.freeze(), "split {split}");
         }
+    }
+
+    /// The ids the auth table and the game's main table both define (30, 34, 36-40) and 89
+    /// (also in 0x14215dce0) take the game table's layout, and nothing is left unframed.
+    #[test]
+    fn ids_shared_with_other_tables_take_the_game_tables_layout() {
+        let phase = MissionPhase::new(15).unwrap();
+        let tables = schema::parse(CLIENT_TABLES_SCHEMA).unwrap();
+        let game = tables.protocols.iter().flat_map(|p| &p.groups).find(|g| g.name == GAME_CLIENT_TABLE).unwrap();
+        for id in [30, 34, 36, 37, 38, 39, 40, 89] {
+            let loaded = phase.client.iter().find(|m| m.id == id).unwrap_or_else(|| panic!("client {id} unframed"));
+            let own = game.client.iter().find(|m| m.id == id).unwrap();
+            assert_eq!(loaded.fields, own.fields, "client {id}");
+        }
+        for group in tables.protocols.iter().flat_map(|p| &p.groups).filter(|g| g.name != AUTH_CLIENT_TABLE) {
+            for m in &group.client {
+                assert!(phase.client.iter().any(|l| l.id == m.id), "client {} ({}) unframed", m.id, group.name);
+            }
+        }
+        let mut ids: Vec<u16> = phase.client.iter().map(|m| m.id).collect();
+        let total = ids.len();
+        ids.sort_unstable();
+        ids.dedup();
+        assert_eq!(ids.len(), total, "one layout per id");
     }
 
     /// The owner's first map load (2026-11-03 17:07Z): client 278 arrived right after the

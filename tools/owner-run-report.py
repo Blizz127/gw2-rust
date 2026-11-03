@@ -83,14 +83,23 @@ def main():
             if m and m.group(1) not in [x[0] for x in seen]:
                 seen.append((m.group(1), m.group(2), ts))
         if seen:
+            # Layouts from agent-client.xml first, then the game's main client table, then
+            # any other client table (data/protocol/209026/client-tables.xml).
             layouts = {}
-            schema = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'protocol', '209026', 'agent-client.xml')
-            if os.path.exists(schema):
-                for mm in re.finditer(r'<Message Id="(\d+)"[^>]*>(.*?)</Message>', open(schema).read(), re.S):
-                    layouts[mm.group(1)] = ' '.join(re.findall(r'<(\w+) Name', mm.group(2)))
+            proto = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'protocol', '209026')
+            sources = []
+            if os.path.exists(os.path.join(proto, 'agent-client.xml')):
+                sources.append(('agent', open(os.path.join(proto, 'agent-client.xml')).read()))
+            if os.path.exists(os.path.join(proto, 'client-tables.xml')):
+                tables = re.findall(r'<Messages Name="(ctable-0x[0-9a-f]+)">(.*?)</Messages>', open(os.path.join(proto, 'client-tables.xml')).read(), re.S)
+                tables.sort(key=lambda t: t[0] != 'ctable-0x14216e260')
+                sources += [(n, b) for n, b in tables if n != 'ctable-0x141923f00']
+            for table, body in sources:
+                for mm in re.finditer(r'<Message Id="(\d+)"[^>]*?(?:/>|>(.*?)</Message>)', body, re.S):
+                    layouts.setdefault(mm.group(1), f"{table}: {' '.join(re.findall(r'<(\w+) Name', mm.group(2) or '')) or '(no fields)'}")
             print('  in-world client messages (first seen):')
             for mid, size, ts in seen:
-                print(f'    {ts} client {mid} ({size} bytes): {layouts.get(mid, "not in the agent client table")}')
+                print(f'    {ts} client {mid} ({size} bytes): {layouts.get(mid, "not in any client table")}')
         # Sizes-only byte timeline from the game server (net +Nms: up/down/EOF lines).
         net = [(ts, text) for ts, text in lines if text.startswith('net +')]
         if net:
