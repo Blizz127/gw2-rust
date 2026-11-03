@@ -42,10 +42,10 @@ assertions and diagnostics identify these states:
 | Value | Name | Relevant dependency or transition |
 | --- | --- | --- |
 | 1 | LOAD_CONTENT | Prepared map definition must exist; map-content lookup is checked when its +0xd8 pointer is present. |
-| 2 | LOAD_MANIFEST | Advances to server wait after its inspected checks. |
-| 3 | SERVER_WAIT | Requires the command-received flag at +0x2c4 before advancing to state 5; ID 1060's load helper sets this flag. |
-| 5 | MAP_DOWNLOAD | Resource acquisition; error paths lead to state 6. |
-| 7 | MAP_STREAM | Success advances to 9 and invokes MapLoaded callback; failure advances to 8. |
+| 2 | LOAD_MANIFEST | Waits, without a timeout, for MapPortalLoader (`MpLoader.cpp`) to finish its async archive read (`0x1417e9740` starts it, `0x1417e9cd0` polls it). It also arms the 300 s SERVER_WAIT timeout (`+0x2e4 = 0x493e0`). |
+| 3 | SERVER_WAIT | Requires the command-received flag at +0x2c4 before advancing to state 5; ID 1060's load helper `0x1409538c0` sets it unconditionally. After 300 s it logs "Completed STATE_SERVER_WAIT with error" and sets state 4, which has no case in the dispatcher. |
+| 5 | MAP_DOWNLOAD | Waits, without a timeout, for the map resource at loader +0x218 (done +0x48, error +0x50), calling `0x140d8f620` every 10 s. An encrypted map without a 1060 key goes to state 6. |
+| 7 | MAP_STREAM | Waits, without a timeout, for every streamer (+0x230) to finish (see below). Success advances to 9 and invokes MapLoaded callback; failure advances to 8. |
 | 9 | MODELS_STREAM | Further model streaming before state 10. |
 | 10 | MAP_ASSET_STREAM | Further asset processing before state 11. |
 | 11 | AGENT_STREAM | `0x140951ce0` waits for a nonnull controlled character and streaming readiness/timing conditions. |
@@ -56,6 +56,16 @@ This table describes the inspected normal path and selected branches, not
 every state or every failure condition. The full model/agent streaming
 prerequisites remain open. Empty server ID 1061 reaches a no-op default-view callback;
 it cannot stand in for whatever population data those services require.
+
+## MAP_STREAM wait (`0x140952720`, 2026-11-03)
+MAP_STREAM is the stage before client 420. It loops over the loader's streamer list (`+0x230`, count `+0x23c`) on every tick and calls each streamer's status (vtable `+0x30`, at `0x1409527d9`):
+- **1–3:** in progress. Timing marks are set in the view's mask (0x80/0x40/0x20), and the streamer is pumped with `+0x20(100, 0)`.
+- **4:** done. The result is taken through `+0x40` into `+0x250`, a quality setting (setting 0xb5, giving 100 or 40) is applied through `+0xb0`, then the streamer is destroyed and its slot cleared.
+- **5:** failed. The slot is cleared and the stage is marked as an error.
+
+When every slot is done, the loader calls `0x140953450` and logs `MapLoader: Completed STATE_MAP_STREAM`. It then moves to MODELS_STREAM (9) and calls the stored callback, which sends client **420**. If any streamer failed, it logs "…with error", moves to state 8 and the callback sends **418**. An empty list completes at once.
+
+There is **no timeout and no server input** here. A stop in MAP_STREAM means a streamer stuck in status 1–3 (map file data on the client), which the server cannot answer. Verified by disassembly of `0x140952720` (rizin, frozen exe).
 
 ## AGENT_STREAM conditions (`0x140951ce0`)
 
