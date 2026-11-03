@@ -151,3 +151,72 @@ fn profession_skill_and_view_frames_match_client_layouts() {
     ids.push(check("view suppression", &f));
     assert_eq!(ids, vec![477, 478, 479, 480, 618, 619, 620, 621, 622, 623, 612, 605, 606, 609, 613, 585]);
 }
+
+#[test]
+fn core_stats_and_specialization_frames_match_client_layouts() {
+    use gw2_proto::core_stats::{AttributeRecord209026, CoreStatsCreation209026, ExtendedCoreStats209026};
+    use gw2_proto::specialization::{SpecializationFrame209026, SpecializationOperation209026 as P};
+    let mut ids = Vec::new();
+    for extended in [
+        Some(ExtendedCoreStats209026 {
+            value: 0,
+            attributes: [AttributeRecord209026 { value_0: 0, value_1: 0, value_2: -1 }; 12],
+            values: [0.0; 3],
+        }),
+        None,
+    ] {
+        let mut f = BytesMut::new();
+        CoreStatsCreation209026 { character_index: 1, appearance: [0; 45], earned_level: 1, level_2: 0, profession: 1, extended }
+            .encode_frame(&mut f);
+        ids.push(check("core stats", &f));
+    }
+    for operation in [
+        P::Assign { specialization_uid: 1, slot: 0 },
+        P::AssignMajorTrait { trait_uid: 1, specialization_slot: 0, major_trait_slot: 0 },
+        P::Replace { specialization_uids: [0; 3], trait_uids: [[0; 3]; 3], notification: 0 },
+        P::Swap { first_slot: 0, second_slot: 1 },
+    ] {
+        let mut f = BytesMut::new();
+        SpecializationFrame209026 { player_index: 1, operation }.encode_frame(&mut f);
+        ids.push(check("specialization", &f));
+    }
+    assert_eq!(&ids[..2], &[182, 183]);
+    assert_eq!(ids.len(), 6);
+}
+
+#[test]
+fn quest_reward_progress_wardrobe_and_behavior_frames_match_client_layouts() {
+    use gw2_proto::agent_behavior::AgentBehaviorFrame209026;
+    use gw2_proto::progress::{BitMaskProgressFrame209026, BitProgressFrame209026, CounterProgressFrame209026};
+    use gw2_proto::quest::QuestManagerReportFrame209026;
+    use gw2_proto::reward_track::RewardTrackCreationFrame209026;
+    use gw2_proto::wardrobe::{WardrobeFrame209026, WardrobeOperation209026 as W};
+    let mut ids = Vec::new();
+    let mut f = BytesMut::new();
+    QuestManagerReportFrame209026 { player_index: 1 }.encode_frame(&mut f);
+    ids.push(check("quest report", &f));
+    let mut f = BytesMut::new();
+    RewardTrackCreationFrame209026 { player_index: 1, track_ids: [0; 4], slot_bytes: [0; 4] }.encode_frame(&mut f);
+    ids.push(check("reward track", &f));
+    let mut f = BytesMut::new();
+    BitProgressFrame209026 { progress_key: 1, channel_mask: 1 }.encode_frame(&mut f);
+    ids.push(check("bit progress", &f));
+    let mut f = BytesMut::new();
+    BitMaskProgressFrame209026 { progress_key: 1, words: vec![0, 1] }.encode_frame(&mut f).unwrap();
+    ids.push(check("bitmask progress", &f));
+    let mut f = BytesMut::new();
+    CounterProgressFrame209026 { progress_key: 1, values: vec![0, 1, 2, 3] }.encode_frame(&mut f).unwrap();
+    ids.push(check("counter progress", &f));
+    for operation in [W::AssignType23 { content_id: 1 }, W::UpdateWords { values: [0; 4] }] {
+        let mut f = BytesMut::new();
+        WardrobeFrame209026 { character_index: 1, operation }.encode_frame(&mut f);
+        ids.push(check("wardrobe", &f));
+    }
+    let mut f = BytesMut::new();
+    AgentBehaviorFrame209026 { agent_index: 1, remote_tick: 300, command_flags: 0x10, behavior_value: 0, behavior_data: vec![] }
+        .encode_frame(&mut f)
+        .unwrap();
+    ids.push(check("agent behavior", &f));
+    assert_eq!(ids.len(), 8);
+    assert_eq!(*ids.last().unwrap(), 84);
+}
