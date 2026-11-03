@@ -499,6 +499,60 @@ pub(crate) mod tests {
         assert!(census.iter().any(|c| c.1 == 1063) && census.iter().any(|c| c.1 == 1036) && census.iter().any(|c| c.1 == 431));
     }
 
+    /// Deterministic xorshift bytes (no extra dependency).
+    fn noise(seed: u64, len: usize) -> Vec<u8> {
+        let mut x = seed | 1;
+        (0..len)
+            .map(|_| {
+                x ^= x << 13;
+                x ^= x >> 7;
+                x ^= x << 17;
+                x as u8
+            })
+            .collect()
+    }
+
+    /// Malformed client input never panics the mission phase: every truncated prefix of
+    /// valid traffic is retained (not misparsed), junk after valid frames disables the phase
+    /// cleanly, and 500 seeded random inputs (including split delivery) neither panic nor
+    /// make the phase reply more than once per event.
+    #[test]
+    fn malformed_client_input_never_panics_and_disables_cleanly() {
+        let mut valid = BytesMut::new();
+        map_load::encode_empty(map_load::MAP_LOADED_420, &mut valid);
+        valid.extend_from_slice(&agent_frame_with(4, true));
+        valid.extend_from_slice(&agent_frame(17));
+        map_load::encode_empty(map_load::AGENTS_LOADED_412, &mut valid);
+        // Truncated prefixes: never more events than complete frames, phase still enabled.
+        for cut in 0..valid.len() {
+            let mut phase = populated_phase();
+            let seen = phase.push(&valid[..cut]);
+            assert!(seen.len() <= 4 && phase.enabled(), "prefix {cut}");
+        }
+        // A junk tail after valid frames: earlier events still delivered, then disabled.
+        let mut tail = valid.clone();
+        tail.extend_from_slice(&[0xff, 0xff, 0x01]); // id 65535: no descriptor
+        let mut phase = populated_phase();
+        assert_eq!(phase.push(&tail).len(), 4);
+        assert!(!phase.enabled());
+        assert!(phase.push(&valid).is_empty(), "a disabled phase stays silent");
+        // Seeded random input, whole and split: no panic; at most one population and one begin.
+        for seed in 0..500u64 {
+            let input = noise(seed.wrapping_mul(0x9e37_79b9_7f4a_7c15), (seed as usize % 300) + 1);
+            let mut phase = populated_phase();
+            let split = input.len() / 2;
+            let mut replies = 0;
+            for part in [&input[..split], &input[split..]] {
+                for seen in phase.push(part) {
+                    if phase.respond(&seen).unwrap().is_some() {
+                        replies += 1;
+                    }
+                }
+            }
+            assert!(replies <= 2, "seed {seed}");
+        }
+    }
+
     #[test]
     fn optional_fields_frame_absent_and_present_for_every_split() {
         let absent = agent_frame_with(4, false);

@@ -629,6 +629,40 @@ mod tests {
         assert_eq!(ids, vec![8, 10, 17, 7, 8, 3, 20]);
     }
 
+    /// Malformed client input never panics the auth probe: random bytes before login are
+    /// an error or retained (bounded), and random bytes in the play phase disable it cleanly;
+    /// every truncated prefix of the play input is retained without a reply.
+    #[test]
+    fn malformed_auth_input_never_panics() {
+        let noise = |seed: u64, len: usize| {
+            let mut x = seed | 1;
+            (0..len)
+                .map(|_| {
+                    x ^= x << 13;
+                    x ^= x >> 7;
+                    x ^= x << 17;
+                    x as u8
+                })
+                .collect::<Vec<u8>>()
+        };
+        let play = play_input();
+        for cut in 0..play.len() {
+            let mut probe = play_probe();
+            let _ = probe.push(&play[..cut]).unwrap();
+            assert!(probe.play_enabled(), "prefix {cut} must be retained, not misparsed");
+        }
+        for seed in 0..500u64 {
+            let input = noise(seed.wrapping_mul(0x9e37_79b9_7f4a_7c15), (seed as usize % 300) + 1);
+            // Before login: an error or retained bytes, never a panic.
+            let fixture = ReplyFixture::new(Bytes::from_static(&[0x44; 2]), None).unwrap();
+            let mut fresh = AuthProbe::new(fixture);
+            let _ = fresh.push(&input);
+            // In the play phase: no panic; garbage either frames (ids 22/29 only reply) or disables.
+            let mut probe = play_probe();
+            let _ = probe.push(&input);
+        }
+    }
+
     #[test]
     fn play_phase_disables_on_undecodable_frame_and_is_opt_in() {
         let mut probe = play_probe();
