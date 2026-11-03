@@ -384,6 +384,15 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
         failing handler.
       - So in-world server messages are added only from the owner's observed traffic and
         verified handlers, never stubbed speculatively.
+    - **Owner's first b107/b108 device run (14:22:52Z).**
+      - Worked: the Kron4ek Wine 10 prefix provisioned, the bubble preflight passed, the
+        runner armed (preferred base, no gdb error, no stack overflow), and the client
+        reached Banshee cligate at 14:22:58Z.
+      - Then the client showed "Unable To Open Archive File … Gw2.dat". The launcher's
+        bubble mounts the client folder `--ro-bind`, and GW2 opens Gw2.dat for write and
+        writes Gw2-64.tmp and debug.log there.
+      - The sandbox runs mounted it read-write and left Gw2.dat unchanged (mtime and size).
+      - Fix (launcher): `--bind` the client folder. No server change.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
