@@ -118,6 +118,7 @@ class DhPatch(gdb.Breakpoint):
         if inf.read_memory(ptr, size).tobytes() != OWN_DH:
             abort('DH write')
         print('GW2_RUNNER: DH patch applied')
+        print('GW2_RUNNER: downloader at DH: %s' % downloader_state(inf))
         self.enabled = False
         return False
 
@@ -212,6 +213,44 @@ def arm_stage_trace(inf, slide):
         StageTrace('*%#x' % (site + slide), internal=True)
     print('GW2_RUNNER: stage trace armed (%d loader sites)' % len(STAGE_SITES))
 
+# Read-only AssetDownloader check (docs/re/209026-map-ready.md, MAP_DOWNLOAD). MAP_DOWNLOAD
+# waits for the map's manifest preparers, which only make progress through the downloader
+# instance at 0x1427fad70; registration (0x140d88140) silently does nothing when it is null.
+# Local run 77: set at the first connect, registration twice during the manifest fetches.
+# Prints the slot state (set/null, never the pointer) and the first 8 registrations.
+# Nothing is written. Guarded on the registration prologue. Off with GW2_RUNNER_STAGE_TRACE=0.
+DL_SLOT, DL_REGISTER = 0x1427fad70, 0x140d88140
+
+def downloader_state(inf):
+    try:
+        return 'null' if int.from_bytes(inf.read_memory(DL_SLOT + SLIDE[0], 8).tobytes(), 'little') == 0 else 'set'
+    except (gdb.MemoryError, gdb.error):
+        return '?'
+
+class DownloaderRegistration(gdb.Breakpoint):
+    hits = 0
+    def stop(self):
+        if not in_client() or not is_x86_64():
+            return False
+        DownloaderRegistration.hits += 1
+        if DownloaderRegistration.hits <= 8:
+            print('GW2_RUNNER: downloader registration %d at %s; downloader %s' % (
+                DownloaderRegistration.hits, time.strftime('%H:%M:%SZ', time.gmtime()), downloader_state(gdb.selected_inferior())))
+        return False
+
+def arm_downloader_check(inf, slide):
+    if os.environ.get('GW2_RUNNER_STAGE_TRACE', '1') == '0':
+        return
+    try:
+        if inf.read_memory(DL_REGISTER + slide, 8).tobytes() != file_bytes(DL_REGISTER, 8):
+            print('GW2_RUNNER: downloader check guard failed; skipped')
+            return
+    except (gdb.MemoryError, gdb.error, ValueError):
+        print('GW2_RUNNER: downloader check skipped (memory)')
+        return
+    DownloaderRegistration('*%#x' % (DL_REGISTER + slide), internal=True)
+    print('GW2_RUNNER: downloader at arm: %s' % downloader_state(inf))
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -248,6 +287,7 @@ class Arm(gdb.Breakpoint):
         print('GW2_RUNNER: patch points armed (image %s)' % ('at its preferred base' if slide == 0 else 'relocated'))
         apply_world_name(inf, slide)
         arm_stage_trace(inf, slide)
+        arm_downloader_check(inf, slide)
         self.enabled = False
         return False
 
