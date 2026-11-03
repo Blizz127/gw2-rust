@@ -6,7 +6,7 @@ use std::{
     net::{SocketAddr, TcpListener, TcpStream},
     path::{Path, PathBuf},
     sync::Arc,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 use bytes::{Bytes, BytesMut};
@@ -105,6 +105,10 @@ fn observe(
     let play_enabled = auth.as_ref().is_some_and(auth::AuthProbe::play_enabled);
     stream.set_read_timeout(Some(read_timeout(play_enabled || mission.is_some())))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
+    // Sizes-only byte timeline (no contents), like the launcher relay's trace: it showed
+    // the split key reply that broke the owner's login. Milliseconds since accept.
+    let t0 = Instant::now();
+    let ms = |t: Instant| t.elapsed().as_millis();
     let preamble = preamble.read(&mut stream)?;
     let mut header = [0u8; 2];
     stream.read_exact(&mut header)?;
@@ -142,7 +146,9 @@ fn observe(
     if let Some(mission) = &mission {
         codec.encode(mission.opening(), &mut first)?;
     }
+    eprintln!("net +{}ms: up {} B (preamble + key record)", ms(t0), preamble.len() + len);
     stream.write_all(&first)?;
+    eprintln!("net +{}ms: down {} B (key reply + first frames, one write)", ms(t0), first.len());
     eprintln!("Game key reply sent; client public length {}", public.len());
     if let Some(reply) = reply {
         eprintln!("Explicit game reply sent: {} plaintext bytes", reply.len());
@@ -168,13 +174,19 @@ fn observe(
                     io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut
                 ) =>
             {
+                eprintln!("net +{}ms: read timeout", ms(t0));
                 break;
             }
-            Err(e) => return Err(e),
+            Err(e) => {
+                eprintln!("net +{}ms: read error {:?}", ms(t0), e.kind());
+                return Err(e);
+            }
         };
         if n == 0 {
+            eprintln!("net +{}ms: client EOF", ms(t0));
             break;
         }
+        eprintln!("net +{}ms: up {n} B", ms(t0));
         let mut pending = BytesMut::from(&chunk[..n]);
         if let Some(decoded) = codec.decode(&mut pending)? {
             capture.write_all(&decoded)?;
@@ -198,6 +210,7 @@ fn observe(
             }
             if !wire.is_empty() {
                 stream.write_all(&wire)?;
+                eprintln!("net +{}ms: down {} B", ms(t0), wire.len());
             }
         }
     }

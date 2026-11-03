@@ -91,6 +91,12 @@ def main():
             print('  in-world client messages (first seen):')
             for mid, size, ts in seen:
                 print(f'    {ts} client {mid} ({size} bytes): {layouts.get(mid, "not in the agent client table")}')
+        # Sizes-only byte timeline from the game server (net +Nms: up/down/EOF lines).
+        net = [(ts, text) for ts, text in lines if text.startswith('net +')]
+        if net:
+            print('  game-server byte timeline (last 30):')
+            for ts, text in net[-30:]:
+                print(f'    {ts} {text}')
         bad = [(ts, text) for ts, text in lines if any(re.search(p, text, re.I) for p in FAILURES)]
         for ts, text in bad[:15]:
             print(f'  ! {ts} {text[:140]}')
