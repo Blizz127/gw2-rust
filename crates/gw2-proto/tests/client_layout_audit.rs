@@ -113,3 +113,41 @@ fn health_and_endurance_frames_match_client_layouts() {
     }
     assert_eq!(ids, vec![256, 257, 258, 259, 260, 217, 218, 219, 220, 221]);
 }
+
+#[test]
+fn profession_skill_and_view_frames_match_client_layouts() {
+    use gw2_proto::character_view::CharacterViewSuppression209026;
+    use gw2_proto::guardian::{GuardianFrame209026, GuardianMeter209026, GuardianOperation209026 as G};
+    use gw2_proto::skill_availability::{SkillAvailabilityFrame209026, SkillAvailabilityOperation209026 as A};
+    use gw2_proto::skill_palette::SkillPaletteFrame209026;
+    use gw2_proto::skillbar::{SkillbarFrame209026, SkillbarOperation209026 as S};
+    let meter = GuardianMeter209026 { maximum: 100.0, rate: 0.0, current: 0.0 };
+    let mut ids = Vec::new();
+    for operation in [
+        G::Create { meter, values: [0, 0] },
+        G::Remove,
+        G::Meter { meter, trailing: [0.0, 0.0] },
+        G::Values([0, 0]),
+    ] {
+        let mut f = BytesMut::new();
+        GuardianFrame209026 { character_index: 1, operation }.encode_frame(&mut f);
+        ids.push(check("guardian", &f));
+    }
+    for operation in [S::Create, S::Notify, S::Remove, S::ClearSlotFlag(0), S::AutoAttackSlot(255), S::AutoAttackMask(0)] {
+        let mut f = BytesMut::new();
+        SkillbarFrame209026 { character_index: 1, operation }.encode_frame(&mut f);
+        ids.push(check("skillbar", &f));
+    }
+    let mut f = BytesMut::new();
+    SkillPaletteFrame209026 { palette_key: 0, slot: 0, context: 1, player_index: 1 }.encode_frame(&mut f);
+    ids.push(check("skill palette", &f));
+    for operation in [A::InitialSet(1), A::Reset, A::Remove(1), A::SetAndNotify { skill_key: 1, flags: 0 }] {
+        let mut f = BytesMut::new();
+        SkillAvailabilityFrame209026 { player_index: 1, operation }.encode_frame(&mut f);
+        ids.push(check("skill availability", &f));
+    }
+    let mut f = BytesMut::new();
+    CharacterViewSuppression209026 { character_index: 1, value: 0 }.encode_frame(&mut f);
+    ids.push(check("view suppression", &f));
+    assert_eq!(ids, vec![477, 478, 479, 480, 618, 619, 620, 621, 622, 623, 612, 605, 606, 609, 613, 585]);
+}
