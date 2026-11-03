@@ -446,6 +446,23 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
         server 7.
       - Kit d3b07c9 deployed 17:06Z (DIT ack, smoke-run first), ready after 3.3 s.
       - Not verified yet: which check enables PLAY after the selection.
+      - **Confirmed live (17:07:03Z).** The owner logged in, selected Anvil Rock (logged twice) and pressed
+        PLAY, so PLAY is enabled by the 14→7 exchange.
+    - **First map load (17:07Z): stalled on the Queensdale loading screen.**
+      - The game server sent 1063 MapData and 1060 LoadMap.
+      - The client then sent message 278. No loaded group framed it, so the log showed
+        "Mission phase disabled: no schema for message id 278" and the population after 420
+        was never sent. The owner closed the client at about 17:09Z.
+      - **Fix in 7b051e4.** `data/protocol/209026/client-tables.xml` has all 34 client
+        registration tables (525 messages, extracted with
+        `~/re/gw2/notes/extract-client-tables.py`; sha256 b0f026b4…, REA ev_3ada7c78…).
+        - 278 is in table 0x14223bf20 (ids 278–286).
+        - The mission phase adds 421 ids that are not yet framed.
+        - It leaves out 8 ids that tables define with different layouts: 30, 34, 36–40
+          and 89.
+        - Regression test: `client_278_during_the_map_load_keeps_the_phase_and_the_population_follows`.
+      - Kit 7b051e4 deployed 17:15:31Z (DIT ack, smoke-run first), ready after 3.5 s. The
+        owner was told he can retry.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
