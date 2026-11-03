@@ -408,6 +408,11 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       - Fixed in a9624d8: TCP_NODELAY plus one write for the key reply and its first
         frames, with a one-read regression test.
       - Kit a9624d8 deployed 15:05Z (DIT ack), ready after 3.5 s.
+      - Kit 8f3af5b deployed 16:07Z in an idle window (DIT ack), ready after 3.3 s.
+        - It sends one write per read for all replies.
+        - Each auth and game connection logs a sizes-only byte timeline (`net +Nms: up/down
+          N B`, client EOF); `tools/owner-run-report.py` prints it.
+        - Rollback: link to a9624d8.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
