@@ -326,6 +326,18 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       For the owner's b107 log: read Banshee's `server.log` from the recorded baseline. A
       stall right after ACCEPT with no new auth or game lines points client-side. Still
       unanswered: client 1, 4 and 34.
+    - **Banshee kit cf490a8, deployed 2026-11-03 07:16Z** with DIT's ack while nobody was
+      on.
+      - Only `gw2-game-observe` changed. The mission phase now frames the group-0 agent
+        client messages ([agent client messages](re/209026-agent-client-messages.md)).
+        Before, client 17 between 420 and 412 disabled the phase, so 1036 was never
+        sent.
+      - Guarded stop, link switch while stopped, start: ready after **3.3 s**.
+      - `server.log` baseline for the owner's next run: line 103.
+      - stackd r57 has gw2 as wake_only, probes pinned to 5825dfb (`humans` across
+        login/auth/game).
+      - A guarded stop leaves the unit `failed` (exit 143 on SIGTERM). A later kit adds
+        `SuccessExitStatus=143`.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
