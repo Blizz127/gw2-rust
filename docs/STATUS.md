@@ -350,6 +350,30 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
         `inactive`.
       - start→ready 3.3 s. **`server.log` baseline for the owner's next run: line 107.**
       - Rollback: link to cf490a8.
+    - **Reading the owner's b107 run.** Banshee kit 56945a9, baseline line 107.
+      Tools: `deploy/tail-stamped.sh` (running since 09:01:54Z) and
+      `tools/owner-run-report.py`. What run 71 does not cover: his GPU under DXVK 3.10,
+      Bazzite's host libraries under Kron4ek Wine, and everything after I ACCEPT.
+      Where the furthest milestone points, in order:
+      1. Nothing reached Banshee: the device side.
+         - gw2-runner.log: "never seen", stack overflow, `gw2 bubble:` or `bwrap:` lines,
+           provisioning.
+         - The journal: missing host libraries, runtime file modes or symlinks after the
+           in-process extract.
+         These are launcher fixes.
+      2. Login stops before RequestGameToken: a TLS or trust problem.
+         - Check the "trust patch applied" line.
+         - The package identity matches Banshee (run 63b).
+      3. Stops at auth login 10 or the agreement: normal until he clicks I ACCEPT, then
+         PLAY.
+      4. 22 but no 29: our server 8/3 name-select reply.
+      5. 29 but no 6112 mission opening: route 20 (127.1.0.4:6112) through the launcher
+         relay to Banshee 6112.
+      6. Mission opening but no 420 within ~120 s: client-side map load (Queensdale from
+         Gw2.dat), or our 1063/1060 placeholder values.
+      7. 420 but no 412: the population sequence.
+      8. 1036 sent and agent traffic seen: in the world. The next work is what the client
+         waits for there.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
