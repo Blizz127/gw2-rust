@@ -32,8 +32,8 @@ use std::io::{self, ErrorKind};
 const MISSION_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/mission.xml");
 /// Group 0 (AgMsg.cpp) client messages: the agent traffic the client sends once
 /// in the world, e.g. client 17 (delay report). Extracted by
-/// ~/re/gw2/notes/extract-agent-client.py; kind-15 (Optional) fields stay
-/// unverified and fail framing explicitly.
+/// ~/re/gw2/notes/extract-agent-client.py; kind 15 is Optional (a presence
+/// byte, then the nested fields), verified from the client's field codec.
 const AGENT_CLIENT_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/agent-client.xml");
 const PENDING_LIMIT: usize = 65536;
 
@@ -360,8 +360,25 @@ pub(crate) mod tests {
         MissionPhase::new(15).unwrap().with_population(fixture).unwrap()
     }
 
-    /// One group-0 client frame built from the extracted schema with zero values.
-    fn agent_frame(id: u16) -> BytesMut {
+    /// A fixture value for one schema field; `present` selects every Optional.
+    fn fixture_value(f: &schema::Field, present: bool) -> dynamic::Value {
+        match f.kind.as_str() {
+            "Byte" => dynamic::Value::U8(0),
+            "Word" => dynamic::Value::U16(250),
+            "Dword" => dynamic::Value::U32(0x1234),
+            "Float" => dynamic::Value::F32(1.5),
+            "Float3" => dynamic::Value::Floats(vec![1.0, 2.0, 7.4]),
+            "Float4" => dynamic::Value::Floats(vec![0.0, 0.0, 0.0, 1.0]),
+            "Optional" if present => dynamic::Value::Optional(Some(Box::new(dynamic::Value::Struct(
+                f.fields.iter().map(|g| (g.name.clone(), fixture_value(g, present))).collect(),
+            )))),
+            "Optional" => dynamic::Value::Optional(None),
+            other => panic!("test fixture lacks kind {other}"),
+        }
+    }
+
+    /// One group-0 client frame built from the extracted schema.
+    fn agent_frame_with(id: u16, present: bool) -> BytesMut {
         let parsed = schema::parse(AGENT_CLIENT_SCHEMA).unwrap();
         let message = parsed.protocols[0].groups[0]
             .client
@@ -369,25 +386,15 @@ pub(crate) mod tests {
             .find(|m| m.id == id)
             .unwrap()
             .clone();
-        let values = message
-            .fields
-            .iter()
-            .map(|f| {
-                let value = match f.kind.as_str() {
-                    "Byte" => dynamic::Value::U8(0),
-                    "Word" => dynamic::Value::U16(250),
-                    "Dword" => dynamic::Value::U32(0x1234),
-                    "Float" => dynamic::Value::F32(1.5),
-                    "Float3" => dynamic::Value::Floats(vec![1.0, 2.0, 7.4]),
-                    other => panic!("test fixture lacks kind {other}"),
-                };
-                (f.name.clone(), value)
-            })
-            .collect();
+        let values = message.fields.iter().map(|f| (f.name.clone(), fixture_value(f, present))).collect();
         let mut out = BytesMut::new();
         id.encode(&mut out);
         dynamic::encode_message(&message, &rules(), &dynamic::Value::Struct(values), &mut out).unwrap();
         out
+    }
+
+    fn agent_frame(id: u16) -> BytesMut {
+        agent_frame_with(id, false)
     }
 
     #[test]
@@ -437,14 +444,31 @@ pub(crate) mod tests {
         }
     }
 
+    /// Kind 15 is Optional (docs/re/209026-agent-client-messages.md): one presence byte,
+    /// then the nested fields only when present. Client 4 nests two more Optionals.
     #[test]
-    fn unverified_optional_field_disables_explicitly() {
-        // Client 4 carries a kind-15 (Optional) field whose encoding is unverified.
+    fn optional_fields_frame_absent_and_present_for_every_split() {
+        let absent = agent_frame_with(4, false);
+        let present = agent_frame_with(4, true);
+        // The present form adds the nested fields: three Float4 (16 bytes each), a Dword,
+        // two Bytes and the two inner presence bytes.
+        assert!(present.len() > absent.len() + 3 * 16);
+        let mut input = absent.clone();
+        input.extend_from_slice(&present);
+        input.extend_from_slice(&agent_frame(17));
+        for split in 0..=input.len() {
+            let mut phase = populated_phase();
+            let mut seen = phase.push(&input[..split]);
+            seen.extend(phase.push(&input[split..]));
+            assert_eq!(seen, vec![Seen::Other(4), Seen::Other(4), Seen::Other(17)], "split {split}");
+            assert!(phase.enabled(), "split {split}");
+        }
+        // A presence byte the client never writes (its encoder uses setne: 0 or 1) is rejected.
+        let mut bad = absent.clone();
+        let last = bad.len() - 1;
+        bad[last] = 2;
         let mut phase = populated_phase();
-        let mut input = BytesMut::new();
-        4u16.encode(&mut input);
-        input.extend_from_slice(&[0; 16]);
-        assert!(phase.push(&input).is_empty());
+        assert!(phase.push(&bad).is_empty());
         assert!(!phase.enabled());
     }
 
