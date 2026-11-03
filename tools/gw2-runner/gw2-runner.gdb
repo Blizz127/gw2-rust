@@ -172,12 +172,16 @@ def apply_world_name(inf, slide):
         print('GW2_RUNNER: world-name patch skipped (memory)')
 
 # Read-only map-loader stage trace (docs/re/209026-map-ready.md). 0x1409bafd0 is a
-# compiled-out marker (spills its four arguments, then ret). The loader and the view call it
-# on every stage transition with ecx = state and rdx = an ASCII name such as
-# "MapLoader: STATE_MAP_DOWNLOAD", so a breakpoint there names the stage a load stops in.
-# Nothing is written. GW2_RUNNER_STAGE_TRACE=0 turns it off.
-STAGE_FN = 0x1409bafd0
-STAGE_GUARD = bytes.fromhex('48894c240848895424104c894424184c894c2420c3')
+# compiled-out marker (spills its four arguments, then ret) that the loader calls on every
+# stage transition with ecx = state and rdx = an ASCII name such as
+# "MapLoader: STATE_MAP_DOWNLOAD". The marker itself is also the profiler's scope marker and
+# fires on every frame, so the breakpoints sit only on the loader's own 22 call sites in
+# VdfLoad.cpp (the arguments are already set there). Nothing is written. Each site is guarded
+# on its 5 call/jmp bytes. GW2_RUNNER_STAGE_TRACE=0 turns it off.
+STAGE_SITES = (0x1409518ec, 0x140951907, 0x140951991, 0x1409519ac, 0x140951a1d, 0x140951a71,
+               0x140951a8c, 0x140951c12, 0x140951c2d, 0x140952009, 0x140952024, 0x14095219d,
+               0x1409525e0, 0x1409525fb, 0x140952646, 0x140952a0b, 0x140952a3e, 0x140952a59,
+               0x140952e9a, 0x140952eb5, 0x140953011, 0x14095377c)
 
 class StageTrace(gdb.Breakpoint):
     def stop(self):
@@ -197,14 +201,16 @@ def arm_stage_trace(inf, slide):
     if os.environ.get('GW2_RUNNER_STAGE_TRACE', '1') == '0':
         return
     try:
-        if inf.read_memory(STAGE_FN + slide, len(STAGE_GUARD)).tobytes() != STAGE_GUARD:
-            print('GW2_RUNNER: stage trace guard failed; skipped')
-            return
-    except (gdb.MemoryError, gdb.error):
+        for site in STAGE_SITES:
+            if inf.read_memory(site + slide, 5).tobytes() != file_bytes(site, 5):
+                print('GW2_RUNNER: stage trace guard failed; skipped')
+                return
+    except (gdb.MemoryError, gdb.error, ValueError):
         print('GW2_RUNNER: stage trace skipped (memory)')
         return
-    StageTrace('*%#x' % (STAGE_FN + slide), internal=True)
-    print('GW2_RUNNER: stage trace armed')
+    for site in STAGE_SITES:
+        StageTrace('*%#x' % (site + slide), internal=True)
+    print('GW2_RUNNER: stage trace armed (%d loader sites)' % len(STAGE_SITES))
 
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
