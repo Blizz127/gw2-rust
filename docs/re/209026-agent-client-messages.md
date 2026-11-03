@@ -67,10 +67,22 @@ with kind 15 emitted as Optional. The first extraction, with kind 15 unverified,
 `~/re/gw2/notes/extract-server-tables.py` scans the image's .rdata and .data for runs of
 (descriptor, handler) pairs, where the descriptor starts with a message-id field and the
 handler points into .text.
-- It finds **50 tables, 1253 server messages**. Two use an unknown field kind 26.
+- It finds **50 tables, 1253 server messages**. No field kind is unknown any more.
 - It writes them to `data/protocol/209026/server-tables.xml` (local, gitignored), one
-  group per table: 225671 bytes, sha256 `22c9c0d1…7ffd3`, evidence
-  `ev_990e99019bdabf1946c8651848b3668ee21b8240c06e6a0b02c44ce3e841dcfd`.
+  group per table (225649 bytes).
+  - Regeneration evidence: `ev_49f5dea5f12197fb072acfa7eca78b9f8ee235bf9b92450badd0b5cbe0c383f4`.
+  - Exact sha256: `f64a99ebb7397a49b5df65736d5678ecee1f21dc210a0a6561062dbb437de8ae`.
+  - Private bundle: `~/re/gw2/notes/209026-server-tables-1.json`.
+
+**Kind 26 frames as Qword** (8 raw bytes).
+- It's used in one message, server 782 (table `0x1422413e8`), inside an array.
+- Its receiver `0x140ff22fe` is kind 5's own: it copies 8 raw bytes and advances 8.
+- Its metadata `(8, 1)` equals kind 5's, meaning 8 bytes, fixed width.
+- Its encoder `0x140ff1432` writes one raw 8-byte value per field, with no varint step.
+- Kind 5's encoder is a different routine (`0x140ff06ae`), so the two kinds may differ in
+  meaning, for example a time or handle type. Only the framing is equal.
+- Evidence: `ev_1e20a6c688f36e339aa4e128264feb1f62af3261457b6d5743f3af798a0cbee0`
+  (`kind26-windows.py`).
 
 The game connection's group-0 server messages are split across tables:
 - the 624-entry table `0x14216e940`;
