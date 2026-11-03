@@ -49,7 +49,8 @@ remote "ln -sfn '$KIT' /home/blizz/gw2-rust-current.new && mv -Tf /home/blizz/gw
 echo "[$(ts)] wake"
 t0=$(date +%s.%N)
 remote "sg blizz -c \"exec /usr/bin/env XDG_RUNTIME_DIR=/run/user/1000 /usr/bin/systemctl --user start gw2-server.service\""
-for _ in $(seq 180); do
+# Fail fast: a crash-looping kit never gets ready, so 60 polls (~1-2 min with ssh) is enough.
+for _ in $(seq 60); do
   if out=$(remote "sg blizz -c \"exec /usr/bin/python3 -I $PROBE health $STATE\"" 2>/dev/null); then
     printf '[%s] ready after %.1f s: %s\n' "$(ts)" "$(echo "$(date +%s.%N) - $t0" | bc)" "$out"
     remote "python3 -I $PROBE humans $STATE; tail -n +$((lines + 1)) $STATE/server.log | tail -5"
@@ -57,4 +58,10 @@ for _ in $(seq 180); do
   fi
   sleep 1
 done
-echo "[$(ts)] NOT ready 180 s after start (link now $KIT, previously $old)"; exit 4
+echo "[$(ts)] NOT ready after start; rolling back to $old"
+remote "export XDG_RUNTIME_DIR=/run/user/1000; systemctl --user stop gw2-server.service; ln -sfn '$old' /home/blizz/gw2-rust-current.new && mv -Tf /home/blizz/gw2-rust-current.new /home/blizz/gw2-rust-current; systemctl --user reset-failed gw2-server.service 2>/dev/null; systemctl --user start gw2-server.service" || true
+for _ in $(seq 60); do
+  if out=$(remote "sg blizz -c \"exec /usr/bin/python3 -I $PROBE health $STATE\"" 2>/dev/null); then echo "[$(ts)] rolled back, ready: $out"; exit 4; fi
+  sleep 1
+done
+echo "[$(ts)] ROLLBACK NOT READY: check Banshee now"; exit 5

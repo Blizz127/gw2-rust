@@ -78,7 +78,7 @@ fn main() {
             }
             ("--reply-xml", Some(v)) => {
                 let (path, file) = v.split_once('=').unwrap_or_else(|| die("--reply-xml requires /PATH=FILE"));
-                if !path.starts_with('/') || !path.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'/' || c == b'_') {
+                if !valid_sts_path(path) {
                     die("--reply-xml requires an ASCII STS request path");
                 }
                 let input = std::fs::File::open(file).unwrap_or_else(|e| die(&format!("open reply fixture: {e}")));
@@ -272,6 +272,16 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: Option<PathBuf>, greet
     println!("conn {id}: closed");
 }
 
+/// An STS request path as the client sends it: `/Service/Method`, ASCII letters, digits,
+/// `_` and `.` (real service names are dotted, e.g. `/Game.com.Wallet/SetWatch`), never `..`.
+fn valid_sts_path(path: &str) -> bool {
+    path.starts_with('/')
+        && path.len() > 1
+        && !path.contains("..")
+        && path.bytes().all(|c| c.is_ascii_alphanumeric() || matches!(c, b'/' | b'_' | b'.'))
+}
+
+
 fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut dyn Write, start: Instant, replies: &[(String, Vec<u8>)]) {
     // Preserve bytes read beyond the plaintext STS message (possibly a ClientHello).
     // The client pings every 30 s and may wait on replies longer than that; a 30 s idle
@@ -358,4 +368,19 @@ fn hexdump(bytes: &[u8]) -> String {
         out.push('\n');
     }
     out
+}
+
+#[cfg(test)]
+mod path_tests {
+    use super::valid_sts_path;
+
+    #[test]
+    fn sts_paths_the_client_sends_are_accepted() {
+        for path in ["/Auth/GetUserInfo", "/Mail/SetOptIn", "/Presence/SetWatch", "/Game.com.Wallet/SetWatch", "/Auth2f/Check"] {
+            assert!(valid_sts_path(path), "{path}");
+        }
+        for path in ["", "/", "Auth/X", "/a/../b", "/a b", "/a=b", "/\u{e9}"] {
+            assert!(!valid_sts_path(path), "{path:?}");
+        }
+    }
 }
