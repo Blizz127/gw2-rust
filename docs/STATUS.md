@@ -457,9 +457,15 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
         registration tables (525 messages, extracted with
         `~/re/gw2/notes/extract-client-tables.py`; sha256 b0f026b4…, REA ev_3ada7c78…).
         - 278 is in table 0x14223bf20 (ids 278–286).
-        - The mission phase adds 421 ids that are not yet framed.
-        - It leaves out 8 ids that tables define with different layouts: 30, 34, 36–40
-          and 89.
+        - 7b051e4 added 421 ids and left out 8 that tables define differently (30, 34,
+          36–40 and 89).
+        - **Fixed in 0edbe1f:** those clashes were the auth connection's table
+          0x141923f00 against the game's main table 0x14216e260.
+          - The auth table is identical to auth.xml (28 of 28 layouts), so it is now
+            skipped on 6112.
+          - The game table ends exactly at its server table 0x14216e940 (0x6e0 B = 219
+            descriptors plus a null) and now wins clashes.
+          - Result: 428 ids, none ambiguous. Only auth 29 (route request) is unframed on 6112.
         - Regression test: `client_278_during_the_map_load_keeps_the_phase_and_the_population_follows`.
       - Kit 7b051e4 deployed 17:15:31Z (DIT ack, smoke-run first), ready after 3.5 s. The
         owner was told he can retry.
