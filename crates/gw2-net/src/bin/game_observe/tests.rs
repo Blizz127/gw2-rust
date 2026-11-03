@@ -380,3 +380,84 @@ fn no_capture_mode_serves_without_writing_files() {
     assert!(!path.exists(), "no-capture mode created a capture file");
     assert!(!path.with_extension("preamble.bin").exists());
 }
+
+/// The deployed game-server configuration (Banshee: --no-capture
+/// --mission-preamble --mission-map-key 15 --mission-population <record>
+/// --mission-spawn 0,0,7.4) end to end over TCP: key exchange, then 1063/1060,
+/// the population sequence after client 420 MapLoaded, then 1036 + 431 after
+/// client 412 AgentsLoaded. 420 and 412 are sent as one plaintext, with the
+/// encrypted bytes split across two writes at every offset; no file is written.
+#[test]
+fn deployed_mission_population_sequence_over_tcp_for_every_split() {
+    let record = mission::tests::guardian_record(15, 1);
+    let spawn = [0.0, 0.0, 7.4];
+    let fixture = mission::PopulationFixture::new(&record, spawn).unwrap();
+    let mut expect = mission::MissionPhase::new(15).unwrap().with_population(fixture.clone()).unwrap();
+    let opening = expect.opening();
+    let population = expect
+        .respond(&mission::Seen::Map(gw2_proto::map_load::ClientMapEvent::MapLoaded))
+        .unwrap()
+        .unwrap();
+    let begin = expect
+        .respond(&mission::Seen::Map(gw2_proto::map_load::ClientMapEvent::AgentsLoaded))
+        .unwrap()
+        .unwrap();
+    let mut plain = BytesMut::new();
+    gw2_proto::map_load::encode_empty(gw2_proto::map_load::MAP_LOADED_420, &mut plain);
+    gw2_proto::map_load::encode_empty(gw2_proto::map_load::AGENTS_LOADED_412, &mut plain);
+    for cut in 0..=plain.len() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let path = std::env::temp_dir().join(format!("gw2-observe-deployed-{}-{cut}.bin", std::process::id()));
+        // Public toy group for this local test; no stored identities are loaded.
+        let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+        let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
+        let (server_path, server_fixture) = (path.clone(), fixture.clone());
+        let server = std::thread::spawn(move || {
+            let fixtures = Fixtures {
+                mission_map_key: Some(15),
+                population: Some(server_fixture),
+                no_capture: true,
+                ..Fixtures::default()
+            };
+            observe(stream_of(listener), &key, &server_path, fixtures, Preamble::Mission)
+        });
+        let mut client = TcpStream::connect(address).unwrap();
+        client.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+        let mut input = preamble::fixture(Preamble::Mission);
+        input.extend_from_slice(&[0, 6, 0, 4, 0, 0]);
+        client.write_all(&input).unwrap();
+        let mut reply = [0u8; 22];
+        client.read_exact(&mut reply).unwrap();
+        let mut codec = ClientCodec::new(&session_secret(&shared, &reply[2..].try_into().unwrap()));
+        let mut pending = BytesMut::new();
+        let mut frames = Vec::new();
+        let mut wire = BytesMut::new();
+        let mut sent = false;
+        while frames.len() < 3 {
+            if let Some(frame) = codec.decode(&mut pending).unwrap() {
+                frames.push(frame);
+                if frames.len() == 1 && !sent {
+                    codec.encode(Bytes::copy_from_slice(&plain), &mut wire).unwrap();
+                    client.write_all(&wire[..cut.min(wire.len())]).unwrap();
+                    client.flush().unwrap();
+                    std::thread::sleep(Duration::from_millis(20));
+                    client.write_all(&wire[cut.min(wire.len())..]).unwrap();
+                    sent = true;
+                }
+                continue;
+            }
+            let mut chunk = [0u8; 4096];
+            let n = client.read(&mut chunk).unwrap();
+            assert_ne!(n, 0, "cut {cut}: server closed early after {} frames", frames.len());
+            pending.extend_from_slice(&chunk[..n]);
+        }
+        assert_eq!(frames[0], opening, "cut {cut}: 1063 then 1060");
+        assert_eq!(frames[1], population, "cut {cut}: population after 420");
+        assert_eq!(frames[2], begin, "cut {cut}: 1036 + 431 after 412");
+        client.shutdown(Shutdown::Both).unwrap();
+        server.join().unwrap().unwrap();
+        assert!(!path.exists(), "no-capture mode created a capture file");
+        assert!(!path.with_extension("preamble.bin").exists());
+    }
+}
