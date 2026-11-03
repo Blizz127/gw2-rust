@@ -37,6 +37,7 @@ RUNNER = [
     ('DH patch', r'GW2_RUNNER: DH patch applied'),
     ('client never traced', r'client image was never seen'),
     ('guard failure', r'GW2_RUNNER: .*guard failed|nothing started'),
+    ('world-name patch', r'GW2_RUNNER: world-name [^\n]*'),
     ('gdb script error', r'Python Exception'),
     ('gdb stopped (run ends)', r'^Breakpoint -?\d+, '),
     ('wine stack overflow', r'stack overflow'),
@@ -44,6 +45,55 @@ RUNNER = [
     ('runner refused', r'^gw2-runner: '),
     ('provisioning', r'gw2 provision: '),
 ]
+
+
+# Map-loader stages (VdfLoad.cpp, build 209026) as the b114 runner's read-only stage trace
+# prints them: "GW2_RUNNER: stage <UTC> MapLoader: STATE_<NAME> (<n>)". The marker fires on
+# leaving a stage and on entering the next, so the last name is the stage the load is in.
+# Each stop point maps to what that stage waits on and the next step (docs/re/209026-map-ready.md,
+# docs/re/209026-request-reply.md).
+STAGE_TRIAGE = {
+    'LOAD_CONTENT': 'no wait in this stage; a stop here is an assert on the map definition or content (1063 map id vs the route map key). Check ArenaNet.log for an assertion.',
+    'LOAD_MANIFEST': 'waits with NO timeout for the map-portal loader (MpLoader.cpp) async Gw2.dat read: 0x1417e9740 starts it, 0x1417e9cd0 polls +0xd8 and the per-item +0x18. Not a server message. Next: find the file id it reads (loader +0x30 vtable +0x20/+0x08), check it in the frozen Gw2.dat, check the DNS lines for CATCH-ALL names.',
+    'SERVER_WAIT': 'waits for 1060 (flag +0x2c4); after 300 s it goes to error state 4 and sits. 1060 sets the flag unconditionally, so check that the server log shows "Mission phase sent server 1063 MapData and 1060 LoadMap" for this connection.',
+    'MAP_DOWNLOAD': 'waits with NO timeout for the map resource object (loader +0x218, done slot +0x48, error slot +0x50), kicking 0x140d8f620 every 10 s. An encrypted map without a key errors out instead (Queensdale is unencrypted). Next: the map file (Queensdale 192711) in Gw2.dat and the DNS lines for an unrouted download host.',
+    'MAP_STREAM': 'streams the map; success sends client 420, failure 418. A stop here means streaming never completed. Our 1060 sends position 0,0,0, beside the Queensdale centre surface point (packet 0,0,7.37, docs/re/209026-agent-position.md), so the position is an unlikely cause; read the MAP_STREAM stage 0x140952720 for its wait.',
+    'MODELS_STREAM': 'after 420; model streaming. The server already sent the population on 420; check the population frames were sent.',
+    'MAP_ASSET_STREAM': 'asset streaming before AGENT_STREAM.',
+    'AGENT_STREAM': 'waits with NO timeout for a finalized controlled character (population 428 ... 170, 618, 444), then up to about 120 s for world readiness. A stop here is a population problem.',
+    'READY_WAIT': 'countdown, then READY.',
+    'READY': 'loader done: the client should send 412 and the server answers 1036 + 431. If 412 never came, check the view and connection conditions in map-ready.md.',
+}
+
+
+def stage_report(text):
+    stages = re.findall(r'GW2_RUNNER: stage (\S+) (.+?) \((-?\d+)\)\s*$', text, re.M)
+    if 'GW2_RUNNER: stage trace armed' in text:
+        print('  stage trace: armed')
+    elif 'stage trace' in text:
+        print('  stage trace: ' + re.search(r'GW2_RUNNER: stage trace[^\n]*', text).group(0))
+    if not stages:
+        return
+    print('  map-loader stages (in order):')
+    for ts, name, n in stages[-30:]:
+        print(f'    {ts} {name} ({n})')
+    loader = [(ts, name) for ts, name, n in stages if name.startswith('MapLoader: STATE_')]
+    if loader:
+        ts, name = loader[-1]
+        key = name.split('STATE_', 1)[1]
+        print(f'  LAST LOADER STAGE: {key} (since {ts})')
+        print(f'  triage: {STAGE_TRIAGE.get(key, "not in the triage table; read VdfLoad.cpp dispatcher 0x140951770")}')
+
+
+def dns_report(text):
+    lines = re.findall(r'gw2 dns: [^\n]*', text)
+    if not lines:
+        return
+    odd = [l for l in lines if 'CATCH-ALL' in l or 'unlisted' in l]
+    names = sorted({re.sub(r'^gw2 dns: \S+ \S+ (\S+).*$', r'\1', l) for l in lines})
+    print(f'  dns: {len(lines)} logged queries, {len(names)} names; unrouted: {len(odd)}')
+    for l in odd[:20]:
+        print('    UNROUTED', l[:150])
 
 
 def stamped(path):
@@ -120,6 +170,8 @@ def main():
             hits = [l for l in text.splitlines() if re.search(pattern, l)]
             if hits:
                 print(f'  {name:22} x{len(hits)}: {hits[0][:120]}')
+        stage_report(text)
+        dns_report(text)
     # The client's own crash/disconnect log from the launcher-managed GW2 prefix (the
     # bubble's profile, never the owner's real AppData).
     for path in sorted(glob.glob(os.path.join(LOG_DIR, '*ArenaNet*.log'))):
