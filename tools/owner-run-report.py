@@ -88,6 +88,18 @@ def main():
             hits = [l for l in text.splitlines() if re.search(pattern, l)]
             if hits:
                 print(f'  {name:22} x{len(hits)}: {hits[0][:120]}')
+    # The client's own crash/disconnect log from the launcher-managed GW2 prefix (the
+    # bubble's profile, never the owner's real AppData).
+    for path in sorted(glob.glob(os.path.join(LOG_DIR, '*ArenaNet*.log'))):
+        text = open(path, errors='replace').read()
+        print(f'client log: {os.path.basename(path)}')
+        for pattern in (r'MsgConnDispatch failed on message (\d+)', r'Forcing disconnect on \{[^}]*\}, reason: (\d+)',
+                        r'^Assertion: .*', r'^File: .*', r'^When: .*', r'DISCONNECT_[A-Z_]+'):
+            for m in re.finditer(pattern, text, re.M):
+                print('  ', m.group(0)[:160])
+        failed = re.findall(r'MsgConnDispatch failed on message (\d+)', text)
+        if failed:
+            print('  FIRST FAILING SERVER MESSAGE ID:', failed[0])
     for path in sorted(glob.glob(os.path.join(LOG_DIR, '*journal*'))):
         print(f'journal: {os.path.basename(path)}')
         for line in open(path, errors='replace'):
