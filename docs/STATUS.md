@@ -466,6 +466,7 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
           - The game table ends exactly at its server table 0x14216e940 (0x6e0 B = 219
             descriptors plus a null) and now wins clashes.
           - Result: 428 ids, none ambiguous. Only auth 29 (route request) is unframed on 6112.
+          - Kit 0edbe1f deployed 17:24:19Z (DIT ack, smoke-run first), ready after 3.3 s.
         - Regression test: `client_278_during_the_map_load_keeps_the_phase_and_the_population_follows`.
       - Kit 7b051e4 deployed 17:15:31Z (DIT ack, smoke-run first), ready after 3.5 s. The
         owner was told he can retry.
