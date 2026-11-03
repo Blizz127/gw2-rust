@@ -128,19 +128,26 @@ fn observe(
         prefix_capture.flush()?;
         Box::new(private_file(log)?)
     };
-    stream.write_all(&[1, 22])?;
-    stream.write_all(&block)?;
-    eprintln!("Game key reply sent; client public length {}", public.len());
+    // The key reply and any immediate frames go out in ONE write on a NODELAY socket. The
+    // client rejects a key reply that arrives split across reads (error 58:11:5:535, then
+    // it closes and retries): written as 2 B + 20 B, Nagle held the second part back one
+    // round trip on the owner's tailnet path (154 ms), and the client had already given up.
+    stream.set_nodelay(true)?;
+    let mut first = BytesMut::new();
+    first.extend_from_slice(&[1, 22]);
+    first.extend_from_slice(&block);
     if let Some(reply) = reply {
-        let mut wire = BytesMut::new();
-        codec.encode(reply.clone(), &mut wire)?;
-        stream.write_all(&wire)?;
-        eprintln!("Explicit game reply sent: {} plaintext bytes", reply.len());
+        codec.encode(reply.clone(), &mut first)?;
     }
     if let Some(mission) = &mission {
-        let mut wire = BytesMut::new();
-        codec.encode(mission.opening(), &mut wire)?;
-        stream.write_all(&wire)?;
+        codec.encode(mission.opening(), &mut first)?;
+    }
+    stream.write_all(&first)?;
+    eprintln!("Game key reply sent; client public length {}", public.len());
+    if let Some(reply) = reply {
+        eprintln!("Explicit game reply sent: {} plaintext bytes", reply.len());
+    }
+    if mission.is_some() {
         eprintln!("Mission phase sent server 1063 MapData and 1060 LoadMap");
     }
     let mut chunk = [0u8; 8192];

@@ -461,3 +461,31 @@ fn deployed_mission_population_sequence_over_tcp_for_every_split() {
         assert!(!path.with_extension("preamble.bin").exists());
     }
 }
+
+/// The client rejects a key reply split across reads (owner's device, error 58:11:5:535:
+/// 2 B arrived, the remaining 20 B one Nagle round trip later). The whole key reply and the
+/// first frame must come from one write, so the client's first read holds all of them.
+#[test]
+fn key_reply_and_first_frame_arrive_in_one_read() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let path = std::env::temp_dir().join(format!("gw2-observe-oneread-{}.bin", std::process::id()));
+    // Public toy group for this local test; no stored identities are loaded.
+    let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+    let server_path = path.clone();
+    let server = std::thread::spawn(move || {
+        let fixtures = Fixtures { mission_map_key: Some(15), no_capture: true, ..Fixtures::default() };
+        observe(stream_of(listener), &key, &server_path, fixtures, Preamble::Mission)
+    });
+    let mut client = TcpStream::connect(address).unwrap();
+    client.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    let mut input = preamble::fixture(Preamble::Mission);
+    input.extend_from_slice(&[0, 6, 0, 4, 0, 0]);
+    client.write_all(&input).unwrap();
+    let mut buffer = [0u8; 4096];
+    let n = client.read(&mut buffer).unwrap();
+    assert_eq!(&buffer[..2], &[1, 22]);
+    assert!(n > 22 + 4, "first read held {n} bytes: key reply and opening frame must be one write");
+    client.shutdown(Shutdown::Both).unwrap();
+    server.join().unwrap().unwrap();
+}
