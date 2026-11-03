@@ -274,8 +274,11 @@ fn observe(mut stream: TcpStream, local: SocketAddr, dir: Option<PathBuf>, greet
 
 fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &mut dyn Write, start: Instant, replies: &[(String, Vec<u8>)]) {
     // Preserve bytes read beyond the plaintext STS message (possibly a ClientHello).
-    let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
+    // The client pings every 30 s and may wait on replies longer than that; a 30 s idle
+    // timeout dropped the owner's session (2026-11-03 16:23:08Z) and forced a reconnect.
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(600)));
     let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
+    let _ = stream.set_nodelay(true);
     let mut secure = match tls::accept(stream, cfg, pre) {
         Ok(s) => s,
         Err(e) => {
