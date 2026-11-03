@@ -37,6 +37,8 @@ RUNNER = [
     ('DH patch', r'GW2_RUNNER: DH patch applied'),
     ('client never traced', r'client image was never seen'),
     ('guard failure', r'GW2_RUNNER: .*guard failed|nothing started'),
+    ('gdb script error', r'Python Exception'),
+    ('gdb stopped (run ends)', r'^Breakpoint -?\d+, '),
     ('wine stack overflow', r'stack overflow'),
     ('bubble/bwrap problem', r'gw2 bubble:|bwrap:|gw2 bridge:'),
     ('runner refused', r'^gw2-runner: '),
