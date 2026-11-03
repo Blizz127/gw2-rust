@@ -393,6 +393,21 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
         writes Gw2-64.tmp and debug.log there.
       - The sandbox runs mounted it read-write and left Gw2.dat unchanged (mtime and size).
       - Fix (launcher): `--bind` the client folder. No server change.
+    - **b109/b110 device runs (14:41–14:59Z).** These runs got through:
+      - the writable client folder and both patches;
+      - login TLS, SSO, accounts and the token;
+      - the auth key exchange.
+      Then the client failed with "58:11:5:535". That is error:product:module:line, from
+      the client's format string `Network error: %u:%u:%u:%u (error:product:module:line)`.
+      - b110's relay trace: up 82 B, down only 2 B of the 22-byte key reply, client EOF
+        14 ms later, the rest one RTT (154 ms) later.
+      - Banshee wrote `[1,22]` and the nonce as two writes, and Nagle split them. The
+        client rejects a split key reply.
+      - Run 72 (the same stack over a ~0 RTT ssh tunnel) passed, so the split never
+        showed in the sandbox.
+      - Fixed in a9624d8: TCP_NODELAY plus one write for the key reply and its first
+        frames, with a one-read regression test.
+      - Kit a9624d8 deployed 15:05Z (DIT ack), ready after 3.5 s.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
