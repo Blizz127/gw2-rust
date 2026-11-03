@@ -663,6 +663,21 @@ mod tests {
         }
     }
 
+    /// Every auth client message the play phase loads (auth.xml protocol 3) is framed
+    /// without disabling the phase; only 22 and 29 get replies.
+    #[test]
+    fn every_auth_client_message_frames_in_the_play_phase() {
+        let group = schema::parse(AUTH_SCHEMA).unwrap().protocols.into_iter().find(|p| p.name == "3").unwrap().groups.remove(0);
+        assert_eq!(group.client.len(), 28);
+        for message in &group.client {
+            let frame = crate::mission::tests::schema_frame(&group.client, message.id, false);
+            let mut probe = play_probe();
+            let reply = probe.push(&frame).unwrap();
+            assert!(probe.play_enabled(), "client {} disabled the play phase", message.id);
+            assert_eq!(reply.is_some(), matches!(message.id, 22 | 29), "client {} reply", message.id);
+        }
+    }
+
     #[test]
     fn play_phase_disables_on_undecodable_frame_and_is_opt_in() {
         let mut probe = play_probe();

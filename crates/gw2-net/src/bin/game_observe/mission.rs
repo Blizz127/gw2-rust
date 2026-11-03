@@ -360,20 +360,70 @@ pub(crate) mod tests {
         MissionPhase::new(15).unwrap().with_population(fixture).unwrap()
     }
 
-    /// A fixture value for one schema field; `present` selects every Optional.
-    fn fixture_value(f: &schema::Field, present: bool) -> dynamic::Value {
+    /// A fixture value for one schema field; `present` selects every Optional. Covers
+    /// every field kind in the client schemas the phases load.
+    pub(crate) fn fixture_value(f: &schema::Field, present: bool) -> dynamic::Value {
+        use dynamic::Value as V;
+        let element = |f: &schema::Field| match &f.type_name {
+            Some(t) => fixture_value(&schema::Field { kind: t.clone(), name: String::new(), size: None, type_name: None, fields: vec![] }, present),
+            None => V::Struct(f.fields.iter().map(|g| (g.name.clone(), fixture_value(g, present))).collect()),
+        };
         match f.kind.as_str() {
-            "Byte" => dynamic::Value::U8(0),
-            "Word" => dynamic::Value::U16(250),
-            "Dword" => dynamic::Value::U32(0x1234),
-            "Float" => dynamic::Value::F32(1.5),
-            "Float3" => dynamic::Value::Floats(vec![1.0, 2.0, 7.4]),
-            "Float4" => dynamic::Value::Floats(vec![0.0, 0.0, 0.0, 1.0]),
-            "Optional" if present => dynamic::Value::Optional(Some(Box::new(dynamic::Value::Struct(
-                f.fields.iter().map(|g| (g.name.clone(), fixture_value(g, present))).collect(),
-            )))),
-            "Optional" => dynamic::Value::Optional(None),
+            "Byte" => V::U8(0),
+            "Word" => V::U16(250),
+            "Dword" => V::U32(0x1234),
+            "Qword" => V::U64(1),
+            "Float" => V::F32(1.5),
+            "Float3" => V::Floats(vec![1.0, 2.0, 7.4]),
+            "Float4" => V::Floats(vec![0.0, 0.0, 0.0, 1.0]),
+            "Point3" => V::Point3(gw2_proto::Point3([1.0, 2.0, 7.4], 0)),
+            "Guid" => V::Guid(Guid([0x5a; 16])),
+            "String" => V::Text("Fixture".into()),
+            "BufferFixed" => V::Bytes(vec![0; f.size.unwrap_or(0) as usize]),
+            "BufferVarSmall" | "BufferVarLarge" => V::Bytes(vec![1, 2, 3]),
+            "ArrayFixed" => V::Array((0..f.size.unwrap_or(0)).map(|_| element(f)).collect()),
+            "ArrayVarSmall" | "ArrayVarLarge" => V::Array(vec![element(f)]),
+            "Optional" if present => V::Optional(Some(Box::new(element(f)))),
+            "Optional" => V::Optional(None),
             other => panic!("test fixture lacks kind {other}"),
+        }
+    }
+
+    /// Encode one client message from a schema list with fixture values.
+    pub(crate) fn schema_frame(messages: &[Message], id: u16, present: bool) -> BytesMut {
+        let message = messages.iter().find(|m| m.id == id).unwrap();
+        let values = message.fields.iter().map(|f| (f.name.clone(), fixture_value(f, present))).collect();
+        let mut out = BytesMut::new();
+        id.encode(&mut out);
+        dynamic::encode_message(message, &rules(), &dynamic::Value::Struct(values), &mut out).unwrap();
+        out
+    }
+
+    /// Every client message the mission phase loads (groups 39, 40 and agent group 0), with
+    /// Optionals absent and present, is dispatched under its own id and keeps the phase.
+    #[test]
+    fn every_loaded_client_message_is_dispatched_under_its_own_id() {
+        let phase = MissionPhase::new(15).unwrap();
+        let ids: Vec<u16> = phase.client.iter().map(|m| m.id).collect();
+        assert_eq!(ids.len(), 66);
+        for present in [false, true] {
+            for &id in &ids {
+                let frame = schema_frame(&phase.client, id, present);
+                let mut live = populated_phase();
+                let seen = live.push(&frame);
+                let got: Vec<u16> = seen
+                    .iter()
+                    .map(|s| match s {
+                        Seen::Other(i) => *i,
+                        Seen::Map(ClientMapEvent::LanguagePrefs(_)) => 423,
+                        Seen::Map(ClientMapEvent::MapLoaded) => 420,
+                        Seen::Map(ClientMapEvent::FailedToLoad) => 418,
+                        Seen::Map(ClientMapEvent::AgentsLoaded) => 412,
+                    })
+                    .collect();
+                assert_eq!(got, vec![id], "client {id} (optionals present: {present})");
+                assert!(live.enabled(), "client {id} disabled the phase");
+            }
         }
     }
 
