@@ -125,6 +125,15 @@ means native only, so a prefix without the DLLs fails at D3D11 load.
     with Proton-style font links, so it is not the runner.
   - The relocated trust and DH patch paths have never executed.
   - **GE-Proton 11 is not a usable GW2 runtime.**
+- **Runtime (owner-approved 2026-11-03):** a launcher-shipped Kron4ek Wine 10.0 WoW64.
+  - Package: `wine-10.0-amd64-wow64.tar.xz`, sha256 aeebbbf2…255f, from
+    github.com/Kron4ek/Wine-Builds release 10.0.
+  - It is self-contained in the launcher's GW2 runtime folder; nothing is installed
+    system-wide and system Proton is untouched.
+  - `--wine <runtime>/bin/wine`: a single 64-bit loader that needs no 32-bit host libraries.
+  - DXVK still comes from GE-Proton 11's `files/lib/wine/dxvk/x86_64-windows` (v3.10).
+  - Use a fresh prefix for this runtime.
+  - Run 71 (the run-66 gate) passes with exactly this combination.
   A real GPU (all runs used lavapipe) and the device's namespace shape are untested.
 
 Sandbox run 63b used the **live** Banshee server. The pieces:

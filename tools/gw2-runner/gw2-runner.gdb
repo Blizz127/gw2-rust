@@ -134,9 +134,11 @@ class Arm(gdb.Breakpoint):
                 return False
             # The client image, not another 64-bit Wine process: its header page is the exe's
             # own and its trust bytes are mapped and still original.
+            # No file-backed header page (some Wine builds copy the image into anonymous
+            # memory): try the preferred base. The header and trust checks below decide.
             base = image_base(inf.pid)
             if base is None:
-                return False
+                base = PREFERRED_BASE
             header = inf.read_memory(base, 0x400).tobytes()
             # The loader may rewrite ImageBase in a relocated header, so compare the DOS
             # header and the PE signature + COFF header (machine, timestamp) only.

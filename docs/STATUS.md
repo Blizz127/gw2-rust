@@ -295,10 +295,28 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       - Debian Wine 10.0 passes (run 66).
       - Kron4ek's vanilla Wine 10.0 tarball hangs in wineboot inside the sandbox image, so it
         is not yet usable.
-    - Open:
-      - the runtime for the device (launcher lead and owner): a non-Proton Wine 10.x;
-      - or the Proton recursion's root cause, which has no stable return addresses in the
-        stack dump so far.
+    - Owner decision (via coordinator): "yes its own wine10 is fine". The launcher ships a
+      self-contained Wine 10.x for GW2. It must pass run 66 first and have a recorded source
+      and checksum.
+    - Device-side alternatives tried:
+      - wine-ge-8-26 (Lutris, already on his device), run 70: GE's DXVK 3.10 needs Vulkan
+        1.3 features this Wine 8 lacks.
+      - wine-ge-8-26 with DXVK 1.10.3, run 70b: graphics work and it reaches login TLS, but
+        the runner never armed. A preferred-base fallback was added for anonymous image
+        maps; it is untested.
+      - Kron4ek's classic multiarch Wine 10.0 hangs in its 32-bit wineboot.
+    - **Run 71 passes the gate** with:
+      - Kron4ek Wine 10.0 WoW64, read-only: `wine-10.0-amd64-wow64.tar.xz`, sha256
+        aeebbbf239e548f0136f1cd72a2e109dd9a572a8f703da3c09fa40d74d5c255f, from
+        github.com/Kron4ek/Wine-Builds release 10.0;
+      - GE-Proton 11's DXVK v3.10, a fresh prefix and the shipping wrapper with the device
+        argv.
+      Result:
+      - armed at the preferred base, trust and DH patches applied;
+      - full login STS, auth and the game key exchange;
+      - no stack overflow, 6 post-auth shots, ending at the untouched agreement panel.
+    - Still open: the Proton recursion's root cause (no stable return addresses in the stack
+      dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
     Done, local commits only, nothing deployed:
     - no-capture servers and bind guard (71ffe34, c76ce60)
