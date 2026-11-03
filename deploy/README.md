@@ -47,8 +47,25 @@ make-identity.py), so the host never needs a copy of the client.
   - Needs to read our processes' `/proc` entries. stackd runs with gid docker, so the
     `sg blizz` wrap is required. DIT pins the real kit path, not the `current` symlink.
 - humans: the same with `humans`; prints `{"humans":N,"bots":0}`
-  - Counts ESTABLISHED connections on the game port owned by the game process.
-  - Exits non-zero when the count can't be determined.
+  - Counts distinct remote peers ESTABLISHED on the login (6114), auth (6113) or game
+    (6112) listener, owned by that process. A player at the login screen holds only 6114.
+  - A fully stopped server reads 0. A partly running one, a reused pid, or anything
+    unreadable exits non-zero, never a false 0.
+
+## Sleep and wake (stackd r57: wake_only)
+
+- start: `sg blizz -c "exec /usr/bin/env XDG_RUNTIME_DIR=/run/user/1000 /usr/bin/systemctl --user start gw2-server.service"`
+- sleep: `gw2-sleep.sh <kit>/deploy/gw2-probe.py /home/blizz/gw2-rust-state/run`
+  - It stops the unit only when humans reads exactly 0, otherwise it exits 1.
+  - Nothing to save: no player state is kept.
+  - Not atomic: a player who connects between the count and the stop is dropped.
+- Switch `gw2-rust-current` only while the unit is stopped. Health compares each
+  process's real exe with the realpath of its pids.json path, which goes through that link.
+- `deploy/watched-cycle.sh` (devbox side) is a dry run by default.
+  - `--execute` runs the full watched cycle with DIT's pinned argv: sleep, switch the link
+    to `KIT`, start, then time start->ready.
+  - Run it only after launcher b106 (PLAY wake-and-wait) is live and the owner's first
+    b107 device run is done.
 
 ## What is synthetic
 
