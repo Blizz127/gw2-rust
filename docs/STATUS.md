@@ -336,8 +336,9 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       - `server.log` baseline for the owner's next run: line 103.
       - stackd r57 has gw2 as wake_only, probes pinned to 5825dfb (`humans` across
         login/auth/game).
-      - A guarded stop leaves the unit `failed` (exit 143 on SIGTERM). A later kit adds
-        `SuccessExitStatus=143`.
+      - A guarded stop left the unit `failed` (exit 143 on SIGTERM). The installed unit now
+        has `SuccessExitStatus=143` (sha256 02d7ca0f…, daemon-reload only; the previous unit
+        is kept as `gw2-server.service.prev-9716fb8e`). The next kit's `deploy/` carries it.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.

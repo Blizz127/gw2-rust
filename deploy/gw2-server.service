@@ -10,6 +10,9 @@ Description=GW2 build-209026 server (Banshee, readiness_only)
 Type=simple
 ExecStart=/usr/bin/env -i HOME=/home/blizz USER=blizz LOGNAME=blizz LANG=C.UTF-8 PATH=/usr/bin:/bin /bin/bash /home/blizz/gw2-rust-current/deploy/gw2-server.sh /home/blizz/gw2-rust-state/gw2.conf
 Restart=on-failure
+# gw2-server.sh exits 143 when stopped with SIGTERM (systemctl stop, gw2-sleep.sh): a clean
+# stop, not a failure. A dying child still exits 1 and is restarted.
+SuccessExitStatus=143
 RestartSec=5
 KillMode=control-group
 TimeoutStopSec=15
