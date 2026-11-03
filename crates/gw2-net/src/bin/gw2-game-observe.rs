@@ -181,22 +181,23 @@ fn observe(
             capture.flush()?;
             total += decoded.len();
             eprintln!("Decrypted game bytes: {} (total {total})", decoded.len());
+            // Everything owed for this read goes out in one write (see the key reply above).
+            let mut wire = BytesMut::new();
             if let Some(auth) = &mut auth
                 && let Some(reply) = auth.push(&decoded)?
             {
-                let mut wire = BytesMut::new();
                 codec.encode(reply, &mut wire)?;
-                stream.write_all(&wire)?;
                 eprintln!("Explicit correlated auth fixture sent");
             }
             if let Some(mission) = &mut mission {
                 for seen in mission.push(&decoded) {
                     if let Some(reply) = mission.respond(&seen)? {
-                        let mut wire = BytesMut::new();
                         codec.encode(reply, &mut wire)?;
-                        stream.write_all(&wire)?;
                     }
                 }
+            }
+            if !wire.is_empty() {
+                stream.write_all(&wire)?;
             }
         }
     }
