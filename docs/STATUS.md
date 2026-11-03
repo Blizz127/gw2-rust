@@ -436,6 +436,16 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
         is a key→value account flag table.
       - The home-world field is still unidentified (server 8 → 0x14023a770). I asked the
         owner whether PLAY works despite "no home world".
+    - **Home world (16:58Z screenshot).** The "Initial Home World Select" list was empty and
+      PLAY greyed.
+      - REA ([home world](re/209026-home-world.md)): the list is server 23 (clear), 25
+        {world, population 0–3, 0, 0} and 24 (publish), filled once when the dialog
+        opens. Selecting sends client 14, which server 7 confirms.
+      - Client 15 is the User Agreement accept.
+      - Fixed in d3b07c9: world 1001 in the login reply, and client 14 answered with
+        server 7.
+      - Kit d3b07c9 deployed 17:06Z (DIT ack, smoke-run first), ready after 3.3 s.
+      - Not verified yet: which check enables PLAY after the selection.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
