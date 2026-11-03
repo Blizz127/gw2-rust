@@ -61,6 +61,9 @@ impl PlayRoute {
 
 const AUTH_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/auth.xml");
 
+/// The one offered home world: 1001 is present in the client's world content (type 373).
+const HOME_WORLD: u32 = 1001;
+
 fn census_rules() -> Rules {
     Rules {
         string: Some(StringEncoding::Utf16Terminated),
@@ -293,6 +296,19 @@ impl AuthProbe {
                     }
                     .encode_frame(&mut reply);
                 }
+                // Client 14 {request, world id, byte}: the home-world selection. The
+                // client waits for server 7 echoing the request id; status word (D3) 0 is
+                // success, after which it sets its current and home world to the choice.
+                14 => {
+                    let mut body = &frame[2..];
+                    let request = <u32 as gw2_proto::Decode>::decode(&mut body)?;
+                    let world = <u32 as gw2_proto::Decode>::decode(&mut body)?;
+                    eprintln!("Play phase: home world {world} selected; confirming");
+                    7u16.encode(&mut reply);
+                    for value in [request, 0, 0, 0, 0, 0, 0] {
+                        value.encode(&mut reply);
+                    }
+                }
                 29 => {
                     let mut input = &frame[..];
                     let route = RouteRequest29::decode_frame(&mut input)?;
@@ -354,6 +370,17 @@ impl AuthProbe {
                 8u16.encode(&mut reply);
                 request.encode(&mut reply);
                 reply.extend_from_slice(&self.fixture.body);
+                // The home-world list (docs/re/209026-home-world.md): server 23 clears the
+                // client's staging list, each server 25 adds {world id, population 0-3,
+                // transfer cost?, hours?}, server 24 publishes it. The Initial Home World
+                // Select grid is filled once, when it is created, so the list must arrive
+                // with the login reply. World 1001 exists in content type 373.
+                23u16.encode(&mut reply);
+                25u16.encode(&mut reply);
+                for value in [HOME_WORLD, 0, 0, 0] {
+                    value.encode(&mut reply);
+                }
+                24u16.encode(&mut reply);
                 // Configuration must arrive while this request is still pending.
                 // Explicit empty fixture; no recovered account configuration yet.
                 10u16.encode(&mut reply);
@@ -377,7 +404,7 @@ impl AuthProbe {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use gw2_proto::{Decode, Guid};
 
@@ -439,6 +466,7 @@ mod tests {
         8u16.encode(&mut expected);
         123456u32.encode(&mut expected);
         expected.extend_from_slice(&body);
+        world_list(&mut expected);
         10u16.encode(&mut expected);
         123456u32.encode(&mut expected);
         expected.extend_from_slice(&[0; 2]);
@@ -482,6 +510,10 @@ mod tests {
             assert_eq!(u32::decode(&mut cursor).unwrap(), 123456);
             assert_eq!(&cursor[..2], &[0x44; 2]);
             cursor = &cursor[2..];
+            let mut worlds = BytesMut::new();
+            world_list(&mut worlds);
+            assert_eq!(&cursor[..worlds.len()], &worlds[..], "home-world list follows server 8");
+            cursor = &cursor[worlds.len()..];
             assert_eq!(u16::decode(&mut cursor).unwrap(), 10);
             assert_eq!(u32::decode(&mut cursor).unwrap(), 123456);
             assert_eq!(&cursor[..2], &[0, 0]);
@@ -491,6 +523,48 @@ mod tests {
             assert_eq!(cursor, &[0; 6]);
             assert!(probe.push(&input).unwrap().is_none());
         }
+    }
+
+    /// Selecting a home world (client 14 {request, world, byte}) is confirmed by server 7
+    /// echoing the request with status 0, decoded under the client's own auth table.
+    #[test]
+    fn home_world_selection_is_confirmed_with_server_7() {
+        const SERVER_TABLES: &str = include_str!("../../../../../data/protocol/209026/server-tables.xml");
+        let tables = schema::parse(SERVER_TABLES).unwrap().protocols[0].groups.clone();
+        let table = tables.iter().find(|g| g.name == "table-0x141923fe0").unwrap();
+        let mut select = BytesMut::new();
+        14u16.encode(&mut select);
+        77u32.encode(&mut select);
+        HOME_WORLD.encode(&mut select);
+        select.extend_from_slice(&[0]);
+        for cut in 0..=select.len() {
+            let mut probe = play_probe();
+            let mut replies = Vec::new();
+            for part in [&select[..cut], &select[cut..]] {
+                if let Some(reply) = probe.push(part).unwrap() {
+                    replies.push(reply);
+                }
+            }
+            assert_eq!(replies.len(), 1, "cut {cut}");
+            let mut cursor = &replies[0][..];
+            let (message, value) = dynamic::decode_frame(&table.server, &census_rules(), &mut cursor).unwrap();
+            assert_eq!(message.id, 7);
+            assert!(cursor.is_empty());
+            let Value::Struct(fields) = value else { panic!() };
+            assert_eq!(fields[0].1, Value::U32(77), "request echoed");
+            assert_eq!(fields[3].1, Value::U32(0), "status 0 = success");
+            assert!(probe.play_enabled());
+        }
+    }
+
+    /// The home-world list the login reply carries: 23, 25 {1001, 0, 0, 0}, 24.
+    pub(crate) fn world_list(out: &mut BytesMut) {
+        23u16.encode(out);
+        25u16.encode(out);
+        for value in [HOME_WORLD, 0, 0, 0] {
+            value.encode(out);
+        }
+        24u16.encode(out);
     }
 
     fn login_input() -> BytesMut {
@@ -626,7 +700,7 @@ mod tests {
                 ids.push(message.id);
             }
         }
-        assert_eq!(ids, vec![8, 10, 17, 7, 8, 3, 20]);
+        assert_eq!(ids, vec![8, 23, 25, 24, 10, 17, 7, 8, 3, 20]);
     }
 
     /// Malformed client input never panics the auth probe: random bytes before login are
@@ -691,7 +765,7 @@ mod tests {
     }
 
     /// Every auth client message the play phase loads (auth.xml protocol 3) is framed
-    /// without disabling the phase; only 22 and 29 get replies.
+    /// without disabling the phase; only 14 (home-world select), 22 and 29 get replies.
     #[test]
     fn every_auth_client_message_frames_in_the_play_phase() {
         let group = schema::parse(AUTH_SCHEMA).unwrap().protocols.into_iter().find(|p| p.name == "3").unwrap().groups.remove(0);
@@ -701,7 +775,7 @@ mod tests {
             let mut probe = play_probe();
             let reply = probe.push(&frame).unwrap();
             assert!(probe.play_enabled(), "client {} disabled the play phase", message.id);
-            assert_eq!(reply.is_some(), matches!(message.id, 22 | 29), "client {} reply", message.id);
+            assert_eq!(reply.is_some(), matches!(message.id, 14 | 22 | 29), "client {} reply", message.id);
         }
     }
 

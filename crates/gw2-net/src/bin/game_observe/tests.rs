@@ -28,6 +28,7 @@ fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
     8u16.encode(&mut expected);
     300u32.encode(&mut expected);
     expected.extend_from_slice(&[0x44; 2]);
+    auth::tests::world_list(&mut expected);
     10u16.encode(&mut expected);
     300u32.encode(&mut expected);
     expected.extend_from_slice(&[0; 2]);
