@@ -315,6 +315,17 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       - armed at the preferred base, trust and DH patches applied;
       - full login STS, auth and the game key exchange;
       - no stack overflow, 6 post-auth shots, ending at the untouched agreement panel.
+    - After the User Agreement (static, 2026-11-03): the client's STS method tables have
+      no agreement method.
+      - Account: AddProductKey, LinkGameAccount, ListGameAccounts, ListMyGameAccounts,
+        RemoveGameAccount.
+      - Auth: login, password and SSO calls plus GetHostname, StartTls, LoginFinish, Resume.
+      So I ACCEPT is most likely recorded locally by the launcher UI. The next server
+      traffic should be the auth play phase (client 22/29 → server 8/3/20) and the game
+      server on route 20, both already handled.
+      For the owner's b107 log: read Banshee's `server.log` from the recorded baseline. A
+      stall right after ACCEPT with no new auth or game lines points client-side. Still
+      unanswered: client 1, 4 and 34.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
