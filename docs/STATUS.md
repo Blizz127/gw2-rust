@@ -374,6 +374,16 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
       7. 420 but no 412: the population sequence.
       8. 1036 sent and agent traffic seen: in the world. The next work is what the client
          waits for there.
+    - After BeginPlaying (static, 2026-11-03): no server keepalive is needed on the game
+      connection.
+      - `GcGameCmd.cpp`'s disconnect reasons are exactly `DISCONNECT_NONE`,
+        `_DISPATCH_FAILED`, `_BAD_COUNT` and `_MISSING_HANDLER`, next to "MsgConnDispatch
+        failed on message %u". There is no idle or timeout reason (strings near
+        file offset 0x1922258).
+      - What disconnects is a bad server message: an unregistered id, a bad count, or a
+        failing handler.
+      - So in-world server messages are added only from the owner's observed traffic and
+        verified handlers, never stubbed speculatively.
     - Still open: the Proton recursion's root cause (no stable return addresses in the stack
       dump). It doesn't block the Wine 10 path.
   - **PAUSED 2026-11-02 ~06:45Z (owner pool hold).** PLAY-button work for task dbf27f7e17a0.
