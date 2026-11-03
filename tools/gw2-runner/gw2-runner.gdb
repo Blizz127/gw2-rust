@@ -10,7 +10,7 @@ set detach-on-fork on
 handle all nostop noprint pass
 set breakpoint pending on
 python
-import gdb, hashlib, os, struct
+import gdb, hashlib, os, struct, time
 
 EXE_SHA256 = '99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621'
 TRUST_VA, TRUST_LEN = 0x14230b4b7, 128
@@ -171,6 +171,41 @@ def apply_world_name(inf, slide):
     except (gdb.MemoryError, gdb.error, ValueError):
         print('GW2_RUNNER: world-name patch skipped (memory)')
 
+# Read-only map-loader stage trace (docs/re/209026-map-ready.md). 0x1409bafd0 is a
+# compiled-out marker (spills its four arguments, then ret). The loader and the view call it
+# on every stage transition with ecx = state and rdx = an ASCII name such as
+# "MapLoader: STATE_MAP_DOWNLOAD", so a breakpoint there names the stage a load stops in.
+# Nothing is written. GW2_RUNNER_STAGE_TRACE=0 turns it off.
+STAGE_FN = 0x1409bafd0
+STAGE_GUARD = bytes.fromhex('48894c240848895424104c894424184c894c2420c3')
+
+class StageTrace(gdb.Breakpoint):
+    def stop(self):
+        try:
+            if not in_client() or not is_x86_64():
+                return False
+            inf = gdb.selected_inferior()
+            state = int(gdb.parse_and_eval('$ecx'))
+            raw = inf.read_memory(int(gdb.parse_and_eval('$rdx')), 64).tobytes().split(b'\0', 1)[0]
+            name = raw.decode('ascii', 'replace') if all(32 <= b < 127 for b in raw) else '?'
+            print('GW2_RUNNER: stage %s %s (%d)' % (time.strftime('%H:%M:%SZ', time.gmtime()), name, state))
+        except (gdb.MemoryError, gdb.error):
+            pass
+        return False
+
+def arm_stage_trace(inf, slide):
+    if os.environ.get('GW2_RUNNER_STAGE_TRACE', '1') == '0':
+        return
+    try:
+        if inf.read_memory(STAGE_FN + slide, len(STAGE_GUARD)).tobytes() != STAGE_GUARD:
+            print('GW2_RUNNER: stage trace guard failed; skipped')
+            return
+    except (gdb.MemoryError, gdb.error):
+        print('GW2_RUNNER: stage trace skipped (memory)')
+        return
+    StageTrace('*%#x' % (STAGE_FN + slide), internal=True)
+    print('GW2_RUNNER: stage trace armed')
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -206,6 +241,7 @@ class Arm(gdb.Breakpoint):
         DhPatch('*%#x' % (0x140ff4480 + slide), internal=True)
         print('GW2_RUNNER: patch points armed (image %s)' % ('at its preferred base' if slide == 0 else 'relocated'))
         apply_world_name(inf, slide)
+        arm_stage_trace(inf, slide)
         self.enabled = False
         return False
 
