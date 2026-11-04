@@ -43,12 +43,31 @@ modal "Initial Home World Select" dialog with an empty list. PLAY stayed greyed 
   (`0x14266c154`), then posts event 0x20.
 - **Not traced:** which check then enables PLAY.
 
-**Shortcut (inferred, not used yet).** Server 8 Dword6 is the home world and Dword7 the
-current world (`0x14023d96d`–`0x14023d986`).
+**Login worlds (static, in use since kit 102bad3).**
+- Server 8's handler `0x140240850` passes the message fields to `0x14023a770`:
+  - Dword7 (message +0x36) arrives in r9d and is stored at record +0x1a4;
+  - Dword6 (+0x32) arrives as the first stack argument and is stored at +0x1a8;
+  - Dword8 (+0x3a) is stored at +0x1ac.
+- `0x14023d96d`–`0x14023d986` copy +0x1a4 to the current world (`0x14266c150`) and +0x1a8
+  to the home world (`0x14266c154`), and +0x1ac to `0x14266c158`.
+- Caveat: when `0x1410f4be0` returns nonzero and `0x1410e9aa0(0x60)` is set
+  (`0x14023d944`), the home world is stored as 0 whatever Dword6 says. Not traced.
+- Owner run 2026-11-04 01:51Z (cd93d58): no dialog and no client 14, so character select
+  showed world "Unknown" with PLAY greyed. The server keeps no account state, so each
+  session started with no world.
+
+**Client 12** {Dword request, BufferVarLarge ≤ 4096} (sender `0x1402418b0` through vtable
+slot `0x14023e3d0` at `0x141923708`) was sent at 01:51:51Z (841 bytes) after the owner
+"clicked it again" at character select. It is a different transaction from 14: the
+neighbouring send slot `0x14023e3f0` goes to `0x1402419d0`, and its completion
+`0x14023de70` posts UI event 0x18 with the result at +0x24. Unanswered; not world-related.
 
 ## Emulator (`game_observe/auth.rs`)
 - The login reply now sends 23, 25 {1001, 0, 0, 0} and 24 right after server 8.
 - The play phase answers client 14 with server 7 {request, 0, 0, 0, 0, 0, 0}.
+- Since 102bad3, gw2-game-observe sets the login body's Dword6/Dword7 to 1001 where zero
+  (`ReplyFixture::with_home_world`; test `login_body_carries_home_and_current_world`, and
+  the deployed-fixture audit checks it).
 - Tests: `home_world_selection_is_confirmed_with_server_7`, decoded under the client's
   own auth table. The deployed-fixture audit `every_auth_reply_frame_matches_the_client_auth_table`
   now expects 8, 23, 25, 24, 10, 17, 7, then 8, 3, 20.
