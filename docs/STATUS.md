@@ -475,6 +475,9 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
         - **Corrected after b115 (22:38Z):** with a fresh Local.dat the client did fetch the manifests (13 MB), but MAP_DOWNLOAD still entered and exited in the same second. That is an error exit to state 6, not a wait.
         - **Cause:** our root manifest had no `MapValleyHill` / `RegionValley` (Queensdale's map/region manifest names), so the map request is null. Fixed in the CDN data with root 2130706520 ([patcher](re/209026-patcher.md)); run 79 OK.
         - The earlier Local.dat theory was only part of it.
+        - **Device result on cd93d58 (2026-11-04 01:25Z, b115): the map loads.** Client 420 MapLoaded arrived at 01:26:27Z, 0.5 s after LoadMap. The server then sent the candidate population sequence, and **the client crashed at 01:26:33Z**: both connections hit EOF, and the owner said "i loaded in and it crashed". The 00:15Z session never got past one idle connection.
+          - Next: the device's ArenaNet.log (assertion text) and the b115 stage lines before 01:26:33Z. Don't change population values before the crash is named.
+          - Runner crash report (runs 80/81): read-only breakpoints on the ExeError sink `0x1409dc570` (all 8 error paths, including the assertion handler `0x1409db7a0`) and the unhandled-exception filter `0x1409dc720`. They print "GW2_RUNNER: assert … file:line "expr"" and "GW2_RUNNER: crash code … at <offset>" with stack offsets. Armed with no false hits on login; untested on a real crash.
       - The a8fdb4e trace hooked the profiler's per-frame marker (about 1,600 hits/s). It is being moved to the loader's 22 call sites.
       - "Banshee Realm": the world-name patch applied on his device.
         - Regression test: `client_278_during_the_map_load_keeps_the_phase_and_the_population_follows`.

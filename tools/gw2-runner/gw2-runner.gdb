@@ -1,5 +1,6 @@
 # Guarded in-memory patches for the frozen build-209026 client.
-# See tools/gw2-runner/gw2-runner. Prints only status lines, never values.
+# See tools/gw2-runner/gw2-runner. Prints status lines, the client's own strings and code
+# offsets only; never memory values, keys or credentials.
 set pagination off
 set confirm off
 set follow-fork-mode parent
@@ -254,6 +255,99 @@ def arm_downloader_check(inf, slide):
     DownloaderRegistration('*%#x' % (DL_REGISTER + slide), internal=True)
     print('GW2_RUNNER: downloader at arm: %s' % downloader_state(inf))
 
+# Read-only crash report. 0x1409dc570 is ExeError.cpp's error sink: all 8 of its callers
+# (the assertion handler 0x1409db7a0 with its 46211 call sites, e.g. "speed >= 0" in
+# CoCharSimpleCli.cpp, plus the fatal/formatted error paths) pass ecx = kind, rdx = text,
+# r8 = source path, r9d = line. 0x1409dc720 is the unhandled-exception filter installed at
+# 0x1409dbdee (rcx = EXCEPTION_POINTERS). Both print the client's own strings and code
+# addresses as image offsets (minus the slide), plus up to 12 return addresses from the
+# stack. Nothing is written. Guarded on the first 8 bytes; each disables itself at its cap.
+# Off with GW2_RUNNER_CRASH_REPORT=0.
+ERROR_SINK, CRASH_FILTER = 0x1409dc570, 0x1409dc720
+TEXT_START, TEXT_END = 0x140001000, 0x141913000
+
+def text_offset(addr):
+    addr -= SLIDE[0]
+    return addr if TEXT_START <= addr < TEXT_END else None
+
+def c_string(inf, addr, limit=200):
+    try:
+        raw = inf.read_memory(addr, limit).tobytes().split(b'\0', 1)[0]
+    except (gdb.MemoryError, gdb.error):
+        return '?'
+    return raw.decode('ascii', 'replace') if all(32 <= b < 127 for b in raw) else '?'
+
+def stack_calls(inf, sp):
+    found = []
+    try:
+        words = inf.read_memory(sp, 8 * 256).tobytes()
+    except (gdb.MemoryError, gdb.error):
+        return '?'
+    for i in range(0, len(words), 8):
+        at = text_offset(int.from_bytes(words[i:i + 8], 'little'))
+        if at is not None:
+            found.append('%#x' % at)
+            if len(found) == 12:
+                break
+    return ' '.join(found) or '-'
+
+class ErrorReport(gdb.Breakpoint):
+    hits = 0
+    def stop(self):
+        try:
+            if not in_client() or not is_x86_64():
+                return False
+            ErrorReport.hits += 1
+            if ErrorReport.hits >= 20:
+                self.enabled = False
+            inf = gdb.selected_inferior()
+            source = c_string(inf, int(gdb.parse_and_eval('$r8'))).rsplit('\\', 1)[-1]
+            print('GW2_RUNNER: assert %s kind %d %s:%d "%s" from %s' % (
+                time.strftime('%H:%M:%SZ', time.gmtime()), int(gdb.parse_and_eval('$ecx')), source,
+                int(gdb.parse_and_eval('$r9d')), c_string(inf, int(gdb.parse_and_eval('$rdx'))),
+                stack_calls(inf, int(gdb.parse_and_eval('$rsp')))))
+        except (gdb.MemoryError, gdb.error):
+            pass
+        return False
+
+class CrashReport(gdb.Breakpoint):
+    hits = 0
+    def stop(self):
+        try:
+            if not in_client() or not is_x86_64():
+                return False
+            CrashReport.hits += 1
+            if CrashReport.hits >= 5:
+                self.enabled = False
+            inf = gdb.selected_inferior()
+            pointers = int(gdb.parse_and_eval('$rcx'))
+            record, context = struct.unpack('<QQ', inf.read_memory(pointers, 16).tobytes())
+            code = struct.unpack('<I', inf.read_memory(record, 4).tobytes())[0]
+            where = int.from_bytes(inf.read_memory(record + 0x10, 8).tobytes(), 'little')
+            rsp = int.from_bytes(inf.read_memory(context + 0x98, 8).tobytes(), 'little')
+            at = text_offset(where)
+            print('GW2_RUNNER: crash %s code %#010x at %s from %s' % (
+                time.strftime('%H:%M:%SZ', time.gmtime()), code, '%#x' % at if at is not None else 'outside the client',
+                stack_calls(inf, rsp)))
+        except (gdb.MemoryError, gdb.error, struct.error):
+            pass
+        return False
+
+def arm_crash_report(inf, slide):
+    if os.environ.get('GW2_RUNNER_CRASH_REPORT', '1') == '0':
+        return
+    try:
+        for fn in (ERROR_SINK, CRASH_FILTER):
+            if inf.read_memory(fn + slide, 8).tobytes() != file_bytes(fn, 8):
+                print('GW2_RUNNER: crash report guard failed; skipped')
+                return
+    except (gdb.MemoryError, gdb.error, ValueError):
+        print('GW2_RUNNER: crash report skipped (memory)')
+        return
+    ErrorReport('*%#x' % (ERROR_SINK + slide), internal=True)
+    CrashReport('*%#x' % (CRASH_FILTER + slide), internal=True)
+    print('GW2_RUNNER: crash report armed')
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -291,6 +385,7 @@ class Arm(gdb.Breakpoint):
         apply_world_name(inf, slide)
         arm_stage_trace(inf, slide)
         arm_downloader_check(inf, slide)
+        arm_crash_report(inf, slide)
         self.enabled = False
         return False
 

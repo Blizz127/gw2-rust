@@ -38,6 +38,10 @@ RUNNER = [
     ('client never traced', r'client image was never seen'),
     ('guard failure', r'GW2_RUNNER: .*guard failed|nothing started'),
     ('world-name patch', r'GW2_RUNNER: world-name [^\n]*'),
+    # Read-only crash report (assertion handler 0x1409db7a0, unhandled-exception filter
+    # 0x1409dc720): source:line "expression" or the exception code, plus code offsets.
+    ('CLIENT ASSERT', r'GW2_RUNNER: assert [^\n]*'),
+    ('CLIENT CRASH', r'GW2_RUNNER: crash [^\n]*'),
     ('gdb script error', r'Python Exception'),
     ('gdb stopped (run ends)', r'^Breakpoint -?\d+, '),
     ('wine stack overflow', r'stack overflow'),
@@ -170,7 +174,10 @@ def main():
         print(f'runner log: {os.path.basename(path)} (started {start.group(1) if start else "?"}, {len(text.splitlines())} lines)')
         for name, pattern in RUNNER:
             hits = [l for l in text.splitlines() if re.search(pattern, l)]
-            if hits:
+            if hits and name.startswith('CLIENT'):
+                for hit in hits:
+                    print(f'  {name:22} {hit}')
+            elif hits:
                 print(f'  {name:22} x{len(hits)}: {hits[0][:120]}')
         stage_report(text)
         dns_report(text)
