@@ -76,9 +76,18 @@ fn main() {
                 // Build 209026's XML accessor rejects bodies without a final LF.
                 replies.push(("/Auth/GetHostname".into(), format!("<Reply><Hostname>{v}</Hostname><Local/></Reply>\n").into_bytes()));
             }
-            ("--reply-xml", Some(v)) => {
-                let (path, file) = v.split_once('=').unwrap_or_else(|| die("--reply-xml requires /PATH=FILE"));
-                if !valid_sts_path(path) {
+            ("--reply-xml" | "--reply-default", Some(v)) => {
+                // --reply-default FILE answers every request path without its own
+                // fixture (stored under the key "*"). The in-world client queries
+                // Game.gw2.* and pings /Sts/Ping; with no reply it times out and shows
+                // "unable to gain access to the log-in server" (42:0:9001:4460:101,
+                // sandbox run 86, 2026-11-04).
+                let (path, file) = if a == "--reply-default" {
+                    ("*", v.as_str())
+                } else {
+                    v.split_once('=').unwrap_or_else(|| die("--reply-xml requires /PATH=FILE"))
+                };
+                if path != "*" && !valid_sts_path(path) {
                     die("--reply-xml requires an ASCII STS request path");
                 }
                 let input = std::fs::File::open(file).unwrap_or_else(|e| die(&format!("open reply fixture: {e}")));
@@ -89,7 +98,7 @@ fn main() {
                 }
                 replies.push((path.into(), body));
             }
-            _ => die("usage: gw2-login-observe [--no-capture] [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER] [--answer-gethostname HOST] [--reply-xml /PATH=FILE]..."),
+            _ => die("usage: gw2-login-observe [--no-capture] [--listen ADDR]... [--log DIR] [--greet-hex HEX] [--answer-starttls BODY] [--tls-key PEM --tls-cert DER] [--answer-gethostname HOST] [--reply-xml /PATH=FILE]... [--reply-default FILE]"),
         }
     }
     let tls_config = match (key, cert) {
@@ -324,8 +333,14 @@ fn observe_tls(stream: TcpStream, cfg: &tls::ServerConfig, pre: Vec<u8>, log: &m
                     let _ = writeln!(log);
                     println!("TLS STS: {} ({} body bytes)", msg.path().unwrap_or("response"), msg.body.len());
                     pending.drain(..used);
-                    let fixture = replies.iter().find(|(path, _)| Some(path.as_str()) == msg.path());
+                    let fixture = replies
+                        .iter()
+                        .find(|(path, _)| Some(path.as_str()) == msg.path())
+                        .or_else(|| replies.iter().find(|(path, _)| path == "*"));
                     if let (Some((path, body)), Some(seq)) = (fixture, msg.seq()) {
+                        if path == "*" {
+                            println!("TLS STS default reply: {}", msg.path().unwrap_or("response"));
+                        }
                         let reply = sts::Message::reply(200, "OK", seq, body.clone()).encode();
                         if let Err(e) = secure.write_app(&reply) {
                             let _ = writeln!(log, "# TLS {path} reply failed: {e}");
