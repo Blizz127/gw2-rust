@@ -279,9 +279,15 @@ def c_string(inf, addr, limit=200):
 
 def stack_calls(inf, sp):
     found = []
-    try:
-        words = inf.read_memory(sp, 8 * 256).tobytes()
-    except (gdb.MemoryError, gdb.error):
+    # 64-byte chunks up to 2 KB: a crash near the top of a stack must keep what it could read
+    # (the 03:23Z device report printed "from ?" with one 2 KB read).
+    words = b''
+    for at in range(sp, sp + 8 * 256, 64):
+        try:
+            words += inf.read_memory(at, 64).tobytes()
+        except (gdb.MemoryError, gdb.error):
+            break
+    if not words:
         return '?'
     for i in range(0, len(words), 8):
         at = text_offset(int.from_bytes(words[i:i + 8], 'little'))
@@ -348,6 +354,33 @@ def arm_crash_report(inf, slide):
     CrashReport('*%#x' % (CRASH_FILTER + slide), internal=True)
     print('GW2_RUNNER: crash report armed')
 
+# Full-resolution textures (owner device crash 2026-11-04 03:23Z/03:58Z/04:31Z). The texture
+# load task 0x140a6f490 (GrTex2d.cpp) drops mip levels when the texture's flags +0x7c & 0x380
+# ask for it; those bits come from s_textureQuality 0x14268b5b4 through 0x140a70670. Its
+# "generate missing levels" branch then writes levels the image never allocated: the null write
+# at 0x140b48c9d (ImgMip.cpp), right after the character's population. The patch makes the
+# branch's je at 0x140a6f57a unconditional (90 e9 fa 00 00 00, same target 0x140a6f67a, the
+# no-reduction path), so every texture keeps its full mip chain. Costs VRAM only. Guarded on the
+# 6 original bytes; skipped on any mismatch. GW2_RUNNER_FULL_TEXTURES=0 turns it off.
+TEX_JE = 0x140a6f57a
+TEX_ORIGINAL, TEX_PATCHED = b'\x0f\x84\xfa\x00\x00\x00', b'\x90\xe9\xfa\x00\x00\x00'
+
+def apply_full_textures(inf, slide):
+    if os.environ.get('GW2_RUNNER_FULL_TEXTURES', '1') == '0':
+        return
+    try:
+        if file_bytes(TEX_JE, 6) != TEX_ORIGINAL or inf.read_memory(TEX_JE + slide, 6).tobytes() != TEX_ORIGINAL:
+            print('GW2_RUNNER: full-texture guard failed; skipped')
+            return
+        inf.write_memory(TEX_JE + slide, TEX_PATCHED)
+        if inf.read_memory(TEX_JE + slide, 6).tobytes() != TEX_PATCHED:
+            print('GW2_RUNNER: full-texture write did not stick; skipped')
+            return
+    except (gdb.MemoryError, gdb.error, ValueError):
+        print('GW2_RUNNER: full-texture patch skipped (memory)')
+        return
+    print('GW2_RUNNER: full-texture patch applied')
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -386,6 +419,7 @@ class Arm(gdb.Breakpoint):
         arm_stage_trace(inf, slide)
         arm_downloader_check(inf, slide)
         arm_crash_report(inf, slide)
+        apply_full_textures(inf, slide)
         self.enabled = False
         return False
 
