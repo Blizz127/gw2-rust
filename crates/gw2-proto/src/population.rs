@@ -35,6 +35,8 @@ use crate::character_setup::CharacterSetupFrame209026;
 use crate::core_stats::CoreStatsCreation209026;
 use crate::endurance::{EnduranceFrame209026, EnduranceOperation209026};
 use crate::guardian::{GuardianFrame209026, GuardianMeter209026, GuardianOperation209026};
+use crate::kennel::KennelCreation209026;
+use crate::pvp::PvpManagerCreation209026;
 use crate::health::{HealthFrame209026, HealthOperation209026, HealthValues209026};
 use crate::player_creation::PlayerCreation209026;
 use crate::quest::QuestManagerReportFrame209026;
@@ -51,6 +53,14 @@ use crate::{Guid, Point3};
 /// (`0x14094d22c` -> `0x14131a777` -> `0x14131ab10` -> health getter
 /// `0x1411d7cb0`) once a controlled character existed. Both are sent before 444.
 ///
+/// 332 (kennel) follows them: without it the client asserted `m_kennel`
+/// (ChCliCharacter.h:579) at the end of READY_WAIT, after 412 and 1036/431 (sandbox
+/// run 84, 2026-11-04).
+///
+/// 516 (player PvP manager, all keys zero) follows the other player managers:
+/// without it the client asserted `m_pvpMgr` (ChCliPlayer.h:308) at the end of
+/// READY_WAIT (sandbox run 85).
+///
 /// 247 (assign a type-23 record to the wardrobe) is not sent. Type 23 (155 records,
 /// UIDs 2-173) has the shape of the outfit catalog, and our key was a placeholder.
 /// With 247 in the sequence, the owner's client crashed in texture streaming
@@ -66,7 +76,7 @@ use crate::{Guid, Point3};
 /// (`docs/re/209026-character-finalization-dependencies.md`); whether 183
 /// alone suffices for the controlled player is still open.
 pub const POPULATION_ORDER: &[u16] = &[
-    428, 37, 443, 183, 282, 477, 151, 256, 217, 248, 565, 538, 605, 170, 618, 444, 46,
+    428, 37, 443, 183, 282, 477, 151, 256, 217, 332, 248, 565, 538, 516, 605, 170, 618, 444, 46,
 ];
 
 /// Caller-supplied inputs. No `Debug`: names and portal identities need not
@@ -417,6 +427,16 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
         })?,
     ));
 
+    // 332: kennel creation (asserts that none exists; sent once). Empty: the Bytes'
+    // and entries' meanings are not established (crate::kennel).
+    frames.push((
+        332,
+        frame(|out| {
+            KennelCreation209026 { character_index: character, first: 0, second: 0, entries: Vec::new() }
+                .encode_frame(out)
+        })?,
+    ));
+
     // 248: wardrobe manager. docs/re/209026-wardrobe-startup.md: 248 (like 247)
     // lazily creates it; needed before 170's model path and required before 431.
     // 247 is left out (see POPULATION_ORDER).
@@ -457,6 +477,15 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
         538,
         frame(|out| {
             QuestManagerReportFrame209026 { player_index: player }.encode_frame(out);
+            Ok(())
+        })?,
+    ));
+
+    // 516: player PvP manager (player index; every key zero, crate::pvp).
+    frames.push((
+        516,
+        frame(|out| {
+            PvpManagerCreation209026::empty(player).encode_frame(out);
             Ok(())
         })?,
     ));
@@ -613,6 +642,13 @@ mod tests {
             443 | 282 | 151 | 170 | 444 => CharacterSetupFrame209026::decode_frame(input)
                 .unwrap()
                 .encode_frame(&mut out),
+            516 => PvpManagerCreation209026::decode_frame(input)
+                .unwrap()
+                .encode_frame(&mut out),
+            332 => KennelCreation209026::decode_frame(input)
+                .unwrap()
+                .encode_frame(&mut out)
+                .unwrap(),
             256 => HealthFrame209026::decode_frame(input)
                 .unwrap()
                 .encode_frame(&mut out),
