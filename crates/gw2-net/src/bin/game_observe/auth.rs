@@ -349,6 +349,20 @@ impl AuthProbe {
                 // Client 14 {request, world id, byte}: the home-world selection. The
                 // client waits for server 7 echoing the request id; status word (D3) 0 is
                 // success, after which it sets its current and home world to the choice.
+                // Client 12 {request, buffer}: the account-preferences upload
+                // (PrContext.cpp 0x14027da93 -> 0x14023bcc0, transaction vtable
+                // 0x1419236f8). Server 7 is the generic completion: 0x14023a9e0 finds
+                // any pending transaction by request id, marks it done and stores the
+                // status words (0 = success). Nothing is stored server-side.
+                12 => {
+                    let mut body = &frame[2..];
+                    let request = <u32 as gw2_proto::Decode>::decode(&mut body)?;
+                    eprintln!("Play phase: preferences upload acknowledged");
+                    7u16.encode(&mut reply);
+                    for value in [request, 0, 0, 0, 0, 0, 0] {
+                        value.encode(&mut reply);
+                    }
+                }
                 14 => {
                     let mut body = &frame[2..];
                     let request = <u32 as gw2_proto::Decode>::decode(&mut body)?;
@@ -665,6 +679,38 @@ pub(crate) mod tests {
         }
     }
 
+    /// The preferences upload (client 12 {request, BufferVarLarge}, 841 bytes on the
+    /// owner's device) is completed by server 7 echoing its request with status 0.
+    #[test]
+    fn preferences_upload_is_completed_with_server_7() {
+        const SERVER_TABLES: &str = include_str!("../../../../../data/protocol/209026/server-tables.xml");
+        let tables = schema::parse(SERVER_TABLES).unwrap().protocols[0].groups.clone();
+        let table = tables.iter().find(|g| g.name == "table-0x141923fe0").unwrap();
+        let mut upload = BytesMut::new();
+        12u16.encode(&mut upload);
+        91u32.encode(&mut upload);
+        upload.extend_from_slice(&835u16.to_le_bytes());
+        upload.extend_from_slice(&[0x5a; 835]);
+        for cut in [0, 1, 3, 6, 400, upload.len()] {
+            let mut probe = play_probe();
+            let mut replies = Vec::new();
+            for part in [&upload[..cut], &upload[cut..]] {
+                if let Some(reply) = probe.push(part).unwrap() {
+                    replies.push(reply);
+                }
+            }
+            assert_eq!(replies.len(), 1, "cut {cut}");
+            let mut cursor = &replies[0][..];
+            let (message, value) = dynamic::decode_frame(&table.server, &census_rules(), &mut cursor).unwrap();
+            assert_eq!(message.id, 7);
+            assert!(cursor.is_empty());
+            let Value::Struct(fields) = value else { panic!() };
+            assert_eq!(fields[0].1, Value::U32(91), "request echoed");
+            assert_eq!(fields[3].1, Value::U32(0), "status 0 = success");
+            assert!(probe.play_enabled());
+        }
+    }
+
     /// The home-world list the login reply carries: 23, 25 {1001, 0, 0, 0}, 24.
     pub(crate) fn world_list(out: &mut BytesMut) {
         23u16.encode(out);
@@ -876,7 +922,8 @@ pub(crate) mod tests {
     }
 
     /// Every auth client message the play phase loads (auth.xml protocol 3) is framed
-    /// without disabling the phase; only 14 (home-world select), 22 and 29 get replies.
+    /// without disabling the phase; only 12 (preferences upload), 14 (home-world select),
+    /// 22 and 29 get replies.
     #[test]
     fn every_auth_client_message_frames_in_the_play_phase() {
         let group = schema::parse(AUTH_SCHEMA).unwrap().protocols.into_iter().find(|p| p.name == "3").unwrap().groups.remove(0);
@@ -886,7 +933,7 @@ pub(crate) mod tests {
             let mut probe = play_probe();
             let reply = probe.push(&frame).unwrap();
             assert!(probe.play_enabled(), "client {} disabled the play phase", message.id);
-            assert_eq!(reply.is_some(), matches!(message.id, 14 | 22 | 29), "client {} reply", message.id);
+            assert_eq!(reply.is_some(), matches!(message.id, 12 | 14 | 22 | 29), "client {} reply", message.id);
         }
     }
 

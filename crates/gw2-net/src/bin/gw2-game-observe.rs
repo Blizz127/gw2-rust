@@ -73,6 +73,8 @@ struct Fixtures<'a> {
     play: Option<auth::PlayRoute>,
     mission_map_key: Option<u32>,
     population: Option<mission::PopulationFixture>,
+    /// Diagnostic hold between client 420 and the population (zero: none).
+    population_delay: Duration,
     /// Service mode: create no capture or preamble files. The auth stream can
     /// carry account strings typed into the client, so a server facing a
     /// person must run with this set.
@@ -92,10 +94,11 @@ fn observe(
         play,
         mission_map_key,
         population,
+        population_delay,
         no_capture,
     } = fixtures;
     let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
-        (Some(phase), Some(fixture)) => Some(phase.with_population(fixture)?),
+        (Some(phase), Some(fixture)) => Some(phase.with_population(fixture)?.with_population_delay(population_delay)),
         (phase, _) => phase,
     };
     let mut auth = match (auth_body.map(auth::AuthProbe::new), play) {
@@ -103,7 +106,8 @@ fn observe(
         (probe, _) => probe,
     };
     let play_enabled = auth.as_ref().is_some_and(auth::AuthProbe::play_enabled);
-    stream.set_read_timeout(Some(read_timeout(play_enabled || mission.is_some())))?;
+    let idle = read_timeout(play_enabled || mission.is_some());
+    stream.set_read_timeout(Some(idle))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
     // Sizes-only byte timeline (no contents), like the launcher relay's trace: it showed
     // the split key reply that broke the owner's login. Milliseconds since accept.
@@ -161,6 +165,10 @@ fn observe(
     // The 1 MiB cap bounds capture files; without capture the session is
     // bounded only by the read timeout.
     while no_capture || total < CAPTURE_LIMIT {
+        // A held population shortens the read so it goes out on time (see --mission-population-delay-ms).
+        let due = mission.as_ref().and_then(mission::MissionPhase::due_at);
+        let wait = due.map_or(idle, |due| due.saturating_duration_since(Instant::now()).max(Duration::from_millis(1)));
+        stream.set_read_timeout(Some(wait.min(idle)))?;
         let available = if no_capture {
             chunk.len()
         } else {
@@ -174,6 +182,18 @@ fn observe(
                     io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut
                 ) =>
             {
+                if let Some(mission) = &mut mission
+                    && let Some(held) = mission.take_due(Instant::now())
+                {
+                    let mut wire = BytesMut::new();
+                    codec.encode(held, &mut wire)?;
+                    stream.write_all(&wire)?;
+                    eprintln!("net +{}ms: down {} B", ms(t0), wire.len());
+                    continue;
+                }
+                if due.is_some() {
+                    continue;
+                }
                 eprintln!("net +{}ms: read timeout", ms(t0));
                 break;
             }
@@ -207,6 +227,9 @@ fn observe(
                         codec.encode(reply, &mut wire)?;
                     }
                 }
+                if let Some(held) = mission.take_due(Instant::now()) {
+                    codec.encode(held, &mut wire)?;
+                }
             }
             if !wire.is_empty() {
                 stream.write_all(&wire)?;
@@ -237,6 +260,7 @@ fn main() -> io::Result<()> {
     let mut population_record: Option<Vec<u8>> = None;
     let mut no_capture = false;
     let mut spawn: Option<[f32; 3]> = None;
+    let mut population_delay = Duration::ZERO;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -272,6 +296,14 @@ fn main() -> io::Result<()> {
                     .take((auth::CHARACTER_BODY_LIMIT + 1) as u64)
                     .read_to_end(&mut bytes)?;
                 population_record = Some(bytes);
+            }
+            "--mission-population-delay-ms" => {
+                let ms = args
+                    .next()
+                    .and_then(|v| v.parse::<u64>().ok())
+                    .filter(|ms| *ms <= 60_000)
+                    .ok_or_else(|| invalid("invalid population delay (0..=60000 ms)"))?;
+                population_delay = Duration::from_millis(ms);
             }
             "--mission-spawn" => {
                 let text = args.next().ok_or_else(|| invalid("missing spawn X,Y,Z"))?;
@@ -322,7 +354,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z]]]",
+                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS]]]]",
                 ));
             }
         }
@@ -348,6 +380,9 @@ fn main() -> io::Result<()> {
         return Err(invalid(
             "--mission-population and --mission-spawn go together and require --mission-map-key",
         ));
+    }
+    if !population_delay.is_zero() && population_record.is_none() {
+        return Err(invalid("--mission-population-delay-ms requires --mission-population"));
     }
     let population = match (&population_record, spawn) {
         (Some(record), Some(spawn)) => Some(mission::PopulationFixture::new(record, spawn)?),
@@ -425,6 +460,7 @@ fn main() -> io::Result<()> {
                 play,
                 mission_map_key,
                 population,
+                population_delay,
                 no_capture,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {

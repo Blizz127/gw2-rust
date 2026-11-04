@@ -28,6 +28,7 @@ use gw2_proto::{
     schema::{self, Message},
 };
 use std::io::{self, ErrorKind};
+use std::time::{Duration, Instant};
 
 const MISSION_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/mission.xml");
 /// Group 0 (AgMsg.cpp) client messages: the agent traffic the client sends once
@@ -118,6 +119,10 @@ pub struct MissionPhase {
     population: Option<PopulationFixture>,
     populated: bool,
     began: bool,
+    /// Diagnostic hold between client 420 and the population (0: send at once).
+    population_delay: Duration,
+    /// The population sequence and when it is due, while held.
+    held: Option<(Instant, Bytes)>,
 }
 
 impl MissionPhase {
@@ -211,6 +216,8 @@ impl MissionPhase {
             population: None,
             populated: false,
             began: false,
+            population_delay: Duration::ZERO,
+            held: None,
         })
     }
 
@@ -228,6 +235,30 @@ impl MissionPhase {
         Ok(self)
     }
 
+    /// Hold the population for `delay` after MapLoaded instead of sending it in the
+    /// same write. Diagnostic: the client streams the map's textures from 420 on, so
+    /// a crash in that second can't tell map assets from population data apart
+    /// (owner run 2026-11-04 03:23Z, GrTex2d/ImgMip null write). AGENT_STREAM waits
+    /// for the controlled character without a timeout, so a short hold is safe.
+    pub fn with_population_delay(mut self, delay: Duration) -> Self {
+        self.population_delay = delay;
+        self
+    }
+
+    /// When the held population is due, if one is held.
+    pub fn due_at(&self) -> Option<Instant> {
+        self.held.as_ref().map(|(due, _)| *due)
+    }
+
+    /// The held population once `now` has reached its due time (once).
+    pub fn take_due(&mut self, now: Instant) -> Option<Bytes> {
+        if self.due_at().is_some_and(|due| now >= due) {
+            eprintln!("Mission phase: sending the held population sequence");
+            return self.held.take().map(|(_, bytes)| bytes);
+        }
+        None
+    }
+
     /// Server frames owed for one framed client message: population after
     /// MapLoaded (once), then BeginPlaying after AgentsLoaded (once, and only
     /// after population). Nothing without a population fixture.
@@ -238,10 +269,19 @@ impl MissionPhase {
         match seen {
             Seen::Map(ClientMapEvent::MapLoaded) if !self.populated => {
                 self.populated = true;
+                let stream = population::population_stream(&fixture.plan)?.freeze();
+                if !self.population_delay.is_zero() {
+                    eprintln!(
+                        "Mission phase: holding the population sequence for {} ms",
+                        self.population_delay.as_millis()
+                    );
+                    self.held = Some((Instant::now() + self.population_delay, stream));
+                    return Ok(None);
+                }
                 eprintln!("Mission phase: sending candidate population sequence");
-                Ok(Some(population::population_stream(&fixture.plan)?.freeze()))
+                Ok(Some(stream))
             }
-            Seen::Map(ClientMapEvent::AgentsLoaded) if self.populated && !self.began => {
+            Seen::Map(ClientMapEvent::AgentsLoaded) if self.populated && self.held.is_none() && !self.began => {
                 self.began = true;
                 eprintln!("Mission phase: sending server 1036 BeginPlaying and 431 player startup");
                 let mut out = BytesMut::new();
@@ -748,6 +788,25 @@ pub(crate) mod tests {
         assert!(phase.respond(&loaded).unwrap().is_none(), "population is sent once");
         assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04, 0xaf, 0x01]);
         assert!(phase.respond(&agents).unwrap().is_none(), "1036 is sent once");
+    }
+
+    /// With a delay the population is held after 420 and released once due (once);
+    /// 412 during the hold never produces 1036 early.
+    #[test]
+    fn held_population_goes_out_once_due_and_1036_waits_for_it() {
+        let mut phase = populated_phase().with_population_delay(Duration::from_secs(15));
+        let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
+        let loaded = Seen::Map(ClientMapEvent::MapLoaded);
+        assert!(phase.due_at().is_none());
+        assert!(phase.respond(&loaded).unwrap().is_none(), "held, not sent with 420");
+        let due = phase.due_at().expect("held");
+        assert!(phase.take_due(due - Duration::from_millis(1)).is_none());
+        assert!(phase.respond(&agents).unwrap().is_none(), "no 1036 before the population");
+        let plan = phase.population.as_ref().unwrap().plan.clone();
+        assert_eq!(phase.take_due(due).unwrap(), population::population_stream(&plan).unwrap());
+        assert!(phase.take_due(due).is_none() && phase.due_at().is_none(), "released once");
+        assert!(phase.respond(&loaded).unwrap().is_none());
+        assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04, 0xaf, 0x01]);
     }
 
     #[test]

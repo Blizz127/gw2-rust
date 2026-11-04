@@ -463,6 +463,79 @@ fn deployed_mission_population_sequence_over_tcp_for_every_split() {
     }
 }
 
+/// --mission-population-delay-ms over TCP: nothing follows 420 until the hold has passed,
+/// with no client traffic meanwhile; then the population, and 1036 + 431 after 412.
+#[test]
+fn held_population_goes_out_after_the_delay_over_tcp() {
+    let record = mission::tests::guardian_record(15, 1);
+    let fixture = mission::PopulationFixture::new(&record, [0.0, 0.0, 7.4]).unwrap();
+    let mut expect = mission::MissionPhase::new(15).unwrap().with_population(fixture.clone()).unwrap();
+    let opening = expect.opening();
+    let population = expect
+        .respond(&mission::Seen::Map(gw2_proto::map_load::ClientMapEvent::MapLoaded))
+        .unwrap()
+        .unwrap();
+    let begin = expect
+        .respond(&mission::Seen::Map(gw2_proto::map_load::ClientMapEvent::AgentsLoaded))
+        .unwrap()
+        .unwrap();
+    let delay = Duration::from_millis(400);
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let path = std::env::temp_dir().join(format!("gw2-observe-held-{}.bin", std::process::id()));
+    // Public toy group for this local test; no stored identities are loaded.
+    let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+    let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
+    let server_path = path.clone();
+    let server = std::thread::spawn(move || {
+        let fixtures = Fixtures {
+            mission_map_key: Some(15),
+            population: Some(fixture),
+            population_delay: delay,
+            no_capture: true,
+            ..Fixtures::default()
+        };
+        observe(stream_of(listener), &key, &server_path, fixtures, Preamble::Mission)
+    });
+    let mut client = TcpStream::connect(address).unwrap();
+    client.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    let mut input = preamble::fixture(Preamble::Mission);
+    input.extend_from_slice(&[0, 6, 0, 4, 0, 0]);
+    client.write_all(&input).unwrap();
+    let mut reply = [0u8; 22];
+    client.read_exact(&mut reply).unwrap();
+    let mut codec = ClientCodec::new(&session_secret(&shared, &reply[2..].try_into().unwrap()));
+    let mut pending = BytesMut::new();
+    let mut next = |client: &mut TcpStream, codec: &mut ClientCodec| loop {
+        if let Some(frame) = codec.decode(&mut pending).unwrap() {
+            return frame;
+        }
+        let mut chunk = [0u8; 4096];
+        let n = client.read(&mut chunk).unwrap();
+        assert_ne!(n, 0, "server closed early");
+        pending.extend_from_slice(&chunk[..n]);
+    };
+    assert_eq!(next(&mut client, &mut codec), opening);
+    let send = |client: &mut TcpStream, codec: &mut ClientCodec, id| {
+        let mut plain = BytesMut::new();
+        gw2_proto::map_load::encode_empty(id, &mut plain);
+        let mut wire = BytesMut::new();
+        codec.encode(plain.freeze(), &mut wire).unwrap();
+        client.write_all(&wire).unwrap();
+    };
+    let loaded_at = std::time::Instant::now();
+    send(&mut client, &mut codec, gw2_proto::map_load::MAP_LOADED_420);
+    assert_eq!(next(&mut client, &mut codec), population, "population after the hold");
+    let waited = loaded_at.elapsed();
+    assert!(waited >= delay, "population came {waited:?} after 420, before the {delay:?} hold");
+    assert!(waited < delay + Duration::from_secs(2), "population came late: {waited:?}");
+    send(&mut client, &mut codec, gw2_proto::map_load::AGENTS_LOADED_412);
+    assert_eq!(next(&mut client, &mut codec), begin, "1036 + 431 after 412");
+    client.shutdown(Shutdown::Both).unwrap();
+    server.join().unwrap().unwrap();
+    assert!(!path.exists(), "no-capture mode created a capture file");
+}
+
 /// The client rejects a key reply split across reads (owner's device, error 58:11:5:535:
 /// 2 B arrived, the remaining 20 B one Nagle round trip later). The whole key reply and the
 /// first frame must come from one write, so the client's first read holds all of them.
