@@ -381,6 +381,39 @@ def apply_full_textures(inf, slide):
         return
     print('GW2_RUNNER: full-texture patch applied')
 
+# Opt-in diagnostic (GW2_RUNNER_TEXTURE_DIAG=1, off by default): just before the load task's
+# "generate missing levels" call at 0x140a6f625 (only reached without the full-texture patch),
+# print the texture's file id (encoded reference at task [+0x8]: id = w1*0xff00 + w0 + 0xff00ff01),
+# the levels present (esi) and wanted (ecx), the format (+0x58) and dims (+0x68). Read-only.
+TEX_GEN_SITE = 0x140a6f625
+
+class TextureDiag(gdb.Breakpoint):
+    hits = 0
+    def stop(self):
+        try:
+            if not in_client() or not is_x86_64():
+                return False
+            TextureDiag.hits += 1
+            if TextureDiag.hits > 40:
+                self.enabled = False
+            inf = gdb.selected_inferior()
+            task = int(gdb.parse_and_eval('$rdi'))
+            ref = int.from_bytes(inf.read_memory(task + 8, 8).tobytes(), 'little')
+            w0, w1 = struct.unpack('<HH', inf.read_memory(ref, 4).tobytes())
+            fid = (w1 * 0xff00 + w0 + 0xff00ff01) & 0xffffffff
+            fmt, dims = struct.unpack('<I', inf.read_memory(task + 0x58, 4).tobytes())[0], struct.unpack('<HH', inf.read_memory(task + 0x68, 4).tobytes())
+            print('GW2_RUNNER: texture-diag file %d levels %d -> %d format %#x dims %dx%d' % (
+                fid, int(gdb.parse_and_eval('$esi')), int(gdb.parse_and_eval('$ecx')), fmt, dims[0], dims[1]))
+        except (gdb.MemoryError, gdb.error, struct.error):
+            pass
+        return False
+
+def arm_texture_diag(inf, slide):
+    if os.environ.get('GW2_RUNNER_TEXTURE_DIAG', '0') != '1':
+        return
+    TextureDiag('*%#x' % (TEX_GEN_SITE + slide), internal=True)
+    print('GW2_RUNNER: texture diagnostic armed')
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -420,6 +453,7 @@ class Arm(gdb.Breakpoint):
         arm_downloader_check(inf, slide)
         arm_crash_report(inf, slide)
         apply_full_textures(inf, slide)
+        arm_texture_diag(inf, slide)
         self.enabled = False
         return False
 
