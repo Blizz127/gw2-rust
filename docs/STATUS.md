@@ -501,6 +501,12 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
             - The 'eula' content (file 154806, chunk data +0xc) is version **13**.
             - **Run 83: the local sandbox reaches character select** (Banshee Fixture, Human Guardian, Queensdale) with no agreement panel. The client then sent an unanswered auth client 39 (40 B; 5 Dwords, 3 Floats, 2 Bytes; it looks like a client report).
             - The owner's "Textures: higher" retry at 16:50Z crashed the same way, so the setting alone isn't enough.
+          - **IN-GAME LOCALLY (2026-11-04 17:33Z, run 86; clean in run 87).** The synthetic account entered Queensdale: character in the world, health 1,645, minimap, chat, skill bar, and in-world client traffic (280 DebugInfo, 191 CharForce).
+            - Run 84: the full-texture runner patch got the loader through READY_WAIT, with 412 back and 1036/431 out, then assert `m_kennel` → server 332 added.
+            - Run 85: assert `m_pvpMgr` → server 516 added (2b9251c).
+            - Run 86: in the world, with a "unable to gain access to the log-in server" dialog (42:0:9001:4460:101): unanswered STS `/Sts/Ping` and `Game.gw2.*` queries → `--reply-default <Reply/>` (f701f42); run 87 has no dialog.
+            - Run 88 (patch off) reproduces the device's ImgMip crash exactly, so the device needs runner 0e6ac30.
+            - **Kit 2090f47 live on Banshee at 18:11:33Z.** The owner approved the restart without the DIT ack, since DIT was unreachable. Rollback is f89ea50.
           - Runner crash report (runs 80/81): read-only breakpoints on the ExeError sink `0x1409dc570` (all 8 error paths, including the assertion handler `0x1409db7a0`) and the unhandled-exception filter `0x1409dc720`. They print "GW2_RUNNER: assert … file:line "expr"" and "GW2_RUNNER: crash code … at <offset>" with stack offsets. Armed with no false hits on login; untested on a real crash.
       - The a8fdb4e trace hooked the profiler's per-frame marker (about 1,600 hits/s). It is being moved to the loader's 22 call sites.
       - "Banshee Realm": the world-name patch applied on his device.
