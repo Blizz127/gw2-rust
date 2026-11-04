@@ -177,9 +177,15 @@ const RADIUS: f32 = 1.0;
 /// above both height minimums of `docs/re/209026-agent-dimensions.md`: the
 /// map-unit one (`2 * RADIUS`) and the full constructor's second one
 /// (`max(array4 / 32, 2 * radius / 32) + 0.1` collision units, about 0.1625,
-/// which is 5.2 map units for this radius). Every other element, and the
-/// chosen speed and height, are placeholder: valid values not established.
-const PARAMETERS: [f32; 8] = [0.0, 0.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0];
+/// which is 5.2 map units for this radius).
+///
+/// Index 0 is the base movement speed (map units per second) and index 1 the turn
+/// scale (yaw rate = scale * turn command scalar). With both at 0 the character
+/// stood in Queensdale but could neither walk nor turn: chat input worked, W/Up did
+/// nothing (sandbox runs 92/93, 2026-11-04). 294 is GW2's familiar base run speed
+/// and 3.0 about pi rad/s for a unit turn command. placeholder: neither, nor any
+/// other element, is established from content.
+const PARAMETERS: [f32; 8] = [294.0, 3.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0];
 
 /// Health for 256: full first meter, no regeneration, empty second meter, state
 /// 0 (alive; `docs/re/209026-character-health-endurance.md`: a non-alive player
