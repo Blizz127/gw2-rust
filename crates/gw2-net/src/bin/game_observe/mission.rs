@@ -20,6 +20,7 @@
 use bytes::{Bytes, BytesMut};
 use gw2_proto::{
     Guid,
+    agent_control::AgentControl209026,
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
@@ -283,10 +284,15 @@ impl MissionPhase {
             }
             Seen::Map(ClientMapEvent::AgentsLoaded) if self.populated && self.held.is_none() && !self.began => {
                 self.began = true;
-                eprintln!("Mission phase: sending server 1036 BeginPlaying and 431 player startup");
+                eprintln!("Mission phase: sending server 1036 BeginPlaying, 431 player startup and 83 client control");
                 let mut out = BytesMut::new();
                 map_load::encode_empty(map_load::BEGIN_PLAYING_1036, &mut out);
                 PlayerStartupFrame209026.encode_frame(&mut out);
+                // 83 grants client control of the player's agent (gw2_proto::agent_control):
+                // without it every local movement command is destroyed. After 412 the
+                // scheduled world entry (46) has run, so the flag can't make it drop 46.
+                AgentControl209026 { agent_index: fixture.plan.character_index as u16, value: 1 }
+                    .encode_frame(&mut out);
                 Ok(Some(out.freeze()))
             }
             _ => Ok(None),
@@ -584,6 +590,7 @@ pub(crate) mod tests {
             let mut begin = BytesMut::new();
             map_load::encode_empty(map_load::BEGIN_PLAYING_1036, &mut begin);
             PlayerStartupFrame209026.encode_frame(&mut begin);
+            AgentControl209026 { agent_index: 1, value: 1 }.encode_frame(&mut begin);
             assert_eq!(replies[1].1, begin.freeze(), "split {split}");
         }
     }
@@ -786,7 +793,7 @@ pub(crate) mod tests {
         let plan = phase.population.as_ref().unwrap().plan.clone();
         assert_eq!(sent, population::population_stream(&plan).unwrap());
         assert!(phase.respond(&loaded).unwrap().is_none(), "population is sent once");
-        assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04, 0xaf, 0x01]);
+        assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01], "1036, 431, then 83 client control for agent 1");
         assert!(phase.respond(&agents).unwrap().is_none(), "1036 is sent once");
     }
 
@@ -806,7 +813,7 @@ pub(crate) mod tests {
         assert_eq!(phase.take_due(due).unwrap(), population::population_stream(&plan).unwrap());
         assert!(phase.take_due(due).is_none() && phase.due_at().is_none(), "released once");
         assert!(phase.respond(&loaded).unwrap().is_none());
-        assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04, 0xaf, 0x01]);
+        assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01], "1036, 431, then 83 client control for agent 1");
     }
 
     #[test]

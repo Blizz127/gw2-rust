@@ -317,7 +317,7 @@ fn mission_population_loopback_follows_client_420_and_412() {
     let population = next(&mut client, &mut codec);
     assert_eq!(&population[..2], &428u16.to_le_bytes());
     send(&mut client, &mut codec, 412);
-    assert_eq!(&next(&mut client, &mut codec)[..], &[0x0c, 0x04, 0xaf, 0x01]);
+    assert_eq!(&next(&mut client, &mut codec)[..], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01], "1036, 431, then 83 client control for agent 1");
     client.shutdown(Shutdown::Both).unwrap();
     server.join().unwrap().unwrap();
     fs::remove_file(&path).unwrap();

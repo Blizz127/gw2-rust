@@ -13,6 +13,7 @@
 //! census enables only the subset verified for build 209026.
 
 pub mod agent_behavior;
+pub mod agent_control;
 pub mod agent_creation;
 pub mod agent_position;
 pub mod agent_scene;

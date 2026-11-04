@@ -444,6 +444,47 @@ def arm_send_trace(inf, slide):
     SendTrace('*%#x' % (SEND_FN + slide), internal=True)
     print('GW2_RUNNER: send trace armed')
 
+# Opt-in diagnostic (GW2_RUNNER_COMMAND_TRACE=1, off by default): read-only breakpoints on
+# agent command submission 0x14102fbd0 (rcx = world, rdx = command; command +0x20 = agent
+# +0x18 interface, +0x50 flags, +0x54 type byte) and its two exits, drop 0x14102fc66 and
+# accept 0x14102fc83. Prints the first 30 submissions with the gating fields.
+CMD_SUBMIT, CMD_DROP, CMD_ACCEPT = 0x14102fbd0, 0x14102fc66, 0x14102fc83
+
+class CommandTrace(gdb.Breakpoint):
+    hits = 0
+    def __init__(self, spec, what):
+        super().__init__(spec, internal=True)
+        self.what = what
+    def stop(self):
+        try:
+            if not in_client() or not is_x86_64():
+                return False
+            CommandTrace.hits += 1
+            if CommandTrace.hits > 90:
+                return False
+            inf = gdb.selected_inferior()
+            rd = lambda a, n: int.from_bytes(inf.read_memory(a, n).tobytes(), 'little')
+            if self.what == 'submit':
+                world, cmd = int(gdb.parse_and_eval('$rcx')), int(gdb.parse_and_eval('$rdx'))
+                iface = rd(cmd + 0x20, 8)
+                agent_e8 = rd(iface - 0x18 + 0xe8, 1) if iface else -1
+                iface30 = rd(iface + 0x30, 1) if iface else -1
+                print('GW2_RUNNER: cmd submit type %#x flags %#x agent+e8 %#x iface+30 %#x world+1cc %#x mode %d' % (
+                    rd(cmd + 0x54, 1), rd(cmd + 0x50, 4), agent_e8, iface30, rd(world + 0x1cc, 4), rd(rd(world + 0x10, 8) + 8, 4)))
+            else:
+                print('GW2_RUNNER: cmd %s' % self.what)
+        except (gdb.MemoryError, gdb.error):
+            pass
+        return False
+
+def arm_command_trace(inf, slide):
+    if os.environ.get('GW2_RUNNER_COMMAND_TRACE', '0') != '1':
+        return
+    CommandTrace('*%#x' % (CMD_SUBMIT + slide), 'submit')
+    CommandTrace('*%#x' % (CMD_DROP + slide), 'DROPPED')
+    CommandTrace('*%#x' % (CMD_ACCEPT + slide), 'accepted')
+    print('GW2_RUNNER: command trace armed')
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -485,6 +526,7 @@ class Arm(gdb.Breakpoint):
         apply_full_textures(inf, slide)
         arm_texture_diag(inf, slide)
         arm_send_trace(inf, slide)
+        arm_command_trace(inf, slide)
         self.enabled = False
         return False
 
