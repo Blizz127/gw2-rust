@@ -16,7 +16,7 @@
 use std::process::ExitCode;
 
 use gw2_dat::archive::Archive;
-use gw2_dat::manifest::{ManifestFile, Record, manifest, records_from_archive, root_manifest};
+use gw2_dat::manifest::{ManifestFile, Property, Record, manifest, manifest_with_properties, records_from_archive, root_manifest};
 
 fn usage() -> ExitCode {
     eprintln!("usage: gw2-manifest-gen --out DIR [--build N] [--root-id N] [--manifest NAME]... [--from-dat Gw2.dat]");
@@ -29,6 +29,7 @@ fn main() -> ExitCode {
     let mut dat = None;
     let (mut record_flags, mut manifest_flags) = (0u32, 0u32);
     let mut limit: Option<usize> = None;
+    let mut properties: Vec<(u32, u8, Vec<u8>)> = Vec::new();
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         let Some(v) = args.next() else { return usage() };
@@ -43,6 +44,24 @@ fn main() -> ExitCode {
             "--manifest-flags" => manifest_flags = v.parse().unwrap_or(0),
             // Keep only the first N records of the --from-dat list.
             "--limit" => limit = v.parse().ok(),
+            // --property FILEID:TYPE:HEX attaches an MFST property to the first manifest's
+            // record for that file (e.g. 135679:0:01000000, docs/STATUS.md 2026-11-04).
+            "--property" => {
+                let parts: Vec<&str> = v.split(':').collect();
+                let parsed = (parts.len() == 3)
+                    .then(|| {
+                        let data = (0..parts[2].len())
+                            .step_by(2)
+                            .map(|i| u8::from_str_radix(parts[2].get(i..i + 2)?, 16).ok())
+                            .collect::<Option<Vec<u8>>>()?;
+                        Some((parts[0].parse().ok()?, parts[1].parse().ok()?, data))
+                    })
+                    .flatten();
+                match parsed {
+                    Some(p) => properties.push(p),
+                    None => return usage(),
+                }
+            }
             _ => return usage(),
         }
     }
@@ -76,7 +95,20 @@ fn main() -> ExitCode {
         let id = root_id + 1 + i as u32;
         // The first manifest lists every asset; the others repeat its first record, since
         // a manifest without records asserts `manifest->records`.
-        let m = manifest(build, if i == 0 { &all } else { &all[..all.len().min(1)] });
+        let m = if i == 0 && !properties.is_empty() {
+            let mut props = Vec::new();
+            for (file, kind, data) in &properties {
+                let Some(r) = all.iter().find(|r| r.base_id == *file || r.file_id == *file) else {
+                    eprintln!("--property: file {file} is not in the archive's records");
+                    return ExitCode::FAILURE;
+                };
+                eprintln!("property type {kind} ({} bytes) on record base {} file {}", data.len(), r.base_id, r.file_id);
+                props.push(Property { base_id: r.base_id, kind: *kind, data: data.clone() });
+            }
+            manifest_with_properties(build, &all, &props)
+        } else {
+            manifest(build, if i == 0 { &all } else { &all[..all.len().min(1)] })
+        };
         if let Err(e) = write(id, &m) {
             eprintln!("write {out}/{id}: {e}");
             return ExitCode::FAILURE;

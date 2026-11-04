@@ -94,24 +94,65 @@ pub fn records_from_archive<R: std::io::Read + std::io::Seek>(a: &crate::archive
     out
 }
 
+/// One `MFST` v6 property: `type` and its data bytes, attached to the record whose
+/// `baseId` is `base_id`. The client's MultiArchive keeps them per file
+/// (MultiManifest.cpp `0x140d91cf0` -> `0x140d973e0`) and reads them back by
+/// (file, type) through `0x140d97290`. Type 0 with 4 bytes is what the texture loader
+/// asks for (`0x140d8fc20` via `0x140d90480`): nonzero selects the 0x400 mip-drop base,
+/// so a texture keeps all its levels at the highest texture quality.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Property {
+    pub base_id: u32,
+    pub kind: u8,
+    pub data: Vec<u8>,
+}
+
 /// `MFST` v6 (`PackAssetManifest`): `buildId, totalRecordSize (Token, 8 bytes),
-/// records[], streams[], properties[], propertyTable[]`. Streams and properties are
-/// written empty. 64-bit pointers, like [`root_manifest`].
+/// records[], streams[], properties[], propertyTable[]`. Streams are written empty.
+/// 64-bit pointers, like [`root_manifest`].
 pub fn manifest(build: u32, records: &[Record]) -> Vec<u8> {
+    manifest_with_properties(build, records, &[])
+}
+
+/// [`manifest`] with properties (`{Byte type, ArrayPtr<Byte> data}`) and one
+/// `propertyTable` row `{baseId, propertyIndex}` per property.
+pub fn manifest_with_properties(build: u32, records: &[Record], properties: &[Property]) -> Vec<u8> {
     let mut b = ChunkBuilder::new64();
     b.u32(build);
     b.u64(records.iter().map(|r| u64::from(r.size)).sum());
     b.u32(records.len() as u32);
     let r_ptr = b.ptr_slot();
-    for _ in 0..3 {
-        b.u32(0);
-        b.ptr_slot();
-    }
+    b.u32(0);
+    b.ptr_slot(); // streams
+    b.u32(properties.len() as u32);
+    let p_ptr = b.ptr_slot();
+    b.u32(properties.len() as u32);
+    let t_ptr = b.ptr_slot();
     if !records.is_empty() {
         let start = b.pos();
         b.point(r_ptr, start);
         for r in records {
             b.u32(r.base_id).u32(r.file_id).u32(r.size).u32(r.flags);
+        }
+    }
+    if !properties.is_empty() {
+        let start = b.pos();
+        b.point(p_ptr, start);
+        let mut data_slots = Vec::new();
+        for p in properties {
+            b.u8(p.kind);
+            b.u32(p.data.len() as u32);
+            data_slots.push(b.ptr_slot());
+        }
+        let table = b.pos();
+        b.point(t_ptr, table);
+        for (index, p) in properties.iter().enumerate() {
+            b.u32(p.base_id).u32(index as u32);
+        }
+        for (slot, p) in data_slots.into_iter().zip(properties) {
+            let at = b.pos();
+            b.point(slot, at);
+            b.bytes(&p.data);
         }
     }
     packfile(*b"MFST", &[(*b"MFST", 6, &b)])
@@ -125,6 +166,26 @@ mod tests {
     use crate::pfschema::{find, parse};
 
     const REFERENCE: &str = include_str!("../reference/packfiles-208039.xml");
+
+    #[test]
+    fn manifest_properties_decode_with_reference_schema() {
+        let schemas = parse(REFERENCE).unwrap();
+        let recs = [Record { base_id: 135679, file_id: 135679, size: 26908, flags: 0 }];
+        let props = [Property { base_id: 135679, kind: 0, data: 1u32.to_le_bytes().to_vec() }];
+        let pf = Packfile::new(manifest_with_properties(209026, &recs, &props)).unwrap();
+        let chunk = pf.chunks().next().unwrap().unwrap();
+        let v6 = find(&schemas, "MFST", "MFST").unwrap().version(6).unwrap();
+        let value = read_chunk(chunk.bytes(), v6, true, Limits::default()).unwrap();
+        let text = format!("{value:?}");
+        assert!(
+            text.contains(r#"("properties", Array([Struct([("type", U8(0)), ("data", Array([U8(1), U8(0), U8(0), U8(0)]))])]))"#),
+            "{text}"
+        );
+        assert!(
+            text.contains(r#"("propertyTable", Array([Struct([("baseId", U32(135679)), ("properyIndex", U32(0))])]))"#),
+            "{text}"
+        );
+    }
 
     #[test]
     fn root_manifest_decodes_with_reference_schema() {
