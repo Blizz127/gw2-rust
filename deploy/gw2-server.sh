@@ -43,7 +43,8 @@ pids+=($!); cdn=$!
   --reply-xml "/Auth/GetUserInfo=$GW2_DATA/empty.xml" \
   --reply-xml "/Mail/SetOptIn=$GW2_DATA/empty.xml" \
   --reply-xml "/Presence/SetWatch=$GW2_DATA/empty.xml" \
-  --reply-xml "/Game.com.Wallet/SetWatch=$GW2_DATA/empty.xml" &
+  --reply-xml "/Game.com.Wallet/SetWatch=$GW2_DATA/empty.xml" \
+  --reply-default "$GW2_DATA/empty.xml" &
 pids+=($!); login=$!
 # Route 20 hands the client the bubble-side game address; the launcher relay
 # maps it to $GW2_BIND:6112.
