@@ -414,6 +414,36 @@ def arm_texture_diag(inf, slide):
     TextureDiag('*%#x' % (TEX_GEN_SITE + slide), internal=True)
     print('GW2_RUNNER: texture diagnostic armed')
 
+# Opt-in diagnostic (GW2_RUNNER_SEND_TRACE=1, off by default): read-only breakpoint on the
+# client's generic message send 0x140ff0110 (rcx = connection, edx = size, r8 = buffer whose
+# first Word is the message id). Prints the first 3 sends of each (connection, id) pair.
+SEND_FN = 0x140ff0110
+
+class SendTrace(gdb.Breakpoint):
+    seen = {}
+    def stop(self):
+        try:
+            if not in_client() or not is_x86_64():
+                return False
+            inf = gdb.selected_inferior()
+            conn = int(gdb.parse_and_eval('$rcx'))
+            msg = struct.unpack('<H', inf.read_memory(int(gdb.parse_and_eval('$r8')), 2).tobytes())[0]
+            key = (conn, msg)
+            n = SendTrace.seen.get(key, 0) + 1
+            SendTrace.seen[key] = n
+            if n <= 3:
+                print('GW2_RUNNER: send %s conn %#x id %d size %d (#%d)' % (
+                    time.strftime('%H:%M:%SZ', time.gmtime()), conn & 0xffffff, msg, int(gdb.parse_and_eval('$edx')), n))
+        except (gdb.MemoryError, gdb.error, struct.error):
+            pass
+        return False
+
+def arm_send_trace(inf, slide):
+    if os.environ.get('GW2_RUNNER_SEND_TRACE', '0') != '1':
+        return
+    SendTrace('*%#x' % (SEND_FN + slide), internal=True)
+    print('GW2_RUNNER: send trace armed')
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -454,6 +484,7 @@ class Arm(gdb.Breakpoint):
         arm_crash_report(inf, slide)
         apply_full_textures(inf, slide)
         arm_texture_diag(inf, slide)
+        arm_send_trace(inf, slide)
         self.enabled = False
         return False
 
