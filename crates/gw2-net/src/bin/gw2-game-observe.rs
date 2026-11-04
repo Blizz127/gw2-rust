@@ -259,6 +259,7 @@ fn main() -> io::Result<()> {
     let mut mission_map_key: Option<u32> = None;
     let mut population_record: Option<Vec<u8>> = None;
     let mut no_capture = false;
+    let mut agreement_state: Option<std::path::PathBuf> = None;
     let mut spawn: Option<[f32; 3]> = None;
     let mut population_delay = Duration::ZERO;
     let mut args = std::env::args().skip(1);
@@ -287,6 +288,9 @@ fn main() -> io::Result<()> {
                 )
             }
             "--no-capture" => no_capture = true,
+            "--auth-agreement-state" => {
+                agreement_state = Some(args.next().ok_or_else(|| invalid("missing agreement state file"))?.into());
+            }
             "--mission-population" => {
                 let path = args
                     .next()
@@ -354,7 +358,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS]]]]",
+                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS]]]]",
                 ));
             }
         }
@@ -380,6 +384,9 @@ fn main() -> io::Result<()> {
         return Err(invalid(
             "--mission-population and --mission-spawn go together and require --mission-map-key",
         ));
+    }
+    if agreement_state.is_some() && auth_body.is_none() {
+        return Err(invalid("--auth-agreement-state requires --auth-reply-body"));
     }
     if !population_delay.is_zero() && population_record.is_none() {
         return Err(invalid("--mission-population-delay-ms requires --mission-population"));
@@ -414,7 +421,13 @@ fn main() -> io::Result<()> {
         _ => None,
     };
     let auth_body = auth_body
-        .map(|body| auth::ReplyFixture::new(body, character).and_then(auth::ReplyFixture::with_home_world))
+        .map(|body| {
+            let fixture = auth::ReplyFixture::new(body, character).and_then(auth::ReplyFixture::with_home_world)?;
+            Ok::<_, io::Error>(match agreement_state {
+                Some(path) => fixture.with_agreement(auth::AgreementState::new(path)),
+                None => fixture,
+            })
+        })
         .transpose()?;
     let params = read_exact_file(&params.ok_or_else(|| invalid("missing --params"))?, 136)?;
     let params = ParamBlob::parse(&params, ByteOrder::Little)

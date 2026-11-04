@@ -9,8 +9,9 @@ use gw2_proto::{
     play_route::{NameSelectComplete3, RouteRequest29, RouteResult20},
     schema::{self, Field, Message},
 };
-use std::io::{self, ErrorKind};
+use std::io::{self, ErrorKind, Write};
 use std::net::SocketAddr;
+use std::path::PathBuf;
 
 pub const CHARACTER_BODY_LIMIT: usize = 238;
 
@@ -19,6 +20,47 @@ pub const CHARACTER_BODY_LIMIT: usize = 238;
 pub struct ReplyFixture {
     body: Bytes,
     character: Option<Bytes>,
+    agreement: Option<AgreementState>,
+}
+
+/// The one account's accepted User Agreement version (owner decision 2026-11-04: the
+/// server remembers it so the client stops asking every login). Client 15 {Byte} carries
+/// the version the player accepted (`0x140241690`, docs/re/209026-home-world.md); the
+/// login reply's server 8 Dword4 low byte is the account's accepted version (handler
+/// `0x140240850` passes it to record +0x1e8), and a match with the client's current
+/// 'eula' content version (`0x1413e6420`) hides the panel. One byte in a 0600 file.
+#[derive(Clone)]
+pub struct AgreementState {
+    path: PathBuf,
+}
+
+impl AgreementState {
+    pub fn new(path: PathBuf) -> Self {
+        Self { path }
+    }
+
+    /// The stored version, if a valid one-byte record exists.
+    pub fn load(&self) -> Option<u8> {
+        match std::fs::read(&self.path) {
+            Ok(bytes) if bytes.len() == 1 => Some(bytes[0]),
+            _ => None,
+        }
+    }
+
+    /// Replace the stored version (temporary file, then rename).
+    pub fn store(&self, version: u8) -> io::Result<()> {
+        use std::os::unix::fs::OpenOptionsExt;
+        let tmp = self.path.with_extension("tmp");
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&tmp)?;
+        file.write_all(&[version])?;
+        file.sync_all()?;
+        std::fs::rename(&tmp, &self.path)
+    }
 }
 
 impl ReplyFixture {
@@ -32,7 +74,27 @@ impl ReplyFixture {
         if let Some(record) = &character {
             validate_character(record)?;
         }
-        Ok(Self { body, character })
+        Ok(Self { body, character, agreement: None })
+    }
+
+    /// Remember the accepted User Agreement version in `state` (see [`AgreementState`]).
+    pub fn with_agreement(mut self, state: AgreementState) -> Self {
+        self.agreement = Some(state);
+        self
+    }
+
+    /// The login body as sent now: with a stored agreement version, Dword4 carries it.
+    fn login_body(&self) -> io::Result<Bytes> {
+        let Some(version) = self.agreement.as_ref().and_then(AgreementState::load) else {
+            return Ok(self.body.clone());
+        };
+        edit_login_body(&self.body, |fields| match &mut fields[4].1 {
+            Value::U32(accepted) => {
+                *accepted = u32::from(version);
+                Ok(())
+            }
+            _ => Err(io::Error::new(ErrorKind::InvalidData, "server 8 Dword4 is not a Dword")),
+        })
     }
 
     /// Set server 8's Dword6 (home world) and Dword7 (current world) of the login
@@ -44,33 +106,45 @@ impl ReplyFixture {
     /// dialog is confirmed (owner, 2026-11-04 01:51Z). The body is decoded and
     /// re-encoded through the auth schema, so it must be a complete server 8 body.
     pub fn with_home_world(mut self) -> io::Result<Self> {
-        let invalid = || io::Error::new(ErrorKind::InvalidData, "auth body is not a server 8 body");
-        let server8 = auth_server8()?;
-        // The body follows the request Dword; frame it with request 0 (one varint byte).
-        let mut framed = BytesMut::new();
-        0u32.encode(&mut framed);
-        framed.extend_from_slice(&self.body);
-        let mut cursor = &framed[..];
-        let Value::Struct(mut fields) =
-            dynamic::decode_message(&server8, &census_rules(), &mut cursor).map_err(|_| invalid())?
-        else {
-            return Err(invalid());
-        };
-        if !cursor.is_empty() || fields.len() != server8.fields.len() {
-            return Err(invalid());
-        }
-        for index in [6, 7] {
-            match &mut fields[index].1 {
-                Value::U32(world) if *world == 0 => *world = HOME_WORLD,
-                Value::U32(_) => {}
-                _ => return Err(invalid()),
+        self.body = edit_login_body(&self.body, |fields| {
+            for index in [6, 7] {
+                match &mut fields[index].1 {
+                    Value::U32(world) if *world == 0 => *world = HOME_WORLD,
+                    Value::U32(_) => {}
+                    _ => return Err(io::Error::new(ErrorKind::InvalidData, "server 8 world is not a Dword")),
+                }
             }
-        }
-        let mut out = BytesMut::new();
-        dynamic::encode_message(&server8, &census_rules(), &Value::Struct(fields), &mut out)?;
-        self.body = out.freeze().slice(1..);
+            Ok(())
+        })?;
         Ok(self)
     }
+}
+
+/// Decode a login body (server 8 after its request Dword) through the auth schema, edit
+/// its fields and re-encode it. Every other byte is kept.
+fn edit_login_body(
+    body: &[u8],
+    edit: impl FnOnce(&mut [(String, Value)]) -> io::Result<()>,
+) -> io::Result<Bytes> {
+    let invalid = || io::Error::new(ErrorKind::InvalidData, "auth body is not a server 8 body");
+    let server8 = auth_server8()?;
+    // The body follows the request Dword; frame it with request 0 (one varint byte).
+    let mut framed = BytesMut::new();
+    0u32.encode(&mut framed);
+    framed.extend_from_slice(body);
+    let mut cursor = &framed[..];
+    let Value::Struct(mut fields) =
+        dynamic::decode_message(&server8, &census_rules(), &mut cursor).map_err(|_| invalid())?
+    else {
+        return Err(invalid());
+    };
+    if !cursor.is_empty() || fields.len() != server8.fields.len() {
+        return Err(invalid());
+    }
+    edit(&mut fields)?;
+    let mut out = BytesMut::new();
+    dynamic::encode_message(&server8, &census_rules(), &Value::Struct(fields), &mut out)?;
+    Ok(out.freeze().slice(1..))
 }
 
 /// Server 8 as the embedded auth schema (protocol 3) defines it.
@@ -349,6 +423,17 @@ impl AuthProbe {
                 // Client 14 {request, world id, byte}: the home-world selection. The
                 // client waits for server 7 echoing the request id; status word (D3) 0 is
                 // success, after which it sets its current and home world to the choice.
+                // Client 15 {Byte}: the User Agreement version the player accepted.
+                // No reply; with --auth-agreement-state it is remembered.
+                15 => {
+                    let version = frame[2];
+                    eprintln!("Play phase: User Agreement version {version} accepted");
+                    if let Some(state) = &self.fixture.agreement
+                        && let Err(e) = state.store(version)
+                    {
+                        eprintln!("Play phase: could not store the agreement version: {e}");
+                    }
+                }
                 // Client 12 {request, buffer}: the account-preferences upload
                 // (PrContext.cpp 0x14027da93 -> 0x14023bcc0, transaction vtable
                 // 0x1419236f8). Server 7 is the generic completion: 0x14023a9e0 finds
@@ -433,7 +518,7 @@ impl AuthProbe {
                 let mut reply = BytesMut::new();
                 8u16.encode(&mut reply);
                 request.encode(&mut reply);
-                reply.extend_from_slice(&self.fixture.body);
+                reply.extend_from_slice(&self.fixture.login_body()?);
                 // The home-world list (docs/re/209026-home-world.md): server 23 clears the
                 // client's staging list, each server 25 adds {world id, population 0-3,
                 // transfer cost?, hours?}, server 24 publishes it. The Initial Home World
@@ -677,6 +762,48 @@ pub(crate) mod tests {
             assert_eq!(fields[3].1, Value::U32(0), "status 0 = success");
             assert!(probe.play_enabled());
         }
+    }
+
+    /// Client 15 stores the accepted agreement version; the next login's server 8 then
+    /// carries it in Dword4 (record +0x1e8), with every other field unchanged. A missing
+    /// or malformed state file leaves the body as configured.
+    #[test]
+    fn accepted_agreement_version_is_remembered_and_echoed_at_login() {
+        let dir = std::env::temp_dir().join(format!("gw2-agreement-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let state = AgreementState::new(dir.join("agreement-version"));
+        let _ = std::fs::remove_file(dir.join("agreement-version"));
+        let server8 = auth_server8().unwrap();
+        let mut values = Vec::new();
+        for f in &server8.fields {
+            values.push((f.name.clone(), match f.kind.as_str() {
+                "Dword" => Value::U32(0),
+                "Guid" => Value::Guid(Guid([3; 16])),
+                "Byte" => Value::U8(0),
+                "BufferFixed" => Value::Bytes(vec![0; f.size.unwrap() as usize]),
+                "ArrayVarSmall" => Value::Array(vec![]),
+                _ => unreachable!(),
+            }));
+        }
+        let mut out = BytesMut::new();
+        dynamic::encode_message(&server8, &census_rules(), &Value::Struct(values), &mut out).unwrap();
+        let body = out.freeze().slice(1..);
+        let fixture = ReplyFixture::new(body.clone(), None).unwrap().with_agreement(state.clone());
+        assert_eq!(fixture.login_body().unwrap(), body, "nothing stored yet");
+        std::fs::write(dir.join("agreement-version"), b"xy").unwrap();
+        assert_eq!(fixture.login_body().unwrap(), body, "malformed state is ignored");
+
+        let route = PlayRoute::new("127.1.0.4:6112".parse().unwrap(), Guid([0x55; 16])).unwrap();
+        let mut probe = AuthProbe::new(fixture.clone()).with_play_route(route).unwrap();
+        probe.push(&login_input()).unwrap().unwrap();
+        let mut accept = BytesMut::new();
+        15u16.encode(&mut accept);
+        accept.extend_from_slice(&[7]);
+        assert!(probe.push(&accept).unwrap().is_none(), "client 15 gets no reply");
+        assert!(probe.play_enabled());
+        assert_eq!(state.load(), Some(7));
+        assert_eq!(login_body_dwords(&fixture.login_body().unwrap()), [0, 7, 0, 0, 0, 0, 0]);
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     /// The preferences upload (client 12 {request, BufferVarLarge}, 841 bytes on the

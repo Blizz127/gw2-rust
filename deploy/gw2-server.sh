@@ -7,7 +7,8 @@
 #   GW2_BIN      directory with gw2-assetcdn, gw2-login-observe, gw2-game-observe
 #   GW2_DATA     fixture directory (see deploy/README.md)
 #   GW2_ID       private server identity from tools/gw2-runner/make-identity.py
-#   GW2_RUN      runtime directory for pids.json (0700)
+#   GW2_RUN      runtime directory for pids.json and agreement-version (0700; persistent:
+#                the account's accepted User Agreement version, owner decision 2026-11-04)
 #   GW2_BIND     tailnet address to bind, e.g. 100.74.44.12 (never 0.0.0.0)
 #   GW2_SPAWN    X,Y,Z placeholder spawn in map units
 #   GW2_POPULATION_DELAY_MS  optional diagnostic hold between client 420 and the
@@ -49,6 +50,7 @@ pids+=($!); login=$!
 "$GW2_BIN/gw2-game-observe" --no-capture --listen "$GW2_BIND:6113" \
   --params "$GW2_ID/dh-params.bin" --private "$GW2_ID/dh-private.bin" --log "$GW2_RUN/unused" \
   --reply-frame "$GW2_DATA/auth-ready.bin" --auth-reply-body "$GW2_DATA/auth-account-body.bin" \
+  --auth-agreement-state "$GW2_RUN/agreement-version" \
   --auth-character-record "$GW2_DATA/character-record.bin" --auth-play-route 127.1.0.4:6112 &
 pids+=($!); auth=$!
 "$GW2_BIN/gw2-game-observe" --no-capture --listen "$GW2_BIND:6112" --mission-preamble \
