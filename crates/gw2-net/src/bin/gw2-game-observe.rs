@@ -379,7 +379,7 @@ fn main() -> io::Result<()> {
         _ => None,
     };
     let auth_body = auth_body
-        .map(|body| auth::ReplyFixture::new(body, character))
+        .map(|body| auth::ReplyFixture::new(body, character).and_then(auth::ReplyFixture::with_home_world))
         .transpose()?;
     let params = read_exact_file(&params.ok_or_else(|| invalid("missing --params"))?, 136)?;
     let params = ParamBlob::parse(&params, ByteOrder::Little)

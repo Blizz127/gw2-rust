@@ -34,6 +34,56 @@ impl ReplyFixture {
         }
         Ok(Self { body, character })
     }
+
+    /// Set server 8's Dword6 (home world) and Dword7 (current world) of the login
+    /// body to [`HOME_WORLD`] where they are zero (docs/re/209026-home-world.md:
+    /// `0x14023a770` stores Dword7 at record +0x1a4 and Dword6 at +0x1a8, which
+    /// `0x14023d96d`-`0x14023d986` copy to the current and home world). The server
+    /// keeps no account state, so without this the client starts every session with
+    /// no world: world "Unknown" and PLAY greyed until the Initial Home World Select
+    /// dialog is confirmed (owner, 2026-11-04 01:51Z). The body is decoded and
+    /// re-encoded through the auth schema, so it must be a complete server 8 body.
+    pub fn with_home_world(mut self) -> io::Result<Self> {
+        let invalid = || io::Error::new(ErrorKind::InvalidData, "auth body is not a server 8 body");
+        let server8 = auth_server8()?;
+        // The body follows the request Dword; frame it with request 0 (one varint byte).
+        let mut framed = BytesMut::new();
+        0u32.encode(&mut framed);
+        framed.extend_from_slice(&self.body);
+        let mut cursor = &framed[..];
+        let Value::Struct(mut fields) =
+            dynamic::decode_message(&server8, &census_rules(), &mut cursor).map_err(|_| invalid())?
+        else {
+            return Err(invalid());
+        };
+        if !cursor.is_empty() || fields.len() != server8.fields.len() {
+            return Err(invalid());
+        }
+        for index in [6, 7] {
+            match &mut fields[index].1 {
+                Value::U32(world) if *world == 0 => *world = HOME_WORLD,
+                Value::U32(_) => {}
+                _ => return Err(invalid()),
+            }
+        }
+        let mut out = BytesMut::new();
+        dynamic::encode_message(&server8, &census_rules(), &Value::Struct(fields), &mut out)?;
+        self.body = out.freeze().slice(1..);
+        Ok(self)
+    }
+}
+
+/// Server 8 as the embedded auth schema (protocol 3) defines it.
+fn auth_server8() -> io::Result<Message> {
+    let invalid = |_| io::Error::new(ErrorKind::InvalidData, "invalid embedded auth schema");
+    schema::parse(AUTH_SCHEMA)
+        .map_err(invalid)?
+        .protocols
+        .into_iter()
+        .find(|p| p.name == "3")
+        .and_then(|p| p.groups.into_iter().next())
+        .and_then(|g| g.server.into_iter().find(|m| m.id == 8))
+        .ok_or_else(|| io::Error::new(ErrorKind::InvalidData, "auth schema lacks server 8"))
 }
 
 /// Opt-in second phase for the existing-character Play path
@@ -525,6 +575,64 @@ pub(crate) mod tests {
         }
     }
 
+    /// Decode a login body (after the request Dword) under the client's own auth
+    /// server table and return its Dword fields 3-9.
+    fn login_body_dwords(body: &[u8]) -> Vec<u32> {
+        const SERVER_TABLES: &str = include_str!("../../../../../data/protocol/209026/server-tables.xml");
+        let tables = schema::parse(SERVER_TABLES).unwrap().protocols[0].groups.clone();
+        let table = tables.iter().find(|g| g.name == "table-0x141923fe0").unwrap();
+        let server8 = table.server.iter().find(|m| m.id == 8).unwrap();
+        let mut framed = BytesMut::new();
+        77u32.encode(&mut framed);
+        framed.extend_from_slice(body);
+        let mut cursor = &framed[..];
+        let Value::Struct(fields) = dynamic::decode_message(server8, &census_rules(), &mut cursor).unwrap() else {
+            unreachable!()
+        };
+        assert!(cursor.is_empty(), "the body keeps its exact length");
+        assert_eq!(fields[0].1, Value::U32(77));
+        (3..=9)
+            .map(|i| match fields[i].1 {
+                Value::U32(v) => v,
+                _ => panic!("field {i} is not a Dword"),
+            })
+            .collect()
+    }
+
+    /// The login body carries home world (Dword6) and current world (Dword7) 1001, so
+    /// PLAY doesn't depend on the Initial Home World Select dialog; every other field
+    /// is kept byte for byte, and a nonzero world is left alone.
+    #[test]
+    fn login_body_carries_home_and_current_world() {
+        let server8 = auth_server8().unwrap();
+        let body_with = |worlds: [u32; 2]| {
+            let mut values = Vec::new();
+            for (index, f) in server8.fields.iter().enumerate() {
+                let value = match (index, f.kind.as_str()) {
+                    (6, _) => Value::U32(worlds[0]),
+                    (7, _) => Value::U32(worlds[1]),
+                    (3, _) => Value::U32(2),
+                    (_, "Dword") => Value::U32(index as u32 * 300),
+                    (_, "Guid") => Value::Guid(Guid([index as u8; 16])),
+                    (_, "Byte") => Value::U8(1),
+                    (_, "BufferFixed") => Value::Bytes(vec![0x5a; f.size.unwrap() as usize]),
+                    (_, "ArrayVarSmall") => Value::Array(vec![]),
+                    _ => unreachable!(),
+                };
+                values.push((f.name.clone(), value));
+            }
+            let mut out = BytesMut::new();
+            dynamic::encode_message(&server8, &census_rules(), &Value::Struct(values), &mut out).unwrap();
+            out.freeze().slice(1..) // request 0
+        };
+        let fixture = ReplyFixture::new(body_with([0, 0]), None).unwrap().with_home_world().unwrap();
+        assert_eq!(fixture.body, body_with([HOME_WORLD, HOME_WORLD]));
+        assert_eq!(login_body_dwords(&fixture.body), [2, 1200, 1500, HOME_WORLD, HOME_WORLD, 2400, 2700]);
+        let kept = ReplyFixture::new(body_with([1002, 0]), None).unwrap().with_home_world().unwrap();
+        assert_eq!(kept.body, body_with([1002, HOME_WORLD]));
+        assert!(ReplyFixture::new(Bytes::from_static(&[0x44; 2]), None).unwrap().with_home_world().is_err());
+    }
+
     /// Selecting a home world (client 14 {request, world, byte}) is confirmed by server 7
     /// echoing the request with status 0, decoded under the client's own auth table.
     #[test]
@@ -686,7 +794,10 @@ pub(crate) mod tests {
         const SERVER_TABLES: &str = include_str!("../../../../../data/protocol/209026/server-tables.xml");
         let tables = schema::parse(SERVER_TABLES).unwrap().protocols[0].groups.clone();
         let table = tables.iter().find(|g| g.name == "table-0x141923fe0").expect("client auth table");
-        let fixture = ReplyFixture::new(body, Some(deployed_record)).unwrap();
+        // As gw2-game-observe loads it: home and current world filled in.
+        let fixture = ReplyFixture::new(body, Some(deployed_record)).unwrap().with_home_world().unwrap();
+        let dwords = login_body_dwords(&fixture.body);
+        assert_eq!((dwords[3], dwords[4]), (HOME_WORLD, HOME_WORLD), "Dword6 home world, Dword7 current world");
         let route = PlayRoute::new("127.1.0.4:6112".parse().unwrap(), Guid([0x55; 16])).unwrap();
         let mut probe = AuthProbe::new(fixture).with_play_route(route).unwrap();
         let login = probe.push(&login_input()).unwrap().unwrap();
