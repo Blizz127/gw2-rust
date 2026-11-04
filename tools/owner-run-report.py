@@ -40,6 +40,9 @@ RUNNER = [
     ('world-name patch', r'GW2_RUNNER: world-name [^\n]*'),
     # Read-only crash report (assertion handler 0x1409db7a0, unhandled-exception filter
     # 0x1409dc720): source:line "expression" or the exception code, plus code offsets.
+    # 0e6ac30: "applied" proves the run skipped the ImgMip mip-reduction branch (0x140b48c9d);
+    # absent means an older runner script was copied into the run.
+    ('full-texture patch', r'GW2_RUNNER: full-texture [^\n]*'),
     ('CLIENT ASSERT', r'GW2_RUNNER: assert [^\n]*'),
     ('CLIENT CRASH', r'GW2_RUNNER: crash [^\n]*'),
     ('gdb script error', r'Python Exception'),
@@ -179,6 +182,8 @@ def main():
                     print(f'  {name:22} {hit}')
             elif hits:
                 print(f'  {name:22} x{len(hits)}: {hits[0][:120]}')
+        if 'GW2_RUNNER: patch points armed' in text and 'GW2_RUNNER: full-texture' not in text:
+            print('  FULL-TEXTURE PATCH ABSENT: pre-0e6ac30 runner script; expect the ImgMip crash at 0x140b48c9d after MODELS_STREAM')
         stage_report(text)
         dns_report(text)
     # The client's own crash/disconnect log from the launcher-managed GW2 prefix (the
