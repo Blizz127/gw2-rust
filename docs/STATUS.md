@@ -507,6 +507,8 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
             - Run 86: in the world, with a "unable to gain access to the log-in server" dialog (42:0:9001:4460:101): unanswered STS `/Sts/Ping` and `Game.gw2.*` queries → `--reply-default <Reply/>` (f701f42); run 87 has no dialog.
             - Run 88 (patch off) reproduces the device's ImgMip crash exactly, so the device needs runner 0e6ac30.
             - **Kit 2090f47 live on Banshee at 18:11:33Z.** The owner approved the restart without the DIT ack, since DIT was unreachable. Rollback is f89ea50.
+          - **Run 89: the crash texture is file 135679** (ATEX DXT5 256x128, one stored level; reduction wants 2). **Run 90 soak: about 13 min in the world standing still**, no dialog, no read timeouts on any connection (EOFs only at sandbox shutdown).
+            - Handoff: runner package `/home/blizz/gw2-runner-pkg-0e6ac30` (gdb identical to runs 86/87; README names kit 2090f47; SHA256SUMS `29f55f14…`) has to ship in a launcher build for the owner's device.
           - Runner crash report (runs 80/81): read-only breakpoints on the ExeError sink `0x1409dc570` (all 8 error paths, including the assertion handler `0x1409db7a0`) and the unhandled-exception filter `0x1409dc720`. They print "GW2_RUNNER: assert … file:line "expr"" and "GW2_RUNNER: crash code … at <offset>" with stack offsets. Armed with no false hits on login; untested on a real crash.
       - The a8fdb4e trace hooked the profiler's per-frame marker (about 1,600 hits/s). It is being moved to the loader's 22 call sites.
       - "Banshee Realm": the world-name patch applied on his device.
