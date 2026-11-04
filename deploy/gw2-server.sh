@@ -10,9 +10,9 @@
 #   GW2_RUN      runtime directory for pids.json (0700)
 #   GW2_BIND     tailnet address to bind, e.g. 100.74.44.12 (never 0.0.0.0)
 #   GW2_SPAWN    X,Y,Z placeholder spawn in map units
-#   GW2_POPULATION_DELAY_MS  optional; hold between client 420 and the population.
-#                Default 15000 while the 2026-11-04 texture crash at MODELS_STREAM is
-#                being split between map assets and population data; 0 sends at once.
+#   GW2_POPULATION_DELAY_MS  optional diagnostic hold between client 420 and the
+#                population (default 0). A 15 s hold showed (2026-11-04 03:58Z) that the
+#                MODELS_STREAM texture crash followed the population, not map assets.
 # Ports: 6112 game, 6113 auth, 6114 login, 6115 asset CDN. Every server runs
 # --no-capture: nothing typed by a player is stored or printed. If any child
 # exits, all are stopped and the script exits non-zero (systemd restarts it).
@@ -54,7 +54,7 @@ pids+=($!); auth=$!
 "$GW2_BIN/gw2-game-observe" --no-capture --listen "$GW2_BIND:6112" --mission-preamble \
   --params "$GW2_ID/dh-params.bin" --private "$GW2_ID/dh-private.bin" --log "$GW2_RUN/unused" \
   --mission-map-key 15 --mission-population "$GW2_DATA/character-record.bin" \
-  --mission-spawn "$GW2_SPAWN" --mission-population-delay-ms "${GW2_POPULATION_DELAY_MS:-15000}" &
+  --mission-spawn "$GW2_SPAWN" --mission-population-delay-ms "${GW2_POPULATION_DELAY_MS:-0}" &
 pids+=($!); game=$!
 
 printf '{"bind":"%s","processes":[{"role":"cdn","pid":%d,"port":6115,"exe":"%s"},{"role":"login","pid":%d,"port":6114,"exe":"%s"},{"role":"auth","pid":%d,"port":6113,"exe":"%s"},{"role":"game","pid":%d,"port":6112,"exe":"%s"}]}\n' \

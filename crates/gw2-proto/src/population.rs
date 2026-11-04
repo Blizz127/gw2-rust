@@ -50,6 +50,15 @@ use crate::{Guid, Point3};
 /// (ChCliCharacter.h:575) from the per-frame ViewAdvanceDevice path
 /// (`0x14094d22c` -> `0x14131a777` -> `0x14131ab10` -> health getter
 /// `0x1411d7cb0`) once a controlled character existed. Both are sent before 444.
+///
+/// 247 (assign a type-23 record to the wardrobe) is not sent. Type 23 (155 records,
+/// UIDs 2-173) has the shape of the outfit catalog, and our key was a placeholder.
+/// With 247 in the sequence, the owner's client crashed in texture streaming
+/// (ImgMip.cpp null write `0x140b48c9d`) in the same second the population arrived,
+/// after a clean 15 s hold (2026-11-04 03:58Z, kit 3eb003c). The wardrobe manager
+/// is still created by 248, which lazily allocates it
+/// (`docs/re/209026-wardrobe-startup.md`); the type-23 slot stays null, which the
+/// setter also allows.
 /// 183 is chosen over 182 because 182 and 183 are
 /// alternatives (`docs/re/209026-character-core-stats.md`) and 182 would need
 /// twelve attribute rows, a Dword and three floats that have no established
@@ -57,7 +66,7 @@ use crate::{Guid, Point3};
 /// (`docs/re/209026-character-finalization-dependencies.md`); whether 183
 /// alone suffices for the controlled player is still open.
 pub const POPULATION_ORDER: &[u16] = &[
-    428, 37, 443, 183, 282, 477, 151, 256, 217, 247, 248, 565, 538, 605, 170, 618, 444, 46,
+    428, 37, 443, 183, 282, 477, 151, 256, 217, 248, 565, 538, 605, 170, 618, 444, 46,
 ];
 
 /// Caller-supplied inputs. No `Debug`: names and portal identities need not
@@ -194,13 +203,6 @@ const REWARD_TRACKS: [u32; 4] = [24, 100, 103, 30];
 /// Pin values for 565's four slots (`docs/re/209026-reward-track-slots.md`
 /// names them `m_pinnedTracks`). placeholder: the accepted domain is open.
 const PINNED: [u8; 4] = [0; 4];
-
-/// Type-23 data key for 247. Keys span 1..=155 and zero is skipped by the
-/// index builder (`docs/re/209026-content-numeric-ids.md`); there is no null
-/// null assertion on the result, so an unresolved key is stored as null
-/// rather than rejected (`docs/re/209026-wardrobe-startup.md`).
-/// placeholder: which type-23 record belongs here is not established.
-const WARDROBE_TYPE23_KEY: u16 = 1;
 
 fn frame(encode: impl FnOnce(&mut BytesMut) -> Result<()>) -> Result<Bytes> {
     let mut out = BytesMut::new();
@@ -415,21 +417,9 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
         })?,
     ));
 
-    // 247/248: wardrobe manager. docs/re/209026-wardrobe-startup.md: both
-    // lazily create it; needed before 170's model path and required before 431.
-    frames.push((
-        247,
-        frame(|out| {
-            WardrobeFrame209026 {
-                character_index: character,
-                operation: WardrobeOperation209026::AssignType23 {
-                    content_id: WARDROBE_TYPE23_KEY,
-                },
-            }
-            .encode_frame(out);
-            Ok(())
-        })?,
-    ));
+    // 248: wardrobe manager. docs/re/209026-wardrobe-startup.md: 248 (like 247)
+    // lazily creates it; needed before 170's model path and required before 431.
+    // 247 is left out (see POPULATION_ORDER).
     frames.push((
         248,
         frame(|out| {
@@ -785,13 +775,10 @@ mod tests {
             other => panic!("{other:?}"),
         }
 
-        for id in [247, 248] {
-            let wardrobe = only(&frames, id, |i| WardrobeFrame209026::decode_frame(i).unwrap());
-            assert_eq!(wardrobe.character_index, character);
-            if let WardrobeOperation209026::AssignType23 { content_id } = wardrobe.operation {
-                assert!((1..=155).contains(&content_id));
-            }
-        }
+        let wardrobe = only(&frames, 248, |i| WardrobeFrame209026::decode_frame(i).unwrap());
+        assert_eq!(wardrobe.character_index, character);
+        assert_eq!(wardrobe.operation, WardrobeOperation209026::UpdateWords { values: [0; 4] });
+        assert!(!POPULATION_ORDER.contains(&247), "no placeholder type-23 (outfit-shaped) record");
         let rewards = only(&frames, 565, |i| {
             RewardTrackCreationFrame209026::decode_frame(i).unwrap()
         });
