@@ -33,7 +33,9 @@ use crate::agent_creation::{AgentCreation209026, facing_words_209026};
 use crate::agent_scene::AgentWorldEntry209026;
 use crate::character_setup::CharacterSetupFrame209026;
 use crate::core_stats::CoreStatsCreation209026;
+use crate::endurance::{EnduranceFrame209026, EnduranceOperation209026};
 use crate::guardian::{GuardianFrame209026, GuardianMeter209026, GuardianOperation209026};
+use crate::health::{HealthFrame209026, HealthOperation209026, HealthValues209026};
 use crate::player_creation::PlayerCreation209026;
 use crate::quest::QuestManagerReportFrame209026;
 use crate::reward_track::RewardTrackCreationFrame209026;
@@ -42,14 +44,20 @@ use crate::skillbar::{SkillbarFrame209026, SkillbarOperation209026};
 use crate::wardrobe::{WardrobeFrame209026, WardrobeOperation209026};
 use crate::{Guid, Point3};
 
-/// Candidate message order. 183 is chosen over 182 because 182 and 183 are
+/// Candidate message order. 256 (health) and 217 (endurance) create the
+/// character's health and endurance components; without 256 the owner's client
+/// (2026-11-04 01:26Z and 02:08Z, device ArenaNet.log) asserted `m_health`
+/// (ChCliCharacter.h:575) from the per-frame ViewAdvanceDevice path
+/// (`0x14094d22c` -> `0x14131a777` -> `0x14131ab10` -> health getter
+/// `0x1411d7cb0`) once a controlled character existed. Both are sent before 444.
+/// 183 is chosen over 182 because 182 and 183 are
 /// alternatives (`docs/re/209026-character-core-stats.md`) and 182 would need
 /// twelve attribute rows, a Dword and three floats that have no established
 /// values. The constructor zero-fills the 182-only fields on the 183 path
 /// (`docs/re/209026-character-finalization-dependencies.md`); whether 183
 /// alone suffices for the controlled player is still open.
 pub const POPULATION_ORDER: &[u16] = &[
-    428, 37, 443, 183, 282, 477, 151, 247, 248, 565, 538, 605, 170, 618, 444, 46,
+    428, 37, 443, 183, 282, 477, 151, 256, 217, 247, 248, 565, 538, 605, 170, 618, 444, 46,
 ];
 
 /// Caller-supplied inputs. No `Debug`: names and portal identities need not
@@ -153,6 +161,21 @@ const RADIUS: f32 = 1.0;
 /// which is 5.2 map units for this radius). Every other element, and the
 /// chosen speed and height, are placeholder: valid values not established.
 const PARAMETERS: [f32; 8] = [0.0, 0.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0];
+
+/// Health for 256: full first meter, no regeneration, empty second meter, state
+/// 0 (alive; `docs/re/209026-character-health-endurance.md`: a non-alive player
+/// gets character flag +0x178 mask 2). The maximum setter asserts
+/// `valueMax >= 0` and current is clamped to [0, maximum]. placeholder: the
+/// level-1 Guardian's real health, the second meter and F5 are not established.
+const HEALTH: f32 = 1645.0;
+const HEALTH_STATE_ALIVE: u8 = 0;
+
+/// Endurance for 217: points, maximum, effective maximum, segment divisor
+/// (`docs/re/209026-character-health-endurance.md`: points <= effective maximum
+/// is asserted by the setter; divisor 0 reads as 1). placeholder: 100 points in
+/// two segments is the familiar default, not established from content.
+const ENDURANCE: u32 = 100;
+const ENDURANCE_SEGMENTS: u32 = 2;
 
 /// Type-64 data key for 605. Type-64 data keys span 1..=81357
 /// (`docs/re/209026-content-numeric-ids.md`) and an unresolved key trips the
@@ -343,6 +366,49 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
             CharacterSetupFrame209026::Attitude {
                 character_index: character,
                 attitude: ATTITUDE,
+            }
+            .encode_frame(out);
+            Ok(())
+        })?,
+    ));
+
+    // 256: health component creation (allocates when absent). Required before
+    // 444: once the character is controlled, the per-frame device view reads its
+    // health and asserts m_health.
+    frames.push((
+        256,
+        frame(|out| {
+            HealthFrame209026 {
+                character_index: character,
+                operation: HealthOperation209026::CreateOrUpdate {
+                    state: HEALTH_STATE_ALIVE,
+                    values: HealthValues209026 {
+                        current: HEALTH,
+                        maximum: HEALTH,
+                        second_current: 0.0,
+                        second_maximum: 0.0,
+                        extra: 0.0,
+                    },
+                    rate: 0.0,
+                },
+            }
+            .encode_frame(out);
+            Ok(())
+        })?,
+    ));
+
+    // 217: endurance component creation (asserts that none exists; sent once).
+    frames.push((
+        217,
+        frame(|out| {
+            EnduranceFrame209026 {
+                character_index: character,
+                operation: EnduranceOperation209026::Create {
+                    points: ENDURANCE,
+                    maximum: ENDURANCE,
+                    effective_maximum: ENDURANCE,
+                    segment_divisor: ENDURANCE_SEGMENTS,
+                },
             }
             .encode_frame(out);
             Ok(())
@@ -557,6 +623,12 @@ mod tests {
             443 | 282 | 151 | 170 | 444 => CharacterSetupFrame209026::decode_frame(input)
                 .unwrap()
                 .encode_frame(&mut out),
+            256 => HealthFrame209026::decode_frame(input)
+                .unwrap()
+                .encode_frame(&mut out),
+            217 => EnduranceFrame209026::decode_frame(input)
+                .unwrap()
+                .encode_frame(&mut out),
             182 | 183 => CoreStatsCreation209026::decode_frame(input)
                 .unwrap()
                 .encode_frame(&mut out),
@@ -751,6 +823,7 @@ mod tests {
             include_str!("../../../data/protocol/209026/character-core-stats.xml"),
             include_str!("../../../data/protocol/209026/character-inventory.xml"),
             include_str!("../../../data/protocol/209026/character-control.xml"),
+            include_str!("../../../data/protocol/209026/character-health-endurance.xml"),
         ];
         sources
             .iter()
@@ -785,7 +858,7 @@ mod tests {
             ..Rules::default()
         };
         let plan = plan();
-        let covered = [428u16, 37, 443, 183, 282, 151, 170, 444];
+        let covered = [428u16, 37, 443, 183, 282, 151, 256, 217, 170, 444];
         for (id, bytes) in frames() {
             let mut input = &bytes[..];
             if !covered.contains(&id) {
@@ -799,7 +872,8 @@ mod tests {
             match id {
                 428 => assert_eq!(dwords[0], player),
                 443 => assert_eq!(dwords, [player, character]),
-                282 | 170 | 183 => assert_eq!(dwords[0], character),
+                282 | 170 | 183 | 256 => assert_eq!(dwords[0], character),
+                217 => assert_eq!(dwords, [character, ENDURANCE, ENDURANCE, ENDURANCE, ENDURANCE_SEGMENTS]),
                 151 => assert_eq!(dwords[0], character),
                 444 => assert_eq!(dwords, [player, player, character]),
                 37 => assert_eq!(dwords.last(), Some(&(0x3000_0000 + player))),
