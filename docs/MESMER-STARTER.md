@@ -15,28 +15,46 @@ API/wiki names may locate content but do not replace client verification.
 
 | Requirement | Current state | Evidence needed for completion |
 | --- | --- | --- |
-| Norn Mesmer creation/selection and correct appearance | Partial: archived Norn Mesmer appearance renders in isolated playback; actual creation missing | Real client creation, biography/appearance/equipment validation, saved character and relog. |
+| Norn Mesmer creation/selection and correct appearance | Private UI creation/save, restart relog and visible world entry pass; run142 now renders the complete creator preview. Live saved-mode activation remains held. | Complete combined flow on the deployed supported client, preservation of biography/appearance/equipment, and existing activation prerequisites. |
 | Correct Mesmer components and startup skills/equipment | Partial: explicit Mesmer component and source-backed item delivery; runs115/116 render armor, weapon and weapon/healing icons | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Isolated map entry and local movement pass at diagnostic position; gameplay missing | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Shared terrain loaded through Great Hunt; open map 28 not played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
-| Mesmer combat and profession mechanics | Missing | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
-| Starting-area NPCs, enemies, vendors and interactions | Missing | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
-| All starting-map hearts, events and discovery objectives | Missing | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
-| XP, leveling, skills and equipment progression within area | Missing | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
+| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work; retail skill effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
+| Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
+| All starting-map hearts, events and discovery objectives | Heart56 progresses/rewards in a diagnostic fixture, with coordinate and reward-once fixes; this is not authored Great Hunt content or whole-map coverage. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
+| XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
 | Relevant starting story, scenes and audio | Missing | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
-| Persistence and interruption recovery | Missing | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards. |
+| Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state is process-local only. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards. |
 | Human Mesmer opening and Queensdale, after Norn | Incomplete | Equivalent creation/tutorial (138)/area (15) coverage, including source-backed identification of the remembered circus/town sequence. |
 | Final completion audit | Not reached | Every required item above proven with current source and runtime evidence; no placeholder counted as retail accurate. |
 
 ## Current checkpoint
 
-- Existing baseline: Guardian can enter Queensdale and walk (sandbox run 110;
-  live kit f36bb98). No existing NPC/combat/progression implementation.
+Latest independently verified live kit: **82d8d04**, prepared mode, deployed
+2026-11-05 22:27:03 UTC; hashes and four listeners verified at 23:24 UTC.
+The [saved creator record](re/209026-saved-norn-creator.md) covers real UI
+creation, durable initial save, restart relog, visible direct world entry and
+same-GUID waypoint rejoin. [Run142](re/209026-texture-remapall-private-candidate.md)
+passes complete male Norn Mesmer preview rendering with no new assertion.
+The tested metadata artifact was handed to the sole publisher at 23:47 UTC;
+it was not live at handoff. Runner63 owner objects are uploaded, but the last
+launcher readback still selected b126/old runner. Existing saved-mode and
+owner-choice restrictions remain in effect. Normal owner character creation
+must not be advertised as available from these private tests alone.
+
+Next work preserves the release workflow while checking the combined creator
+flow and implementing source-backed tutorial/skill behavior. The full goal
+remains open; diagnostic fixture results are not retail encounter completion.
+
+## Earlier source checkpoints
+
+- Historical baseline: Guardian entered Queensdale and walked (run110,
+  then-live kit f36bb98), before the later NPC/combat/progression fixtures.
 - [Mesmer state](re/209026-mesmer-profession.md): raw messages and explicit
   candidate population path implemented and checked against client schemas.
   No retail startup values established. [Runs 111/112](re/209026-norn-mesmer-playback.md)
-  render the Norn Mesmer in map 379 and demonstrate local movement; skills and
-  equipment remain empty.
+  rendered the Norn Mesmer in map 379 and demonstrated local movement; those
+  early fixtures had empty skills and equipment.
 - [Starter maps](re/209026-human-norn-starter-maps.md): Norn tutorial379/open28
   share archive187611, with game types9/3. Human tutorial138/open15 share
   archive192711, with game types9/3. Auth already preserves requested types.
@@ -71,11 +89,7 @@ API/wiki names may locate content but do not replace client verification.
 - [Initial skills](re/209026-mesmer-starter-skill-requirements.md): explicit
   605/612 observer input adds a healing icon in run116. Selection and
   presentation pass; cast execution, effects and cooldowns remain missing.
-- Latest owner question: whether they can make a Norn Mesmer now. Answer:
-  actual character creation/save flow is not available; current playback is an
-  isolated prepared fixture. **Immediate priority: real creator, saved record,
-  selection and relog**, then continue tutorial/combat work.
-
-No live service or owner-device changes were made in this checkpoint. Local
-synthetic fixtures remain explicitly labeled; deployment/playback follows a
-concrete usable increment, retaining active-player protection.
+These earlier source checkpoints preceded the later private creator tests and
+prepared-mode server releases above. Synthetic fixtures remain explicitly
+labeled; releases retain active-player protection, rollback and the existing
+sole publisher. No owner-device action is implied by a local playback.
