@@ -123,3 +123,22 @@ server milestones and durable record counts provide evidence without names
 or raw requests in logs. This change has not itself been run against GW2 or
 published during preparation, and the bookkeeping checks alone do not prove
 that the outstanding visual problem is resolved.
+
+## Controlled client check completed
+
+Run 134 exercised this exact implementation with server cd4c3b6. The newly
+created Norn Mesmer rendered on direct first world entry without a process
+restart, killed an NPC, gained XP/loot/heart progress, and returned through
+client 210/1065 waypoint rejoin with a visible avatar and preserved in-process
+progress. Wrapper and UI exited zero; one screenshot-guided correction to the
+waypoint click completed the scripted flow. Executable hashes, owned cleanup,
+network isolation and console privacy checks passed. See the
+[controller record](209026-creation-model-pipeline.md) for exact evidence,
+image/record hashes and fixture limits.
+
+The creation preview remains blank even though its textures became ready and
+its model finalized. This increment fixes empty-job bookkeeping and the
+observed invisible direct-entry avatar; it is not a complete preview fix or a
+retail-accuracy claim. Normal saved-character activation remains held. Owner
+feed publication is routed to the existing launcher publisher; a source
+commit or this successful private check does not establish publication.

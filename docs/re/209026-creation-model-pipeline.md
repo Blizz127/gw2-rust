@@ -1710,3 +1710,180 @@ model. Thus initial model finalization and the four cleanup sequences are
 real progress, while the final Norn preview remains visibly unresolved.
 The absent late *state* snapshot is separate from this positive screenshot
 evidence. No direct-world entry was attempted by this diagnostic.
+
+## Run 134: ready appearance scratch pair and same-owner finalization
+
+The isolated `run134-norn-empty-job-full-flow` used the production-scoped,
+stateless empty-job handler described in
+[the runner contract](209026-empty-composite-runner.md), plus a new passive
+observer. Its input manifest was
+`d939ee4836206ff8382b80081823da1aaf3fda65cfa88f355131f9f325a1b2b7`.
+The observer was `creator-pool-assets-probe-20261105.py`, **47,566 bytes**,
+SHA-256 `4075887014f943c1c06982190b87993aa2695e83d38588a4b1f554115bb12d7d`,
+entry `arm_creator_pool_assets`, prefix `GW2_CREATOR_POOL_ASSETS`.
+It retained the preceding passive probe's 19 sites and finite filters,
+adding only concrete-type-guarded compact source file IDs and clearly
+labelled current-head job memory words. Its rectangle observation at
+`140a74ce5` and the production empty-only site at `140a74ced` were distinct.
+The observer made no target writes or function calls.
+
+The timer began at the first owner binding. The controller used a 15-second
+initial soak, the initial-snapshot handshake plus five seconds before
+selection, and a 20-second appearance soak followed by a marker and further
+observation. Those controller delays differ from the earlier long-soak
+experiments. Snapshot times below are observer seconds since first binding.
+
+| Snapshot | Owner / scene | Model finalized | Composite state / component / completion | Scratch state |
+| --- | --- | --- | --- | --- |
+| Initial marker, +24.722 | 1 / 0 | true | 6 / 0 / 0 | Both wrappers and model blit alternates null; global pair count 0 |
+| Appearance marker, +73.430 | 7 / 3 | false | 5 / 15 / 3 | Both textures ready; empty/tagged operation heads and zero outstanding groups; global pair count 1 |
+| Appearance followup, +81.608 | Same 7 / 3 | true | 6 / 0 / 0 | Both wrappers and model blit alternates null; global pair count 0 |
+
+All three snapshots had **complete** status and verified current
+scene/manager/model identity. At the appearance marker both scratch
+textures had flags **`0x13104`**, dimensions **1024 × 1024**, **nine levels**,
+backing present, ready bit set, low-bit-set operation heads and zero
+outstanding groups. Their formats were 26 and 31. Both model blit alternates
+matched the corresponding scratch wrappers. The composite still had
+`b1c = 0x5007`, including its model-geometry wait bit, and its model
+finalization bit was clear. `ViewAdvanceTexture` was observed at +73.865.
+
+By +81.608 the **same verified appearance owner** had its model finalization
+bit set, `b1c = 0x1007`, and the scratch references/alternates were null.
+This records an actual ready-texture sample followed by model-state
+progress and release of those current scratch references. It is stronger
+coverage than run 133's initial-owner finalization and missing late state.
+It does **not** by itself establish that a character was visibly rendered,
+that texture content was correct, or that every model/resource completed.
+Controller screenshot and world-flow evidence remain separate.
+
+There was no queued current head at either late snapshot. Consequently no
+multi-source operation was watched, and no actual job poll, destructor,
+head-job memory snapshot or component acquisition was recorded in the
+marker-gated scope. Those missing event classes are not evidence that such
+calls never happened earlier. There is no remaining source-unready or
+queued-job condition demonstrated by these late snapshots; an additional
+cause should not be invented from the earlier failures.
+
+Early observations retained six rectangle-test results across owners 1,
+2 and 4, with one empty and one nonempty result for each observed
+destination/owner. The initial source was ready at 512 × 128. Later ready
+samples included 256 × 128 and 512 × 512. Every source-file lookup in these
+records found **both high and low holder pointers null**, so **no numeric
+file ID was recovered**. Null current holders do not establish that the
+source was never loaded from a file. Pointer tags can be reused across
+owner lifetimes; identical numeric tags across those bindings do not prove
+allocation continuity. The early rectangle hook retained the prior
+pre-marker lifetime limitations and is not a separate production-repair
+qualification trace.
+
+The production handler's bounded constant log showed **five**
+`empty unsubmitted job completed; readback verified` statuses and **three**
+`unqualified invocation left unchanged` statuses, then
+`further status lines suppressed; handler remains armed`. These establish
+at least five successful writes/readbacks and three unchanged refusals,
+not the final totals. No per-generation qualification fields or later
+handler activity can be reconstructed after that deliberate suppression.
+The passive observer did not claim those writes as its own observations.
+
+The observer finished normally at **+81.608**, reason
+`late_followup_complete`, with **17 records**, **23 post-build callbacks**,
+**nine sampled UI callbacks**, **seven owner bindings** and **zero watched
+multi-source operations**. Only the first four owner-binding records were
+emitted by design. It did not reach its 210-second ownership limit, 128-line
+limit, 64-post-build limit or four-operation watch limit. No malformed JSON,
+observation error or partial snapshot was recorded. This finite observer
+ended before the controller's remaining save/world/combat/waypoint flow;
+its result does not cover those later actions.
+
+Evidence from read-only safe-prefix readers:
+
+- `ev_f96ce7a8b786e0c170ff64290be90df30b33b601779c88db86dabe1d90593e58`:
+  both production handler and passive observer armed.
+- `ev_60a7cfef7d0baca5b1ca34dfa9373064f95fd65171f25a83c10a1073d19e5d2c`:
+  first binding, early source dimensions/empty test, null file holders and
+  bounded production status counts.
+- `ev_ad4e2b4d5bffcdee4983b4c7966c257e8d93c0078be5f39faf0212206c22bee1`:
+  initial finalized model, normal texture advancement and subsequent early
+  owner/rectangle samples.
+- `ev_ceb55949cca03ecb7278a36520d6780edbf5fe45a7cd832dfb5a79578ed823cd`:
+  complete ready-scratch appearance snapshot, same-owner finalization and
+  normal observer finish.
+
+Listed captures exited zero with nontruncated output and verified cleanup
+of the owned reader processes. Unrelated `/proc` environment-access failures
+are separate. No reader attached to, controlled or queried a GW2 container,
+and none accessed an archive. The compact filename interpretation and its
+unsupported-type limits are documented in
+[the source-filename note](209026-composite-source-filename.md).
+
+Final retained audit read: UI exit **0**, `client.out` **89,357 bytes**,
+SHA-256 `c4ea5ea8a017bfa086bb0338a780feaa022e7e777d1344f340c1d1f4753999f8`.
+Evidence `ev_33f7305730d4b71516df4e1100054300468a1cb0ced4ea81a17b487456b2c4c4`
+records that status/digest; `ev_fec042927ae006dc5c1bd101484e3c2ec3eba8d4d2d33d14d97010bfd6664f49`
+confirms the same digest and unchanged final observer/constant-status counts.
+The first line was the known isolation banner, not an exact container ID.
+Container cleanup is outside this reader's scope. Complete private audit
+export: `/home/blizz/re/gw2/notes/209026-creator-run134-pool-assets-audit-20261105.json`.
+
+## Run 134 controller: visible direct entry, combat and saved waypoint rejoin
+
+Controller evidence `ev_23f26d00d8d4b896cfb5f8b803361ee647d4b4439d8340aaab716fd3bddf7e3f`
+records wrapper/UI exit zero. Exact owned-container removal, independently
+absent shared name, unchanged executable hashes, network isolation, archive
+inventory of 1,124,232 entries, and console privacy checks passed. Window 14
+returned at **2026-11-05 21:25:30 UTC**. Complete private export is
+`209026-norn-creator-run134-20261105.json`.
+
+This run used server **cd4c3b6**, the permanent runner implementation from
+**63bc59a** (main **b4879a6**), and observer **40758870**. The fixture moved
+only its private spawn inside the already-tested heart area to bound combat
+time; it does not establish an authored starting location or change the live
+profile. The initially empty private character store contained only the
+zero-length 0600 lock created by successful auth/world configuration checks.
+
+The actual UI submitted client 415, received result 1048, requested 430 and
+followed 1065 to map 379. Both first entry and later waypoint rejoin produced
+420/412/1036. Root inspected the pinned first-world image: the newly created
+Norn Mesmer's avatar is **visible without restarting the process**. The
+first-kill image also shows that avatar, level-up display and heart 1/5.
+
+One kill awarded 2,500 XP and one Broken Claw (item 19526). After ordinary
+retaliation/downed/defeat, actual client 210 requested waypoint rejoin. The
+server carried and restored `xp=(2500,2)`, one loot drop and
+`heart=(1,false,false)` at `[597.3,-30352.1,-1563.2]`. The same saved character
+entered the second world session, and its avatar is also visible in the
+post-waypoint image. Source lookup requires the saved GUID; no extra character
+or record replacement occurred. These are same-process carry observations,
+not durable world-progression persistence.
+
+The 142-byte character record remained mode 0600 and SHA-256
+`a7d5b556bf81ba81d93ac8170ff3e02ebb52dc982a5dc3eb1bd9aed14048ad15`
+from first save through rejoin. Its private store is preserved untouched.
+The UI script's assumed waypoint Y=695 missed the control. Root verified the
+owned container and its run mount, then issued **one** screenshot-guided click
+at `(585,780)` through REA `ev_601b3a310474c4f9de885b8e666f5afcfee300493da91b9d130d6f176e8da0b3`.
+This completed the existing waiting UI flow; frozen inputs were not edited.
+Thus the flow passed with that explicit harness intervention, not as an
+unassisted replay of the original click coordinates.
+
+The appearance preview **remains blank**. Its PNG is byte-identical to
+run 133's blank appearance image, despite the proven ready textures and
+finalized model. Normal saved-character activation stays held for that
+remaining visual defect. The tested runner increment was handed to the
+existing launcher-feed publisher through the coordinator; no publication is
+claimed without a feed receipt. The server-kit integrator does not publish
+the launcher feed.
+
+| Retained image | SHA-256 | Root visual observation |
+| --- | --- | --- |
+| `creator-lifecycle-appearance.png` | `2a1ea51f59098e2041853603e4b672939700d771aa8972fa393607148e06c42f` | Empty preview area |
+| `saved-first-world.png` | `ce3a0f88c36fe20b72b978119ebe347e743c5c84e76e8d7acf28a6a48dc0d8db` | Visible player on first entry |
+| `saved-first-kill.png` | `c05a0c5621c7e57617af4eb31c030961c1f623352df36c8c94625c23204cd3bf` | Visible player, level-up, heart 1/5 |
+| `saved-after-waypoint.png` | `f15fcdbe778ec24a1748fa057b7ff65c96dabd807e4bf86ed20deb43ebbd34ac` | Visible player after rejoin |
+
+Safe flow/image/record evidence: `ev_0c45b778cdddd20e0947d90143f5dded7cd6b52662ec5518acd371fdadd8065a`,
+`ev_09b91e0e324c3b439ab38760a55f9c3e31f79b7a2844faf50f3e0b0f06151d39`,
+and `ev_745073c1fa3d9938fe3ec48776cedea039ff5fabd964c7e452bd8840f6f9397e`.
+Exact safe reward/carry lines are retained as
+`ev_66a45d1ce0f50ac327ad55cb4203aeca1bcfede4208045d759d85148d515641a`.
