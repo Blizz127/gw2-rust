@@ -819,6 +819,9 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     if quest.is_some() && !has_population {
         return Err(invalid("--mission-quest requires --mission-population"));
     }
+    if heart.is_some() && !has_population {
+        return Err(invalid("--mission-heart requires a population"));
+    }
     if equipment_frames.is_some() && !has_population {
         return Err(invalid("--mission-equipment requires --mission-population"));
     }
@@ -913,6 +916,9 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
         let mut phase = mission::MissionPhase::new(key)?;
         if let Some(fixture) = &population {
             phase = phase.with_population(fixture.clone())?;
+        }
+        if let Some((heart_key, target)) = heart {
+            phase = phase.with_heart(heart_key, target)?;
         }
         // Validate world-only NPC values even when the first connection will
         // select the creator. Dispatch must not conceal an invalid profile.
