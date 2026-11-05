@@ -95,7 +95,9 @@ A profile can also enable the research combat loop with `GW2_HOSTILE_NPC`
 `GW2_STARTER_BAG` (959), `GW2_KILL_LOOT=1`, `GW2_NPC_ATTACK` and
 `GW2_SOURCED_DAMAGE` (1) and `GW2_HEART` (TYPE72_KEY,KILLS: a renown heart shown at
 spawn that advances per kill) and `GW2_RESPAWN=1` (the defeat screen's "Return to a
-Waypoint" revives the player in place). These map one-to-one to the `--mission-*` flags in
+Waypoint" revives the player; with `GW2_RESPAWN_POINT=X,Y,Z` the player rejoins the
+map there through 1065 to `GW2_REJOIN_ROUTE`, default `127.1.0.4:6112`, keeping XP, loot
+and heart progress). These map one-to-one to the `--mission-*` flags in
 [the talk-loop note](../docs/re/209026-npc-talk-loop.md). The values are
 sandbox-tested placeholders, not retail encounter data.
 

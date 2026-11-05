@@ -74,6 +74,9 @@ for npc in ${GW2_HOSTILE_NPC:-}; do mission_args+=(--mission-hostile-npc "$npc")
 [[ -z "${GW2_SOURCED_DAMAGE:-}" ]] || mission_args+=(--mission-sourced-damage "$GW2_SOURCED_DAMAGE")
 [[ -z "${GW2_HEART:-}" ]] || mission_args+=(--mission-heart "$GW2_HEART")
 [[ "${GW2_RESPAWN:-0}" != 1 ]] || mission_args+=(--mission-respawn-flag)
+# GW2_RESPAWN_POINT X,Y,Z: the defeat respawn rejoins the map there via 1065 to
+# GW2_REJOIN_ROUTE (the bubble-side game address, as the auth play route).
+[[ -z "${GW2_RESPAWN_POINT:-}" ]] || mission_args+=(--mission-respawn-point "$GW2_RESPAWN_POINT" --mission-rejoin-route "${GW2_REJOIN_ROUTE:-127.1.0.4:6112}")
 auth_args=(--no-capture --listen "$GW2_BIND:6113"
   --params "$GW2_ID/dh-params.bin" --private "$GW2_ID/dh-private.bin" --log "$GW2_RUN/unused"
   --reply-frame "$GW2_DATA/auth-ready.bin" --auth-reply-body "$GW2_DATA/auth-account-body.bin"
