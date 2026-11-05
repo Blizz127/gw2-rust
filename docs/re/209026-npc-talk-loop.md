@@ -474,3 +474,23 @@ Remaining candidates:
 The next probe is the model handle's attach to the view, and a check of the view's
 visibility or alpha fields against the player's view.
 
+### Runs 133–134: view-object diff (player vs NPC)
+
+**Method:** a run-local runner copy captures each ordinary character view as its
+constructor installs vtable `0x142149138` (`0x1411589c5`, `rbx`). It dumps each view's
+0xc00 bytes 20 s after the NPC's view appears.
+
+- **Both views have a model component at +0x820**, similar fill density, and plausible
+  world-position floats near +0x830: about −3200 for the player, about −3020 for the NPC
+  near its spawn.
+- The player's view also holds a count of 2 at +0x3a0 followed by three
+  player-position triples, and nonzero +0x0f4..+0x104 (1, 0x40, 0.25, −1). The NPC's
+  are zero. Those fields look player- or control-specific (*inferred*).
+- **Run 134** added a server **86** position update for the NPC. The NPC's +0x3a0
+  stayed 0 and it stayed invisible, so missing position samples aren't the cause. The
+  86 frame was reverted.
+
+**Conclusion so far:** the NPC has a view, a valid model handle, a model component,
+REVEALED and a position. The remaining cause is inside model-component rendering
+(pose/animation, material/skin, LOD). That's the next trace.
+
