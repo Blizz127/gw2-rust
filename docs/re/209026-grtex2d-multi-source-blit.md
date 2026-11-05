@@ -168,13 +168,14 @@ record flags `+0x60` and operation-head emptiness at `+0xa8`. The previously
 validated texture dimensions/format/levels may contextualize those results;
 no recursive operation-list or file-resource walk is needed.
 
-For a non-null job, require job callback `+0 == 0x140b3d4e0` before labeling
-`+0xf8` as composite completion. Label this a callback-guarded snapshot:
-the allocator recycles jobs, so callback equality alone does not prove the
-current operation passed submission. A post-start observation, producer or
-callback visit can supply stronger lifecycle evidence. Never dereference a
-cached job after its operation has been destroyed; revalidate the live
-operation-to-job relation for each event.
+The first probe used job callback `+0 == 0x140b3d4e0` as an additional guard
+before reading `+0xf8`. Run 131 did not satisfy that guard, so it reported no
+completion value. Callback equality is not required by the client's poll and
+does not prove that a recycled job passed submission for its current use.
+The follow-up below replaces that observation gate with the actual native
+poll result at `0x140a6fdda`. Never dereference a cached job after its
+operation has been destroyed; revalidate the live operation-to-job relation
+for each event.
 
 | Hook | Owned identity at entry/site | Exact first 16 bytes |
 | --- | --- | --- |
@@ -215,3 +216,153 @@ windows through their returns. No broad field-offset scan was used.
 | Worker completion writer and job release | `ev_55908254c49c67d10f72a7c113dd182f5b164ba9823abe97820607849a344b1c` |
 | Exact hook guards | `ev_fa69d9b1e66a3b484050dcd68e34bfe89e5d1a8c425d19638708e3f0a7f33826` |
 | Callback-pointer setter | `ev_507544b376efcc1b01e9f5a2c9ee26fd10c2efcb64ae1aabd78c09bf260cfcc6` |
+
+## Run-131 follow-up: job identity and the skipped-producer branch
+
+The runtime lane reported ready primary/mask inputs, non-null group/job, and
+a callback mismatch at the observed head. It did not capture the actual
+callback value or `+0xf8`. This follow-up does not classify that unknown
+pointer or infer that the empty-rectangle branch was taken.
+
+`0x140dd4780` allocates/reuses a `0x110`-byte block and returns its address
+plus `0x10` at `0x140dd4854`. It sets generic job state `+0x18 = 5` and
+reference count `+0x1c = 1`, but does not explicitly initialize callback
+`+0` or composite completion `+0xf8`. Starter `0x140a75020` stores this exact
+returned pointer at operation `+0x108`; the producer and completion getter
+use the same pointer without another wrapper offset.
+
+The submission/execution routes inspected here preserve job `+0`:
+
+- `0x140dd43a0` links the job into its group using job `+8/+0x10`, increments
+  references, and passes the pointer array to `0x140dd5250`.
+- `0x140dd5250` changes generic job state/refcounts and allocates a separate
+  queue node through `0x140dd4250`. At `0x140dd530e` it puts the job pointer
+  in **node `+0x10`**; the following zero write at `0x140dd5312` is to
+  **node `+0`**, not job `+0`.
+- Execution helper `0x140dd4020` loads job `+0` at `0x140dd402a`, calls that
+  function at `0x140dd4030` with RCX still equal to the job, then sets generic
+  job-state bit `0x4` at `+0x18` and updates group counters. The complete
+  helper does not replace the callback. Group-wait path `0x140dd4510` can
+  claim a job and invoke this helper at `0x140dd46f4`.
+
+This bounded path supplies no scheduler-overwrite explanation for the
+reported mismatch. It is not an exhaustive search for every write to job
+memory. The callback assignment to `0x140b3d4e0` remains established for jobs
+that pass the composite producer; using that assignment as a prerequisite
+for observing the client's own poll was unnecessarily restrictive.
+
+### Exact empty-rectangle control flow
+
+Starter `0x140a75020` copies operation `+0x40` into a local 16-byte rectangle
+at `0x140a750e8`; `0x140a747c0` receives a pointer to that copy. It also
+receives the two-Dword destination point from operation `+0x38`. Clamping
+therefore does not overwrite the operation's original rectangle.
+
+After backing/input validation, `0x140a74c2b..0x140a74ce5` performs these
+unsigned 32-bit operations (addition/subtraction wrap):
+
+- Replace zero destination/source dimensions with one.
+- Clamp destination point X/Y to the respective destination dimension.
+- Clamp rectangle right/bottom to both the source dimension and
+  `rectangle left/top - clamped point + destination dimension`.
+- Set EAX to one if right is at most left or bottom is at most top;
+  otherwise set it to zero.
+
+At **`0x140a74ce5`**, zero branches to producer setup `0x140a74da7`.
+Nonzero logs the out-of-bounds diagnostic and jumps from `0x140a74da5` to
+`0x140a74e1c`, skipping `0x140b3d3b0`. Group/job allocation and destination
+`+0x94` increment have already happened. The skipped path performs no
+explicit callback or completion-word initialization, and submits no composite
+job. It neither marks completion nor undoes the increment in this function.
+
+Subsequent `0x140a6fdc0` sees the non-null group and polls `job+0xf8`; it
+does not retry startup. A zero value keeps the operation queued. Nonzero
+returns success and permits the normal destructor, which releases work,
+decrements the texture counter, and unlinks without setting texture readiness.
+Fresh/recycled memory contents on the skipped-producer path remain unknown.
+Thus neither a non-null handle nor a mismatched callback establishes an
+unfinished submitted worker.
+
+The complete retained body was checked again for other normal skips after
+starter allocation. It has one return, `0x140a74e3f`, one composite-producer
+call, `0x140a74e17`, and only the empty-rectangle jump at `0x140a74da5`
+entering the common epilogue before that call. The other relevant branches
+are:
+
+| Sites | Condition and continuation |
+| --- | --- |
+| Preparation call `0x140a74854`; helper `0x140a74280` | Missing destination `+0x40` attempts backing allocation. The helper returns no tested success flag. Caller continues to validation. |
+| `0x140a74859`, `0x140a74878` | Destination/primary format must be `0x1a`; failure calls assertion, with no normal skip branch. |
+| `0x140a74898..0x140a74903` | Destination requires CPU backing and flags `&6`; primary requires those plus readiness. Failure calls assertion. |
+| `0x140a7492e` | Zero passes skips the mask loop only, reaching rectangle handling. Constructor-valid active counts are one through five. |
+| `0x140a74958..0x140a7497a` | Null mask is allowed only at index zero; it supplies null bits for that pass and continues the loop. Later null masks assert. |
+| `0x140a7497f..0x140a74a16` | Non-null masks require bits `+0x40`, readiness, format `0x1b`, and nonzero levels `+0x68`; failures call assertions. |
+| `0x140a74a21`, `0x140a74a2c` | Mask dimensions smaller than primary select diagnostic/assertion code. If that code returns, processing still continues at `0x140a74bf2`. |
+| `0x140a74cd7`, `0x140a74cdc`, `0x140a74ce7` | Empty bounded rectangle selects the sole normal producer-skip path. |
+
+Preparation additionally asserts destination CPU-only flag `0x4`, absence of
+raw destination flags `0x1200000`, and primary bits/readiness. It has no
+normal failure return tested by `0x140a747c0`. Ready inputs alone therefore
+do not prove all backing/format/preparation conditions passed. Minimal
+additional context is destination/primary `+0x40` non-nullness, `+0x60`
+flags, `+0x64` format; and each non-null mask's bits, format, levels, and
+dimensions compared with primary dimensions. These later field snapshots
+would contextualize an observation, not prove that an earlier assertion was
+never reached. Abort, exception, allocation failure, or a call that never
+returns is outside this normal-flow census. No such event is inferred for
+run 131. The census reuses the complete bodies in
+`ev_c74507ae63057828be2e4558b106143d228ce89cc3ffba87f823832445eb19d5`
+and `ev_e6ddc329db69b3d526fca55554feca1803245d33f4ac0edae03bed74935a100e`;
+it required no new executable/archive query.
+
+### Observation plan that follows the native poll
+
+At **`0x140a6fdda`**, immediately after the call to `0x14026f540`, EAX is
+the exact Dword the client just read. RCX still identifies the job because
+the frozen getter is only `mov eax,[rcx+0xf8]; ret`. Match it to the current
+owned `7c0` operation's `+0x108`, with that operation's table, destination,
+and non-null group revalidated. Read EAX instead of requiring a particular
+callback or independently reading job payload. Record first zero once per
+live operation/job, then a finite nonzero transition; a native condition can
+suppress further zeros. This is a **completion-poll value**, not job count.
+
+To distinguish a skipped producer from an installed/submitted callback in a
+future run, retain the original point `op+0x38`, rectangle `op+0x40`, and
+destination/primary dimensions `texture+0x48/+0x4c`. The precise branch hook
+at `0x140a74ce5` has RDI = destination, R14 = primary source, R13 = local
+rectangle pointer, `[RSP+0x370]` = local destination point,
+`[RSP+0xa8]` = job, and `[RSP+0xb0]` = group. Match these to a currently
+owned operation; record EAX and the bounded local rectangle/point only.
+At **`0x140b3d4be`**, RBX = job, RCX = group, R8D = one immediately before
+submission; callback and completion initialization have already executed.
+
+| Additional hook | Exact first 16 bytes |
+| --- | --- |
+| Actual completion result `0x140a6fdda` | `85c00f85b70000004883c428c3488b51` |
+| Empty-rectangle test `0x140a74ce5` | `85c00f84ba000000498b56584885d275` |
+| Nonempty producer branch `0x140a74da7` | `4d8b4e40488b8424980000004c8b4740` |
+| Job submission `0x140b3d4be` | `e8dd6e2900488b5c2438488b6c244048` |
+
+A marker's existing head watch cannot retrospectively observe a starter or
+branch that already ran. Such branch observations need the owned destination
+and operation/job relation established before that invocation. Original
+rectangle values sampled later are contextual request evidence, not an
+observed branch result. No runtime or helper changes occurred in this source
+follow-up.
+
+Private export (11 complete REA records), mode 0600:
+`/home/blizz/re/gw2/notes/209026-composite-job-lifecycle-20261105.json`,
+SHA-256 `ea9e75ef890b5d818f90a3843a3aed1b3df64b7f0c5dcf4b5ba5b27ae0435518`.
+All captures exited zero, were nontruncated, and verified owned-process
+cleanup. Partial initial `.pdata` chunks remain retained; only the followed
+complete paths support the statements above. Existing full allocator,
+starter, producer, and rectangle evidence is in the first bundle.
+
+| Finding | REA Evidence ID |
+| --- | --- |
+| Complete submission/link route | `ev_4cf634f5815d91ac2570b47188b47faacdc2430ad57e00105c227733f7d5da89` |
+| Queue-node insertion and group-wait body | `ev_3fe0fe5a0ea2bc630532510d415657f7bb4878ba1fdf897c9142a41bcca6957f` |
+| Queue/group-wait continuation through direct execution call | `ev_1d6750017f18534aed9894c6c0cf0c39d5b1619b3962c1072e5f11c5271548ef` |
+| Complete executor, including callback and completion tail | `ev_ad1b9f7682824825ae222d69d6bc436d4cfac5e2efb8d0ff5f9b142f43d8671e` |
+| Exact poll/rectangle/submission hook guards | `ev_9cfdbf46e9d13e713375c07249a1d8922862fbad8361f57f35f008c800564fa3` |
+| Complete immediate preparation helper `0x140a74280` | `ev_e6ddc329db69b3d526fca55554feca1803245d33f4ac0edae03bed74935a100e` |

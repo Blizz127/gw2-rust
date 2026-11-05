@@ -182,3 +182,70 @@ instruction renderings.
 | Full pool lookup, variant selection, composition dispatcher | `ev_0e7d3b5381d8d20a12cdd646bbc2a8a6ec9cc8252641f785085df591e245f41e` |
 | Pool acquire/constructor, format lookup, representative blit path | `ev_1baaff50e3c3b7929d67e08ee00583966e395be1b8ccc7adbc725db483ea0046` |
 | Exact channel formats and hook byte guards | `ev_4b79142466d3d815a768d4a7a28173ad8e10dd24be507523e8fdf3362f954ab4` |
+
+## Selected-pool observation bound to an owned acquisition
+
+A later source-only pass resolves the exact acquisition frame and null-return
+boundaries. It confirms the strict unsigned `count > limit` check; no change
+to that earlier finding is required. Limit 8 permits allocation when count is
+8, followed by an increment to 9. Count 9 alone is therefore not corruption.
+
+Bind an acquisition at component call **`0x1412d8c01`** (channel) or
+**`0x1412d8b23`** (optional input), with R14 equal to the current owned
+component `C`. R15D is the channel only at the channel call. Preserve the
+thread, active helper invocation, input kind/channel, and **B = pre-call RSP**.
+The callback pointer at `[B+0x30]` must be `0x1412d8930`.
+
+| Boundary | Source-derived identity and useful value |
+| --- | --- |
+| Cache-miss callback `0x140a7275c` | RSP=`B-0x4d0`; callback `[RSP+0x68]` must equal `0x1412d8930`. A cache hit bypasses this site. |
+| Pool lookup return `0x1412d8941` | RAX is the selected pool; RSP=`B-0x510`; `[RSP+0x38]` is callback return `0x140a72760`. |
+| Pool acquisition entry `0x141562910` | RCX is that pool; RSP=`B-0x4d8`; `[RSP]` is `0x140a72760`, preserved by the callback's tail jump. |
+| Pool body through `0x141562a12` | RSP=`B-0x520`; RSI retains the selected pool. |
+| Component result `0x1412d8b28` / `0x1412d8c06` | RSP returns to B; RAX is the acquisition result and R14 is again C. |
+
+These stack offsets derive from the guarded prologues and call order, not a
+runtime measurement. **R14 must not be treated as C inside the cache/pool
+chain:** `0x140a72530` reuses R14D for a cache key. Inner observations must
+match the bound thread and acquisition stack as well as the selected pool.
+Expire the binding at its component return, helper return, owner change, or
+sampling limit; pool-pointer coincidence alone is insufficient.
+
+The pool's array pointer is `+0x10`, count `+0x1c`, format `+0x28`, packed
+dimensions `+0x2c`, levels `+0x34`, flags `+0x38`, and limit `+0x44`.
+Only the pool returned by this invocation needs inspection. Its native reuse
+walk exposes the following bounded observation points:
+
+| Address | Meaning before the instruction executes |
+| --- | --- |
+| `0x14156295f` | EAX is wrapper reference count; RDI is wrapper, RCX its data, RBX current array cursor, RBP end. |
+| `0x141562967` | EAX is data reference count; this site executes only after wrapper count equals 1. |
+| `0x1415629f1` | Reuse selected after both counts equal 1. |
+| `0x14156297f` | Unsigned `JA` rejects count greater than limit after the walk found no reusable entry; RSI is pool, EAX is limit. |
+| `0x1415629bf` | RAX is the result of texture allocation `0x140a71800`; a null result takes the other normal failure path. Pool count has not yet incremented. |
+| `0x141562a12` | RAX is the final pool result, after null zeroing when applicable and before RSI restoration. At `0x141562a10` itself zeroing has not yet executed. |
+
+Observe the native candidate walk rather than reading unrelated pool arrays.
+Cap retained candidate counts and acquisitions, and label an incomplete walk
+as partial. Refcounts establish lifetime/reuse eligibility, not file readiness
+or the cause of retained references. A null pool lookup is also distinct from
+the two normal acquisition failures: entry `0x141562910` dereferences RCX
+immediately, so a null selected pool is an anomalous/unknown path, not evidence
+of the count limit. No runtime cause is assigned by this static follow-up.
+
+Nineteen exact 16-byte guards and the finite pairing plan are retained in
+`~/re/gw2/notes/209026-owned-component-pool-probe-plan-20261105.json`
+(SHA-256 `c4ddd0258af3970d09344e5ce2b1cac39c6a3d8f9da840d58aee23d18926a5b6`).
+Complete six-capture source export:
+`~/re/gw2/notes/209026-owned-component-pool-source-20261105.json`
+(SHA-256 `1368b5770972f2f30281560979f00db36c4f6787b882b3c8dd2432c474685a1f`).
+Key evidence: pool/body and callback
+`ev_9a56876f49c7df2ef40a2aee2fe4d6c1c9c8e683fc4374d85bcf3fa48aadd8a7`;
+cache frame `ev_b708f03900760d51169015e9d9ac1f18bb95a4798391974f7c00b62ad5a22341`;
+component callsites
+`ev_1b39895c6d3673a9833f54bb273f148ec2ccad40a1c0cea2e99e5d45995d8c5d`;
+guards `ev_82b53160e2db6665f51505d6e51e95ca99966cf329aac4c23a9c59cffe0dda3d`.
+All readers exited zero with complete raw terminal records. A partial
+instruction in an initial caller window was replaced by the complete caller
+disassembly. No probe implementation, runtime, archive access, or target
+mutation occurred in this source pass.
