@@ -1157,3 +1157,21 @@ transition branch. The subsequent focused
 checks exact 655/656 frames, repeated-movement suppression, and outside/inside
 waypoint rejoin state while retaining incomplete progress. Live boundary
 crossing remains unobserved in this run.
+
+### Runs 186–191: live position decoding verified; scripted crossings blocked by terrain
+
+- **Run 186** measured the client 18/19 wire space: collision `[X/32, Y/32, -Z/32]`. Fixed
+  in `cd4c3b6`, with a unit test for the scale and the Z sign.
+- **Runs 187–191** logged movement in map units that match the expected walk paths (for
+  example, 0,-26300 → 2632,-26561). No scripted walk crossed heart 56's edge:
+  - run 187 was deflected south by terrain, short of the east edge;
+  - run 188 had the heart already completed (by design no 655/656 then), and its spawn was
+    below the ground;
+  - run 189 was blocked east of the spawn at x ≈ -2336;
+  - runs 190 and 191 walked backward to x ≈ -1210 against a slope, about 55 units inside
+    the west edge at x ≈ -1266.
+
+So the polygon's west edge here runs along steep terrain. The enter/leave logic is covered
+by the focused regression (`heart_area_crossings_and_waypoint_rejoin_use_current_position`)
+and the polygon tests. A client-observed 655/656 still needs a route that terrain does not
+block, or an owner walk-in.
