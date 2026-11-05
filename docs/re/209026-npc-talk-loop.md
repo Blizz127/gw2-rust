@@ -613,3 +613,26 @@ Rewards 1209/1210 resolve a type-0x15f (351) content key, a reward definition, n
 XP amount. **No plain "experience gained" message is identified.** The next candidates
 are 182's unassigned Dword and a reason-tagged experience event; the UI's reason
 registration is the entry point.
+
+### Run 143: kill XP and level-up (server 191 experience, 188 level)
+
+**Server 191 is the experience message.** The coreStats setter `0x1412091e0` stores its
+Dword at +0xe4, capped by `0x1412df420`, which returns **`s_experienceForLevelLut[level]`**
+(`0x1421d59a0`, ConstTable.cpp). The extended 182 creation feeds the same setter.
+
+The client's table (`gw2_proto::experience::EXPERIENCE_FOR_LEVEL`, levels 0..=80) gives
+2,000 XP for level 2, 4,110 for level 3, … and 4,605,959 for level 80.
+
+`--mission-xp-per-kill N` (with the fight flags): each NPC death adds N to the player's
+total and sends **191 `{player character, total, 0, 0}`**. When `level_for_experience`
+crosses a threshold it also sends **188 `{player character, level}`**.
+
+**Run 143** (N = 2500): the kill sent 191 (2500) and 188 (level 2). The skill bar's
+**second weapon slot unlocked** (slot 2 now shows a skill icon). That matches the
+slot-6 level-2 fallback in `docs/re/209026-mesmer-starter-skill-requirements.md`, so the
+client applied level 2. The top-right "(Level 1)" didn't change; it appears to be a map
+or area indicator.
+
+Placeholders and open items: the XP per kill is not retail, the trailing 191 fields are
+sent as 0 (reason/source unnamed), and the experience bar fill and level-up effects
+aren't checked.

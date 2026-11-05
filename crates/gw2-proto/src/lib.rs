@@ -24,6 +24,7 @@ pub mod character_view;
 pub mod character_summary;
 pub mod core_stats;
 pub mod dynamic;
+pub mod experience;
 pub mod endurance;
 pub mod guardian;
 pub mod health;

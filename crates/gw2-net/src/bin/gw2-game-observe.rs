@@ -99,6 +99,8 @@ struct Fixtures<'a> {
     damage_on_skill: Option<f32>,
     /// Research: weapon repeat-start answered with a 0x78 order for this skill.
     autoattack_skill: Option<u32>,
+    /// Research: experience awarded per NPC kill.
+    xp_per_kill: Option<u32>,
 
     /// Service mode: create no capture or preamble files. The auth stream can
     /// carry account strings typed into the client, so a server facing a
@@ -128,6 +130,7 @@ fn observe(
         npc_cast,
         damage_on_skill,
         autoattack_skill,
+        xp_per_kill,
         no_capture,
     } = fixtures;
     let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
@@ -168,6 +171,9 @@ fn observe(
     }
     if let Some(skill) = npc_cast {
         mission = Some(mission.ok_or_else(|| invalid("NPC cast requires a mission phase"))?.with_npc_cast(skill));
+    }
+    if let Some(per_kill) = xp_per_kill {
+        mission = Some(mission.ok_or_else(|| invalid("experience requires a mission phase"))?.with_xp_per_kill(per_kill));
     }
     if let Some(skill) = autoattack_skill {
         mission = Some(mission.ok_or_else(|| invalid("auto-attack requires a mission phase"))?.with_autoattack_skill(skill));
@@ -355,6 +361,7 @@ fn main() -> io::Result<()> {
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
     let mut autoattack_skill: Option<u32> = None;
+    let mut xp_per_kill: Option<u32> = None;
     let mut store_path: Option<PathBuf> = None;
     let mut creation_destination: Option<SocketAddr> = None;
     let mut creation_route: Option<SocketAddr> = None;
@@ -495,6 +502,10 @@ fn main() -> io::Result<()> {
                 talk_npc_spec = Some((species, [x?, y?, z?]));
             }
             "--mission-skill-order-echo" => skill_order_echo = true,
+            "--mission-xp-per-kill" => {
+                let text = args.next().ok_or_else(|| invalid("missing experience per kill"))?;
+                xp_per_kill = Some(text.parse().map_err(|_| invalid("invalid experience per kill"))?);
+            }
             "--mission-autoattack-skill" => {
                 let text = args.next().ok_or_else(|| invalid("missing auto-attack skill key"))?;
                 autoattack_skill = Some(text.parse().map_err(|_| invalid("invalid auto-attack skill key"))?);
@@ -579,7 +590,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z] [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY]]]]",
+                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z] [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N]]]]",
                 ));
             }
         }
@@ -643,6 +654,9 @@ fn main() -> io::Result<()> {
     }
     if initial_health.is_some() && !has_population {
         return Err(invalid("--mission-health requires --mission-population"));
+    }
+    if xp_per_kill.is_some() && hostile_npc.is_none() {
+        return Err(invalid("--mission-xp-per-kill requires --mission-hostile-npc"));
     }
     if autoattack_skill.is_some() && hostile_npc.is_none() {
         return Err(invalid("--mission-autoattack-skill requires --mission-hostile-npc"));
@@ -807,6 +821,7 @@ fn main() -> io::Result<()> {
                 npc_cast,
                 damage_on_skill,
                 autoattack_skill,
+                xp_per_kill,
                 no_capture,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {

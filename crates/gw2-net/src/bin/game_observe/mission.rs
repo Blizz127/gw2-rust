@@ -27,6 +27,7 @@ use gw2_proto::{
     agent_control::AgentControl209026,
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
+    experience::{EarnedLevelFrame209026, ExperienceFrame209026, level_for_experience},
     health::{HealthFrame209026, HealthOperation209026},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
     npc_talk::{ConversationReply209026, InteractRequest209026, TalkNpcPlan209026, TalkSession209026},
@@ -360,6 +361,23 @@ pub struct MissionPhase {
     /// Research: answer `[0x29][slot]` with server 34 + 0x78 for this skill key,
     /// aimed at the hostile NPC (auto-attack hypothesis).
     autoattack_skill: Option<u32>,
+    /// Research: experience per NPC kill, running total and earned level.
+    xp: Option<(u32, u32, u8)>,
+}
+
+/// On an NPC kill: add experience, send 191, and 188 when the client's
+/// experience table crosses a level (docs/re/209026-npc-talk-loop.md, XP).
+fn award_kill_xp(xp: &mut Option<(u32, u32, u8)>, character_index: u32, out: &mut BytesMut) {
+    let Some((per_kill, total, level)) = xp.as_mut() else { return };
+    *total = total.saturating_add(*per_kill);
+    ExperienceFrame209026 { character_index, experience: *total, dword_2: 0, byte_3: 0 }.encode_frame(out);
+    let reached = level_for_experience(*total);
+    eprintln!("Mission phase: kill experience +{per_kill} -> {total} (server 191)");
+    if reached > *level {
+        *level = reached;
+        EarnedLevelFrame209026 { character_index, level: reached }.encode_frame(out);
+        eprintln!("Mission phase: level up to {reached} (server 188)");
+    }
 }
 
 impl MissionPhase {
@@ -390,6 +408,7 @@ impl MissionPhase {
             npc_cast: None,
             damage_on_skill: None,
             autoattack_skill: None,
+            xp: None,
         })
     }
 
@@ -463,6 +482,12 @@ impl MissionPhase {
     /// Research: answer the weapon repeat-start signal with a 0x78 order.
     pub fn with_autoattack_skill(mut self, skill_key: u32) -> Self {
         self.autoattack_skill = Some(skill_key);
+        self
+    }
+
+    /// Research: award `per_kill` experience on every NPC kill (level 1 start).
+    pub fn with_xp_per_kill(mut self, per_kill: u32) -> Self {
+        self.xp = Some((per_kill, 0, 1));
         self
     }
 
@@ -621,6 +646,7 @@ impl MissionPhase {
                         }
                         .encode_frame(&mut out)?;
                         eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
+                        award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
                     }
                 }
                 Ok(Some(out.freeze()))
@@ -661,6 +687,7 @@ impl MissionPhase {
                     }
                     .encode_frame(&mut out)?;
                     eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
+                    award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
                 }
                 Ok(Some(out.freeze()))
             }
