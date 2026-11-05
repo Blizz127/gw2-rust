@@ -2172,3 +2172,142 @@ final loaded dimensions, selected rectangle extents and the unidentified
 run-132 initial-scene source. Neither the material pairs nor these headers
 alone identify the cause of the incomplete preview. No new production fix
 or saved-norn activation follows from this diagnostic run.
+
+## Run 137: paired kind-nine rectangles on the current appearance owner
+
+`run137-norn-creator-kind9-rectangles` paired the parent component dispatch,
+each admitted advanced submission at `1412dcaba`, and the exact parent
+continuation at `1412d8ca3`. The passive helper SHA-256 was
+`70729da1925b2ae6e7761822fe5768d96a13d97b57938496430b7995657a76a1`;
+its source, ownership and stack guards are documented in
+[the kind-nine rectangle note](209026-composite-kind9-rectangles.md).
+The separate production empty-job completion handler remained enabled.
+
+The **current appearance owner was record 6 in scene 3**. Its one admitted
+slot-9/kind-9 invocation began at **+40.297 seconds** from first binding and
+returned at **+40.409**. Rectangle-set ID was **3**, half-size argument **0**,
+and authored/requested dimensions **1024 by 1024**. Both raw descriptor
+masks, `D+0x5e` and `D+0x62`, were **2048 (`0x800`)**. Their difference
+`mask_5e & ~mask_62` is zero; this does not establish the number of ordinary
+copies, whose list also includes its source-defined base category.
+
+The exact descriptor/current-call source tuple, in channels 0 through 6, was:
+
+| Channel | Compact file ID | Raw format at submission |
+| --- | --- | --- |
+| 0 | 140123 | 26 |
+| 1 | 140121 | 27 |
+| 2 | 140115 | 27 |
+| 3 | 140117 | 27 |
+| 4 | 140119 | 27 |
+| 5 | null | No wrapper |
+| 6 | 140125 | 30 |
+
+All non-null filename encodings used six bytes with optional decoder byte
+zero. These are the actual run-137 owner-6 IDs, **not** run 136's 140521 tuple.
+The scripted Norn/male/Mesmer clicks do not establish identical appearance
+data across runs. No pass-compaction outcome or final pixel source is inferred
+from these seven inputs.
+
+The helper observed all three advanced calls in this paired invocation,
+at **+40.324**, **+40.356** and **+40.383**. Each current list had count **3**,
+with indices **0, 1, 2** respectively. Common origin was **`[0,512]`**.
+Every destination point and unsigned source-rectangle subtraction matched
+the current selected rectangle and the source-defined formula:
+
+| List index | Selected authored rectangle | Destination point | Relative source rectangle |
+| --- | --- | --- | --- |
+| 0 | `[0,512,384,768]` | `[0,512]` | `[0,0,384,256]` |
+| 1 | `[128,768,384,1024]` | `[128,768]` | `[128,256,384,512]` |
+| 2 | `[384,768,896,1024]` | `[384,768]` | `[384,256,896,512]` |
+
+At each call, every non-null source had current dimensions **1024 by 1024**,
+one level, flags **12342 (`0x3036`)**, a low-bit-tagged operation head,
+**no backing**, outstanding count **0**, and field-derived readiness
+**false**. The destination was 1024 by 1024, format 26, nine levels, flags
+12548 (`0x3104`), with backing present, outstanding count **3**, and readiness
+false. Thus these are **pending source metadata and queued-destination
+observations**, not completed loaded dimensions or successful pixel blits.
+The observer did not read source/destination pixels or follow a submitted
+operation through completion.
+
+The earlier **owner 3, scene 2** supplied a separate paired invocation with
+five advanced calls and a verified return. Its tuple was
+`[139381,null,139375,139377,139379,null,139383]`, masks `0x820/0x800`, and
+common origin `[0,256]`. It is not substituted for the final appearance
+owner. Both invocation returns reported the exact observed counts, **5 and
+3**, below the sixteen-submission cap, with `sample_limit_reached: false`
+and `later_submission_count_unknown: false`. There were no abandoned pairs,
+observer rejection/read-failure records, or reader pairing errors.
+
+### Late state, image and coverage
+
+At **+91.373**, the late snapshot still identified owner **6**, scene **3**.
+Composite state and flags were both **7**, and the texture-invalid mask was
+**0**. The model was finalized, its skeleton was present, animation readiness
+was cached, and graphics bypass was false. The type-9 graphics object had
+flags **1**, ready cache true, rejected flag false, and **12 entries**.
+All twelve current materials, indices 0–11, were sampled with
+**`P+0x50 == 1` and `P+0x30 == 1`**. These fields do not establish correct
+texture content or complete visible geometry.
+
+The retained audit contains **24 accepted records**, six owner bindings,
+two paired dispatches, eight advanced submissions and two paired returns.
+There is **no `late_followup_snapshot` or `finished` record**. The last
+observer record is the late snapshot above; stable log bytes do not prove
+normal observer termination. No malformed/unknown observer record was
+discarded. Production constant statuses reported four verified empty-job
+writes/readbacks and four unchanged unqualified invocations before log
+suppression; these are lower bounds, not totals.
+
+Root's final image review still found a **partial preview**. Image SHA-256:
+`f570f4a77fb684e9c810506c718723baa0564eb57564d472954a765aa9d3a515`.
+This is not a passed visual acceptance check. The controller retained runtime
+evidence `ev_3efe73ae36929437903b63c41aad7fd4b846dd4407b3850bc5396bac5dc46126`
+and recorded cleanup at **2026-11-05 22:19:58 UTC**.
+
+### Original asset headers are a separate observation
+
+Root extracted the actual tuple's primary **140123** and channel-1 mask
+**140121** from the frozen archive. Both original headers declare
+**512 by 256**. Primary 140123 is DXT5, 57,272 bytes, SHA-256
+`1539c1851adb6a8ddc37a0bc253a70c487c15f579a6e9780e83b18f8f57a7df8`;
+mask 140121 is DXTA, 252 bytes, SHA-256
+`86307ccdf5007c1f7573bfeab22a9e1098477a6dd711cd35b096cea07bdf5c99`.
+During the reserved window, the working copies matched both frozen hashes;
+the comparison receipt recorded unchanged working-archive identity at
+**22:19:35.743680 UTC**. Receipts are retained at
+`/home/blizz/re/gw2/notes/run137-actual-assets-20261105/receipt.json` and
+the adjacent `working-comparison.json`.
+
+These original headers **do not establish final loaded source dimensions**.
+Native high-resolution remapping may select different file IDs; that path
+remains under source investigation. Neither the pending 1024-square fields
+nor the original 512-by-256 headers establish which backing the later blit
+used. The relative rectangles therefore motivate a linked loaded-source
+observation; they do not yet prove a clamp failure or explain the missing
+pixels. No new production fix or activation follows from this run.
+
+### Retained audit evidence
+
+The read-only safe-prefix reader passed eight synthetic checks covering
+strict field admission, privacy filtering, bounds, paired returns and
+truncation/cap reporting. Its SHA-256 is
+`5703ecf0ca8178d6264d9b41f922186a870de633e9e7e6ce23e08776b6be8322`.
+The final retained read covered 110,322 stable bytes of `client.out`, SHA-256
+`0112c3406aa1e0b1f9819be97f2f384190277aee22f80e4df4870ba242272186`;
+this is the audited snapshot, not a claim about later controller output.
+
+- `ev_a3057e576d845ca6af46cfb7095681931e80f3452ad02feef25be0e9f21e194d`:
+  both complete invocation records, current-call tuples and rectangle fields.
+- `ev_a8fc141392f25de904d8bc465b055e0499045f5d1935182dc77c0c6eb0e58cb7`:
+  late owner-6 readiness/material snapshot.
+- `ev_2e90aac9094059ccb40a7ad139ef791129b1b9ad9d46f49a657eef4ed27acaf3`:
+  unchanged later read, preserving the missing followup/finish boundary.
+
+Complete private Evidence and sanitized records:
+`/home/blizz/re/gw2/notes/209026-run137-kind9-safe-audit-20261105.json`,
+SHA-256 `4059714a0b78ccbc492ace76b741993faa87d9c72605bd9f0394c651aa461bfe`.
+The audit itself accessed only retained logs; it performed no runtime control
+or archive operations. Controller asset/image observations above remain
+separately attributed.
