@@ -87,6 +87,8 @@ struct Fixtures<'a> {
     creation: Option<(character_store::CharacterStore, SocketAddr)>,
     /// Diagnostic hold between client 420 and the population (zero: none).
     population_delay: Duration,
+    /// Opt-in talkable test NPC (docs/re/209026-npc-talk-loop.md).
+    talk_npc: Option<mission::TalkNpc>,
     /// Service mode: create no capture or preamble files. The auth stream can
     /// carry account strings typed into the client, so a server facing a
     /// person must run with this set.
@@ -109,6 +111,7 @@ fn observe(
         saved_population,
         creation,
         population_delay,
+        talk_npc,
         no_capture,
     } = fixtures;
     let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
@@ -133,6 +136,9 @@ fn observe(
         let fixture = saved.for_join(&preamble)?;
         mission = Some(mission.ok_or_else(|| invalid("saved population requires a mission phase"))?
             .with_population(fixture)?.with_population_delay(population_delay));
+    }
+    if let Some(npc) = talk_npc {
+        mission = Some(mission.ok_or_else(|| invalid("talk NPC requires a mission phase"))?.with_talk_npc(npc));
     }
     let mut header = [0u8; 2];
     stream.read_exact(&mut header)?;
@@ -307,6 +313,8 @@ fn main() -> io::Result<()> {
     let mut equipment_frames: Option<Vec<u8>> = None;
     let mut skill_frames: Option<Vec<u8>> = None;
     let mut initial_health: Option<f32> = None;
+    let mut talk_npc_spec: Option<(u32, [f32; 3])> = None;
+    let mut talk_npc_speaker: Option<String> = None;
     let mut store_path: Option<PathBuf> = None;
     let mut creation_destination: Option<SocketAddr> = None;
     let mut creation_route: Option<SocketAddr> = None;
@@ -431,6 +439,27 @@ fn main() -> io::Result<()> {
                 }
                 initial_health = Some(value);
             }
+            "--mission-talk-npc" => {
+                if talk_npc_spec.is_some() {
+                    return Err(invalid("duplicate --mission-talk-npc"));
+                }
+                let text = args.next().ok_or_else(|| invalid("missing talk NPC SPECIES,X,Y,Z"))?;
+                let parts: Vec<&str> = text.split(',').collect();
+                let [species, x, y, z] = parts[..] else {
+                    return Err(invalid("talk NPC needs exactly SPECIES,X,Y,Z"));
+                };
+                let species: u32 = species.parse().map_err(|_| invalid("invalid talk NPC species key"))?;
+                let position = [x, y, z]
+                    .map(|v| v.parse::<f32>().map_err(|_| invalid("invalid talk NPC position")));
+                let [x, y, z] = position;
+                talk_npc_spec = Some((species, [x?, y?, z?]));
+            }
+            "--mission-talk-npc-speaker" => {
+                if talk_npc_speaker.is_some() {
+                    return Err(invalid("duplicate --mission-talk-npc-speaker"));
+                }
+                talk_npc_speaker = Some(args.next().ok_or_else(|| invalid("missing talk NPC speaker"))?);
+            }
             "--mission-spawn" => {
                 let text = args.next().ok_or_else(|| invalid("missing spawn X,Y,Z"))?;
                 let parts: Vec<f32> = text
@@ -480,7 +509,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL]]]]",
+                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]]]]]",
                 ));
             }
         }
@@ -545,6 +574,14 @@ fn main() -> io::Result<()> {
     if initial_health.is_some() && !has_population {
         return Err(invalid("--mission-health requires --mission-population"));
     }
+    if (talk_npc_spec.is_some() && !has_population) || (talk_npc_speaker.is_some() && talk_npc_spec.is_none()) {
+        return Err(invalid("--mission-talk-npc requires a population; --mission-talk-npc-speaker requires --mission-talk-npc"));
+    }
+    let talk_npc = talk_npc_spec
+        .map(|(species, position)| {
+            mission::TalkNpc::new(species, position, talk_npc_speaker.unwrap_or_else(|| "Talk test".to_owned()))
+        })
+        .transpose()?;
     if saved_population_mode && (mission_map_key != Some(379) || mesmer_values.is_none()) {
         return Err(invalid("saved population currently requires Norn map379 and explicit Mesmer state/tracks"));
     }
@@ -667,6 +704,7 @@ fn main() -> io::Result<()> {
         let population = population.clone();
         let saved_population = saved_population.clone();
         let creation = creation.clone();
+        let talk_npc = talk_npc.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
             let fixtures = Fixtures {
@@ -678,6 +716,7 @@ fn main() -> io::Result<()> {
                 saved_population,
                 creation,
                 population_delay,
+                talk_npc,
                 no_capture,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {

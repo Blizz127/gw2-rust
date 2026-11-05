@@ -23,10 +23,12 @@
 use bytes::{Bytes, BytesMut};
 use gw2_proto::{
     Guid,
+    agent_behavior::AgentBehaviorFrame209026,
     agent_control::AgentControl209026,
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
+    npc_talk::{ConversationReply209026, InteractRequest209026, TalkNpcPlan209026, TalkSession209026},
     player_startup::PlayerStartupFrame209026,
     population::{self, PopulationPlan, PopulationProfession209026},
     quest::{QuestLifecycleFrame209026, QuestLifecycleOperation209026},
@@ -68,7 +70,42 @@ pub(super) fn rules() -> Rules {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Seen {
     Map(ClientMapEvent),
+    /// Client 23 carrying the packed interact request (opcode 0x14/0x15).
+    Interact(InteractRequest209026),
+    /// Client 275/276 conversation replies.
+    Conversation(ConversationReply209026),
     Other(u16),
+}
+
+/// Opt-in talkable test NPC (docs/re/209026-npc-talk-loop.md). Spawned once
+/// with the player's BeginPlaying batch; answers interact with test dialogue.
+#[derive(Clone)]
+pub struct TalkNpc {
+    plan: TalkNpcPlan209026,
+    session: TalkSession209026,
+}
+
+impl TalkNpc {
+    /// Agent index of the test NPC. The player's placeholder character index
+    /// is 1; `respond` refuses to spawn on a collision.
+    pub const AGENT_INDEX: u16 = 2;
+
+    /// Placeholder pages, marked as test text: retail dialogue is server data.
+    pub fn new(species_key: u32, position: [f32; 3], speaker: String) -> io::Result<Self> {
+        let plan = TalkNpcPlan209026 {
+            agent_index: Self::AGENT_INDEX,
+            species_key,
+            position,
+            facing: [1.0, 0.0, 0.0], // placeholder: unit vector, direction unestablished
+        };
+        plan.spawn_frames()?;
+        let pages = vec![
+            "[test] Well met, traveler.".to_owned(),
+            "[test] This is placeholder dialogue from the private test server.".to_owned(),
+        ];
+        let session = TalkSession209026::new(u32::from(Self::AGENT_INDEX), speaker, pages)?;
+        Ok(Self { plan, session })
+    }
 }
 
 /// Explicit synthetic population input, built from the same server-17
@@ -290,6 +327,7 @@ pub struct MissionPhase {
     population_delay: Duration,
     /// The population sequence and when it is due, while held.
     held: Option<(Instant, Bytes)>,
+    talk: Option<TalkNpc>,
 }
 
 impl MissionPhase {
@@ -314,6 +352,7 @@ impl MissionPhase {
             began: false,
             population_delay: Duration::ZERO,
             held: None,
+            talk: None,
         })
     }
 
@@ -338,6 +377,12 @@ impl MissionPhase {
     /// for the controlled character without a timeout, so a short hold is safe.
     pub fn with_population_delay(mut self, delay: Duration) -> Self {
         self.population_delay = delay;
+        self
+    }
+
+    /// Spawn a talkable test NPC after BeginPlaying (needs a population).
+    pub fn with_talk_npc(mut self, npc: TalkNpc) -> Self {
+        self.talk = Some(npc);
         self
     }
 
@@ -410,7 +455,36 @@ impl MissionPhase {
                     }
                     eprintln!("Mission phase: sending explicit quest Create, SelectGoal and Notify once");
                 }
+                if let Some(npc) = &self.talk {
+                    // After the player's 46 and 1036: the NPC is a separate agent
+                    // and only needs the world (docs/re/209026-npc-talk-loop.md).
+                    if u32::from(npc.plan.agent_index) == fixture.plan.character_index {
+                        eprintln!("Mission phase: talk NPC agent index collides with the player; not spawned");
+                    } else {
+                        out.extend_from_slice(&npc.plan.spawn_frames()?);
+                        eprintln!(
+                            "Mission phase: spawning talk NPC agent {} (species {}) with 378 talk flag",
+                            npc.plan.agent_index, npc.plan.species_key
+                        );
+                    }
+                }
                 Ok(Some(out.freeze()))
+            }
+            Seen::Interact(request) if self.began => {
+                let Some(npc) = self.talk.as_mut() else { return Ok(None) };
+                let InteractRequest209026::Interact { target } = *request else { return Ok(None) };
+                let reply = npc.session.on_interact(target)?;
+                eprintln!(
+                    "Mission phase: client interact target {target} ({})",
+                    if reply.is_some() { "talk NPC: opening conversation" } else { "not the talk NPC" }
+                );
+                Ok(reply.map(BytesMut::freeze))
+            }
+            Seen::Conversation(reply) if self.began => {
+                let Some(npc) = self.talk.as_mut() else { return Ok(None) };
+                let answer = npc.session.on_reply(*reply)?;
+                eprintln!("Mission phase: conversation reply {reply:?}; active now {:?}", npc.session.active());
+                Ok(answer.map(BytesMut::freeze))
             }
             _ => Ok(None),
         }
@@ -477,7 +551,7 @@ impl MissionPhase {
             let mut input = &frame[..];
             let event = match ClientMapEvent::decode_frame(&mut input) {
                 Ok(event) if input.is_empty() => Seen::Map(event),
-                _ => Seen::Other(id),
+                _ => Self::talk_event(id, &frame).unwrap_or(Seen::Other(id)),
             };
             match event {
                 Seen::Map(ClientMapEvent::LanguagePrefs(prefs)) => eprintln!(
@@ -491,11 +565,38 @@ impl MissionPhase {
                 Seen::Map(ClientMapEvent::AgentsLoaded) => {
                     eprintln!("Mission phase: client 412 AgentsLoaded")
                 }
+                Seen::Interact(request) => eprintln!("Mission phase: client 23 interact {request:?}"),
+                Seen::Conversation(reply) => eprintln!("Mission phase: client conversation {reply:?}"),
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
         }
         seen
+    }
+
+    /// Client 23 with an interact payload, or 275/276. Other client-23
+    /// payloads (skills, movement signals) stay `Other` and are logged with
+    /// their leading opcode so new request kinds can be identified.
+    fn talk_event(id: u16, frame: &[u8]) -> Option<Seen> {
+        let mut input = frame;
+        match id {
+            AgentBehaviorFrame209026::CLIENT_MESSAGE_ID => {
+                let behavior = AgentBehaviorFrame209026::decode_client_frame(&mut input).ok()?;
+                match InteractRequest209026::from_behavior_data(&behavior.behavior_data) {
+                    Ok(request) => Some(Seen::Interact(request)),
+                    Err(_) => {
+                        eprintln!(
+                            "Mission phase: client 23 opcode {:?} ({} payload bytes)",
+                            behavior.behavior_data.first(),
+                            behavior.behavior_data.len()
+                        );
+                        None
+                    }
+                }
+            }
+            275 | 276 => ConversationReply209026::decode_frame(&mut input).ok().map(Seen::Conversation),
+            _ => None,
+        }
     }
 
     fn disable(&mut self) {
@@ -636,6 +737,9 @@ pub(crate) mod tests {
                         Seen::Map(ClientMapEvent::MapLoaded) => 420,
                         Seen::Map(ClientMapEvent::FailedToLoad) => 418,
                         Seen::Map(ClientMapEvent::AgentsLoaded) => 412,
+                        Seen::Interact(_) => 23,
+                        Seen::Conversation(ConversationReply209026::Choose { .. }) => 275,
+                        Seen::Conversation(ConversationReply209026::Closed { .. }) => 276,
                     })
                     .collect();
                 assert_eq!(got, vec![id], "client {id} (optionals present: {present})");
@@ -1049,5 +1153,97 @@ pub(crate) mod tests {
         assert!(phase.push(&[0xff, 0xff, 0]).is_empty());
         assert!(!phase.enabled());
         assert!(phase.push(&client_input()).is_empty());
+    }
+
+    fn talk_phase() -> MissionPhase {
+        let npc = TalkNpc::new(3172, [5.0, 0.0, 0.0], "Eir".to_owned()).unwrap();
+        populated_phase().with_talk_npc(npc)
+    }
+
+    fn client_23(data: &[u8]) -> BytesMut {
+        let mut out = BytesMut::new();
+        AgentBehaviorFrame209026 {
+            agent_index: 1,
+            remote_tick: 77,
+            command_flags: 3,
+            behavior_value: 0,
+            behavior_data: data.to_vec(),
+        }
+        .encode_client_frame(&mut out)
+        .unwrap();
+        out
+    }
+
+    #[test]
+    fn talk_npc_spawns_with_begin_playing_and_answers_interact_and_replies() {
+        use gw2_proto::npc_talk::{ConversationFrame209026, NpcInteractFlag209026};
+        let mut phase = talk_phase();
+        let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
+        let interact = Seen::Interact(InteractRequest209026::Interact { target: 2 });
+        // Before BeginPlaying an interact is not answered.
+        assert!(phase.respond(&interact).unwrap().is_none());
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+        let begin = phase.respond(&agents).unwrap().unwrap();
+        // 1036, 431 and 83 first (unchanged), then the NPC spawn ending in 378.
+        assert_eq!(&begin[..9], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01]);
+        let spawn = phase.talk.as_ref().unwrap().plan.spawn_frames().unwrap();
+        assert_eq!(&begin[9..], &spawn[..]);
+        assert_eq!(
+            NpcInteractFlag209026::decode_frame(&mut &begin[begin.len() - 5..]).unwrap(),
+            NpcInteractFlag209026::Talk { character_index: 2, talk: 1, byte_2: 0 }
+        );
+
+        // Client 23 [0x14][2] reaches the phase as an interact and opens a conversation.
+        let seen = phase.push(&client_23(&[0x14, 2, 0, 0, 0]));
+        assert_eq!(seen, [interact]);
+        let open = phase.respond(&interact).unwrap().unwrap();
+        let mut input = &open[..];
+        assert!(matches!(
+            ConversationFrame209026::decode_frame(&mut input).unwrap(),
+            ConversationFrame209026::Open { agent: 2, conversation: 1, stage: 1, .. }
+        ));
+        // Another target is ignored.
+        let other = Seen::Interact(InteractRequest209026::Interact { target: 1 });
+        assert!(phase.respond(&other).unwrap().is_none());
+
+        // 275 Goodbye on the last page closes with 762; the 276 ack needs no answer.
+        let mut reply = BytesMut::new();
+        ConversationReply209026::Choose { conversation: 1, response: TalkSession209026::CONTINUE }
+            .encode_frame(&mut reply);
+        let seen = phase.push(&reply);
+        assert!(matches!(seen[..], [Seen::Conversation(_)]));
+        let next = phase.respond(&seen[0]).unwrap().unwrap();
+        assert!(matches!(
+            ConversationFrame209026::decode_frame(&mut &next[..]).unwrap(),
+            ConversationFrame209026::Page { stage: 2, .. }
+        ));
+        let bye = Seen::Conversation(ConversationReply209026::Choose {
+            conversation: 1,
+            response: TalkSession209026::GOODBYE,
+        });
+        let close = phase.respond(&bye).unwrap().unwrap();
+        assert_eq!(&close[..], &[0xfa, 0x02, 0x01]);
+        let ack = Seen::Conversation(ConversationReply209026::Closed { conversation: 1 });
+        assert!(phase.respond(&ack).unwrap().is_none());
+        assert!(phase.enabled());
+    }
+
+    #[test]
+    fn other_client_23_payloads_stay_raw_and_keep_the_phase() {
+        let mut phase = talk_phase();
+        // The 10-byte skill request (0x23) is not an interact.
+        let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0x80, 0x27, 0, 0, 0]));
+        assert_eq!(seen, [Seen::Other(23)]);
+        assert!(phase.enabled());
+    }
+
+    #[test]
+    fn talk_npc_colliding_with_the_player_is_not_spawned() {
+        let mut npc = TalkNpc::new(3172, [5.0, 0.0, 0.0], "Eir".to_owned()).unwrap();
+        npc.plan.agent_index = 1;
+        let mut phase = populated_phase().with_talk_npc(npc);
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+        let begin = phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().unwrap();
+        assert_eq!(begin.len(), 9, "only 1036, 431 and 83");
     }
 }

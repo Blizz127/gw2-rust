@@ -180,3 +180,70 @@ virtual +0xa8 with outer command flags 3.
   until a client symptom shows it's needed.
 - A producer side effect: it also calls `0x1411db060(char, 0, 0, 1)` and target vtbl
   +0x2d8 locally before sending. Those are client-side presentation, *inferred*.
+
+## 3. Server wiring on branch `claude/npc-talk-loop` (handoff to Codex)
+
+Opt-in and off by default; deployed services are unchanged unless the flag is added.
+
+```text
+gw2-game-observe ... --mission-preamble --mission-map-key KEY <population flags> \
+    --mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]
+```
+
+- **Spawn.** `MissionPhase::respond` appends `TalkNpcPlan209026::spawn_frames` to the
+  AgentsLoaded batch, after 1036/431/83 and any skills/quest. The frames are 37 (type 0,
+  identity `0x20000000 + SPECIES`), 151 (0), 256 (alive), 170, 46 (flags 0) and 378
+  `{2, 1, 0}`. The NPC is agent and character index **2**; it refuses to spawn if
+  that collides with the player's character index. It works with both
+  `--mission-population` and the saved-population (`--character-store`) path, because
+  it attaches to `MissionPhase` itself.
+- **Interact.** `MissionPhase::push` decodes client 23 behavior data with
+  `InteractRequest209026`. `[0x14][2]` becomes `Seen::Interact`, and the reply
+  is `TalkSession209026::on_interact`: 758, a 760 page (flags 0x80, chat echo),
+  757 Continue/Goodbye, then 761. Every other client-23 payload stays
+  `Seen::Other(23)`; the log prints its leading opcode and length.
+- **Replies.** Client 275 Continue sends the next page, and Goodbye (or the last
+  page) sends 762. 276 only clears state. Interacting again while a conversation is
+  active sends 762 first.
+- **Text** is placeholder, marked `[test]`. Retail lines are server data.
+
+**Choosing SPECIES (open):**
+- No tutorial species key is established.
+- 3172 resolves to the name `Eir` but has a null direct model field, so it may be
+  invisible.
+- 8013 (`Juvenile Boar`) and 1544 (`Branded Minotaur`) have direct models
+  (`docs/re/209026-species-plain-name-coverage.md`).
+- A visible species is the better first smoke test. Place it a few map units from
+  `--mission-spawn`.
+
+**Live smoke (Codex/owner; not run).** Expected log lines, in order:
+1. `Mission phase: spawning talk NPC agent 2 (species …) with 378 talk flag`
+2. Walk to the NPC and press F: `Mission phase: client 23 interact Interact { target: N }`.
+   - `N == 2` confirms the target is the server-side index. It can't tell agent index
+     from character index, which are equal here (`population.rs` sets them equal); that
+     only matters if they ever diverge.
+   - Any other N appears as `not the talk NPC`. Then the server must map N to the NPC.
+3. The dialogue window opens, the line shows in chat, and Continue/Goodbye produce
+   `conversation reply Choose …` lines.
+
+No F prompt means the gate failed (section 2); check the NPC appeared first. A
+`client 23 opcode Some(0x..)` line on F means the key sends a different request
+than producer `0x141282d90`.
+
+**Crash risk on the first F (checked).** Every conversation handler dereferences the
+context at game ctx+0xf0 without a null test. That context is registered in the same
+global context-factory table as the character context: slot 0x1e (×8 = +0xf0,
+`0x14130de60` → factory `0x14130de90` → `0x14130d780`), next to the character context's
+slot 0x13 (= +0x98, `0x141242c70`). The uniform registration means it exists whenever
+151/378 work. That's strong static evidence, not a runtime check, so do the first
+smoke in a sandbox run anyway.
+
+**Verification on the branch (2026-11-05):**
+- `cargo test -p gw2-proto --lib`: all pass (9 npc_talk tests).
+- `cargo test -p gw2-net --bin gw2-game-observe`: 87 passed, 3 ignored. That includes
+  the spawn-after-BeginPlaying, interact → conversation, 275/276 and raw-23 tests, and
+  the existing every-client-message dispatch test.
+- Clippy on gw2-proto/gw2-net is clean for the new code. The remaining workspace errors
+  are pre-existing, in untouched files: `gw2-map-probe.rs:386`, `creation_scene.rs:26`
+  and `saved_population.rs:364`.
+- Not run in game. Nothing deployed.

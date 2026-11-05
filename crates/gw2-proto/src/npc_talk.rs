@@ -11,7 +11,11 @@ use std::io::{Error, ErrorKind, Result};
 
 use bytes::BytesMut;
 
-use crate::{Decode, Encode};
+use crate::agent_creation::{AgentCreation209026, facing_words_209026};
+use crate::agent_scene::AgentWorldEntry209026;
+use crate::character_setup::CharacterSetupFrame209026;
+use crate::health::{HealthFrame209026, HealthOperation209026, HealthValues209026};
+use crate::{Decode, Encode, Point3};
 
 /// Schema `String` sizes, in UTF-16 units including the zero terminator.
 const LINE_UNITS: usize = 512;
@@ -549,10 +553,265 @@ impl InteractRequest209026 {
     }
 }
 
+/// An explicitly chosen test NPC: an ordinary nonplayer character
+/// (`docs/re/209026-npc-character-foundation.md`) made talkable by 378.
+///
+/// No value here is a retail spawn. The species key must exist in content
+/// type 67 or the client's species lookup fails; no tutorial species key is
+/// established (`docs/re/209026-great-hunt-species-link-audit.md`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct TalkNpcPlan209026 {
+    /// Server-37 Word agent index; also the Dword character index of
+    /// 151/256/170/378. Must differ from every other agent.
+    pub agent_index: u16,
+    pub species_key: u32,
+    /// Map units, transform tag zero (same space as the player's spawn).
+    pub position: [f32; 3],
+    /// Unit map-space facing.
+    pub facing: [f32; 3],
+}
+
+impl TalkNpcPlan209026 {
+    /// Nonplayer identity: high nibble 2 plus a 28-bit species key.
+    pub fn identity(&self) -> Result<u32> {
+        if self.species_key == 0 || self.species_key >= 0x1000_0000 {
+            return Err(invalid_input("species key must be nonzero and below 0x10000000"));
+        }
+        Ok(0x2000_0000 + self.species_key)
+    }
+
+    /// 37 create, 151 attitude, 256 health, 170 finalize, 46 world entry, then
+    /// 378 talk flag. Send after the player is populated and in the world.
+    pub fn spawn_frames(&self) -> Result<BytesMut> {
+        let identity = self.identity()?;
+        if !self.position.iter().all(|v| v.is_finite()) {
+            return Err(invalid_input("NPC position must be finite"));
+        }
+        let facing = facing_words_209026(self.facing)
+            .ok_or_else(|| invalid_input("NPC facing must be a finite unit vector"))?;
+        let character_index = u32::from(self.agent_index);
+        let position = Point3(self.position, 0);
+        let mut out = BytesMut::new();
+        AgentCreation209026 {
+            agent_index: self.agent_index,
+            remote_tick: 0, // placeholder, as in the player population
+            command_flags: 0,
+            behavior_value: 0,
+            behavior_data: Vec::new(),
+            agent_type: 0, // character factory
+            identity,
+            // As the player: field 8 = 1 satisfies the full factory's F & 1
+            // assertion (docs/re/209026-agent-creation-flags.md).
+            creation_flags: [0, 1, 0],
+            position,
+            facing,
+            // Speed and turn 0 (the NPC does not move); height 16 stays above
+            // both minimums for radius 1 (docs/re/209026-agent-dimensions.md).
+            // placeholder: no NPC values are established from content.
+            parameters: [0.0, 0.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0],
+            radius: 1.0,
+        }
+        .encode_frame(&mut out)?;
+        // Attitude 0 (friendly, inferred) passes both 170's bound and the
+        // interaction gate's friendly-or-neutral test.
+        CharacterSetupFrame209026::Attitude {
+            character_index,
+            attitude: 0,
+        }
+        .encode_frame(&mut out);
+        // Alive: the gate needs alive (or flag bit 49). placeholder meter.
+        HealthFrame209026 {
+            character_index,
+            operation: HealthOperation209026::CreateOrUpdate {
+                state: 0,
+                values: HealthValues209026 {
+                    current: 100.0,
+                    maximum: 100.0,
+                    second_current: 0.0,
+                    second_maximum: 0.0,
+                    extra: 0.0,
+                },
+                rate: 0.0,
+            },
+        }
+        .encode_frame(&mut out);
+        CharacterSetupFrame209026::Finalize { character_index }.encode_frame(&mut out);
+        AgentWorldEntry209026 {
+            agent_index: self.agent_index,
+            remote_tick: 0,
+            // No client control or action slot: the NPC is not controlled.
+            command_flags: 0,
+            collision_flags: 0,
+            // Bit 1 clear so the collision scene entry (REVEALED) is reached.
+            entry_options: 0,
+            position,
+            facing,
+        }
+        .encode_frame(&mut out);
+        NpcInteractFlag209026::Talk {
+            character_index,
+            talk: 1,
+            byte_2: 0,
+        }
+        .encode_frame(&mut out);
+        Ok(out)
+    }
+}
+
+/// Server side of one NPC's conversation, following the client rules in
+/// `docs/re/209026-npc-talk-loop.md`: one active conversation, each page sent
+/// as 760, its responses, then 761, and 276 treated as an acknowledgement.
+///
+/// Dialogue text is caller-supplied test text; retail lines are server data
+/// the client does not hold.
+#[derive(Debug, Clone)]
+pub struct TalkSession209026 {
+    npc_agent: u32,
+    speaker: String,
+    pages: Vec<String>,
+    next_conversation: u32,
+    /// (conversation, stage) of the conversation the client has active.
+    active: Option<(u32, u32)>,
+}
+
+impl TalkSession209026 {
+    /// Response id that advances to the next page.
+    pub const CONTINUE: u32 = 1;
+    /// Response id that closes the conversation.
+    pub const GOODBYE: u32 = 2;
+
+    pub fn new(npc_agent: u32, speaker: String, pages: Vec<String>) -> Result<Self> {
+        if pages.is_empty() {
+            return Err(invalid_input("a talk session needs at least one page"));
+        }
+        text_units(&speaker, SPEAKER_UNITS)?;
+        for page in &pages {
+            text_units(page, LINE_UNITS)?;
+        }
+        Ok(Self {
+            npc_agent,
+            speaker,
+            pages,
+            next_conversation: 1,
+            active: None,
+        })
+    }
+
+    pub fn active(&self) -> Option<(u32, u32)> {
+        self.active
+    }
+
+    /// Frames for an interact request on `target`, or `None` when the target
+    /// is not this NPC. A still-active conversation is closed first (762), so
+    /// the new 758 is promoted immediately instead of left pending.
+    pub fn on_interact(&mut self, target: u32) -> Result<Option<BytesMut>> {
+        if target != self.npc_agent {
+            return Ok(None);
+        }
+        let mut out = BytesMut::new();
+        if let Some((conversation, _)) = self.active.take() {
+            ConversationFrame209026::Close { conversation }.encode_frame(&mut out)?;
+        }
+        let conversation = self.next_conversation;
+        self.next_conversation = self.next_conversation.wrapping_add(1).max(1);
+        ConversationFrame209026::Open {
+            agent: self.npc_agent,
+            conversation,
+            stage: 1,
+            byte_3: 0,
+            speaker: self.speaker.clone(),
+        }
+        .encode_frame(&mut out)?;
+        self.page(conversation, 1, &mut out)?;
+        Ok(Some(out))
+    }
+
+    /// Frames answering client 275/276, if any.
+    pub fn on_reply(&mut self, reply: ConversationReply209026) -> Result<Option<BytesMut>> {
+        match reply {
+            ConversationReply209026::Closed { conversation } => {
+                if self.active.is_some_and(|(active, _)| active == conversation) {
+                    self.active = None;
+                }
+                Ok(None)
+            }
+            ConversationReply209026::Choose {
+                conversation,
+                response,
+            } => {
+                let Some((active, stage)) = self.active else { return Ok(None) };
+                if active != conversation {
+                    return Ok(None);
+                }
+                let mut out = BytesMut::new();
+                if response == Self::CONTINUE && (stage as usize) < self.pages.len() {
+                    self.page(conversation, stage + 1, &mut out)?;
+                } else {
+                    // Goodbye, or anything else: close. The client acks with 276.
+                    self.active = None;
+                    ConversationFrame209026::Close { conversation }.encode_frame(&mut out)?;
+                }
+                Ok(Some(out))
+            }
+        }
+    }
+
+    fn page(&mut self, conversation: u32, stage: u32, out: &mut BytesMut) -> Result<()> {
+        let text = self.pages[stage as usize - 1].clone();
+        ConversationFrame209026::Page {
+            conversation,
+            stage,
+            timer_ms: 0,
+            float_3: 0.0,
+            byte_4: 0,
+            // 0x80: also echo the line to chat, so a screenshot shows whether
+            // the text rendered even if the dialogue window did not.
+            flags: 0x80,
+            dword_6: 0,
+            dword_7: 0,
+            dword_8: 0,
+            byte_9: 0,
+            dword_10: 0,
+            dword_11: 0,
+            text,
+            speaker: self.speaker.clone(),
+            extra: String::new(),
+        }
+        .encode_frame(out)?;
+        if (stage as usize) < self.pages.len() {
+            ConversationFrame209026::AddShortResponse {
+                conversation,
+                stage,
+                response: Self::CONTINUE,
+                definition: 0,
+                dword_4: 0,
+                byte_5: 0,
+                text: "Continue.".into(),
+            }
+            .encode_frame(out)?;
+        }
+        ConversationFrame209026::AddShortResponse {
+            conversation,
+            stage,
+            response: Self::GOODBYE,
+            definition: 0,
+            dword_4: 0,
+            byte_5: 0,
+            text: "Goodbye.".into(),
+        }
+        .encode_frame(out)?;
+        ConversationFrame209026::PageReady { conversation, stage }.encode_frame(out)?;
+        self.active = Some((conversation, stage));
+        Ok(())
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::dynamic::{self, CountPrefix, Rules, StringEncoding, Value};
+    use crate::agent_creation::AgentCreation209026;
     use crate::schema;
 
     fn hex(bytes: &[u8]) -> String {
@@ -803,5 +1062,108 @@ mod tests {
         assert!(InteractRequest209026::from_behavior_data(&[0x23, 0, 0, 0, 0, 0, 0, 0, 0, 0]).is_err());
         assert!(InteractRequest209026::from_behavior_data(&[0x14, 1, 0, 0]).is_err());
         assert!(InteractRequest209026::from_behavior_data(&[0x1f, 1, 0, 0, 0]).is_err());
+    }
+
+    fn server_messages() -> Vec<schema::Message> {
+        let server = schema::parse(include_str!("../../../data/protocol/209026/server-tables.xml")).unwrap();
+        server
+            .protocols
+            .into_iter()
+            .filter(|p| p.name == "0")
+            .flat_map(|p| p.groups)
+            .filter(|g| ["table-0x14223a5c0", "table-0x14216e940", "table-0x14211be70"].contains(&g.name.as_str()))
+            .flat_map(|g| g.server)
+            .collect()
+    }
+
+    /// Split a server stream through the client schema; return the frame ids.
+    fn ids(messages: &[schema::Message], bytes: &[u8]) -> Vec<u16> {
+        let rules = Rules {
+            string: Some(StringEncoding::Utf16Terminated),
+            array_var_small: Some(CountPrefix::U8),
+            array_var_large: Some(CountPrefix::U16),
+            buffer_var_small: Some(CountPrefix::U8),
+            buffer_var_large: Some(CountPrefix::U16),
+            buffer_fixed_is_size_bytes: true,
+            ..Rules::default()
+        };
+        let mut input = bytes;
+        let mut out = Vec::new();
+        while !input.is_empty() {
+            out.push(dynamic::decode_frame(messages, &rules, &mut input).unwrap().0.id);
+        }
+        out
+    }
+
+    fn npc() -> TalkNpcPlan209026 {
+        TalkNpcPlan209026 {
+            agent_index: 2,
+            species_key: 3172,
+            position: [10.0, 20.0, 30.0],
+            facing: [1.0, 0.0, 0.0],
+        }
+    }
+
+    #[test]
+    fn npc_spawn_is_create_attitude_health_finalize_enter_then_talk_flag() {
+        let messages = server_messages();
+        let bytes = npc().spawn_frames().unwrap();
+        assert_eq!(ids(&messages, &bytes), [37, 151, 256, 170, 46, 378]);
+        let mut input = &bytes[..];
+        let created = AgentCreation209026::decode_frame(&mut input).unwrap();
+        assert_eq!((created.agent_index, created.agent_type, created.identity), (2, 0, 0x2000_0000 + 3172));
+        let tail = &bytes[bytes.len() - 5..];
+        assert_eq!(
+            NpcInteractFlag209026::decode_frame(&mut &tail[..]).unwrap(),
+            NpcInteractFlag209026::Talk { character_index: 2, talk: 1, byte_2: 0 }
+        );
+        for bad in [0, 0x1000_0000] {
+            assert!(TalkNpcPlan209026 { species_key: bad, ..npc() }.spawn_frames().is_err());
+        }
+        assert!(TalkNpcPlan209026 { facing: [0.0, 0.0, 0.0], ..npc() }.spawn_frames().is_err());
+    }
+
+    #[test]
+    fn session_pages_continue_and_goodbye_follow_the_client_ordering() {
+        let messages = server_messages();
+        let mut session =
+            TalkSession209026::new(2, "Eir".into(), vec!["First.".into(), "Second.".into()]).unwrap();
+        assert!(session.on_interact(9).unwrap().is_none());
+
+        let open = session.on_interact(2).unwrap().unwrap();
+        assert_eq!(ids(&messages, &open), [758, 760, 757, 757, 761]);
+        assert_eq!(session.active(), Some((1, 1)));
+
+        let reply = |response| ConversationReply209026::Choose { conversation: 1, response };
+        // A stale conversation id is ignored.
+        assert!(session
+            .on_reply(ConversationReply209026::Choose { conversation: 7, response: 1 })
+            .unwrap()
+            .is_none());
+        let next = session.on_reply(reply(TalkSession209026::CONTINUE)).unwrap().unwrap();
+        // Last page: no Continue option.
+        assert_eq!(ids(&messages, &next), [760, 757, 761]);
+        assert_eq!(session.active(), Some((1, 2)));
+
+        let bye = session.on_reply(reply(TalkSession209026::GOODBYE)).unwrap().unwrap();
+        assert_eq!(ids(&messages, &bye), [762]);
+        assert_eq!(session.active(), None);
+        // The client's 276 ack after our 762 changes nothing.
+        assert!(session.on_reply(ConversationReply209026::Closed { conversation: 1 }).unwrap().is_none());
+    }
+
+    #[test]
+    fn reinteracting_closes_the_active_conversation_first() {
+        let messages = server_messages();
+        let mut session = TalkSession209026::new(2, "Eir".into(), vec!["Only.".into()]).unwrap();
+        session.on_interact(2).unwrap().unwrap();
+        let again = session.on_interact(2).unwrap().unwrap();
+        assert_eq!(ids(&messages, &again), [762, 758, 760, 757, 761]);
+        assert_eq!(session.active(), Some((2, 1)));
+        // A client-side close (276) drops the active conversation.
+        session.on_reply(ConversationReply209026::Closed { conversation: 2 }).unwrap();
+        assert_eq!(session.active(), None);
+        assert!(TalkSession209026::new(2, "Eir".into(), Vec::new()).is_err());
+        assert!(TalkSession209026::new(2, "x".repeat(64), vec!["a".into()]).is_err());
     }
 }
