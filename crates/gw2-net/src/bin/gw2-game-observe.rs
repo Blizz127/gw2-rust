@@ -248,6 +248,15 @@ fn bind_allowed(listen: &SocketAddr, no_capture: bool) -> bool {
     listen.ip().is_loopback() || (no_capture && !listen.ip().is_unspecified())
 }
 
+fn parse_csv<T: std::str::FromStr, const N: usize>(text: &str, message: &str) -> io::Result<[T; N]> {
+    text.split(',')
+        .map(str::parse)
+        .collect::<Result<Vec<T>, _>>()
+        .map_err(|_| invalid(message))?
+        .try_into()
+        .map_err(|_| invalid(message))
+}
+
 fn main() -> io::Result<()> {
     let mut listen: SocketAddr = "127.1.0.2:6112".parse().unwrap();
     let (mut params, mut private, mut logs) = (None, None, None);
@@ -261,6 +270,8 @@ fn main() -> io::Result<()> {
     let mut no_capture = false;
     let mut agreement_state: Option<std::path::PathBuf> = None;
     let mut spawn: Option<[f32; 3]> = None;
+    let mut mesmer_values: Option<[u8; 2]> = None;
+    let mut reward_tracks: Option<[u32; 4]> = None;
     let mut population_delay = Duration::ZERO;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -308,6 +319,24 @@ fn main() -> io::Result<()> {
                     .filter(|ms| *ms <= 60_000)
                     .ok_or_else(|| invalid("invalid population delay (0..=60000 ms)"))?;
                 population_delay = Duration::from_millis(ms);
+            }
+            "--mission-mesmer-values" => {
+                if mesmer_values.is_some() {
+                    return Err(invalid("duplicate --mission-mesmer-values"));
+                }
+                mesmer_values = Some(parse_csv(
+                    &args.next().ok_or_else(|| invalid("missing Mesmer FIRST,SECOND"))?,
+                    "Mesmer state needs exactly two bytes: FIRST,SECOND",
+                )?);
+            }
+            "--mission-reward-tracks" => {
+                if reward_tracks.is_some() {
+                    return Err(invalid("duplicate --mission-reward-tracks"));
+                }
+                reward_tracks = Some(parse_csv(
+                    &args.next().ok_or_else(|| invalid("missing reward tracks A,B,C,D"))?,
+                    "reward tracks need exactly four unsigned Dwords: A,B,C,D",
+                )?);
             }
             "--mission-spawn" => {
                 let text = args.next().ok_or_else(|| invalid("missing spawn X,Y,Z"))?;
@@ -358,7 +387,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS]]]]",
+                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D]]]]",
                 ));
             }
         }
@@ -391,8 +420,18 @@ fn main() -> io::Result<()> {
     if !population_delay.is_zero() && population_record.is_none() {
         return Err(invalid("--mission-population-delay-ms requires --mission-population"));
     }
+    if mesmer_values.is_some() != reward_tracks.is_some()
+        || (mesmer_values.is_some() && population_record.is_none())
+    {
+        return Err(invalid("--mission-mesmer-values and --mission-reward-tracks go together and require --mission-population"));
+    }
     let population = match (&population_record, spawn) {
-        (Some(record), Some(spawn)) => Some(mission::PopulationFixture::new(record, spawn)?),
+        (Some(record), Some(spawn)) => Some(match (mesmer_values, reward_tracks) {
+            (Some(values), Some(tracks)) => mission::PopulationFixture::with_profession(
+                record, spawn, gw2_proto::population::PopulationProfession209026::Mesmer { values }, tracks,
+            )?,
+            _ => mission::PopulationFixture::new(record, spawn)?,
+        }),
         _ => None,
     };
     if let Some(key) = mission_map_key {

@@ -25,7 +25,7 @@ use gw2_proto::{
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
     player_startup::PlayerStartupFrame209026,
-    population::{self, PopulationPlan},
+    population::{self, PopulationPlan, PopulationProfession209026},
     schema::{self, Message},
 };
 use std::io::{self, ErrorKind};
@@ -79,14 +79,27 @@ impl PopulationFixture {
     /// `spawn` is an operator-chosen packet-space position; valid spawn
     /// coordinates are not established (docs/re/209026-map-coordinate-spaces.md).
     pub fn new(record: &[u8], spawn: [f32; 3]) -> io::Result<Self> {
+        Self::with_profession(record, spawn, PopulationProfession209026::Guardian, [24, 100, 103, 30])
+    }
+
+    /// Explicit research fixture. The supplied state must match the summary;
+    /// neither raw Mesmer values nor selected reward tracks have established
+    /// retail startup defaults. See docs/re/209026-mesmer-profession.md.
+    pub fn with_profession(
+        record: &[u8],
+        spawn: [f32; 3],
+        profession: PopulationProfession209026,
+        reward_track_ids: [u32; 4],
+    ) -> io::Result<Self> {
         let invalid = |message: &str| io::Error::new(ErrorKind::InvalidInput, message.to_owned());
         let (name, summary) = super::auth::character_parts(record)?;
         let summary = SummaryV11::parse(&summary)?;
-        // Only the Guardian (profession 1) creator, server 477, is implemented.
-        if summary.profession() != 1 {
-            return Err(invalid("population fixture supports only profession 1 (Guardian)"));
+        if summary.profession() != profession.profession_id() {
+            return Err(invalid("population profession state must match character summary"));
         }
         let plan = PopulationPlan {
+            profession,
+            reward_track_ids,
             player_index: 1,        // placeholder: valid value not established
             character_index: 1,     // placeholder: valid value not established
             name,
@@ -834,6 +847,32 @@ pub(crate) mod tests {
         assert!(PopulationFixture::new(&guardian_record(15, 1)[..40], [0.0; 3]).is_err());
         let other_map = PopulationFixture::new(&guardian_record(16, 1), [0.0; 3]).unwrap();
         assert!(MissionPhase::new(15).unwrap().with_population(other_map).is_err());
+    }
+
+    #[test]
+    fn mesmer_fixture_requires_matching_summary_and_explicit_state() {
+        let state = PopulationProfession209026::Mesmer { values: [3, 0] };
+        // Synthetic distinct IDs test transport, not retail track selection.
+        let tracks = [1, 2, 3, 4];
+        assert!(PopulationFixture::new(&guardian_record(28, 7), [0.0; 3]).is_err());
+        assert!(PopulationFixture::with_profession(&guardian_record(28, 1), [0.0; 3], state, tracks).is_err());
+        for (map, race) in [(379, 3), (28, 3), (138, 2), (15, 2)] {
+            let mut record = guardian_record(map, 7);
+            let summary_start = record.len() - 159;
+            record[summary_start + 0x21] = race;
+            let fixture = PopulationFixture::with_profession(&record, [0.0; 3], state, tracks).unwrap();
+            assert_eq!(fixture.map_key(), map);
+            assert_eq!(fixture.plan.appearance[27], race);
+            assert_eq!(fixture.plan.reward_track_ids, tracks);
+            let frames = population::population_frames(&fixture.plan).unwrap();
+            assert!(!frames.iter().any(|(id, _)| *id == 477));
+            assert_eq!(frames.iter().filter(|(id, _)| *id == 481).count(), 1);
+            let mut phase = MissionPhase::new(u32::from(map)).unwrap().with_population(fixture).unwrap();
+            assert!(phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().is_none());
+            assert!(phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().is_some());
+            assert!(phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().is_some());
+            assert!(phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().is_none());
+        }
     }
 
     #[test]

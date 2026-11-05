@@ -107,3 +107,45 @@ Content extraction and slot audit:
 | `ev_bd2dc4e8e30c81c9bfccd2d4a6ec1be6e5592c924bb83f675dbf9d57bd1e28d5` | Armor-category mapping function and color-helper vtable. |
 | `ev_5deff320aaee446b721d1817f9fefbd855dd366234fafe4a5a21adbc51828d3d` | Category jump table and equipment-slot color-matrix arithmetic. |
 | `ev_28c8ffd64caddce5432aa993945c42ff9c1a1156118d4021423ee42cfbfb5081` | Corrected slot labels, category/slot pairs and per-template uniqueness. |
+
+## Typed reader and Mesmer archive check (2026-11-05)
+
+`gw2_dat::creation_equipment_content` now provides bounded views for the
+type-137 equipment-template reference list, type-139 templates, their
+16-byte item/slot entries, and type-35 item identity/kind. Traversal takes
+an explicitly ordered container set and caller-supplied element limits.
+Returned templates, entries and items retain their container index and
+content offset; callers associate those locations with archive IDs and
+digests. Local/external references and target record types are checked.
+Template order and duplicates, null item references, and equipment slot
+zero are preserved. Null template references are rejected.
+
+Three focused tests pass, covering cross-container provenance, slot zero,
+empty versus missing references, wrong types, truncation, overflowing
+offsets and traversal limits. Debug and optimized library builds pass.
+
+A compiled checker ran through REA against the frozen `Gw2.dat`, inspecting
+the four explicit Human/Norn male/female type-137 records (content keys
+55/54 and 57/56 respectively). Each lists 18 templates and has exactly one
+entry with level 1 and profession 7. All four point to template **UID 210**,
+archive file **1282832**, content offset **250800**, with ordered
+`(item data key, equipment slot)` pairs:
+`(6465, 2), (6467, 6), (6464, 3), (33355, 29)`.
+The four used source-container hashes match the retained extraction above.
+The optimized check exited successfully in approximately 2.9 seconds;
+an earlier debug check was terminated by its 30-second capture timeout
+and supplies no passing evidence.
+
+This verifies archived references and reader behavior, not the runtime
+mode-selection branch, final equipment after overrides, item gameplay
+properties, or successful equipment delivery to the client. The reader
+does not choose a default template or infer a lower-level fallback.
+
+Private helper/source:
+`~/re/gw2/notes/check-creation-equipment-rust-20261105{,.rs}`.
+Private evidence bundle:
+`~/re/gw2/notes/209026-creation-equipment-reader-20261105.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_9910aac9354013b47173b01c7936f46a9b3434c5915e26a450336a2011a5bd12` | Optimized Rust reader checks all four explicit Human/Norn Mesmer template paths, ordered item/slot pairs and source digests; exit 0. |

@@ -28,7 +28,7 @@ fn offset(start: usize, i: u32, stride: usize) -> io::Result<u32> {
         .and_then(|at| u32::try_from(at).ok())
         .ok_or_else(|| invalid("palette offset exceeds index width"))
 }
-fn run(path: &str) -> io::Result<()> {
+fn run(path: &str, profession: u32, palette_keys: &[u32]) -> io::Result<()> {
     let archive = Archive::open(path)?;
     let packfiles: Vec<_> = (1282830..=1282861)
         .map(|id| archive.read(id).and_then(Packfile::new))
@@ -57,7 +57,7 @@ fn run(path: &str) -> io::Result<()> {
     let mut uids = BTreeSet::new();
     let mut rows = 0usize;
     let mut entries = 0usize;
-    let mut guardian_rows = 0usize;
+    let mut profession_rows = 0usize;
     let mut candidates = BTreeMap::<u32, Vec<(u32, u32, u32, u32)>>::new();
     for (container, index) in containers.iter().enumerate() {
         for indexed in index.entries() {
@@ -91,7 +91,7 @@ fn run(path: &str) -> io::Result<()> {
                     offset(row_data.offset, i, palette.rows.stride())?,
                 )?;
                 rows += 1;
-                guardian_rows += usize::from(row.profession == 1);
+                profession_rows += usize::from(row.profession == profession);
                 let Some(entry_data) =
                     row.entries
                         .resolve(&containers, row_data.container_index, 100_000)?
@@ -115,7 +115,7 @@ fn run(path: &str) -> io::Result<()> {
                             .map_err(|_| invalid("skill offset exceeds index width"))?,
                     )?;
                     entries += 1;
-                    if row.profession == 1 && [1, 2, 4, 14, 21, 127].contains(&palette.key) {
+                    if row.profession == profession && palette_keys.contains(&palette.key) {
                         candidates.entry(palette.key).or_default().push((
                             skill.key,
                             entry.minimum_level,
@@ -132,22 +132,40 @@ fn run(path: &str) -> io::Result<()> {
     }
     println!("standard-slot setting levels (slots 0–4): {slot_levels:?}");
     println!(
-        "checked 32 base containers: palettes={} rows={rows} entries={entries} resolved_type64_skills={entries} guardian_rows={guardian_rows}",
+        "checked 32 base containers: palettes={} rows={rows} entries={entries} resolved_type64_skills={entries} profession={profession} profession_rows={profession_rows}",
         keys.len()
     );
     println!(
-        "Guardian candidates: palette key -> (skill key, minimum level, raw mode, skill flags): {candidates:?}"
+        "Profession {profession} candidates: palette key -> (skill key, minimum level, raw mode, skill flags): {candidates:?}"
     );
+    for key in palette_keys {
+        if !candidates.contains_key(key) {
+            return Err(invalid("requested palette has no entry for the selected profession"));
+        }
+    }
     println!("record/reference bounds checked; gameplay eligibility and runtime state untested");
     Ok(())
 }
 fn main() -> ExitCode {
     let args: Vec<_> = std::env::args().skip(1).collect();
-    if args.len() != 1 || args[0].starts_with('-') {
-        eprintln!("usage: gw2-skill-palette-check <build-209026 Gw2.dat>");
+    if args.is_empty() || args.len() == 2 || args[0].starts_with('-') {
+        eprintln!("usage: gw2-skill-palette-check <build-209026 Gw2.dat> [profession-1..9 palette-key ...]");
         return ExitCode::from(2);
     }
-    match run(&args[0]) {
+    let (profession, keys) = if args.len() == 1 {
+        (1, vec![1, 2, 4, 14, 21, 127])
+    } else {
+        let profession = args[1].parse::<u32>().ok().filter(|n| (1..=9).contains(n));
+        let keys = args[2..].iter().map(|s| s.parse::<u32>()).collect::<Result<Vec<_>, _>>();
+        match (profession, keys) {
+            (Some(profession), Ok(keys)) if keys.iter().all(|k| *k != 0) => (profession, keys),
+            _ => {
+                eprintln!("profession must be 1..=9 and palette keys must be positive Dwords");
+                return ExitCode::from(2);
+            }
+        }
+    };
+    match run(&args[0], profession, &keys) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("palette check failed: {error}");

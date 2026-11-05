@@ -15,13 +15,15 @@
 //! constraint, not evidence of a useful gameplay value.
 //!
 //! The caller owns the values with no documented default: the identities, the
-//! spawn position/facing and the 45 appearance bytes ([`PopulationPlan`]).
+//! spawn position/facing, the 45 appearance bytes, profession selection and
+//! reward-track IDs ([`PopulationPlan`]). Mesmer's two creation bytes must
+//! also be supplied explicitly; the builder does not infer retail defaults.
 //! Scene bounds for the position are not checked here; for the primary map
 //! see `docs/re/209026-scene-bounds.md` (the full-character clamp works in
 //! collision units, map units divided by 32, and clamps rather than rejects).
 //!
 //! Gap: no note states that server 37's Word agent index equals the Dword
-//! character index used by 443/183/282/477/151/170/444. This module follows
+//! character index used by 443/183/282/477/481/151/170/444. This module follows
 //! the task's tie (the same index everywhere) and therefore limits the index
 //! to the Word range.
 
@@ -35,6 +37,7 @@ use crate::character_setup::CharacterSetupFrame209026;
 use crate::core_stats::CoreStatsCreation209026;
 use crate::endurance::{EnduranceFrame209026, EnduranceOperation209026};
 use crate::guardian::{GuardianFrame209026, GuardianMeter209026, GuardianOperation209026};
+use crate::mesmer::{MesmerFrame209026, MesmerOperation209026};
 use crate::kennel::KennelCreation209026;
 use crate::pvp::PvpManagerCreation209026;
 use crate::health::{HealthFrame209026, HealthOperation209026, HealthValues209026};
@@ -46,7 +49,7 @@ use crate::skillbar::{SkillbarFrame209026, SkillbarOperation209026};
 use crate::wardrobe::{WardrobeFrame209026, WardrobeOperation209026};
 use crate::{Guid, Point3};
 
-/// Candidate message order. 256 (health) and 217 (endurance) create the
+/// Candidate Guardian message order. 256 (health) and 217 (endurance) create the
 /// character's health and endurance components; without 256 the owner's client
 /// (2026-11-04 01:26Z and 02:08Z, device ArenaNet.log) asserted `m_health`
 /// (ChCliCharacter.h:575) from the per-frame ViewAdvanceDevice path
@@ -79,17 +82,54 @@ pub const POPULATION_ORDER: &[u16] = &[
     428, 37, 443, 183, 282, 477, 151, 256, 217, 332, 248, 565, 538, 516, 605, 170, 618, 444, 46,
 ];
 
+/// Mesmer uses the same component ordering, with creator 481 in place of 477.
+pub const MESMER_POPULATION_ORDER: &[u16] = &[
+    428, 37, 443, 183, 282, 481, 151, 256, 217, 332, 248, 565, 538, 516, 605, 170, 618, 444, 46,
+];
+
+/// Supported candidate profession components, not complete gameplay profiles.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PopulationProfession209026 {
+    /// Retains the existing Guardian fixture's placeholder meter and bytes.
+    Guardian,
+    /// Raw creator bytes in wire order; no default or gameplay name is inferred.
+    Mesmer { values: [u8; 2] },
+}
+
+impl PopulationProfession209026 {
+    /// The profession scalar in coreStats; distinct from the creator message ID.
+    pub fn profession_id(self) -> u8 {
+        match self {
+            Self::Guardian => 1,
+            Self::Mesmer { .. } => 7,
+        }
+    }
+
+    pub fn population_order(self) -> &'static [u16] {
+        match self {
+            Self::Guardian => POPULATION_ORDER,
+            Self::Mesmer { .. } => MESMER_POPULATION_ORDER,
+        }
+    }
+}
+
 /// Caller-supplied inputs. No `Debug`: names and portal identities need not
 /// be logged (same stance as [`PlayerCreation209026`]).
 #[derive(Clone, PartialEq)]
 pub struct PopulationPlan {
+    /// Keeps the coreStats profession scalar and derived component consistent.
+    pub profession: PopulationProfession209026,
+    /// Explicit type-353 data keys for server 565's four slots. The caller must
+    /// verify content existence and intended selection. Zero/missing IDs are
+    /// not established as empty slots (`209026-reward-track-messages.md`).
+    pub reward_track_ids: [u32; 4],
     /// Player-table index. Must be nonzero (`docs/re/209026-agent-creation.md`
     /// and `209026-character-finalization-dependencies.md`: a player index of
     /// zero is absent for GetPlayer) and below `0x1000_0000` (server 37's
     /// identity is `0x3000_0000 + player_index`; the high nibble must stay 3).
     pub player_index: u32,
     /// Character index, shared by 37 (as its Word agent index), 443, 183,
-    /// 282, 477, 151, 170, 444 and 46. No note forbids zero. Must fit a Word
+    /// 282, 477/481, 151, 170, 444 and 46. No note forbids zero. Must fit a Word
     /// because 37 and 46 carry it as one (see the module-level gap).
     pub character_index: u32,
     /// Player name for server 428: 1 to 31 nonzero UTF-16 units
@@ -114,6 +154,15 @@ pub struct PopulationPlan {
 impl PopulationPlan {
     /// Check every plan constraint stated in the notes.
     pub fn validate(&self) -> Result<()> {
+        if let PopulationProfession209026::Mesmer { values: [first, second] } = self.profession {
+            // The client evaluates unsigned (first - second) / first without
+            // guards. Candidate initialization avoids zero and underflow;
+            // the raw codec still preserves every byte pair.
+            // See docs/re/209026-mesmer-profession.md.
+            if first == 0 || second > first {
+                return Err(invalid("Mesmer first byte must be nonzero and second must not exceed it"));
+            }
+        }
         if self.player_index == 0 || self.player_index >= 0x1000_0000 {
             return Err(invalid("player index must be 1..0x0fff_ffff"));
         }
@@ -151,11 +200,6 @@ fn invalid(message: &'static str) -> Error {
 /// still yields the baseline delay, but no shared epoch is established).
 const REMOTE_TICK: u32 = 0;
 
-/// Profession byte of 183 and the 477 creator: Guardian is 1
-/// (`docs/re/209026-character-profession.md`: "prepared local character
-/// candidate is profession 1"; 477's getter returns 1).
-const PROFESSION_GUARDIAN: u8 = 1;
-
 /// Both level bytes of 183. The setters assert 1..=80 for players
 /// (`docs/re/209026-character-core-stats.md`). placeholder: the value 1 and
 /// the meaning of the second byte are not established.
@@ -191,7 +235,8 @@ const PARAMETERS: [f32; 8] = [294.0, 3.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0];
 /// 0 (alive; `docs/re/209026-character-health-endurance.md`: a non-alive player
 /// gets character flag +0x178 mask 2). The maximum setter asserts
 /// `valueMax >= 0` and current is clamped to [0, maximum]. placeholder: the
-/// level-1 Guardian's real health, the second meter and F5 are not established.
+/// real health for either supported profession, the second meter and F5 are
+/// not established. This remains a shared fixture, not a profession profile.
 const HEALTH: f32 = 1645.0;
 const HEALTH_STATE_ALIVE: u8 = 0;
 
@@ -209,13 +254,6 @@ const ENDURANCE_SEGMENTS: u32 = 2;
 /// placeholder: which skills are available at startup is not established.
 const SKILL_KEY: u32 = 1080;
 
-/// Four type-353 reward-track data keys for 565. Type-353 keys span 1..=529
-/// and all 529 tracks have a progress reference
-/// (`docs/re/209026-reward-track-content.md`). 24, 100, 103 and 30 are the
-/// Guardian specialization tracks listed there. placeholder: the initial
-/// track selection is not established.
-const REWARD_TRACKS: [u32; 4] = [24, 100, 103, 30];
-
 /// Pin values for 565's four slots (`docs/re/209026-reward-track-slots.md`
 /// names them `m_pinnedTracks`). placeholder: the accepted domain is open.
 const PINNED: [u8; 4] = [0; 4];
@@ -227,7 +265,7 @@ fn frame(encode: impl FnOnce(&mut BytesMut) -> Result<()>) -> Result<Bytes> {
 }
 
 /// The candidate sequence as `(message id, one complete frame)` pairs, in
-/// [`POPULATION_ORDER`]. Validates the plan first.
+/// [`PopulationProfession209026::population_order`]. Validates the plan first.
 pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
     plan.validate()?;
     let player = plan.player_index;
@@ -325,8 +363,8 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
                 earned_level: LEVEL,
                 level_2: LEVEL,
                 // docs/re/209026-character-core-stats.md: the profession
-                // scalar; must match the 477 creator.
-                profession: PROFESSION_GUARDIAN,
+                // scalar; must match the selected 477/481 creator.
+                profession: plan.profession.profession_id(),
                 extended: None,
             }
             .encode_frame(out);
@@ -347,11 +385,11 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
         })?,
     ));
 
-    // 477: Guardian profession creator, required before 170
-    // (docs/re/209026-character-profession.md).
-    frames.push((
-        477,
-        frame(|out| {
+    // Exactly one matching profession component, required before 170
+    // (docs/re/209026-character-profession.md). Other derived creators are
+    // not interchangeable with the coreStats profession scalar.
+    match plan.profession {
+        PopulationProfession209026::Guardian => frames.push((477, frame(|out| {
             GuardianFrame209026 {
                 character_index: character,
                 operation: GuardianOperation209026::Create {
@@ -373,8 +411,15 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
             }
             .encode_frame(out);
             Ok(())
-        })?,
-    ));
+        })?)),
+        PopulationProfession209026::Mesmer { values } => frames.push((481, frame(|out| {
+            MesmerFrame209026 {
+                character_index: character,
+                operation: MesmerOperation209026::Create { values },
+            }.encode_frame(out);
+            Ok(())
+        })?)),
+    }
 
     // 151: attitude. docs/re/209026-character-core-stats.md: the character must
     // exist (an earlier update is ignored) and the value must be below 4.
@@ -468,7 +513,7 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
         frame(|out| {
             RewardTrackCreationFrame209026 {
                 player_index: player,
-                track_ids: REWARD_TRACKS,
+                track_ids: plan.reward_track_ids,
                 slot_bytes: PINNED,
             }
             .encode_frame(out);
@@ -514,7 +559,7 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
     // 170: finalize. docs/re/209026-character-finalization-dependencies.md
     // ("Server 170" row): needs the player (428), attitude (151), owned
     // character (443), coreStats (183), inventory (282) and a profession
-    // component (477, docs/re/209026-character-profession.md).
+    // component (477/481, docs/re/209026-character-profession.md).
     frames.push((
         170,
         frame(|out| {
@@ -595,7 +640,7 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
 
     debug_assert_eq!(
         frames.iter().map(|(id, _)| *id).collect::<Vec<_>>(),
-        POPULATION_ORDER
+        plan.profession.population_order()
     );
     Ok(frames)
 }
@@ -623,6 +668,9 @@ mod tests {
         appearance[28] = 7;
         appearance[29] = 1;
         PopulationPlan {
+            profession: PopulationProfession209026::Guardian,
+            // Preserves the old Guardian fixture selection, not retail defaults.
+            reward_track_ids: [24, 100, 103, 30],
             player_index: 300,
             character_index: 0x1234,
             name: "Fixture".to_string(),
@@ -635,6 +683,14 @@ mod tests {
 
     fn frames() -> Vec<(u16, Bytes)> {
         population_frames(&plan()).unwrap()
+    }
+
+    fn mesmer_plan() -> PopulationPlan {
+        let mut plan = plan();
+        // Deliberately distinct bytes and tracks test data flow, not defaults.
+        plan.profession = PopulationProfession209026::Mesmer { values: [255, 128] };
+        plan.reward_track_ids = [101, 102, 103, 104];
+        plan
     }
 
     /// Decode one frame with its module decoder, re-encode it and return the
@@ -670,6 +726,9 @@ mod tests {
                 .unwrap()
                 .encode_frame(&mut out),
             477 => GuardianFrame209026::decode_frame(input)
+                .unwrap()
+                .encode_frame(&mut out),
+            481 => MesmerFrame209026::decode_frame(input)
                 .unwrap()
                 .encode_frame(&mut out),
             247 | 248 => WardrobeFrame209026::decode_frame(input)
@@ -732,6 +791,93 @@ mod tests {
             assert_eq!(again, &bytes[..], "id {id}");
         }
         assert!(input.is_empty());
+    }
+
+    #[test]
+    fn mesmer_matches_core_profession_and_preserves_explicit_selection() {
+        let guardian = frames();
+        let plan = mesmer_plan();
+        let frames = population_frames(&plan).unwrap();
+        let ids: Vec<_> = frames.iter().map(|(id, _)| *id).collect();
+        assert_eq!(ids, MESMER_POPULATION_ORDER);
+        assert_eq!(ids.iter().filter(|id| **id == 481).count(), 1);
+        assert!(!ids.contains(&477));
+        let position = |id| ids.iter().position(|actual| *actual == id).unwrap();
+        assert!(position(37) < position(481));
+        assert!(position(481) < position(170));
+        assert!(position(170) < position(444));
+        let core = only(&frames, 183, |i| CoreStatsCreation209026::decode_frame(i).unwrap());
+        assert_eq!(core.profession, 7);
+        assert_eq!(core.character_index, plan.character_index);
+        let mesmer = only(&frames, 481, |i| MesmerFrame209026::decode_frame(i).unwrap());
+        assert_eq!(mesmer.character_index, plan.character_index);
+        assert_eq!(mesmer.operation, MesmerOperation209026::Create { values: [255, 128] });
+        let tracks = only(&frames, 565, |i| RewardTrackCreationFrame209026::decode_frame(i).unwrap());
+        assert_eq!(tracks.player_index, plan.player_index);
+        assert_eq!(tracks.track_ids, plan.reward_track_ids);
+
+        // Changing profession must not silently change unrelated fixture frames.
+        for (id, bytes) in &frames {
+            if ![183, 481, 565].contains(id) {
+                assert_eq!(bytes, &guardian.iter().find(|(other, _)| other == id).unwrap().1);
+            }
+        }
+        // Guardian selection is also explicit rather than hard-coded in the builder.
+        let mut guardian_plan = plan;
+        guardian_plan.profession = PopulationProfession209026::Guardian;
+        let guardian = population_frames(&guardian_plan).unwrap();
+        let tracks = only(&guardian, 565, |i| RewardTrackCreationFrame209026::decode_frame(i).unwrap());
+        assert_eq!(tracks.track_ids, guardian_plan.reward_track_ids);
+    }
+
+    #[test]
+    fn mesmer_stream_preserves_every_typed_frame_boundary() {
+        let plan = mesmer_plan();
+        let frames = population_frames(&plan).unwrap();
+        let stream = population_stream(&plan).unwrap();
+        let mut input = &stream[..];
+        for (id, bytes) in &frames {
+            let before = input.len();
+            assert_eq!(decode_reencode(*id, &mut input), bytes.as_ref(), "id {id}");
+            assert_eq!(before - input.len(), bytes.len(), "id {id}");
+        }
+        assert!(input.is_empty());
+        assert_eq!(stream, population_stream(&plan).unwrap());
+    }
+
+    #[test]
+    fn both_profession_streams_match_complete_client_server_schemas() {
+        // These are the agent and character registration tables. Other client
+        // subsystems can reuse IDs and must not override these descriptors.
+        let tables = schema::parse(include_str!("../../../data/protocol/209026/server-tables.xml")).unwrap();
+        let messages: Vec<_> = tables.protocols.into_iter()
+            .filter(|p| p.name == "0")
+            .flat_map(|p| p.groups)
+            .filter(|g| ["table-0x14211be70", "table-0x14216e940"].contains(&g.name.as_str()))
+            .flat_map(|g| g.server)
+            .collect();
+        let rules = Rules {
+            string: Some(StringEncoding::Utf16Terminated),
+            array_var_small: Some(CountPrefix::U8),
+            array_var_large: Some(CountPrefix::U16),
+            buffer_var_small: Some(CountPrefix::U8),
+            buffer_var_large: Some(CountPrefix::U16),
+            buffer_fixed_is_size_bytes: true,
+            ..Rules::default()
+        };
+        for plan in [plan(), mesmer_plan()] {
+            let frames = population_frames(&plan).unwrap();
+            let stream = population_stream(&plan).unwrap();
+            let mut input = &stream[..];
+            for (id, bytes) in &frames {
+                assert_eq!(messages.iter().filter(|message| message.id == *id).count(), 1);
+                let before = input.len();
+                let (message, _) = dynamic::decode_frame(&messages, &rules, &mut input).unwrap();
+                assert_eq!(message.id, *id);
+                assert_eq!(before - input.len(), bytes.len(), "id {id}");
+            }
+            assert!(input.is_empty());
+        }
     }
 
     fn only<T>(frames: &[(u16, Bytes)], id: u16, f: impl FnOnce(&mut &[u8]) -> T) -> T {
@@ -838,6 +984,7 @@ mod tests {
             RewardTrackCreationFrame209026::decode_frame(i).unwrap()
         });
         assert_eq!(rewards.player_index, player);
+        assert_eq!(rewards.track_ids, [24, 100, 103, 30]);
         assert!(rewards.track_ids.iter().all(|k| (1..=529).contains(k)));
         let quest = only(&frames, 538, |i| {
             QuestManagerReportFrame209026::decode_frame(i).unwrap()
@@ -955,6 +1102,8 @@ mod tests {
         bad(&|p| p.appearance[27] = 5);
         bad(&|p| p.appearance[28] = 16);
         bad(&|p| p.appearance[29] = 2);
+        bad(&|p| p.profession = PopulationProfession209026::Mesmer { values: [0, 0] });
+        bad(&|p| p.profession = PopulationProfession209026::Mesmer { values: [1, 2] });
     }
 
     #[test]
@@ -971,6 +1120,10 @@ mod tests {
         population_frames(&p).unwrap();
         p.character_index = u32::from(u16::MAX);
         population_frames(&p).unwrap();
+        for values in [[1, 0], [1, 1], [255, 0], [255, 255]] {
+            p.profession = PopulationProfession209026::Mesmer { values };
+            population_frames(&p).unwrap();
+        }
     }
 
     #[test]

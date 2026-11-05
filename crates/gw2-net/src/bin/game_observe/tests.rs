@@ -4,6 +4,16 @@ use gw2_proto::Encode;
 use std::net::Shutdown;
 
 #[test]
+fn explicit_profession_fixture_csv_checks_width_and_range() {
+    assert_eq!(parse_csv::<u8, 2>("3,0", "bad").unwrap(), [3, 0]);
+    assert_eq!(parse_csv::<u32, 4>("1,128,16384,4294967295", "bad").unwrap(), [1, 128, 16384, u32::MAX]);
+    for input in ["", "3", "3,0,1", "256,0", "-1,0", "3,", "3,0x0"] {
+        assert!(parse_csv::<u8, 2>(input, "bad").is_err(), "{input}");
+    }
+    assert!(parse_csv::<u32, 4>("1,2,3,4294967296", "bad").is_err());
+}
+
+#[test]
 fn auth_and_mission_loopback_capture_plaintext_with_exact_limit() {
     let mut record = vec![0; 16]; // Synthetic character GUID.
     record.push(0); // Opaque Dword.
@@ -393,7 +403,24 @@ fn deployed_mission_population_sequence_over_tcp_for_every_split() {
     let record = mission::tests::guardian_record(15, 1);
     let spawn = [0.0, 0.0, 7.4];
     let fixture = mission::PopulationFixture::new(&record, spawn).unwrap();
-    let mut expect = mission::MissionPhase::new(15).unwrap().with_population(fixture.clone()).unwrap();
+    mission_population_over_tcp_for_every_split(15, fixture);
+}
+
+#[test]
+fn norn_mesmer_tutorial_population_over_tcp_for_every_split() {
+    let mut record = mission::tests::guardian_record(379, 7);
+    let summary_start = record.len() - 159;
+    record[summary_start + 0x21] = 3; // Norn, preserved in coreStats appearance.
+    let fixture = mission::PopulationFixture::with_profession(
+        &record, [0.0; 3],
+        gw2_proto::population::PopulationProfession209026::Mesmer { values: [3, 0] },
+        [1, 2, 3, 4], // Deliberately synthetic, not selected retail tracks.
+    ).unwrap();
+    mission_population_over_tcp_for_every_split(379, fixture);
+}
+
+fn mission_population_over_tcp_for_every_split(map_key: u32, fixture: mission::PopulationFixture) {
+    let mut expect = mission::MissionPhase::new(map_key).unwrap().with_population(fixture.clone()).unwrap();
     let opening = expect.opening();
     let population = expect
         .respond(&mission::Seen::Map(gw2_proto::map_load::ClientMapEvent::MapLoaded))
@@ -409,14 +436,14 @@ fn deployed_mission_population_sequence_over_tcp_for_every_split() {
     for cut in 0..=plain.len() {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let address = listener.local_addr().unwrap();
-        let path = std::env::temp_dir().join(format!("gw2-observe-deployed-{}-{cut}.bin", std::process::id()));
+        let path = std::env::temp_dir().join(format!("gw2-observe-deployed-{}-{map_key}-{cut}.bin", std::process::id()));
         // Public toy group for this local test; no stored identities are loaded.
         let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
         let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
         let (server_path, server_fixture) = (path.clone(), fixture.clone());
         let server = std::thread::spawn(move || {
             let fixtures = Fixtures {
-                mission_map_key: Some(15),
+                mission_map_key: Some(map_key),
                 population: Some(server_fixture),
                 no_capture: true,
                 ..Fixtures::default()

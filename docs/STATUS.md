@@ -2,6 +2,19 @@
 
 Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboot. The previous Codex lead was thread 01a19513, and the owner handoff was 9acee8ca7cde4358bbdf0fb61fdc2310. Updated 2026-11-01.
 
+## Active Mesmer starting-area work (2026-11-05)
+
+The owner requested 100% retail-accurate starting-area implementation using
+the client as the source of truth, with **Norn first**, then Human. The
+[completion ledger](MESMER-STARTER.md) records the full scope and missing
+runtime evidence. Local changes add Mesmer481–483 framing, explicit
+profession-aware population, bounded creation-equipment readers, and Mesmer
+palette checks. Focused protocol/reader tests, observer build and synthetic
+Norn tutorial TCP loopback pass; real-archive readers reproduce the client
+equipment and palette records. No Mesmer client playback or deployment has
+occurred. NPCs, combat, tutorial objectives, progression and persistence
+remain incomplete; this is not a 100% claim.
+
 ## Blocker
 
 - **Client frozen** 2026-10-31 19:03Z as `/home/blizz/gw2-client/build-209026` (see

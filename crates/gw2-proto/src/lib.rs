@@ -28,6 +28,7 @@ pub mod guardian;
 pub mod health;
 pub mod kennel;
 pub mod map_load;
+pub mod mesmer;
 pub mod play_route;
 pub mod player_creation;
 pub mod player_startup;
