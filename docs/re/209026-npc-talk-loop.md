@@ -958,3 +958,27 @@ resource pipeline for the character-creation preview model (runs 121–123, note
 Our run-172 breakpoints sat on hot paths (AvManager loop, Advance, finalizer). They
 consume real frame time and may have amplified that starvation. Re-test the post-load
 NPC with sparse probes, or none, before concluding the request is never serviced.
+
+### Run 174: renown heart 56 shows, advances and completes; floating damage numbers visible
+
+The run used `--mission-heart 56,3`, on top of the run-169 four-NPC combat profile. In
+the AgentsLoaded batch, after the quest, the observer sends:
+`651 {player, region 1, 0}`, `1090 {uid 0x38, "", 0, target 3, 0, 0, 0, Guid 0, 0}`,
+`657 {player, 1, 0x38, [], "", "", Word 56}` and `655 {player, Word 56}`.
+
+| Event | Wire | What the client showed |
+|---|---|---|
+| Heart shown | the four frames above | Tracker: heart icon, **"Honor the Spirit of Raven." (Level 2)**, `: 0/3`. The title and level come from the client's type-72 content. |
+| Each kill | `1089 {0x38, n}` | Tracker updated to 1/3, then 2/3. |
+| Third kill | `1089 3`, then `654 {player, 0, 1, Word 56}` | Retail completion toast: a gold heart with "Honor the Spirit of Raven." |
+
+No asserts.
+
+The same run's screenshot caught a **floating damage number, "30"**, next to the
+minotaur. Hit floaters render once 255 carries |delta| in its Word; earlier screenshots
+simply missed their ~0.45 s lifetime.
+
+Not done yet:
+- 384, which places the heart marker on a heart NPC;
+- 556, the completion reward;
+- the "inside heart" region test (the observer sends 655 unconditionally).
