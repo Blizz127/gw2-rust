@@ -2546,6 +2546,105 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn heart_area_crossings_and_waypoint_rejoin_use_current_position() {
+        // The process-global handoff must not be consumed by parallel tests.
+        const CHILD: &str = "GW2_TEST_HEART_AREA_REJOIN_CHILD";
+        if std::env::var_os(CHILD).is_none() {
+            let output = std::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", "mission::tests::heart_area_crossings_and_waypoint_rejoin_use_current_position", "--nocapture"])
+                .env(CHILD, "1")
+                .output()
+                .unwrap();
+            assert!(output.status.success(), "isolated heart area lifecycle failed:\n{}\n{}",
+                String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+            return;
+        }
+        assert!(CARRY.lock().unwrap().is_none());
+        const OUTSIDE: [f32; 3] = [-3200.0, -25600.0, -3742.0];
+        const WAYPOINT: [f32; 3] = [597.3, -30352.1, -1563.2];
+        const INSIDE: [f32; 3] = [-500.0, -26500.0, -3800.0];
+        let fresh = |spawn, respawn| {
+            let mut phase = populated_phase();
+            phase.population.as_mut().unwrap().plan.position = spawn;
+            phase.with_heart(56, 2).unwrap()
+                .with_npc_attack(10.0, 100.0)
+                .with_respawn_point(respawn)
+                .with_rejoin_route("127.1.0.4:6112".parse().unwrap())
+        };
+        let enter_world = |phase: &mut MissionPhase| {
+            phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+            phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().unwrap()
+        };
+        let moved = |position: [f32; 3]| Seen::Moved { id: 18, position: position.map(|v| v.round() as i32) };
+        let wire = |frame: RenownFrame209026| {
+            let mut out = BytesMut::new();
+            frame.encode_frame(&mut out).unwrap();
+            out.freeze()
+        };
+        let entered = wire(RenownFrame209026::EnterSubRegion { player: 1, heart: 56 });
+        let left = wire(RenownFrame209026::LeaveSubRegion { player: 1, heart: 56 });
+        let tables = schema::parse(include_str!("../../../../../data/protocol/209026/server-tables.xml")).unwrap();
+        let game_tables: Vec<_> = [
+            "table-0x14216e940", "table-0x14211be70", "table-0x1422ddbf0",
+            "table-0x141923b80", "table-0x1422e03b0",
+        ].iter().map(|name| tables.protocols.iter().flat_map(|p| &p.groups)
+            .find(|g| g.name == *name).unwrap()).collect();
+        // Inspect actual frame boundaries, not byte patterns inside other frames.
+        let ids = |bytes: &[u8]| {
+            let mut input = bytes;
+            let mut ids = Vec::new();
+            while !input.is_empty() {
+                let id = u16::from_le_bytes([input[0], input[1]]);
+                let table = game_tables.iter().find(|t| t.server.iter().any(|m| m.id == id)).unwrap();
+                ids.push(dynamic::decode_frame(&table.server, &rules(), &mut input).unwrap().0.id);
+            }
+            ids
+        };
+        let heart_ids = |bytes: &[u8]| ids(bytes).into_iter()
+            .filter(|id| [651, 1090, 657, 655, 656, 1089, 654, 556].contains(id)).collect::<Vec<_>>();
+        let redirect = |phase: &mut MissionPhase| {
+            phase.npc_attack.as_mut().unwrap().defeated = true;
+            let reply = phase.respond(&Seen::Other(210)).unwrap().unwrap();
+            assert_eq!(ids(&reply), [1065]);
+        };
+
+        let mut phase = fresh(OUTSIDE, WAYPOINT);
+        assert!(phase.respond(&moved(INSIDE)).unwrap().is_none(), "movement before BeginPlaying is ignored");
+        let opening = enter_world(&mut phase);
+        assert_eq!(heart_ids(&opening), [651, 1090, 657], "outside spawn does not enter the heart");
+        assert_eq!(phase.respond(&moved(INSIDE)).unwrap(), Some(entered.clone()));
+        assert!(phase.respond(&moved(INSIDE)).unwrap().is_none(), "same-side movement must not repeat 655");
+        assert_eq!(phase.respond(&moved(OUTSIDE)).unwrap(), Some(left.clone()));
+        assert!(phase.respond(&moved(OUTSIDE)).unwrap().is_none(), "same-side movement must not repeat 656");
+        assert_eq!(phase.respond(&moved(INSIDE)).unwrap(), Some(entered.clone()));
+        advance_heart(&mut phase.heart, &mut BytesMut::new()).unwrap();
+
+        // Rejoin outside after leaving a connection whose last position was inside.
+        // The fresh fixture deliberately starts inside, so only the carried
+        // waypoint can determine the correct opening state.
+        redirect(&mut phase);
+        let mut phase = fresh(INSIDE, INSIDE);
+        let opening = enter_world(&mut phase);
+        assert!(CARRY.lock().unwrap().is_none());
+        assert_eq!(phase.population.as_ref().unwrap().plan.position, WAYPOINT);
+        assert!(phase.heart.is_some_and(|h| !h.inside && h.progress == 1 && !h.done && !h.rewarded));
+        assert_eq!(heart_ids(&opening), [651, 1090, 657, 1089]);
+        assert!(phase.respond(&moved(WAYPOINT)).unwrap().is_none());
+        assert_eq!(phase.respond(&moved(INSIDE)).unwrap(), Some(entered.clone()));
+
+        // The reverse rejoin must enter immediately, despite an outside fixture.
+        redirect(&mut phase);
+        let mut phase = fresh(OUTSIDE, WAYPOINT);
+        let opening = enter_world(&mut phase);
+        assert!(CARRY.lock().unwrap().is_none());
+        assert_eq!(phase.population.as_ref().unwrap().plan.position, INSIDE);
+        assert!(phase.heart.is_some_and(|h| h.inside && h.progress == 1 && !h.done && !h.rewarded));
+        assert_eq!(heart_ids(&opening), [651, 1090, 657, 655, 1089]);
+        assert!(phase.respond(&moved(INSIDE)).unwrap().is_none());
+        assert_eq!(phase.respond(&moved(OUTSIDE)).unwrap(), Some(left));
+    }
+
+    #[test]
     fn heart_reward_is_issued_once_across_waypoint_rejoins() {
         // CARRY belongs to the observer process. Run this lifecycle in its own
         // process so parallel mission/TCP tests cannot consume its handoff.

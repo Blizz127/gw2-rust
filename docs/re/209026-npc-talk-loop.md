@@ -1150,4 +1150,10 @@ Run 185 spawned the player inside, at (-500, -26500, -3800), with the four NPCs 
 into the area at z -3800. All four stood on the hillside and rendered; one shows as
 "Champion Son of Svanir". The tracker opened, and three kills completed the heart with
 the reward icon and no asserts. Holding W for 12 s did not visibly cross the boundary,
-so the 656/655 transition is covered by unit tests only so far.
+so this run did not verify a 656/655 boundary transition. At source `0846fcb`,
+unit coverage checked polygon membership and movement decoding, not that
+transition branch. The subsequent focused
+`heart_area_crossings_and_waypoint_rejoin_use_current_position` regression
+checks exact 655/656 frames, repeated-movement suppression, and outside/inside
+waypoint rejoin state while retaining incomplete progress. Live boundary
+crossing remains unobserved in this run.
