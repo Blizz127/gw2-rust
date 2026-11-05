@@ -2,10 +2,10 @@
 
 The observer has opt-in, single-account persistence and a creation scene.
 Support first deployed in owner release `56242d1`. The integrator's latest
-receipt is `9961b56-hm` at `/home/blizz/gw2-rust-9961b56-hm`, live at
-2026-11-05 19:58:44 UTC in prepared mode, with rollback
-`/home/blizz/gw2-rust-9961b56`; saved mode is not enabled in the host config.
-This profile uses the tested `9961b56` binaries and Hero's Moot respawn point;
+receipt is `d7252a8` at `/home/blizz/gw2-rust-d7252a8`, live at
+2026-11-05 20:27:13 UTC in prepared mode, with rollback
+`/home/blizz/gw2-rust-bc997f0`; saved mode is not enabled in the host config.
+The profile retains the Hero's Moot respawn point from `9961b56-hm`;
 the [release receipt](209026-combat-release-3cf2483.md) records hashes and checks.
 Run126 observed actual UI creation, durable save and transfer to a playable
 world connection. Run127 passed process-restart relog using the same record,
@@ -21,7 +21,9 @@ initially empty private owner store, stopped-service backup and rollback that
 preserves later-created records. No synthetic character is imported. Plan:
 `/home/blizz/re/gw2/notes/saved-norn-activation-handoff-v2-20261105.json`
 (SHA-256 `dc59390740f5f9f6aaa9aea0bb233679672d6ffc0351e509e3f4253f121ef6c1`),
-reviewed against the latest kit; the original handoff remains preserved.
+reviewed against baseline `9961b56-hm`; the original handoff remains preserved.
+Activation must pin its then-current rendering-fixed candidate as the plan
+requires. Later reward-only server changes do not alter its mode/store settings.
 The separate heart preflight/combination-coverage fix `d175bd5` shipped in
 `018cb96`; it does not clear the rendering hold.
 
@@ -33,6 +35,12 @@ respawn must still preserve the selected GUID in the new connection; the
 creation redirect in run126 and auth relog in run127 do not establish that
 different transition. One combined post-fix saved-character smoke can check
 preview, direct-entry rendering, one kill and one waypoint rejoin.
+Release `d7252a8` also preserves whether the heart reward was already issued,
+preventing its panel and bonus XP from repeating after a waypoint rejoin.
+The focused regression reproduced the duplicate on `bc997f0` and passed with
+`1e4e3e1`, cherry-picked by the integrator as `d7252a8`. Startup smoke, zero-human
+deployment, 3.4-second readiness and local/remote hashes are in the release
+receipt. This fix changes only volatile carry state; it adds no durable progress.
 
 ## Implemented local behavior
 

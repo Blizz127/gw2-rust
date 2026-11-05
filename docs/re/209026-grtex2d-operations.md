@@ -576,3 +576,48 @@ runtime, working archive, or target mutation was used in this follow-up.
 Private export:
 `/home/blizz/re/gw2/notes/209026-vdf-texture-composite-gates-20261105.json`
 (SHA256 `357ec55e117c7c71d90aa7928b5c912db94e7b27c96cb386bba5859154ad4ec3`).
+
+## Alternate entry bound to creator construction
+
+A subsequent exact-address follow-up resolves the creator binding left open
+above. Constructor `0x1412d16cc..0x1412d16d6` installs composite vtable
+**`0x142185c58`**. Its **`+0xe0`** slot at `0x142185d38` holds
+**`0x1412d71c0`**, the leaf that sets R8D to 1 and jumps to `0x1412d7db0`.
+The literal-pointer query found this one reference to the leaf; the immediate
+code-reference query found only its jump to `0x1412d7db0`. These bounded
+queries do not enumerate every possible indirect caller.
+
+Creator UI build `0x14029eb30` calls creation-context virtual `+0xd8` at
+`0x14029ec17`; its established implementation is `0x14129cd40`. Within that
+context method, the new-manager path sets R12D to 1 at `0x14129ce2a`, calls
+the composite factory at `0x14129cf32`, and stores the result at context
+`+0x450`. At **`0x14129d104`**, a nonzero R12D leads to **`0x14129d118`**:
+call manager virtual `+0xe0` with EDX=1. The existing-manager path sets
+R12D=0 at `0x14129cdf7` and skips this call. Thus new preview construction
+has the concrete path `14129d118 → 1412d71c0 → 1412d7db0 → 1412d25e0`,
+with processor choice argument 1, independently of the normal Vdf advance
+pair. This call precedes the UI's post-build observation point
+`0x14029ec21`; a probe first binding there cannot observe this same initial
+processor invocation. It does not explain later processor choice-0 samples.
+
+The complete inspected UI frame callback `0x14029ccd0..0x14029d2ec` has no
+direct call to either alternate entry or manager virtual `+0xe0`. No further
+callgraph expansion or runtime attribution is needed for the construction
+mapping. Whether the creator also executes the normal Vdf advance remains
+a separate runtime question.
+
+Evidence: exact references
+`ev_f2f626e1edc5b0789e36d836a1c2f2ee6892bc4b63fa16f4a34a3b1fcc5819e8`,
+`ev_02305e8cf665b0c41ba0e462696090f6815cd2c14e9e2b7ead02e62c1529060e`;
+creator UI routines
+`ev_60fc6da7d6ac36a0689469ff885b4868a4941ea6db337f25f95f68fb7a60af85`;
+context branches and exact slot call / constructor install
+`ev_0ae9051b6b667b804d8c09976701917e3969fed9484682bb2a381de7482627ca`,
+`ev_57470240f6271cb7e006ea74e2ff6214c0f5e5b1825bae551b64c510dec059a5`.
+The aggregate UI/constructor capture truncates later constructor output;
+the relevant constructor install was recaptured in full separately. The
+context's initial split instruction was likewise recaptured from a verified
+boundary. All readers exited zero; no runtime or working archive was used.
+Full private export:
+`/home/blizz/re/gw2/notes/209026-creator-alternate-composite-binding-20261105.json`
+(SHA256 `1cfca6e75390cae5ffdc270db904ea31099de39499e3c352ffe96ee655dd98c1`).

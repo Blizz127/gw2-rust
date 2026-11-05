@@ -1076,3 +1076,92 @@ Reader processes exited zero and verified their owned-process cleanup; some
 records list unrelated `/proc/*/environ` permission failures in process
 sampling. This lane performed no client attachment, launch, control action,
 archive access, or frozen-input edit during the audit.
+
+## Next bounded probe: matched multi-source work and one component invocation
+
+The new private helper is
+`/home/blizz/re/gw2/notes/creator-work-component-probe-20261105.py`, entry
+`arm_creator_work_component(inf, slide)`, prefix
+`GW2_CREATOR_WORK_COMPONENT`. Its frozen SHA-256 is
+**`953c8da8afc33f3fc86d25b4baafbe65322a02132ad4eb684a16eebfe93e43ef`**,
+34,046 bytes. It replaces the prior probe in the next controlled run; the
+run-130 V3 file and its hash remain unchanged. Preparation itself launched
+no GW2 client and made no attachment or archive access.
+
+Only the post-build identity hook and UI heartbeat, with native ignore count
+30, are enabled before the two existing marker files. Early owner records
+contain small identity/state samples; deep texture/list sampling begins at
+the markers. Each marker snapshot is emitted **before** internal hooks are
+armed. The initial UI handshake uses the new prefix and
+`initial_soak_snapshot_before_rearm`; a five-second subsequent soak gives
+that owner's newly armed hooks an observation window before race selection.
+The first context-driven composite processing call precedes the post-build
+binding, so its earlier history remains explicitly unobserved.
+
+The source-supported additions are:
+
+- A concrete `0x141bfc7c0` head must match the sampled scratch destination
+  before reading its layout. One primary input and at most five masks are
+  sampled one level deep, deduplicating at most six data identities. Only
+  mask zero may be null. Each input uses the guarded GrTex2d layout; its own
+  operation list is never followed. Unsupported input layouts remain unknown
+  and optional read failures stay local to a partial snapshot.
+- A job's first Qword is checked against callback `0x140b3d4e0` before
+  interpreting completion word `+0xf8`. This is labeled a callback-guarded
+  snapshot, **not proof of current submission**. At most four matched live
+  operations receive finite process, callback, completion-writer and
+  destructor observations. Process sampling admits one initial visit and
+  then only a callback-guarded nonzero completion. The destructor-entry hook
+  retires the watch before release or group cleanup; later callbacks never
+  follow that cached operation/job.
+- At call site `0x1412d81ce`, **RBX must equal the current composite**, EDX
+  must be a valid slot, and RCX must equal `manager+0x18+0x48*slot`. One
+  invocation per marker then enables the resolved-input, optional/channel
+  acquisition, acquisition-boundary, actual dispatch and common-return
+  observations. All match the exact component state and native thread and
+  refresh current UI/manager/model identity. Each channel is sampled once.
+  A null acquisition, a skip-flag aggregate, dispatch and helper return are
+  distinct records. No filename or speculative archive ID is emitted.
+- `ViewAdvanceTexture` at `0x14094d905` is sampled once per marked phase;
+  destination processing at `0x140a6ff50` is sampled once per watched
+  destination and phase. These observations can distinguish an actual frame
+  advance from a component call through a separate object path. They do not
+  continuously count frame or queue activity.
+
+The helper has **18 guarded sites**, a 210-second lifetime from first
+binding, a 20-second final-phase cap, 64 post-build callbacks and at most
+128 records. Final followup occurs on a sparse heartbeat at least eight
+seconds after the final marker. All site bytes, the complete readiness
+predicate, the model alternate-store anchor and the exact fifteen-entry
+component order table are checked against the hash-pinned executable before
+installation. Public GDB command lists and native conditions are used; the
+helper performs no target calls or data writes.
+
+Validation is bounded and does not claim a successful client observation:
+
+- `ev_c35c2c895a261a6554ebc05063cb67f131053867f35ee57cdac972175b6ce759`
+  verifies the frozen guards/table and exact component call/dispatch source
+  boundaries. The helper digest in that source-check record precedes the
+  final manager-register filter; the final digest is the one above.
+- `ev_01b43069fa49582b0cf2e92f0bd1bbc016c147b81fcae5d919f1fa4bd18f237f`
+  passes syntax and 24 focused host checks against the final helper. These
+  exercise partial reads, four-byte alignment, bounded arrays, callback
+  guarding, pending/completed filtering, live ownership/thread matching,
+  destructor retirement, marker ordering and all resource limits.
+- `ev_175c7a4af1f838acf5e3b6d8b55ded0e9d9c5a86298dbdd606ed555366b0239b`
+  evaluates all new native condition forms with GDB **16.3** and a tiny
+  owned C fixture. Exact operation/job matching, nested completion guards,
+  component register arithmetic, native thread selection and `r15d` channel
+  exclusions pass. Only the fixture directory was mounted in a distinct
+  networkless container; its removal was independently checked. No client
+  files or game processes were used. The earlier host attempt found no
+  `gdb` executable and did not start one.
+
+The native fixture is retained under
+`/home/blizz/re/gw2/notes/creator-work-native-17wtr37n`. Full private evidence:
+`/home/blizz/re/gw2/notes/209026-creator-work-component-probe-20261105.json`.
+Successful captures exited zero with complete output and verified owned
+process cleanup; unrelated `/proc/*/environ` sampling failures remain
+separate. The next runtime must still establish input readiness, actual
+submission/completion, normal servicing and the precise component result.
+No queue policy or readiness flag change is proposed from this preparation.
