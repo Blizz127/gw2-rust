@@ -1079,3 +1079,13 @@ fresh map join with the waypoint as the spawn. That would mean re-running the
 1063/1060 → 420 → population → 412 sequence on the existing connection, or a 1065
 route to a new connection. Not implemented; `--mission-respawn-point` stays a research
 option.
+
+**Run 181: a second 1063 + 1060 during gameplay asserts.** On the respawn request the
+observer reset its join state and resent the opening, 1063 MapData then 1060 LoadMap with
+the waypoint as the spawn. The client asserted `view != VIEW_GAMEPLAY` and closed.
+
+A map load can't be restarted in place from gameplay. Retail waypoint travel needs to
+leave the gameplay view first, most likely the 1065 map-join route onto a new game
+connection, as the creator lane uses for creation → world. Reverted:
+`--mission-respawn-point` again only sends the (ineffective) 86. The respawn itself
+(169/210 → 0x49) is live in kit f751c25 and later.
