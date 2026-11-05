@@ -49,7 +49,8 @@ class SavedModeTests(unittest.TestCase):
         self.values.update(GW2_CHARACTER_MODE="saved-norn", GW2_CHARACTER_STORE=self.state / "characters",
                            GW2_MAP_KEY="379", GW2_MESMER_VALUES="1,0", GW2_REWARD_TRACKS="56,88,47,112",
                            GW2_EQUIPMENT="equipment.bin", GW2_SKILLS="skills.bin", GW2_HEALTH="388",
-                           GW2_QUEST="154,0,1", GW2_HOSTILE_NPC="101,4,5,6", GW2_DAMAGE_ON_SKILL="10")
+                           GW2_QUEST="154,0,1", GW2_HOSTILE_NPC="101,4,5,6", GW2_DAMAGE_ON_SKILL="10",
+                           GW2_HEART="56,5")
 
     def calls(self):
         path = self.root / "calls"
@@ -109,6 +110,8 @@ class SavedModeTests(unittest.TestCase):
         self.assertEqual(auth[auth.index("--auth-create-route") + 1], "127.1.0.4:6112")
         self.assertEqual(game[game.index("--creation-scene") + 1], "127.1.0.4:6112")
         self.assertIn("--mission-hostile-npc", game)
+        self.assertEqual(game[game.index("--mission-heart") + 1], "56,5")
+        self.assertNotIn("--mission-heart", auth)
 
     def test_failed_binary_preflight_starts_no_listeners_or_fallback(self):
         self.saved()

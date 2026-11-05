@@ -139,6 +139,8 @@ struct Fixtures<'a> {
     talk_npc: Option<mission::TalkNpc>,
     /// Opt-in hostile test NPCs: species and position, one per flag (agent 3, 4, ...).
     hostile_npcs: Vec<(u32, [f32; 3])>,
+    late_npc: Option<(u32, [f32; 3])>,
+    heart: Option<(u16, u32)>,
     /// Research: answer SkillBegin with server 34 + 0x78.
     skill_order_echo: bool,
     /// Research: hostile NPC casts this skill on each player SkillBegin.
@@ -179,6 +181,8 @@ fn observe(
         population_delay,
         talk_npc,
         hostile_npcs,
+        late_npc,
+        heart,
         skill_order_echo,
         npc_cast,
         damage_on_skill,
@@ -242,6 +246,12 @@ fn observe(
     if !combined || mission.is_some() {
         if let Some(npc) = talk_npc {
             mission = Some(mission.ok_or_else(|| invalid("talk NPC requires a mission phase"))?.with_talk_npc(npc));
+        }
+        if let Some((key, target)) = heart {
+            mission = Some(mission.ok_or_else(|| invalid("heart requires a mission phase"))?.with_heart(key, target)?);
+        }
+        if let Some((species, position)) = late_npc {
+            mission = Some(mission.ok_or_else(|| invalid("late NPC requires a mission phase"))?.with_late_npc(species, position)?);
         }
         for (species, position) in hostile_npcs {
             mission = Some(
@@ -460,6 +470,8 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut talk_npc_spec: Option<(u32, [f32; 3])> = None;
     let mut talk_npc_speaker: Option<String> = None;
     let mut hostile_npcs: Vec<(u32, [f32; 3])> = Vec::new();
+    let mut late_npc: Option<(u32, [f32; 3])> = None;
+    let mut heart: Option<(u16, u32)> = None;
     let mut skill_order_echo = false;
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
@@ -654,6 +666,25 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 let text = args.next().ok_or_else(|| invalid("missing NPC cast skill key"))?;
                 npc_cast = Some(text.parse().map_err(|_| invalid("invalid NPC cast skill key"))?);
             }
+            "--mission-heart" => {
+                let text = args.next().ok_or_else(|| invalid("missing heart KEY,TARGET"))?;
+                let Some((key, target)) = text.split_once(',') else {
+                    return Err(invalid("heart needs KEY,TARGET"));
+                };
+                let key: u16 = key.parse().map_err(|_| invalid("invalid heart key"))?;
+                let target: u32 = target.parse().map_err(|_| invalid("invalid heart target"))?;
+                heart = Some((key, target));
+            }
+            "--mission-late-npc" => {
+                let text = args.next().ok_or_else(|| invalid("missing late NPC SPECIES,X,Y,Z"))?;
+                let parts: Vec<&str> = text.split(',').collect();
+                let [species, x, y, z] = parts[..] else {
+                    return Err(invalid("late NPC needs exactly SPECIES,X,Y,Z"));
+                };
+                let species: u32 = species.parse().map_err(|_| invalid("invalid late NPC species key"))?;
+                let [x, y, z] = [x, y, z].map(|v| v.parse::<f32>().map_err(|_| invalid("invalid late NPC position")));
+                late_npc = Some((species, [x?, y?, z?]));
+            }
             "--mission-hostile-npc" => {
                 if hostile_npcs.len() >= mission::MAX_HOSTILE_NPCS {
                     return Err(invalid("too many --mission-hostile-npc (at most 16)"));
@@ -781,6 +812,9 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     if quest.is_some() && !has_population {
         return Err(invalid("--mission-quest requires --mission-population"));
     }
+    if heart.is_some() && !has_population {
+        return Err(invalid("--mission-heart requires a population"));
+    }
     if equipment_frames.is_some() && !has_population {
         return Err(invalid("--mission-equipment requires --mission-population"));
     }
@@ -875,6 +909,9 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
         let mut phase = mission::MissionPhase::new(key)?;
         if let Some(fixture) = &population {
             phase = phase.with_population(fixture.clone())?;
+        }
+        if let Some((heart_key, target)) = heart {
+            phase = phase.with_heart(heart_key, target)?;
         }
         // Validate world-only NPC values even when the first connection will
         // select the creator. Dispatch must not conceal an invalid profile.
@@ -975,6 +1012,8 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 population_delay,
                 talk_npc,
                 hostile_npcs,
+                late_npc,
+                heart,
                 skill_order_echo,
                 npc_cast,
                 damage_on_skill,

@@ -32,6 +32,7 @@ use gw2_proto::{
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     experience::{EarnedLevelFrame209026, ExperienceFrame209026, level_for_experience},
+    renown::RenownFrame209026,
     health::{HealthFrame209026, HealthOperation209026, HealthValues209026, SourcedHealthFrame209026},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
     npc_talk::{ConversationReply209026, InteractRequest209026, LEVEL1_NPC_HEALTH, TalkNpcPlan209026, TalkSession209026},
@@ -379,6 +380,13 @@ pub struct MissionPhase {
     xp: Option<(u32, u32, u8)>,
     /// Research: item-creation message used to give the Starter Backpack.
     starter_bag: Option<u16>,
+    /// Research (post-load spawn trace): one neutral NPC spawned in the
+    /// AgentsLoaded batch, after BeginPlaying, the path whose model never
+    /// streams (docs/re/209026-npc-talk-loop.md, render root cause).
+    late_npc: Option<TalkNpcPlan209026>,
+    /// Research: one renown heart shown at spawn whose counter advances on
+    /// each NPC kill (docs/re/209026-npc-talk-loop.md, renown heart).
+    heart: Option<Heart>,
     /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
     /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
@@ -505,6 +513,54 @@ fn start_npc_attack(attack: &mut Option<NpcAttack>) {
     }
 }
 
+/// Research renown heart: type-72 key, kills needed, kills so far, player
+/// index (set when shown), and whether it completed.
+#[derive(Clone, Copy)]
+struct Heart {
+    key: u16,
+    target: u32,
+    progress: u32,
+    player: Option<u32>,
+    done: bool,
+}
+
+/// Server-chosen ids for the single research heart.
+const HEART_REGION: u32 = 1;
+const HEART_OBJECTIVE: u32 = 0x38;
+
+/// Show the heart: region, counter, sub-region, enter (651, 1090, 657, 655).
+fn show_heart(heart: &mut Heart, player: u32, out: &mut BytesMut) -> io::Result<()> {
+    for frame in [
+        RenownFrame209026::AddRegion { player, region: HEART_REGION },
+        RenownFrame209026::CreateCounter { objective: HEART_OBJECTIVE, target: heart.target },
+        RenownFrame209026::AddSubRegion { player, region: HEART_REGION, objective: HEART_OBJECTIVE, heart: heart.key },
+        RenownFrame209026::EnterSubRegion { player, heart: heart.key },
+    ] {
+        frame.encode_frame(out)?;
+    }
+    heart.player = Some(player);
+    eprintln!("Mission phase: renown heart {} shown, 0/{} (server 651, 1090, 657, 655)", heart.key, heart.target);
+    Ok(())
+}
+
+/// A kill advances the heart counter (1089); at the target it completes (654).
+fn advance_heart(heart: &mut Option<Heart>, out: &mut BytesMut) -> io::Result<()> {
+    let Some(heart) = heart.as_mut() else { return Ok(()) };
+    let Some(player) = heart.player else { return Ok(()) };
+    if heart.done {
+        return Ok(());
+    }
+    heart.progress = (heart.progress + 1).min(heart.target);
+    RenownFrame209026::SetCounter { objective: HEART_OBJECTIVE, value: heart.progress }.encode_frame(out)?;
+    eprintln!("Mission phase: renown heart {} progress {}/{} (server 1089)", heart.key, heart.progress, heart.target);
+    if heart.progress == heart.target {
+        RenownFrame209026::CompleteSubRegion { player, region: HEART_REGION, heart: heart.key }.encode_frame(out)?;
+        heart.done = true;
+        eprintln!("Mission phase: renown heart {} completed (server 654)", heart.key);
+    }
+    Ok(())
+}
+
 /// Backpack slots sized by 305 (Starter Backpack item 8932, def +0x4c).
 const STARTER_BAG_SLOTS: u32 = 20;
 /// Research instance IDs for the backpack and drops (registry is sparse).
@@ -592,6 +648,8 @@ impl MissionPhase {
             autoattack_skill: None,
             xp: None,
             starter_bag: None,
+            late_npc: None,
+            heart: None,
             kill_loot: None,
             npc_attack: None,
             sourced_damage: None,
@@ -701,6 +759,23 @@ impl MissionPhase {
         self
     }
 
+    /// `target` kills complete renown heart `key` (a type-72 content key).
+    pub fn with_heart(mut self, key: u16, target: u32) -> io::Result<Self> {
+        if target == 0 {
+            return Err(io::Error::new(ErrorKind::InvalidInput, "heart target must be nonzero"));
+        }
+        self.heart = Some(Heart { key, target, progress: 0, player: None, done: false });
+        Ok(self)
+    }
+
+    /// Agent 20, attitude 3 (neutral), not talkable.
+    pub fn with_late_npc(mut self, species_key: u32, position: [f32; 3]) -> io::Result<Self> {
+        let plan = TalkNpcPlan209026 { agent_index: 20, species_key, position, facing: [1.0, 0.0, 0.0], attitude: 3, talkable: false };
+        plan.spawn_frames()?;
+        self.late_npc = Some(plan);
+        Ok(self)
+    }
+
     pub fn with_starter_bag(mut self, message_id: u16) -> Self {
         self.starter_bag = Some(message_id);
         self
@@ -762,6 +837,7 @@ impl MissionPhase {
             .encode_frame(out)?;
             eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
             award_kill_xp(&mut self.xp, player, out);
+            advance_heart(&mut self.heart, out)?;
             award_kill_loot(&mut self.kill_loot, player, out)?;
             self.hostiles[slot].respawn = Some(Instant::now() + RESPAWN_DELAY);
             // The dead NPC stops attacking; another hit NPC that is still alive
@@ -952,6 +1028,10 @@ impl MissionPhase {
                         .encode_frame(&mut out)?;
                     eprintln!("Mission phase: Starter Backpack via server {message_id} + 300 bag slot 0 + 305 20 slots");
                 }
+                if let Some(plan) = &self.late_npc {
+                    out.extend_from_slice(&plan.spawn_frames()?);
+                    eprintln!("Mission phase: late NPC agent {} (species {}) after BeginPlaying", plan.agent_index, plan.species_key);
+                }
                 if let Some(QuestFixture { quest_id, flags, goal_id }) = fixture.quest {
                     // All character/player components now exist. 532 is not
                     // idempotent: it completes an old active goal. Send exactly
@@ -966,6 +1046,9 @@ impl MissionPhase {
                             .encode_frame(&mut out);
                     }
                     eprintln!("Mission phase: sending explicit quest Create, SelectGoal and Notify once");
+                }
+                if let Some(heart) = self.heart.as_mut() {
+                    show_heart(heart, fixture.plan.player_index, &mut out)?;
                 }
                 Ok(Some(out.freeze()))
             }
