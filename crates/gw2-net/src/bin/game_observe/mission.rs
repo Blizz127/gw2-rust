@@ -91,6 +91,9 @@ pub enum Seen {
     /// selected target's agent id (object +0xc, the same field SkillBegin's
     /// target uses), 0 when none. Run 168: sent after Tab.
     Target(u32),
+    /// Client 18/19 (AgMsg) `{Dword, Dword, Float3 position, ...}`: the
+    /// player's movement report; the position in whole map units.
+    Moved { id: u16, position: [i32; 3] },
     Other(u16),
 }
 
@@ -605,6 +608,9 @@ struct Heart {
     done: bool,
     /// The completion reward (556 + bonus XP) has been sent.
     rewarded: bool,
+    /// Whether the player is inside the heart's area (heart 56 only; other
+    /// keys have no polygon here and count as always inside).
+    inside: bool,
 }
 
 /// Heart completion reward. Coins and karma are placeholders (the client
@@ -616,6 +622,31 @@ const HEART_COINS: u32 = 30;
 const HEART_KARMA: u32 = 50;
 const HEART_XP: u32 = 7354 * 7 / 10;
 
+/// Heart 56's area polygon (x, y map units), read from its client type-287
+/// record (content 1282852 offset 4224016: +0x40 Float2 array, +0x48 count
+/// 16). Centre 465.05, -26226.8, -3820.56.
+const HEART_56_POLYGON: [(f32, f32); 16] = [
+    (-4290.5, -26895.6), (-2586.4, -27380.6), (-1511.5, -27177.6), (-1238.0, -26547.5),
+    (-1437.1, -25318.5), (-2893.7, -24242.6), (-1184.0, -23906.0), (3026.0, -26504.0),
+    (2627.0, -28787.0), (1782.4, -29510.9), (19.0, -29976.0), (-1734.0, -30403.6),
+    (-2612.3, -29939.8), (-3751.3, -29076.1), (-4833.2, -28165.5), (-4800.0, -27501.4),
+];
+
+/// Even-odd point-in-polygon test on the x/y plane.
+fn inside_polygon(polygon: &[(f32, f32)], x: f32, y: f32) -> bool {
+    let mut inside = false;
+    let mut j = polygon.len() - 1;
+    for i in 0..polygon.len() {
+        let (xi, yi) = polygon[i];
+        let (xj, yj) = polygon[j];
+        if (yi > y) != (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi {
+            inside = !inside;
+        }
+        j = i;
+    }
+    inside
+}
+
 /// Server-chosen ids for the single research heart.
 const HEART_REGION: u32 = 1;
 const HEART_OBJECTIVE: u32 = 0x38;
@@ -626,9 +657,11 @@ fn show_heart(heart: &mut Heart, player: u32, out: &mut BytesMut) -> io::Result<
         RenownFrame209026::AddRegion { player, region: HEART_REGION },
         RenownFrame209026::CreateCounter { objective: HEART_OBJECTIVE, target: heart.target },
         RenownFrame209026::AddSubRegion { player, region: HEART_REGION, objective: HEART_OBJECTIVE, heart: heart.key },
-        RenownFrame209026::EnterSubRegion { player, heart: heart.key },
     ] {
         frame.encode_frame(out)?;
+    }
+    if heart.inside {
+        RenownFrame209026::EnterSubRegion { player, heart: heart.key }.encode_frame(out)?;
     }
     heart.player = Some(player);
     eprintln!("Mission phase: renown heart {} shown, 0/{} (server 651, 1090, 657, 655)", heart.key, heart.target);
@@ -886,10 +919,12 @@ impl MissionPhase {
 
     /// `target` kills complete renown heart `key` (a type-72 content key).
     pub fn with_heart(mut self, key: u16, target: u32) -> io::Result<Self> {
+        let spawn = self.population.as_ref().map(|f| f.plan.position);
         if target == 0 {
             return Err(io::Error::new(ErrorKind::InvalidInput, "heart target must be nonzero"));
         }
-        self.heart = Some(Heart { key, target, progress: 0, player: None, done: false, rewarded: false });
+        let inside = key != 56 || spawn.is_none_or(|p| inside_polygon(&HEART_56_POLYGON, p[0], p[1]));
+        self.heart = Some(Heart { key, target, progress: 0, player: None, done: false, rewarded: false, inside });
         Ok(self)
     }
 
@@ -1119,6 +1154,7 @@ impl MissionPhase {
             if let (Some(heart), Some((progress, done))) = (self.heart.as_mut(), carry.heart) {
                 heart.progress = progress;
                 heart.done = done;
+                heart.inside = heart.key != 56 || inside_polygon(&HEART_56_POLYGON, carry.spawn[0], carry.spawn[1]);
             }
             eprintln!("Mission phase: rejoin carry-over applied {carry:?}");
         }
@@ -1303,6 +1339,26 @@ impl MissionPhase {
                     eprintln!("Mission phase: respawn at {point:?} (server 86)");
                 }
                 eprintln!("Mission phase: client {id} respawn request -> player alive at full health (84 packed 0x49, 259/260, 169 0)");
+                Ok(Some(out.freeze()))
+            }
+            Seen::Moved { position, .. } if self.began => {
+                // 655/656 follow the player across heart 56's boundary; the
+                // client never tests the polygon itself (renown-heart note).
+                let Some(heart) = self.heart.as_mut() else { return Ok(None) };
+                let (Some(player), false, 56) = (heart.player, heart.done, heart.key) else { return Ok(None) };
+                let inside = inside_polygon(&HEART_56_POLYGON, position[0] as f32, position[1] as f32);
+                if inside == heart.inside {
+                    return Ok(None);
+                }
+                heart.inside = inside;
+                let mut out = BytesMut::new();
+                let frame = if inside {
+                    RenownFrame209026::EnterSubRegion { player, heart: heart.key }
+                } else {
+                    RenownFrame209026::LeaveSubRegion { player, heart: heart.key }
+                };
+                frame.encode_frame(&mut out)?;
+                eprintln!("Mission phase: player {} heart 56 area at {position:?} (server {})", if inside { "entered" } else { "left" }, frame.message_id());
                 Ok(Some(out.freeze()))
             }
             Seen::Target(agent) if self.living_hostile(*agent).is_some() => {
@@ -1524,6 +1580,7 @@ impl MissionPhase {
                     eprintln!("Mission phase: client message {id} ({used} bytes) [{}]", hex.join(" "))
                 }
                 Seen::Target(agent) => eprintln!("Mission phase: client 227 target agent {agent}"),
+                Seen::Moved { .. } => {}
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
@@ -1537,6 +1594,17 @@ impl MissionPhase {
     fn talk_event(id: u16, frame: &[u8]) -> Option<Seen> {
         let mut input = frame;
         match id {
+            18 | 19 => {
+                use gw2_proto::Decode;
+                let _ = u16::decode(&mut input).ok()?;
+                let _ = u32::decode(&mut input).ok()?;
+                let _ = u32::decode(&mut input).ok()?;
+                let position = [f32::decode(&mut input).ok()?, f32::decode(&mut input).ok()?, f32::decode(&mut input).ok()?];
+                position
+                    .iter()
+                    .all(|v| v.is_finite() && v.abs() < 1.0e7)
+                    .then(|| Seen::Moved { id, position: position.map(|v| v.round() as i32) })
+            }
             227 => {
                 use gw2_proto::Decode;
                 let _ = u16::decode(&mut input).ok()?;
@@ -1723,6 +1791,7 @@ pub(crate) mod tests {
                         Seen::Map(ClientMapEvent::AgentsLoaded) => 412,
                         Seen::Interact(_) | Seen::Skill(_) | Seen::RepeatStart(_) => 23,
                         Seen::Target(_) => 227,
+                        Seen::Moved { id, .. } => *id,
                         Seen::Conversation(ConversationReply209026::Choose { .. }) => 275,
                         Seen::Conversation(ConversationReply209026::Closed { .. }) => 276,
                     })
@@ -1763,7 +1832,10 @@ pub(crate) mod tests {
             let mut phase = populated_phase();
             let mut seen = phase.push(&input[..split]);
             seen.extend(phase.push(&input[split..]));
-            assert_eq!(seen, vec![Seen::Other(17), Seen::Other(18), Seen::Other(17)], "split {split}");
+            assert_eq!(seen.len(), 3, "split {split}");
+            assert_eq!(seen[0], Seen::Other(17), "split {split}");
+            assert!(matches!(seen[1], Seen::Moved { id: 18, .. }), "split {split}");
+            assert_eq!(seen[2], Seen::Other(17), "split {split}");
             assert!(phase.enabled(), "split {split}");
             assert!(phase.respond(&Seen::Other(17)).unwrap().is_none(), "no reply to agent traffic");
         }
@@ -2469,5 +2541,21 @@ pub(crate) mod tests {
         phase.hostiles[1].health = LEVEL1_NPC_HEALTH;
         assert!(phase.respond(&skill_at(4)).unwrap().is_none());
         assert_eq!(health_of(&phase, 4), LEVEL1_NPC_HEALTH);
+    }
+}
+
+#[cfg(test)]
+mod heart_area_tests {
+    use super::*;
+
+    #[test]
+    fn heart_56_area_contains_its_centre_but_not_the_spawn_or_waypoints() {
+        // The client polygon dips north-east of the spawn: the heart starts
+        // outside it, as in retail, and is entered by walking east.
+        assert!(!inside_polygon(&HEART_56_POLYGON, -3200.0, -25600.0), "Norn Mesmer spawn");
+        assert!(!inside_polygon(&HEART_56_POLYGON, 597.3, -30352.1), "Hero's Moot Waypoint");
+        assert!(inside_polygon(&HEART_56_POLYGON, -500.0, -26500.0), "inside near the centre");
+        assert!(inside_polygon(&HEART_56_POLYGON, 465.05, -26226.8), "heart centre");
+        assert!(!inside_polygon(&HEART_56_POLYGON, -9057.7, -24303.5), "Horncall Waypoint");
     }
 }
