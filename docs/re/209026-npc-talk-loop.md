@@ -944,3 +944,17 @@ agents. Respawn already revives the same agent with packed 0x49, so it works. A 
 event can likewise pre-spawn its NPCs at load and show them later. Open item: find the
 request's priority/queue field (`0x140cf5130` / `0x140d00c90`) and whether a play-time
 request is serviced at all.
+
+**Caveat and cross-lane evidence for run 172.** The creator lane traced the same
+resource pipeline for the character-creation preview model (runs 121–123, notes in
+`docs/re/209026-creation-model-pipeline.md` on main). They found:
+- the pump `0x140d01c30` runs, restarts at the head of the +0x170 list on every pass,
+  and checks its budget only after finalizer calls;
+- a deferred combined-file build stays queued, and the finalizer unlinks it only at
+  `0x140cf1b82`;
+- so starvation at the head of the queue is a concrete mechanism, though not yet proven
+  to be the cause.
+
+Our run-172 breakpoints sat on hot paths (AvManager loop, Advance, finalizer). They
+consume real frame time and may have amplified that starvation. Re-test the post-load
+NPC with sparse probes, or none, before concluding the request is never serviced.
