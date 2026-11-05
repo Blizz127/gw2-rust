@@ -25,6 +25,7 @@ use gw2_proto::{
     Guid,
     agent_behavior::{AgentBehaviorFrame209026, HealthTransitionDetails209026, HealthTransitionPayload209026},
     agent_control::AgentControl209026,
+    bags::{BagSlotFrame209026, InventoryItemFrame209026, InventorySlotCountFrame209026, STARTER_BACKPACK_ITEM, encode_minimal_item_creation},
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     experience::{EarnedLevelFrame209026, ExperienceFrame209026, level_for_experience},
@@ -365,6 +366,44 @@ pub struct MissionPhase {
     xp: Option<(u32, u32, u8)>,
     /// When the killed hostile NPC revives (10 s after death, research timing).
     respawn: Option<Instant>,
+    /// Research: item-creation message used to give the Starter Backpack.
+    starter_bag: Option<u16>,
+    /// Research: on each kill, a copy of the equipped weapon goes into the next
+    /// backpack slot (971 + 276). Holds the number of drops so far.
+    kill_loot: Option<u32>,
+}
+
+/// Backpack slots sized by 305 (Starter Backpack item 8932, def +0x4c).
+const STARTER_BAG_SLOTS: u32 = 20;
+/// Research instance IDs for the backpack and drops (registry is sparse).
+const STARTER_BAG_INSTANCE: u32 = 0x6f00;
+const LOOT_INSTANCE_BASE: u32 = 0x6f10;
+
+/// On an NPC kill: copy the fixture's weapon creation with a fresh instance
+/// and place it with 276 in the next backpack slot (docs/re/209026-npc-talk-loop.md, loot).
+fn award_kill_loot(
+    loot: &mut Option<u32>,
+    equipment: Option<&super::equipment::EquipmentFixture>,
+    character_index: u32,
+    out: &mut BytesMut,
+) -> io::Result<()> {
+    let Some(drops) = loot.as_mut() else { return Ok(()) };
+    if *drops >= STARTER_BAG_SLOTS {
+        eprintln!("Mission phase: backpack full, no loot");
+        return Ok(());
+    }
+    let Some(mut weapon) = equipment.and_then(|e| e.first_weapon()) else {
+        eprintln!("Mission phase: no weapon in the equipment fixture, no loot");
+        return Ok(());
+    };
+    let slot = *drops;
+    weapon.common.instance_id = LOOT_INSTANCE_BASE + slot;
+    weapon.common.guid = None;
+    weapon.encode_frame(out)?;
+    InventoryItemFrame209026 { character_index, item_instance: weapon.common.instance_id, reason: 0, slot }.encode_frame(out)?;
+    *drops += 1;
+    eprintln!("Mission phase: loot item {} -> backpack slot {slot} (server 971 + 276)", weapon.common.item_data_key);
+    Ok(())
 }
 
 /// Seconds between a test NPC's death and its revival (placeholder).
@@ -415,6 +454,8 @@ impl MissionPhase {
             autoattack_skill: None,
             xp: None,
             respawn: None,
+            starter_bag: None,
+            kill_loot: None,
         })
     }
 
@@ -494,6 +535,19 @@ impl MissionPhase {
     /// Research: award `per_kill` experience on every NPC kill (level 1 start).
     pub fn with_xp_per_kill(mut self, per_kill: u32) -> Self {
         self.xp = Some((per_kill, 0, 1));
+        self
+    }
+
+    /// Research: create the Starter Backpack with item-creation `message_id`
+    /// after BeginPlaying and equip it into bag slot 0 (server 300).
+    /// Requires with_starter_bag (276 needs 305's slots).
+    pub fn with_kill_loot(mut self) -> Self {
+        self.kill_loot = Some(0);
+        self
+    }
+
+    pub fn with_starter_bag(mut self, message_id: u16) -> Self {
+        self.starter_bag = Some(message_id);
         self
     }
 
@@ -604,6 +658,17 @@ impl MissionPhase {
                     out.extend_from_slice(skills.bytes());
                     eprintln!("Mission phase: sending explicit initial skills once");
                 }
+                if let Some(message_id) = self.starter_bag {
+                    let instance = STARTER_BAG_INSTANCE;
+                    encode_minimal_item_creation(message_id, instance, STARTER_BACKPACK_ITEM, &mut out)?;
+                    BagSlotFrame209026 { character_index: fixture.plan.character_index, bag_slot: 0, item_instance: instance }
+                        .encode_frame(&mut out);
+                    // 300 does not size m_inventorySlots; 305 grows it to the
+                    // backpack's 20 slots (item 8932 def +0x4c).
+                    InventorySlotCountFrame209026 { character_index: fixture.plan.character_index, slot_count: STARTER_BAG_SLOTS }
+                        .encode_frame(&mut out)?;
+                    eprintln!("Mission phase: Starter Backpack via server {message_id} + 300 bag slot 0 + 305 20 slots");
+                }
                 if let Some(QuestFixture { quest_id, flags, goal_id }) = fixture.quest {
                     // All character/player components now exist. 532 is not
                     // idempotent: it completes an old active goal. Send exactly
@@ -683,6 +748,7 @@ impl MissionPhase {
                         .encode_frame(&mut out)?;
                         eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
                         award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
+                        award_kill_loot(&mut self.kill_loot, fixture.equipment.as_ref(), fixture.plan.character_index, &mut out)?;
                         self.respawn = Some(Instant::now() + RESPAWN_DELAY);
                     }
                 }
@@ -725,6 +791,7 @@ impl MissionPhase {
                     .encode_frame(&mut out)?;
                     eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
                     award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
+                    award_kill_loot(&mut self.kill_loot, fixture.equipment.as_ref(), fixture.plan.character_index, &mut out)?;
                     self.respawn = Some(Instant::now() + RESPAWN_DELAY);
                 }
                 Ok(Some(out.freeze()))

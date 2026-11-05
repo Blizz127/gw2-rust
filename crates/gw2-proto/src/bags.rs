@@ -47,11 +47,13 @@ impl ContainerDialogFrame209026 {
 }
 
 /// Server 300: place `item_instance` in bag slot `bag_slot` of the character.
+/// Wire order is character, **bag slot, then item instance** (handler reads
+/// +0x6 as the slot and +0xa as the instance; instance 0 clears the slot).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BagSlotFrame209026 {
     pub character_index: u32,
-    pub item_instance: u32,
     pub bag_slot: u32,
+    pub item_instance: u32,
 }
 
 impl BagSlotFrame209026 {
@@ -60,9 +62,89 @@ impl BagSlotFrame209026 {
     pub fn encode_frame(&self, output: &mut BytesMut) {
         Self::MESSAGE_ID.encode(output);
         self.character_index.encode(output);
-        self.item_instance.encode(output);
         self.bag_slot.encode(output);
+        self.item_instance.encode(output);
     }
+}
+
+/// Server 305 `{character, slot count}`: handler `0x141251410` calls
+/// `0x14128d680`, which grows the inventory's `m_inventorySlots` array
+/// (+0xc0, count +0xd4) to `slot_count` and never shrinks it. Equipping a bag
+/// with 300 does not size this array; without 305, opening the inventory with
+/// a bag asserts ChCliInventory.cpp:653 (sandbox runs 146/147/149/150).
+pub struct InventorySlotCountFrame209026 {
+    pub character_index: u32,
+    pub slot_count: u32,
+}
+
+impl InventorySlotCountFrame209026 {
+    pub const MESSAGE_ID: u16 = 305;
+    /// CHAR_INVENTORY_SLOTS_MAX (assert at `0x1411eca90`).
+    pub const MAX_SLOTS: u32 = 0x200;
+
+    pub fn encode_frame(&self, output: &mut BytesMut) -> Result<()> {
+        if self.slot_count > Self::MAX_SLOTS {
+            return Err(Error::new(ErrorKind::InvalidInput, "inventory slot count exceeds 512"));
+        }
+        Self::MESSAGE_ID.encode(output);
+        self.character_index.encode(output);
+        self.slot_count.encode(output);
+        Ok(())
+    }
+}
+
+/// Server 276 `{character, item instance, Byte reason, slot}`: handler
+/// `0x1412500e0` calls `0x1411eca90`, which asserts `slot < 0x200`, requires
+/// `slot < m_inventorySlots.Count()` (sized by 305) and an empty slot, then
+/// stores the item there with location 3 (inventory). Reasons 0, 7 and 8 also
+/// call item vtable +0x1c8(1, 1) first (meaning unresolved, inferred to be the
+/// new-item mark).
+pub struct InventoryItemFrame209026 {
+    pub character_index: u32,
+    pub item_instance: u32,
+    pub reason: u8,
+    pub slot: u32,
+}
+
+impl InventoryItemFrame209026 {
+    pub const MESSAGE_ID: u16 = 276;
+
+    pub fn encode_frame(&self, output: &mut BytesMut) -> Result<()> {
+        if self.slot >= InventorySlotCountFrame209026::MAX_SLOTS {
+            return Err(Error::new(ErrorKind::InvalidInput, "inventory slot exceeds 511"));
+        }
+        Self::MESSAGE_ID.encode(output);
+        self.character_index.encode(output);
+        self.item_instance.encode(output);
+        self.reason.encode(output);
+        self.slot.encode(output);
+        Ok(())
+    }
+}
+
+/// Minimal item creation `{instance, item key, flags, Optional Guid absent}`
+/// for messages 959/962 (970 adds one Byte, 968 one Dword, before the Guid). Each message runs
+/// the shared factory `0x1413c7720(instance, key)` then its own initializer
+/// (959: item vtable +0x290, 962: +0x2a8, 970: `0x1413c7580`), so the message
+/// must match the item's class. Research codec; field roles beyond the prefix
+/// are unnamed.
+pub fn encode_minimal_item_creation(message_id: u16, instance: u32, item_key: u32, output: &mut BytesMut) -> Result<()> {
+    if ![959u16, 962, 968, 970].contains(&message_id) {
+        return Err(Error::new(ErrorKind::InvalidInput, "minimal item creation supports 959, 962, 968 and 970"));
+    }
+    message_id.encode(output);
+    instance.encode(output);
+    item_key.encode(output);
+    0u8.encode(output);
+    match message_id {
+        970 => 0u8.encode(output),
+        // 968's extra Dword is unnamed; 20 (the Starter Backpack's size) is a
+        // research guess at a capacity field.
+        968 => 20u32.encode(output),
+        _ => {}
+    }
+    0u8.encode(output); // Optional Guid: absent
+    Ok(())
 }
 
 #[cfg(test)]
@@ -87,11 +169,39 @@ mod tests {
         ContainerDialogFrame209026 { container_item_key: STARTER_BACKPACK_ITEM, byte_1: 0, instances: vec![] }
             .encode_frame(&mut out)
             .unwrap();
-        BagSlotFrame209026 { character_index: 1, item_instance: 0x7001, bag_slot: 0 }.encode_frame(&mut out);
+        BagSlotFrame209026 { character_index: 1, bag_slot: 0, item_instance: 0x7001 }.encode_frame(&mut out);
+        InventorySlotCountFrame209026 { character_index: 1, slot_count: 20 }.encode_frame(&mut out).unwrap();
+        assert!(InventorySlotCountFrame209026 { character_index: 1, slot_count: 513 }
+            .encode_frame(&mut BytesMut::new())
+            .is_err());
+        InventoryItemFrame209026 { character_index: 1, item_instance: 0x7002, reason: 0, slot: 3 }
+            .encode_frame(&mut out)
+            .unwrap();
+        assert!(InventoryItemFrame209026 { character_index: 1, item_instance: 1, reason: 0, slot: 512 }
+            .encode_frame(&mut BytesMut::new())
+            .is_err());
         let mut input = &out[..];
         assert_eq!(dynamic::decode_frame(&messages, &rules, &mut input).unwrap().0.id, 286);
         assert_eq!(dynamic::decode_frame(&messages, &rules, &mut input).unwrap().0.id, 300);
+        assert_eq!(dynamic::decode_frame(&messages, &rules, &mut input).unwrap().0.id, 305);
+        assert_eq!(dynamic::decode_frame(&messages, &rules, &mut input).unwrap().0.id, 276);
         assert!(input.is_empty());
+        for id in [959u16, 962, 968, 970] {
+            let mut frame = BytesMut::new();
+            encode_minimal_item_creation(id, 0x7000, STARTER_BACKPACK_ITEM, &mut frame).unwrap();
+            let mut input = &frame[..];
+            let all: Vec<_> = schema::parse(include_str!("../../../data/protocol/209026/server-tables.xml"))
+                .unwrap()
+                .protocols
+                .into_iter()
+                .filter(|p| p.name == "0")
+                .flat_map(|p| p.groups)
+                .filter(|g| g.name == "table-0x142260af0")
+                .flat_map(|g| g.server)
+                .collect();
+            assert_eq!(dynamic::decode_frame(&all, &rules, &mut input).unwrap().0.id, id);
+            assert!(input.is_empty());
+        }
         let mut keep = BytesMut::from(&b"x"[..]);
         assert!(ContainerDialogFrame209026 { container_item_key: 1, byte_1: 0, instances: vec![0; 11] }
             .encode_frame(&mut keep)
