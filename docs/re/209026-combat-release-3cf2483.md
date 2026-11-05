@@ -161,3 +161,23 @@ Checks:
   - no asserts.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s. The creator stays
   disabled.
+
+## Update: kit 56242d1 (live 2026-11-05 18:06:54Z)
+
+- Source: `56242d1`, the creator lane's `08b8c55` cherry-picked cleanly onto `72cca31`.
+- Change: an explicit, host-only saved-Norn supervisor mode with private-store checks and
+  a `--check-config` preflight. It adds `deploy/gw2-saved-store.py`. The default prepared
+  argv is unchanged, and saved mode is not enabled.
+- Kit: `/home/blizz/gw2-rust-56242d1`, 40 files.
+- Rollback: `/home/blizz/gw2-rust-3d079ad`.
+- Game binary SHA-256: `7866799636831581f899ebc8470836eaf6da34e88381cab8f7ec569436ac6a1e`.
+- `gw2-saved-store.py` SHA-256: `03e982d9ff7389eaf5d69dded8b4958db29491e560e5f89aede4ea3ee65bbcc6`.
+- SHA256SUMS SHA-256: `1f781e476bc38c2c6366742c9ed7bf8af0d3f65b91b4f95265009a69cc3b1296`.
+- Verified locally and on Banshee.
+
+Checks:
+- `deploy/test_saved_mode.py`: 6/6 passed.
+- `check_config`: 1/1 passed.
+- Workspace tests: no failures.
+- Supervisor smoke (prepared default): 4 listeners ready, 4 hostile-NPC flags.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
