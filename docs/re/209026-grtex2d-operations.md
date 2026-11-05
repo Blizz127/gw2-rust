@@ -502,3 +502,77 @@ and `ev_2f626fef1190f15a6b6c25fd7111f8e3aa40daba5ea37ca997e332df55a74907`;
 view labels/order `ev_dd18d4d2d631bfb36b111e6231b537301c51f8ba2f3817ab3a5056a2d23f591f`;
 complete context advance `ev_28a99e2b3de6ddcf7729552b9372c10e0612aefe8023429e06ec088b3e32423f`.
 Private export: `/home/blizz/re/gw2/notes/209026-texture-view-advance-chain-20261105.json`.
+
+## Enclosing view gates and the independent composite entry
+
+The enclosing entry is **`0x14094cc70`**, established by chained unwind
+records, not the apparent fragment start `0x14094d688`. Its four `.pdata`
+fragments start at `0x14094cc70`, `0x14094cde3`, `0x14094d569`, and
+`0x14094d688`; the latter fragments chain back to the same function. The
+normal instructions end at `0x14094da49`, followed by switch-table data.
+
+Within this function, the inspected view branches do **not** select a path
+that skips the texture call while retaining the composite call:
+
+| Gate | Verified continuation |
+| --- | --- |
+| Context `+0xb90 & 2`, earlier context `+0x74` cases, and the mode checks before `ViewAdvanceStress` | Optional setup converges before the advance pair |
+| `context->GetView()` through virtual `+0x110` at `0x14094d001` | Values 4, 7, 8, 11, 12, 15, 17 enter optional stress setup at `0x14094d029`; the other values 0..17 go directly to `0x14094d108`; both groups converge there |
+| Unsigned view value greater than 17 | Fatal assertion for `context->GetView()`, not a normal alternate advance path |
+| `comiss xmm6,xmm13` at `0x14094d4e4`, with XMM6 from context `+0x84` and XMM13 zero | `JBE 0x14094d8d4` skips the middle subsystem block but still reaches both advances |
+| Remaining middle-block branches | Converge at `0x14094d688`, then reach the same pair |
+
+The common path calls texture advancement at `0x14094d905`, then composite
+advancement at `0x14094d91f`, with no local conditional branch between them.
+This is static reachability on normal return from preceding calls. It does
+not establish that creator frames invoke this entry, that the calls return,
+or that the independently checked texture context `[0x14268b840]` is non-null.
+No numeric view value is assigned the meaning "creator" by this trace.
+
+The composite wrapper **`0x1412d8310`** is a complete five-byte leaf jump
+(`e9fba0ffff`) to **`0x1412d2410`**. That function walks the active composite
+list headed by `[0x1428a9740]`, using the link offset at `[0x1428a9730]`.
+For selected composites, it calls virtual `+8`, then checks dirty mask
+`+0xae4` and geometry-invalid flag `+0xb1c & 0x2000`. Dirty work reaches
+**`0x1412d25e0` at callsite `0x1412d253f`**. The per-pass processing flag
+can defer later composites in states 4 through 6; list traversal is not
+proof that every object was processed. This wrapper contains no texture
+advance call.
+
+There is also an independent object entry **`0x1412d7db0`**. It returns 2
+when the same dirty mask and geometry-invalid flag are clear; otherwise it
+calls **`0x1412d25e0` at `0x1412d7df6`**, forwarding R8D as the processor's
+EDX argument. Its caller leaf **`0x1412d71c0`** sets R8D to 1 and tail-jumps
+to it at `0x1412d71c6`. Neither entry calls texture advancement. The exact
+direct-reference query found this leaf; binding it to a creator UI call or
+virtual slot remains unproven. A runtime hit at `0x1412d25e0` alone therefore
+does not identify its caller or demonstrate normal texture servicing.
+
+Useful passive observation anchors are the enclosing entry `0x14094cc70`,
+texture callsite `0x14094d905`, the null-context branch `0x140a72d9a`,
+composite callsite `0x14094d91f`, and the two distinct processor callsites
+`0x1412d253f` / `0x1412d7df6`. The present source result supports observing
+these boundaries; it does not justify adding a pump call or changing flags.
+
+Evidence: chained bounds, switch, strings, and guards
+`ev_4667a2e961722b0002c86cbbe3d47881becb5e4d211dace5aa7ab7adc036604a`;
+enclosing disassembly
+`ev_735014fa34a2ad0902931971336e5ffa6ebeadba21afa6b6401c3492fb72b7a5`,
+`ev_15bae4b4674378bf21e32a07fd1f706f1d85f16fb6e41bc7418e24548deca294`,
+`ev_3f7db2e00782aa0296e91fc9394aaf267f5b2a0f0fea1966e0130c7be50c22b3`;
+corrected instruction boundary across the initial split at `0x14094d050`
+`ev_58804922ac7d4e2ff70af7e7bf846511b759c63b405c729ef6663af2a9e09cb9`;
+global composite body
+`ev_a0f2c1c06c7d50761940c5bf2c60132bae5b2779e05edfbd315176620b274f39`;
+independent object body and exact caller
+`ev_b94cf590588f357d87b00b0e49bcd5d8fb9f908be76407cee1778c77d368927c`,
+`ev_1025986ba85c48bfe1875f0db104ed7876ae2ca518b0873b77ccc5527d3cb616`,
+`ev_c4bff5ca3b6ad55eb25c011017af6aeba171c395bb2579a90575a4ff694c621b`.
+All reader processes exited zero. Raw and normalized terminal records are
+complete; some cumulative rendered frames were truncated. Unrelated process
+permission limitations remain in the full private Evidence bundle. No client
+runtime, working archive, or target mutation was used in this follow-up.
+
+Private export:
+`/home/blizz/re/gw2/notes/209026-vdf-texture-composite-gates-20261105.json`
+(SHA256 `357ec55e117c7c71d90aa7928b5c912db94e7b27c96cb386bba5859154ad4ec3`).
