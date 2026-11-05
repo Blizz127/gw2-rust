@@ -748,8 +748,10 @@ failures. This does not establish the exact earlier values read inside the
 call, which writer last changed the bit, or the current owner's own texture
 state; that owner was behind the four sampled heads.
 
-The common flags contain source-defined `GR_TEXTURE_CPU_ONLY` (`0x4`) and raw
-bit 8 (`0x100`). The inspected constructor path skips its immediate bit-16 set
+The common flags contain source-defined `GR_TEXTURE_CPU_ONLY` (`0x4`) and
+bit 8 (`0x100`), subsequently source-named `GR_TEXTURE_NOT_READY_ON_CREATE`
+in [the operation producer trace](209026-grtex2d-operations.md).
+The inspected constructor path skips its immediate bit-16 set
 when caller bit 8 is present. That is a concrete source-compatible path for the
 captured state, not proof that this was each object's creation path or that a
 later completion was never attempted. No flag or queue state was overridden.
@@ -772,3 +774,187 @@ and final unchanged read
 (exit zero, nontruncated, owned-process cleanup verified).
 Private export:
 `/home/blizz/re/gw2/notes/209026-creator-run128-readiness-bit-20261105.json`.
+
+## Run 129: initial preview binding and bounded observation failure
+
+This was a **failed diagnostic**, with useful early observations retained.
+Neither these records nor the controller's initial race-chooser artwork
+establish successful character rendering.
+
+Run 129 used the frozen lifecycle helper
+`f995b17f2534a9a115240a2cb5b963e92a478715d81acce2d0bb8c633f99af57`
+and a 45-second initial-scene soak before Norn selection. The controller added
+a bounded wait for `initial_soak_snapshot_before_rearm` after writing the
+initial marker; without that event it must not treat the intended initial
+snapshot as captured. The helper contract, guarded sites, and mock evidence
+are in [the operations note](209026-grtex2d-operations.md).
+
+The first available post-build record captured **scene 0**, owner record 1,
+with the manager's model matching the UI model. This establishes the actual
+scratch binding rather than inferring it from matching flags:
+
+| Field | First binding and early service samples |
+| --- | --- |
+| Model alternate blit entry 0 | Exactly manager scratch `+0xb58` |
+| Model alternate blit entry 1 | Exactly manager scratch `+0xb60` |
+| Scratch dimensions | Both 1024 by 1024 |
+| Scratch formats | 26 and 31, respectively |
+| Scratch levels | Both 9 |
+| Scratch flags | Both `0x3104`, readiness bit clear |
+| CPU backing | Present for both |
+| Operation heads | Both nonzero/even, hence nonempty |
+| Outstanding group count `+0x94` | Both zero |
+| Global scratch-set count | 1 |
+| Composite state `+0xb44` | 5 |
+| Component index `+0xb40` | 4 |
+| Completion stage `+0xb3c` | 0 |
+| Composite flags `+0xb1c` | `0x5007`, including model-geometry wait `0x4000` |
+| Component-invalid mask `+0xae4` | `0x7fff` |
+| Model finalized bit | Clear |
+
+The owned `0x1412d25e0` entry was observed at **+0.249 seconds**, followed
+by the owned call to `0x1412d7f20` at **+0.270 seconds**, both with second
+argument 1. These are times relative to the first binding, not process launch.
+They directly show that this initial preview receives composite and component
+processing before model finalization. The four-set limit was not exhausted
+in these samples. They do not establish whether every later processing pass
+ran, because these sites intentionally become one-shot until a marker.
+
+At **+57.925 seconds**, the helper stopped with
+**`bounded_read_failure_at_ui_frame`** while attempting the initial marker
+snapshot. It emitted no initial-soak snapshot, no later owner binding, and no
+completion-request/work event. Its final counters were four post-build
+callbacks, eleven sparse heartbeat callbacks, one owner, one component-call
+sample, and five total safe-prefix records including arm/finish. The stop
+record does not identify which field read failed; it must not be relabeled
+as a specific target resource failure or as proof that an operation pointer
+was corrupt. Earlier lightweight snapshots succeeded; the failed marker path
+also attempted deep operation-head reads, but the available record does not
+isolate that step.
+
+Consequently there is no captured late state to compare with the initial
+component index or to diagnose cap exhaustion. The absence of later request
+events is bounded to this instrumented interval and filtering contract, not
+a universal claim that the client never submits finishing work. The sampled
+1024-square/nine-level targets also do not fit the source trace's specialized
+one-level/zero-job edge; see [the CPU completion note](209026-grtex2d-cpu-work-completion.md).
+No readiness override or queue-policy change was made.
+
+Safe-prefix read at **2026-11-05 19:50:34 UTC**:
+`/home/blizz/gw2-sandbox/runs/run129-norn-creator-lifecycle/client.out`,
+74792 bytes, SHA-256
+`c28bff6e37dfeb4270799e4473df506d93d073d9f36c738f8398754a124b4611`.
+The initial marker existed and final appearance marker did not at that read.
+This digest identifies that read, not an assertion about subsequent controller
+cleanup or other log writes.
+
+Reader: `/home/blizz/re/gw2/notes/creator-scratch-run129-filter-20261105.py`.
+Runtime evidence:
+`ev_4f94dfc3d06cb9b739e434465d5ef3652b44a65952407bfade299661d774f88e`
+and `ev_9fdd4005ce3e84012f3f3aee86aae20feb4770c1ee6c4dd09c542c45eb7965ce`.
+Both reader processes exited zero with owned-process cleanup verified; the
+latter lists an unrelated `/proc/*/environ` permission failure in process
+sampling. No client attachment, control action, or frozen-input edit was
+performed by this audit.
+
+### Observer failure audit and separate resilient revision
+
+The frozen `f995...` helper has been preserved. Its UI callback first checks
+the current scene's manager/model pointers, then evaluates the entire deep
+snapshot as an argument to `emit`. A failure before that call means no partial
+snapshot is written. The last record identifies only `ui_frame`, so the
+following possibilities cannot be distinguished from run 129's output:
+
+| Read stage | Conditions that can terminate the old snapshot |
+| --- | --- |
+| UI identity and composite/model fields | A bounded memory read fails or required scalar unpack fails |
+| Model blit array | Count exceeds 64, nonzero count has null base, or an entry read fails |
+| Scratch wrapper/data/predicate metadata | Wrapper, data, vtable, predicate code, or scalar metadata read fails |
+| Optional nonempty operation head | Old eight-byte alignment guard rejects it, or a vtable/concrete-field read fails |
+
+An unrecognized texture vtable or mismatching predicate guard normally returns
+an explicitly unsupported texture; that branch alone is not a thrown failure.
+No run-129 record identifies the missing value or failing address. There was
+also no initial snapshot event before the finish record, so later rearming
+after a successfully emitted initial snapshot does not explain this output.
+
+One unsupported observer assumption was found: the old operation reader
+required `operation & 7 == 0`, while base constructor `0x140a6b880` asserts
+only `(operation+8) & 3 == 0`. The client therefore establishes four-byte
+alignment, not the reader's stricter eight-byte requirement. The normal
+processor at `0x140a6ff6c..0x140a6ffa6` takes `texture+0xa8` directly as the
+operation base and calls its vtable; no missing subtraction of the intrusive
+link offset was found. This corrects a source mismatch, **not** a proven
+explanation for the actual read failure. Static evidence:
+`ev_6d5c85c5f007bdefb31d6d8417b3156fcb85b43054cd9a662fad0017b09fca84`
+and `ev_839e302801a540a95578a1222ecdbcd5a509f4eed3ec203851a8c3269ed0adc6`.
+
+New private file:
+`/home/blizz/re/gw2/notes/creator-scratch-lifecycle-resilient-probe-20261105.py`.
+Entrypoint **`arm_creator_scratch_lifecycle_resilient(inf, slide)`**, output
+prefix **`GW2_CREATOR_SCRATCH_LIFECYCLE_V2`**, size **23,147 bytes**, SHA-256
+**`0a47d7f116712b33934e6b0b72218ca3c2e15ba59e4855624c3e9470117677b2`**.
+It keeps the same thirteen sites and observation bounds and introduces no
+target calls, explicit target writes, or additional global tracing.
+
+The revision starts each snapshot with owner-record and phase metadata,
+rereads current UI manager/model identities, and verifies manager `+0xaf0`
+before following their fields. A changed, unreadable, or mismatched identity
+is labeled and prevents speculative reads through the cached owner. Each
+optional scalar, texture, and deep operation read preserves preceding fields
+and returns a local `read_errors` entry with a fixed stage and safe error kind.
+One failed texture no longer discards the other texture, composite state, or
+available blit bindings. Operation alignment now follows the source's four-byte
+requirement and records only its modulo-eight class, never the pointer.
+
+Marker records can intentionally contain **`snapshot_status: partial`** and
+an unverified `owner_identity`. Seeing the event is not equivalent to a complete
+diagnostic: readers and the UI handoff must retain those labels. A failure
+outside the optional snapshot readers emits `observation_error` with owner
+tags, phase, stage, and error kind before stopping. Original exception messages,
+which may contain heap addresses, are not printed.
+
+Syntax and 33 focused host checks passed, including injected unreadable heads,
+four-byte-aligned operations, wrong alignment, unreadable wrappers/core fields,
+changed owner pointers, manager/model mismatch, partial marker output, and
+preservation of the frozen `f995...` hash. REA evidence:
+`ev_6167a05165ee9e8fd640a99f1554bdeeaccdb5ab538d8be481a6627da297107b`.
+These are mocked inferior/GDB checks with real pinned-image code guards;
+the revised helper has not been launched against the client by this audit.
+
+### Source-aware V3 revision prepared for run 130
+
+A separate file preserves both frozen predecessors:
+`/home/blizz/re/gw2/notes/creator-scratch-lifecycle-source-probe-20261105.py`.
+Entrypoint **`arm_creator_scratch_lifecycle_source(inf, slide)`**, prefix
+**`GW2_CREATOR_SCRATCH_LIFECYCLE_V3`**, size **25,427 bytes**, SHA-256
+**`8e9737a35d4c46c7449e7ca119a4fe33dbffc48d3f6d7416c2d6760e69d886c0`**.
+The prepared run-130 UI handshake must match that prefix and the unchanged
+`initial_soak_snapshot_before_rearm` event; its staging UI is owned by the
+navigation lane, separately from this helper.
+
+With the same thirteen sites and bounds, V3 extends only the marker snapshot
+of an active head whose concrete table is ordinary blit `0x141bfc780`. It
+reads that operation's retained source-data pointer at `+0x30` and samples
+one object. Source fields are read only after matching texture-data vtable
+`0x141bfc700`, readiness target `0x140a73860`, and its complete 41-byte frozen
+code guard. It records flags/readiness, dimensions, format, levels, outstanding
+groups, and operation-head classification. The source's own operation head is
+never followed, and its identity is not added to the work-hook watch set.
+Other operation or source types remain unknown; nulls and failed reads retain
+local diagnostic labels and surrounding snapshot fields.
+
+`predicate_from_current_fields` is a snapshot of the known readiness
+conjunction, not an observed predicate call or proof of completed blit work.
+It separates an unready retained source from other possible processing gates;
+a ready source alone does not establish that a pending blit's workers have
+finished or that normal processing should already have removed it.
+
+Syntax and 40 focused host checks passed, including all source predicate
+branches, null/unsupported sources, full-code-guard mismatch, a deliberately
+unreadable source head proving no recursion, local source-field failure, and
+unchanged `f995...` / `0a47...` hashes. REA evidence:
+`ev_483fc49743d380867798ef0abe1fd29b7a2ec012a73759d807e0dc637aa95060`.
+Private export:
+`/home/blizz/re/gw2/notes/209026-creator-scratch-source-probe-20261105.json`.
+No client run or attachment was performed during this preparation.

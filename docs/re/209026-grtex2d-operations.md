@@ -236,8 +236,10 @@ The composite creation path supplies exactly these flags:
    entry field selected in all four run-128 failed predicates.
 
 This is a concrete source path explaining both `0x3104` and selected entry
-`+0x10`. Runtime identity equality between each sampled head's alternate
-texture and its creating composite has not yet been captured. The scratch
+`+0x10`. Runtime identity equality between each of the four run-128 heads'
+alternate textures and its creating composite was not captured. Run 129 later
+established that equality for its owned initial scene-0 model; see the pipeline
+note for the bounded early samples and failed late diagnostic. The scratch
 targets are allocated CPU images, not archive-file records: this constructor
 chain does **not** supply a file or asset ID. Format selectors and blit-source
 keys must not be reported as file IDs.
@@ -325,3 +327,123 @@ Creation-side evidence:
 - `ev_974dc96f2303c53e9a5bde4069a1ef07f6834bca31a8e0f62cf159c111ff6c73`
   and `ev_512875f3fdcae3a02a03d3a90004d5ad9dade03759c1095047c04f829da10642`:
   original mip-reduction branch and common load-task completion tail.
+
+## Direct servicing gates: no demonstrated model-readiness cycle
+
+The exact-reference query found one direct caller of `0x1412d7f20`, at
+`0x1412d2717` inside `0x1412d25e0`. The dispatch table at `0x1412d2a5c`
+maps composite states **2 and 5** directly to `0x1412d26e4`: assert a nonzero
+component-invalid mask, derive the second argument from flag bit 4, and call
+`0x1412d7f20`. State **4** enters `0x1412d26cd`, calls scratch setup
+`0x1412d21a0`, and advances to state 5 only if that returns 2. It then falls
+through into the same component call. The `+0xb1c & 0x4000` wait is tested
+**after** `0x1412d7f20` returns 2, at `0x1412d2725`. Thus this direct call
+does not wait for the model's finalization callback before requesting scratch
+work. No dependency cycle follows from these gates alone.
+
+Component index `+0xb40` can still prevent reaching completion stages.
+`0x1412d7f20` returns early if component helper `0x1412d8950` returns zero;
+the inspected helper resolves/loads component textures and submits their
+blits, rather than testing the owned model's finalizer flag. Source-texture
+loading, scratch copying, and scheduling remain separate possible blockers.
+
+Two direct callers of `0x1412d25e0` were found:
+
+- Wrapper **`0x1412d7db0`**, call `0x1412d7df6`, skips processing only when
+  the component-invalid mask is zero and geometry-invalid flag `0x2000` is
+  clear. It does not first require model readiness.
+- Global composite processor **`0x1412d2410`**, call `0x1412d253f`, walks
+  a list rooted at `0x1428a9730` / head `0x1428a9740`. Its per-pass boolean
+  starts true. Once an earlier processed composite returns 1, that boolean
+  becomes false; later composites in states **4 through 6** are skipped
+  at `0x1412d24fd..0x1412d2513` for the remainder of that pass. Ready-model
+  virtual `+0x540` checks earlier in this function service a separate array
+  and are not a readiness gate around this list's call.
+
+The scratch limit's exact source name is now established by this processor's
+assertion: global Dword **`0x1428a970c` is `s_scratchTextureSetCount`**.
+Together, the four-set limit and per-pass skip explain why observing only a
+late appearance owner in state 4 could capture a downstream consequence of
+earlier work. Neither behavior has yet been attributed to a runtime sample.
+
+Evidence: exact caller query
+`ev_aabb08b299fb2419ed8cf853bd594ea768bcd803d67e7b14c7eabfecce35b267`,
+dispatch table
+`ev_6f634acf349b512b513f42c217566e024b7ae24153d9e5e85cc5db72208a9b1e`,
+component helper
+`ev_5d792af3b00a272f13c6dec5bbc6b28d7306f900196e1dc1821e1b5d7bbe7590`,
+processor callers
+`ev_419e2fc7292bf1cc1caaf89c0d1a029eeae233e63cca1c54d32447714d789e73`,
+and their bodies
+`ev_dc6e0e4e7a890840f86a6da07bda75924a6d34e931c9466359c4aaf834b87a98`.
+The complete CPU-work completion chain is in
+[the separate completion note](209026-grtex2d-cpu-work-completion.md).
+
+## Frozen lifecycle probe for the two-soak observation
+
+New private helper:
+`/home/blizz/re/gw2/notes/creator-scratch-lifecycle-probe-20261105.py`.
+Entrypoint **`arm_creator_scratch_lifecycle(inf, slide)`**; safe output prefix
+**`GW2_CREATOR_SCRATCH_LIFECYCLE`**. Frozen size **16,448 bytes**, SHA-256
+**`f995b17f2534a9a115240a2cb5b963e92a478715d81acce2d0bb8c633f99af57`**.
+All earlier helpers and run inputs remain unchanged. This replaces earlier
+texture/queue helpers rather than being installed alongside shared sites.
+
+The probe binds the first available creation scene's manager/model after its
+local build, with pre-binding creation history explicitly unobserved. It
+records the first four owner bindings and retains their tags plus the current
+binding. Later scene changes do not end observation or reread stale objects;
+the final current owner is sampled even when it has no scratch pair. Identity
+associations are reported explicitly when the same texture pointer was
+observed with multiple owner bindings; these associations are not a proof of
+allocation generations or exclusive ownership.
+
+Thirteen guarded sites include UI post-build and a sparse heartbeat,
+`0x1412d25e0` entry, scratch-setup return `0x1412d26d5`, the `0x1412d7f20`
+call, both scratch creation returns, both completion requests, and four
+completion hooks supplied by the completion trace. Service-entry/call/return
+samples are one-shot per tracked owner and sampling phase. Work hooks match
+at most ten concrete texture-data identities, with one start, one producer
+return, one pending and one completed poll, and one destructor join per
+identity. A native nonzero-count condition repeats the source poll gate to
+prevent zero/zero equality from repeatedly invoking Python. Destructor join
+is labeled `post_completion_branch`, not as proof that the ready-bit writer
+executed.
+
+Snapshots include composite `+0xb1c`, `+0xb44`, `+0xb40`, `+0xb3c`, the
+global scratch-set count, scratch dimensions/format/levels/flags and operation
+head classification, plus exact alternate-entry equality with the model's
+blit array. Deep operation-head reads occur only in marker snapshots. Heap
+addresses are tags; no texture pixels, arbitrary strings, or speculative file
+identifiers are emitted.
+
+The initial marker is
+**`/sandbox/logs/creator-initial-soak-complete`**. It produces an initial-soak
+snapshot and rearms one service sample while allowing observation to continue.
+The final marker remains
+**`/sandbox/logs/creator-quiet-soak-complete`**. It samples the then-current
+owner, rearms one final service sample, and ends after a sparse follow-up at
+least five seconds later. The UI must wait for the safe-prefix
+`initial_soak_snapshot_before_rearm` event before selecting Norn; writing the
+marker and immediately changing scenes would not guarantee an initial-owner
+snapshot. The records always include the actual sampled scene and owner.
+
+Bounds are 210 seconds from first binding, 20 seconds after the final marker,
+128 output records, 64 post-build callbacks, a 64-entry blit-array read limit,
+and native heartbeat ignore count 30. Time limits are checked at callbacks,
+not by an independent timer. No global pump tracing, target function calls,
+explicit target writes, client launch, or attachment is performed by this
+preparation. Native breakpoint traps still have cost; this is not an
+uninstrumented timing baseline.
+
+Syntax and 24 host-side checks passed, including both markers, early race
+ownership, later-owner continuation, stale-object avoidance, producer
+identity checks, pending/completed polls, partial-install cleanup, bounds,
+pointer redaction, and real-image site guards. REA evidence:
+`ev_00a59dcf3daf0395965f1cbb73ca1631ca72557a4900a177794081a1d589200b`.
+The checks use mocked GDB/inferior memory; actual native command-list filtering
+is supported by the earlier owned-GDB fixture, not newly claimed as tested
+against a live GW2 process here.
+
+Private source/probe export:
+`/home/blizz/re/gw2/notes/209026-creator-scratch-lifecycle-20261105.json`.

@@ -183,3 +183,77 @@ RIP-relative LEA encodings plus aligned absolute Qwords in readable
 non-executable sections, validating every returned code candidate at a decoded
 instruction boundary. Their negative results exclude other encodings,
 indirect construction, and runtime callers.
+
+## Complete constructor check: no one-level fast path
+
+A bounded followup inspected the complete `0x140a71e80..0x140a71fed`
+operation-creation body and its immediate base constructor
+`0x140a6b880..0x140a6b930`. Neither reads texture mip count `+0x68`, checks
+for one or fewer levels, or sets the readiness bit.
+
+The creation entry asserts a non-null wrapper, type `DDI_TEXTURE_2D`, and
+texture flag `GR_TEXTURE_CPU_ONLY` (`0x4`). It saves the prior tagged operation
+head, allocates `0x58` bytes, and passes the full texture rectangle
+`{0, 0, width, height}` to the base constructor. That constructor only
+initializes its base vtable, intrusive list link, and rectangle. The creation
+entry then installs `0x141bfc7e0`, initializes the group, job array and completion
+counter to zero, retains the texture, and appends the operation and global
+target link. Only the prior list head controls immediate startup: an empty
+list calls `0x140a75110` at `0x140a71fd4`; otherwise processing is deferred.
+
+Consequently, **if work production yields zero jobs and that state remains
+unchanged**, subsequent normal visits to `0x140a6feb0` take startup again and
+return zero. The normal processing path does not delete that operation as
+complete. This is a conditional static result, not an observed indefinite
+loop or evidence that run 129 has zero jobs.
+
+The mip argument entering texture creation must be distinguished from the
+stored count. In `0x140a71800`, a nonzero requested count requires some bit in
+`flags & 0x61`; the assertion names the combined flags
+`GR_TEXTURE_FORCE_MIP_LEVELS | GR_TEXTURE_AUTOGEN_MIPMAPS |
+GR_TEXTURE_DISABLE_MIP_MAPPING`. Flags `0x3104` do not contain those bits.
+The creation-side scratch path supplies zero. `0x140a740c0` treats zero as
+automatic calculation: at `0x140a7417d` it calls `0x140b3cd50`, then stores
+the resulting positive count at texture `+0x68`. The ready-bit suppression
+at `0x140a7194a` independently tests flag bit `0x100`.
+
+For format 26 (`0x1a`), classification at `0x141c82658` is `0xb1`, whose bit
+zero makes `0x140b3e190` supply a 4-by-4 block size. Automatic count calculation
+uses `max(1, min(width >> 2, height >> 2))` and the verified bit-scan helper
+`0x1409bf190`. From its exact branches, the automatic level count is one only
+when that scaled minimum is one. Given the constructor's dimension assertions
+(`width >= 4` and `height >= 4`), this requires the smaller dimension to be
+between four and seven. Both dimensions at least eight yield at least two
+levels. This derivation does not assign dimensions to any runtime texture.
+
+The specialized zero-job edge additionally requires the job producer's base
+area threshold of `0x1000`. A large but very narrow texture could satisfy both
+conditions; an automatically sized square texture of at least 64-by-64 cannot.
+The ordinary non-specialized asynchronous path still creates one job. Thus
+requested mip argument zero alone is not evidence for zero jobs, and the
+format-26 source path substantially narrows the dimensions that could reach
+the edge. Actual scratch format, dimensions, stored level count, operation
+count and completed count remain the discriminating observations.
+
+The earlier component-acquisition boundary is traced separately in
+[the component source-input note](209026-composite-component-source-inputs.md).
+Its loop ordinal and incomplete-return conditions must be distinguished from
+this later mip-operation job count and completion predicate. In particular,
+successful component dispatch can leave source-dependent blits queued before
+the scratch completion operation is requested.
+
+Complete private followup:
+`/home/blizz/re/gw2/notes/209026-grtex2d-zero-job-constructor-20261105.json`,
+SHA-256 `394ca5e45fbf90562d82a457bc5f1e1215ca52d9d6bb081e3363667a06862575`.
+All five captures exited zero, were nontruncated, and verified owned-process
+cleanup. The full constructor evidence is
+`ev_8c30f3994ec6c1d1a6ac7d906181036d527d7f26f356a9be071c07c461562266`;
+base constructor, flag guards, and stored-level normalization are
+`ev_e8407f22d5b9cf0f3ca993fd91f6cc7b996aa8089be10a6ebc090eb01e26f16a`;
+automatic mip calculation is
+`ev_d7d4330f3a454a54066dac93f4b1ea456b0bfd23622b1518b6deaa3e3c7dcccc`;
+format block selection is
+`ev_43441c7191fae119544702f5fba68deaaf8997465493752123a739c646919ffe`;
+the exact format-26 table value and bit-scan leaf are
+`ev_3a2488e739faf3e03d65279ba2b558aa4b3f58b15909ba1f2517f10d0819fe2d`.
+This followup introduced no runtime action or patch.
