@@ -655,26 +655,51 @@ New post-load spawns would hit the model-streaming problem.
 
 There were no asserts.
 
-### Loot route (traced, not implemented)
+### Loot route: storage bag (runs 145–151) and kill drops
 
-- **Server 300** `{Dword character, Dword item instance, Dword bag slot}` (handler
-  `0x141251100`): resolves the character and its inventory, then the item through
-  item-service `0x1413c71f0`, and calls bag setter `0x141291a10` (ChCliItemStorageBags.cpp).
-  The setter asserts **`bagSlot < GetBagSlotCount()`** and dispatches on the item's kind.
+All handlers below are in ChCliMsg.cpp (table `0x14216e940`). Each resolves the
+character (`0x1411b4500`) and then its inventory (character vtable +0xc8).
+
+- **Server 300** `{Dword character, Dword bag slot, Dword item instance}` (handler
+  `0x141251100` → bag setter `0x141291a10`, ChCliItemStorageBags.cpp) equips a bag item
+  into `m_bags[slot]` (inventory +0x380, count +0x440 = 5). It asserts `bagSlot <
+  GetBagSlotCount()`. If the item already had a location, the setter first clears it
+  (location 3 → slot array +0xc0, 6 → +0xe0, 10 → +0x100).
+- **Server 305** `{Dword character, Dword slot count}` (handler `0x141251410` →
+  `0x14128d680`) grows **`m_inventorySlots`** (array +0xc0: pointer +0xc8, count +0xd4)
+  to the given count. It never shrinks the array. It is the only caller of that grow
+  function. **300 does not size this array.** Runs 146, 147, 149 and 150 created the
+  Starter Backpack (item **8932**, 20 slots at def +0x4c) with 959, 962, 968 and 970,
+  then equipped it with 300. Opening the inventory then asserted every time:
+  `ChCliInventory.cpp:653 "slotIndex < m_inventorySlots.Count()"`.
+  **Run 151** (959 + 300 + 305 {char, 20}) opened the inventory with "Starter Backpack",
+  0/20 and 20 empty slots, with no assert.
+- **Server 276** `{Dword character, Dword item instance, Byte reason, Dword slot}`
+  (handler `0x1412500e0` → `0x1411eca90`) puts an item into inventory slot `slot`.
+  That function asserts `slot < 0x200` (CHAR_INVENTORY_SLOTS_MAX), that the slot is in
+  range and that it is empty. It then sets the item's location to 3 (inventory) and
+  notifies listeners. Reasons 0, 7 and 8 also call item vtable +0x1c8(1, 1) first. The
+  meaning of that call is unresolved; it is probably the new-item mark.
+- **Server 308** `{character, bag slot, item}` (→ `0x141291ca0`) replaces an equipped
+  bag. It asserts ITEM_TYPE_BAG (type 3), a non-null `m_bags[bagSlot]`, and an item
+  location of inventory, overflow or shared. **Server 301** `{character, Byte}` sets the
+  bag-slot count (+0x440). **Server 302** (`0x141290ea0`) rewrites the +0x448/+0x450
+  shared-slot array.
 - **Server 286** `{Dword container key, Byte, ArrayVarSmall[≤10] Dword}` (handler
   `0x141250710`) is a **container dialog**, the "open a loot container" UI, **not bag
-  storage**. Sandbox run 145 sent it with the Starter Backpack (item **8932**, name text
-  22242, item type field 3, 20 slots) and the client asserted
+  storage**. Run 145 sent it with item 8932 and the client asserted
   `DlgContainerUi.cpp:2413 "containerDef->GetItemType() == Content::ITEM_TYPE_CONTAINER"`.
-  That broke the session. The loot wiring was reverted; the codec is kept as
-  `ContainerDialogFrame209026`.
+  The codec is kept as `ContainerDialogFrame209026`.
 
-So a kill drop needs:
-1. a storage bag. That's not 286. It's probably the Starter Backpack 8932 equipped into
-   an inventory bag slot, a route not traced yet;
-2. an item instance (generic item creation; only armor and weapon creation codecs exist
-   today, `item.rs`);
-3. 300 into a bag slot.
+The observer now does the following:
+- `--mission-starter-bag 959` sends 959 {0x6f00, 8932}, then 300 {char, 0, 0x6f00},
+  then 305 {char, 20}.
+- `--mission-kill-loot` handles each kill: it copies the equipment fixture's 971 weapon
+  with a fresh instance (0x6f10 + n), then sends 276 {char, instance, 0, n}.
 
-Server 285 `{character, item instance}` removes a bag item. Loot tables themselves are
-server data.
+**Run 152** (hostile minotaur, auto-attack, XP, respawn, plus `--mission-starter-bag 959
+--mission-kill-loot`): two kills sent two drops of item 33355 (971 + 276 slots 0 and 1).
+Opening the inventory afterwards showed "Starter Backpack" 2/20 with both weapons in
+slots 0 and 1, and no assert. The weapon copy only tests the drop path. Retail loot tables
+are server data.
+Server 285 `{character, item instance}` removes a bag item.
