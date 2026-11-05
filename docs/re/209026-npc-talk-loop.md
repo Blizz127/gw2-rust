@@ -859,3 +859,39 @@ placements for it. Real keys with coordinates, all taken from map 28:
 
 Candidate species: 4079 Wolf, 4080 Alpha Wolf, 7200 Son of Svanir, 7951 Modniir Hunter,
 8013 Juvenile Boar. The story text is encrypted; its keys are server-supplied.
+
+## Several hostile NPCs (server behaviour, not client evidence)
+
+`--mission-hostile-npc SPECIES,X,Y,Z` may be repeated (up to 16): the i-th gets agent
+index 3+i (talk NPC 2, player 1). Each has its own health (`LEVEL1_NPC_HEALTH`) and
+respawns independently 10 s after its death. A SkillBegin damages `request.target`
+when that is a living hostile NPC. Auto-attack (repeat start, no target on the wire)
+hits the NPC last attacked with a SkillBegin if alive, else the living hostile NPC
+nearest the player spawn. With `--mission-npc-attack` the attacker is the NPC the
+player hit most recently; when it dies another hit, living NPC takes over, and the
+attacks stop when none is left. Downed/defeat/rally rules are unchanged.
+
+### Runs 168–169: four hostile NPCs and client target selection (227)
+
+Run 168 spawned four NPCs with the population:
+
+| Agent | Species | Position |
+|---|---|---|
+| 3 | 1544 Branded Minotaur | -3000, -25300 |
+| 4 | 4079 Wolf | -2900, -25850 |
+| 5 | 8013 Juvenile Boar | -3500, -25350 |
+| 6 | 7200 Son of Svanir | -3400, -25900 |
+
+All are at z -3742. The minotaur and the wolf render and can be targeted; the wolf's
+tooltip reads "Howls to Summon Allies". Each NPC dies, drops loot and respawns on its own.
+
+Auto-attack (`[0x29][slot]`) carries no target. After Tab moved the selection to the
+wolf, run 168 kept hitting the minotaur. The client reports its selection with **client
+227 `{Dword agent}`** (sender `0x1412646b0`, CharForce.cpp). It sends the selected
+object's +0xc, the same agent id SkillBegin's target uses, or 0 for none. The observer
+now uses a living hostile selection as the auto-attack target. In run 169, Tab sent 227
+agent 4 and auto-attack hit and killed the wolf, with the Mesmer sword animation playing.
+227 agent 0 follows a death.
+
+Floating numbers were still not visible 0.12 s after each hit. The client's own fade-in
+is 0.05 s and its total lifetime 0.45 s.

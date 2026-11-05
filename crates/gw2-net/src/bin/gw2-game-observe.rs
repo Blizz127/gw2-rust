@@ -89,8 +89,8 @@ struct Fixtures<'a> {
     population_delay: Duration,
     /// Opt-in talkable test NPC (docs/re/209026-npc-talk-loop.md).
     talk_npc: Option<mission::TalkNpc>,
-    /// Opt-in hostile test NPC: species and position.
-    hostile_npc: Option<(u32, [f32; 3])>,
+    /// Opt-in hostile test NPCs: species and position, one per flag (agent 3, 4, ...).
+    hostile_npcs: Vec<(u32, [f32; 3])>,
     /// Research: answer SkillBegin with server 34 + 0x78.
     skill_order_echo: bool,
     /// Research: hostile NPC casts this skill on each player SkillBegin.
@@ -130,7 +130,7 @@ fn observe(
         creation,
         population_delay,
         talk_npc,
-        hostile_npc,
+        hostile_npcs,
         skill_order_echo,
         npc_cast,
         damage_on_skill,
@@ -168,7 +168,7 @@ fn observe(
     if let Some(npc) = talk_npc {
         mission = Some(mission.ok_or_else(|| invalid("talk NPC requires a mission phase"))?.with_talk_npc(npc));
     }
-    if let Some((species, position)) = hostile_npc {
+    for (species, position) in hostile_npcs {
         mission = Some(
             mission
                 .ok_or_else(|| invalid("hostile NPC requires a mission phase"))?
@@ -377,7 +377,7 @@ fn main() -> io::Result<()> {
     let mut initial_health: Option<f32> = None;
     let mut talk_npc_spec: Option<(u32, [f32; 3])> = None;
     let mut talk_npc_speaker: Option<String> = None;
-    let mut hostile_npc: Option<(u32, [f32; 3])> = None;
+    let mut hostile_npcs: Vec<(u32, [f32; 3])> = Vec::new();
     let mut skill_order_echo = false;
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
@@ -569,8 +569,8 @@ fn main() -> io::Result<()> {
                 npc_cast = Some(text.parse().map_err(|_| invalid("invalid NPC cast skill key"))?);
             }
             "--mission-hostile-npc" => {
-                if hostile_npc.is_some() {
-                    return Err(invalid("duplicate --mission-hostile-npc"));
+                if hostile_npcs.len() >= mission::MAX_HOSTILE_NPCS {
+                    return Err(invalid("too many --mission-hostile-npc (at most 16)"));
                 }
                 let text = args.next().ok_or_else(|| invalid("missing hostile NPC SPECIES,X,Y,Z"))?;
                 let parts: Vec<&str> = text.split(',').collect();
@@ -579,7 +579,7 @@ fn main() -> io::Result<()> {
                 };
                 let species: u32 = species.parse().map_err(|_| invalid("invalid hostile NPC species key"))?;
                 let [x, y, z] = [x, y, z].map(|v| v.parse::<f32>().map_err(|_| invalid("invalid hostile NPC position")));
-                hostile_npc = Some((species, [x?, y?, z?]));
+                hostile_npcs.push((species, [x?, y?, z?]));
             }
             "--mission-talk-npc-speaker" => {
                 if talk_npc_speaker.is_some() {
@@ -636,7 +636,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z] [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
+                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
                 ));
             }
         }
@@ -701,35 +701,35 @@ fn main() -> io::Result<()> {
     if initial_health.is_some() && !has_population {
         return Err(invalid("--mission-health requires --mission-population"));
     }
-    if npc_attack_damage.is_some() && (hostile_npc.is_none() || initial_health.is_none() || damage_on_skill.is_none()) {
+    if npc_attack_damage.is_some() && (hostile_npcs.is_empty() || initial_health.is_none() || damage_on_skill.is_none()) {
         return Err(invalid("--mission-npc-attack requires --mission-hostile-npc, --mission-health and --mission-damage-on-skill"));
     }
     let npc_attack = npc_attack_damage.zip(initial_health);
     if sourced_damage.is_some() && damage_on_skill.is_none() {
         return Err(invalid("--mission-sourced-damage requires --mission-damage-on-skill"));
     }
-    if kill_loot && (starter_bag.is_none() || hostile_npc.is_none()) {
+    if kill_loot && (starter_bag.is_none() || hostile_npcs.is_empty()) {
         return Err(invalid("--mission-kill-loot requires --mission-starter-bag and --mission-hostile-npc"));
     }
     if starter_bag.is_some() && !has_population {
         return Err(invalid("--mission-starter-bag requires a population"));
     }
-    if xp_per_kill.is_some() && hostile_npc.is_none() {
+    if xp_per_kill.is_some() && hostile_npcs.is_empty() {
         return Err(invalid("--mission-xp-per-kill requires --mission-hostile-npc"));
     }
-    if autoattack_skill.is_some() && hostile_npc.is_none() {
+    if autoattack_skill.is_some() && hostile_npcs.is_empty() {
         return Err(invalid("--mission-autoattack-skill requires --mission-hostile-npc"));
     }
-    if damage_on_skill.is_some() && hostile_npc.is_none() {
+    if damage_on_skill.is_some() && hostile_npcs.is_empty() {
         return Err(invalid("--mission-damage-on-skill requires --mission-hostile-npc"));
     }
-    if npc_cast.is_some() && hostile_npc.is_none() {
+    if npc_cast.is_some() && hostile_npcs.is_empty() {
         return Err(invalid("--mission-npc-cast requires --mission-hostile-npc"));
     }
     if skill_order_echo && !has_population {
         return Err(invalid("--mission-skill-order-echo requires a population"));
     }
-    if hostile_npc.is_some() && !has_population {
+    if !hostile_npcs.is_empty() && !has_population {
         return Err(invalid("--mission-hostile-npc requires a population"));
     }
     if (talk_npc_spec.is_some() && !has_population) || (talk_npc_speaker.is_some() && talk_npc_spec.is_none()) {
@@ -863,6 +863,7 @@ fn main() -> io::Result<()> {
         let saved_population = saved_population.clone();
         let creation = creation.clone();
         let talk_npc = talk_npc.clone();
+        let hostile_npcs = hostile_npcs.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
             let fixtures = Fixtures {
@@ -875,7 +876,7 @@ fn main() -> io::Result<()> {
                 creation,
                 population_delay,
                 talk_npc,
-                hostile_npc,
+                hostile_npcs,
                 skill_order_echo,
                 npc_cast,
                 damage_on_skill,
