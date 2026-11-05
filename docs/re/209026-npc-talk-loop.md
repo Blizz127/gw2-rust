@@ -532,3 +532,21 @@ The scan tooling (`model-refs.*`) is kept in `~/re/gw2/notes/209026-mesmer-re-ha
 - **Player heal:** the slot-6 heal icon shows a darkened, cooldown-like overlay at
   1.5 s, which earlier runs didn't show. That may be the client's own predicted cast.
   Unconfirmed.
+
+### Run 139: server-side damage updates the NPC's health in the client
+
+`--mission-damage-on-skill 40` (with `--mission-hostile-npc`): when a player SkillBegin
+targets the hostile NPC (target = agent 3), the server lowers the NPC's tracked health
+and sends **server 257 `Currents {current, 0}`** for its character index. That is
+Codex's `HealthFrame209026`; the NPC was created with 256 at 100/100.
+
+**Run 139:** Tab, then the heal (10176) aimed at the minotaur. The server logged 100 → 60.
+The client's **target frame dropped from 100% to 61%** (overhead bar too), with no assert.
+So the client accepts server-driven health changes on NPCs, which is the base of a damage
+pipeline.
+
+Placeholders and open items:
+- the amount is a fixed research value, not skill content;
+- the player's heal standing in for an attack is only a trigger;
+- death at 0 (likely a packed dead transition through server 84, per
+  `docs/re/209026-health-transitions.md`) isn't exercised yet.

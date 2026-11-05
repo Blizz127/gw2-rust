@@ -27,6 +27,7 @@ use gw2_proto::{
     agent_control::AgentControl209026,
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
+    health::{HealthFrame209026, HealthOperation209026},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
     npc_talk::{ConversationReply209026, InteractRequest209026, TalkNpcPlan209026, TalkSession209026},
     skill_order::{AgentBehaviorOrderFrame209026, SkillBeginRequest209026, SkillOrder209026},
@@ -350,6 +351,9 @@ pub struct MissionPhase {
     /// Research: on each player SkillBegin, order the hostile NPC to cast this
     /// skill (server 34 + 0x78, slot 23), with its own behavior-value counter.
     npc_cast: Option<(u32, u32)>,
+    /// Research: on each player SkillBegin aimed at the hostile NPC, lower its
+    /// health by this amount through server 257 (amount, remaining health).
+    damage_on_skill: Option<(f32, f32)>,
 }
 
 impl MissionPhase {
@@ -378,6 +382,7 @@ impl MissionPhase {
             hostile: None,
             skill_order_echo: false,
             npc_cast: None,
+            damage_on_skill: None,
         })
     }
 
@@ -438,6 +443,13 @@ impl MissionPhase {
     /// sends SkillBegin (docs/re/209026-npc-talk-loop.md section 6).
     pub fn with_npc_cast(mut self, skill_key: u32) -> Self {
         self.npc_cast = Some((skill_key, 0x4000_0000));
+        self
+    }
+
+    /// Research: player skills aimed at the hostile NPC lower its health by
+    /// `amount` via server 257 (the NPC spawns with 100). Clamped at 0.
+    pub fn with_damage_on_skill(mut self, amount: f32) -> Self {
+        self.damage_on_skill = Some((amount, 100.0));
         self
     }
 
@@ -544,6 +556,24 @@ impl MissionPhase {
                     if reply.is_some() { "talk NPC: opening conversation" } else { "not the talk NPC" }
                 );
                 Ok(reply.map(BytesMut::freeze))
+            }
+            Seen::Skill(skill)
+                if self.began
+                    && self.damage_on_skill.is_some()
+                    && self.hostile.as_ref().is_some_and(|plan| u32::from(plan.agent_index) == skill.request.target) =>
+            {
+                let npc = self.hostile.as_ref().unwrap().agent_index;
+                let (amount, health) = self.damage_on_skill.unwrap();
+                let remaining = (health - amount).max(0.0);
+                self.damage_on_skill = Some((amount, remaining));
+                let mut out = BytesMut::new();
+                HealthFrame209026 {
+                    character_index: u32::from(npc),
+                    operation: HealthOperation209026::Currents { current: remaining, second_current: 0.0 },
+                }
+                .encode_frame(&mut out);
+                eprintln!("Mission phase: skill {} hit NPC {npc}: health {health} -> {remaining} (server 257)", skill.request.skill_key);
+                Ok(Some(out.freeze()))
             }
             Seen::Skill(skill) if self.began && self.npc_cast.is_some() && self.hostile.is_some() => {
                 let npc = self.hostile.as_ref().unwrap().agent_index;
