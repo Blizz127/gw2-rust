@@ -982,3 +982,13 @@ Not done yet:
 - 384, which places the heart marker on a heart NPC;
 - 556, the completion reward;
 - the "inside heart" region test (the observer sends 655 unconditionally).
+
+**Run 175 (no probes).** This repeated the run-171 post-load wolf (agent 20, spawned after
+BeginPlaying at -3000, -25300) with the runner's default per-frame move-trace breakpoints
+disabled (`GW2_RUNNER_MOVE_TRACE` defaults to 0 in the run copy) and no other probes, so
+0 trace lines were logged. The wolf **still never rendered**; the screenshot shows that
+spot empty. Starvation caused by debugger breakpoints is therefore not the cause. The
+post-load request really stalls in the client's resource pipeline, consistent with the
+creator lane's head-of-queue / deferred-build finding.
+
+The workaround stays: spawn everything during map load.
