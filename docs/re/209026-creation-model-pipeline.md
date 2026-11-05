@@ -1556,3 +1556,157 @@ destruction. The [same-call contract](209026-empty-composite-repair-contract.md)
 requires guarded frame, owner, operation, group and job identities before any
 write. No renderer fix or saved-Norn activation has been published from this
 evidence. The live server remains separately recorded in the release note.
+
+## Run 133: four guarded completion writes followed by native retirement
+
+Run 133 was an explicitly enabled **private repair experiment**, using
+`repair=True` and frozen helper SHA-256
+`48a01c74e03f97c1b26387f4cc2b4cac690b23f7fdf37a2aaac1e5a35eec5f22` in
+`/home/blizz/gw2-sandbox/runs/run133-norn-creator-empty-job`. Input manifest:
+`d64933a376559d35e38f733b78c249f04510dd4150d76def925eedc654cf38b6`.
+It is not an observation of unmodified client behavior or proof of retail
+texture correctness. The audit itself remained read-only and performed no
+client, container or archive action.
+
+The helper's admitted operations were tied to the exact current empty-call
+frame and owner, concrete source/destination operation, job and group. It
+verified the fresh unsubmitted group state, job generic state **5**,
+reference count **1**, and completion memory **0**, together with the source
+validation conditions in the frozen contract. Lifetime watches were armed
+before the write. This addresses the missing early allocation continuity in
+run 132 for these admitted generations; address tags alone remain
+insufficient for unrelated observations.
+
+All **four** qualified generations followed the complete observed sequence:
+qualification, Dword `job+0xf8` write **0→1**, readback **1**, actual native
+completion getter **EAX 1**, then exact operation destructor entry with its
+watch retired. No native release completion was directly observed at that
+entry.
+
+| Generation / owner | Qualified | Write/readback | Actual EAX-1 poll | Destructor entry |
+| --- | --- | --- | --- | --- |
+| 1 / 1 | +87.900 s | +87.900 s | +88.150 s | +88.176 s |
+| 2 / 2 | +154.817 s | +154.817 s | +155.026 s | +155.053 s |
+| 3 / 2 | +155.651 s | +155.652 s | +156.146 s | +156.172 s |
+| 4 / 2 | +158.024 s | +158.025 s | +158.073 s | +158.105 s |
+
+Times are relative to helper arming, not the first owner binding. **There
+were zero observed native EAX-zero polls in this run.** The recorded zero
+before each write was a memory guard, not an earlier call to the native
+getter. Consequently the evidence is a guarded memory change followed by a
+native poll of one; it must not be described as an observed same-job native
+poll changing from zero to one.
+
+The admitted empty geometry was varied and remained explicitly recorded:
+
+| Generation | Loaded primary dimensions | Original source rectangle | Clamped rectangle |
+| --- | --- | --- | --- |
+| 1 | 256 × 512 | `[256,512,512,768]` | `[256,512,256,512]` |
+| 2 | 128 × 256 | `[128,256,256,384]` | `[128,256,128,256]` |
+| 3 | 256 × 512 | `[0,512,384,768]` | `[0,512,256,512]` |
+| 4 | 512 × 512 | `[384,512,896,768]` | `[384,512,512,512]` |
+
+The current context's component index was also logged, but was explicitly
+**not** identified as the original submitting component. The source-image
+versus requested-coordinate relationship remains a separate question; see
+[the authored-rectangle trace](209026-composite-authored-rectangles.md).
+This experiment does not establish why those dimensions differ or repair
+missing image content.
+
+There were **14 attempts**, of which **10** were rejected with
+`job_not_fresh_zero_completion`. No write was recorded for a rejected
+candidate. That combined guard compares generic state, reference count and
+completion memory; the public rejection record does not say which field
+failed. It must not be interpreted as proof that all ten jobs were submitted,
+completed, corrupt, or in need of a broader write. No prewrite recheck,
+write, readback, observation or code-guard failure was recorded.
+
+The initial creator owner was bound in scene 0 at **+85.295**, state 5,
+component index 6, model finalization clear, and both scratch flags `0x3104`.
+At the initial marker **+144.701**, that same owner had **model finalization
+set**, state **7**, component index/completion stage zero and an empty
+current scratch list. This is positive model-state progress. The snapshot
+did not capture a scratch ready-bit transition; an empty scratch list is
+not itself a ready-texture sample. Neither result establishes rendered
+character quality or appearance-scene success.
+
+Owner 2 was bound in scene 2 at **+154.618** and accounted for generations
+2–4. Owners 3, 4 and 5 then bound at **+158.558**, **+158.595** and
+**+158.633**. Their binding snapshots showed state 5, component index and
+completion stage zero, model finalization clear and empty-head scratch
+textures with flags `0x3104` and zero outstanding groups. These were early
+binding samples, not final state after the appearance soak.
+
+The helper stopped on its **210-second global limit** at the next sampled
+callback, **+215.482**. Its final record reported four attempted/verified
+writes, four generations, five owners and **no live watched generations**.
+It did not reach a late or late-followup model snapshot, although the final
+marker file was present by the audit. The latest current-owner snapshot is
+therefore owner 5's early scene-2 binding; its later state is unknown here.
+The result cannot be treated as a failed or successful final appearance
+snapshot. The helper's `coverage_limits` list was empty because no owner,
+attempt, output or simultaneous-watch count cap fired; the separate finish
+reason still establishes the time limit and partial coverage.
+
+Final counts: **38** recognized records, no malformed/unknown-prefix
+records, four qualifications, four writes/readbacks, four actual polls of
+one, four destructor entries and ten guard rejections. The explicit repair
+bounds were eight owners, 128 qualified writes, 16 simultaneous watched
+generations, 256 attempts, 512 records, 210 seconds globally and 20 seconds
+after the final marker. No conclusion about every client job or every
+empty-composite operation follows from this finite coverage.
+
+Retained final `client.out`: **82,802 bytes**, SHA-256
+**`995c809abce06d0ebcd2cf296f46cc434f63244d192b11169300ad4370a8f89e`**;
+UI exit **0**. The first line was the known isolation banner, not an exact
+container ID. The audit reader made no container query; controller cleanup
+and screenshots are separate evidence scopes.
+
+Evidence:
+
+- `ev_60dc90a3fcd2ba7c82d58cc408de76c6b0236153a80d3499779be5e2832cff07`:
+  explicit repair mode and bounds.
+- `ev_ce597059d8fd566a20942a1c75984d3c9b677c2105ebaac00dd109efd9a8c8d4`:
+  first owner's initial state, first complete generation sequence and early
+  guard rejections.
+- `ev_03a3df983b60eb59548724cdb2c8054fcb2c6af30c9f0ddcfd09d64752e4f164`:
+  generation-aware summary and initial finalized model snapshot.
+- `ev_2d1b11ad65d1f5a087c669094dc55f549369c1037cea2e4a6ed5edd3c351317a`:
+  full generations 2–4 qualification geometry and native followup.
+- `ev_bc9e2c2fd77aacfd7845d16e6ebbeeba97c8a60851fadeda84e3a8e8f1a028f3`:
+  last native retirement, owners 3–5 and time-limited finish.
+- `ev_e6509291fdeb7969ca6f8e259280f7b57213e5434171b26a76f1d685d26efe96`:
+  final digest and UI status.
+
+The private safe-prefix reader is `creator-empty-run133-filter-20261105.py`
+(SHA-256 `78731230edf916c53f9633f99f8f8e8a6d30ee2a35dd22578ff43a0e93117569`);
+its summary explicitly separates memory values from native polls and
+retirement from completed release. The final status reader is
+`creator-empty-run133-final-filter-20261105.py` (SHA-256
+`e5b73b67396170d575830c78976b851ee3d605cc8926e8bfe7e1bf7089473249`).
+Ten synthetic reader checks passed before launch in
+`ev_958dc8b65b3002b04699a4373e27a479a4147ac28810d904afbf0cb7ffe13f63`;
+those tests read no run files. Complete audit export:
+`/home/blizz/re/gw2/notes/209026-creator-run133-empty-composite-audit-20261105.json`.
+Listed audit captures exited zero with complete output and verified owned
+reader-process cleanup; unrelated process-environment sampling failures
+remain separate.
+
+Root controller evidence for run 133 is
+`ev_7b8f7bed2ffbb1ba69a2cde9ceaae593feedcaef09da8f49f25ae78c39fdb775`,
+retained in `209026-norn-creator-run133-20261105.json`. Wrapper/UI exited zero;
+exact container removal, executable hashes, archive inventory (1,124,232),
+network isolation and console privacy checks passed. The shared name was
+independently absent, and window 13 returned at **21:07:32 UTC**.
+
+Root also inspected the retained images after pinning their hashes through
+REA record `ev_8be1fcefa15e0ae9e4c772f97e5a64a88fceda05a539838f7f1dc6a3fa31b7c5`.
+The final `creator-lifecycle-appearance.png` (1280 by 900, 852,515 bytes,
+SHA-256 `2a1ea51f59098e2041853603e4b672939700d771aa8972fa393607148e06c42f`)
+shows the purple Mesmer appearance page with an **empty character-preview
+area**. It is byte-identical to the earlier appearance screenshot. The race
+selection screenshot is interface artwork, not proof of a rendered character
+model. Thus initial model finalization and the four cleanup sequences are
+real progress, while the final Norn preview remains visibly unresolved.
+The absent late *state* snapshot is separate from this positive screenshot
+evidence. No direct-world entry was attempted by this diagnostic.
