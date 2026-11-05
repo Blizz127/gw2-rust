@@ -236,3 +236,55 @@ Checks:
 - Sandbox run 179: defeat → 210 → revived; the inventory still showed 20 cells; no asserts.
 - Supervisor smoke passed.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+## Update: kit 018cb96 (live 2026-11-05 19:22:47Z)
+
+- Source: `018cb96`. It is the creator lane's `d175bd5` (heart configuration validated
+  before binding) cherry-picked as `2fab752`, plus a test fix: with a talk NPC, the saved
+  world's heart opening is followed by the 384 marker.
+- Kit: `/home/blizz/gw2-rust-018cb96`.
+- Rollback: `/home/blizz/gw2-rust-f751c25`.
+- Game binary SHA-256: `f539827260514d0be8a7dc241e704c36a08729968a0a0be30e6aa3f6266a04ce`.
+- SHA256SUMS SHA-256: `36097b8816ed35d48bef3ca0dd1ecf59d97efdf49c7c6c5f0d5f4b7fbd29f3fc`.
+
+Checks:
+- workspace tests ok; `shared_creation` 6/6; `check_config` 1/1; saved-mode 6/6.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+The prepared profile is unchanged.
+
+## Update: kit 9961b56 (live 2026-11-05 19:43:41Z)
+
+- Source: `9961b56`, which merges `claude/npc-talk-loop` at `34f3bc5` and adds the
+  `GW2_RESPAWN_POINT` and `GW2_REJOIN_ROUTE` deploy variables.
+- Kit: `/home/blizz/gw2-rust-9961b56`.
+- Rollback: `/home/blizz/gw2-rust-018cb96`.
+- Game binary SHA-256: `ba65788f09a2dfc3ec8fd7fc98cea0337aa415a96ba25ffc934ef4dfb57ba275`.
+- SHA256SUMS SHA-256: `c56c54a51b95b49258ab890f9f857b51eb8ffbd1c03772add930cd6c0cd6c15a`.
+- 40 files verified locally and on Banshee.
+
+Change: the defeat respawn now rejoins the map at Horncall Waypoint (POI 372) through
+1065 to `127.1.0.4:6112`, keeping XP, loot and heart progress. The profile adds
+`GW2_RESPAWN_POINT=-9057.7,-24303.5,-3736.1`, and the live game process was read back with
+`--mission-rejoin-route 127.1.0.4:6112`.
+
+Checks:
+- workspace tests ok; saved-mode 6/6; `shared_creation` 6/6.
+- Sandbox run 182 passed.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+## Update: kit 9961b56-hm (live 2026-11-05 19:58:44Z)
+
+- This is a profile-only update of 9961b56; the binaries are identical.
+- The respawn point is now **Hero's Moot Waypoint**: POI 371, `597.3,-30352.1,-1563.2`,
+  inside heart 56's area and closer to the starting NPCs.
+- In sandbox run 183 the defeat → 210 → 1065 rejoin put the player standing on a hillside
+  by archery targets, at full health with the heart at 1/5, and no asserts.
+- Kit: `/home/blizz/gw2-rust-9961b56-hm`; SHA256SUMS SHA-256
+  `8c67470ce5cbda0c6cfdf0e7d2c86d8026e5b0e79b386f6dda0531cdb6366ef1`.
+- Verified locally and on Banshee.
+- Rollback: `/home/blizz/gw2-rust-9961b56`.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s. The live game process
+  was read back with `--mission-respawn-point 597.3,-30352.1,-1563.2`.
