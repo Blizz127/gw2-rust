@@ -323,3 +323,25 @@ Checks:
 - saved-mode 6/6; `shared_creation` 6/6.
 - Supervisor smoke passed.
 - The watched cycle ran at 0 humans and reported ready after 3.4 s.
+
+## Update: kit 0846fcb (live 2026-11-05 20:40:04Z)
+
+- Source: `0846fcb`.
+- Kit: `/home/blizz/gw2-rust-0846fcb`.
+- Rollback: `/home/blizz/gw2-rust-d7252a8`.
+- Game binary SHA-256: `364320c8c88b1af25b420998d1afc9a54658319e1ec709100308a09beb9c10e9`.
+- SHA256SUMS SHA-256: `0c75892f569525076cd433a7e40aa2872f4837efc9f29e44a9a9ab053e5bf881`.
+- Verified locally and on Banshee.
+
+Changes:
+- Heart 56's area now comes from its client polygon. The tracker opens when the player
+  enters the area and hides when they leave (client 18/19 movement → 655/656).
+- The profile moves the four NPCs inside the heart area, east of the spawn:
+  `1544,-300,-26800,-3800 4079,-200,-26300,-3800 8013,-800,-26750,-3800 7200,-700,-26200,-3800`.
+
+Checks:
+- workspace tests had no failures.
+- saved-mode 6/6; `shared_creation` 6/6.
+- Sandbox run 185 passed.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.4 s.

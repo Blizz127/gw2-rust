@@ -1131,3 +1131,23 @@ unlocked. No asserts.
 Coin and karma amounts are placeholders, and the currency keys 1/2 are inferred. 556 is
 display data only and does not credit a wallet. The reward id must be unique per session
 (it is 1 because the heart completes once).
+
+### Run 185: heart 56 area from the client polygon; NPCs inside it
+
+Heart 56's area is the 16-vertex Float2 polygon of its type-287 record (content
+1282852 offset 4224016: +0x40 pointer, +0x48 count; centre 465.05, -26226.8, -3820.56).
+The **Norn Mesmer spawn (-3200, -25600) is outside it**; the content note's bounding box
+overstated the area. Hero's Moot and Horncall are outside it too.
+
+The observer now does the following:
+- It decodes client **18/19** (AgMsg `{Dword, Dword, Float3 position, ...}`) as the
+  player's movement (`Seen::Moved`).
+- It sends 655 at show time only when the player is inside the polygon.
+- It sends **656 / 655** on boundary crossings; the client never tests the polygon itself.
+- It recomputes the inside state for a rejoin spawn.
+
+Run 185 spawned the player inside, at (-500, -26500, -3800), with the four NPCs moved
+into the area at z -3800. All four stood on the hillside and rendered; one shows as
+"Champion Son of Svanir". The tracker opened, and three kills completed the heart with
+the reward icon and no asserts. Holding W for 12 s did not visibly cross the boundary,
+so the 656/655 transition is covered by unit tests only so far.

@@ -429,10 +429,11 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
         RenownFrame209026::AddRegion { player: 1, region: 1 },
         RenownFrame209026::CreateCounter { objective: 0x38, target: 5 },
         RenownFrame209026::AddSubRegion { player: 1, region: 1, objective: 0x38, heart: 56 },
-        RenownFrame209026::EnterSubRegion { player: 1, heart: 56 },
     ] {
         frame.encode_frame(&mut heart_opening).unwrap();
     }
+    // 655 (enter) follows only when the spawn lies inside heart 56's client
+    // polygon; the region, counter and sub-region always open.
     let mut prefix = scenario.preamble(0);
     prefix[24..28].copy_from_slice(&379u32.to_le_bytes());
     let (mut client, mut codec, mut pending) = shared_listener_peer(address, prefix, 55);
