@@ -170,3 +170,49 @@ budget; no raw terminal bytes or normalized frames were omitted. Process
 sampling and unrelated inaccessible `/proc` entries remain explicit limitations
 in the private evidence. These are static observations, not runtime use of
 the Mission records.
+
+### Exact-reference follow-up: selected-index consumer remains unknown
+
+A further bounded frozen-executable trace did not identify a typed caller of
+Mission virtual `+0x30`. Exact disassembly references to `0x140c3c320`,
+`0x140c3c3f0`, `0x141d62348`, and `0x1409493d0` returned only the known
+descriptor getter and its registration call. The indexed reader has one
+literal pointer reference, **`0x141d623c0`**, its Mission vtable slot. In
+contrast, count accessor **`0x140314f20`** has **35** literal pointer
+references in tables: its receiver cannot be called Mission merely because
+that accessor is used. These queries do not cover dynamically constructed
+or indirect references.
+
+The complete map lookup `0x1409493d0..0x14094941a` checks EDX against map
+`+0x8c`, then returns `map->array_at_0x80[EDX]`. Registration helper
+`0x140c39b70..0x140c39d12` explicitly asserts
+`moduleInfo.id < MODULE_COUNT_MAX` using descriptor Dword +0. This confirms
+**11 is the Mission module ID**. It copies 0x38-byte descriptors into
+flag-selected arrays; the enclosing initialization subsequently sorts one
+array by dependencies. Neither operation selects an interest-point index or
+uses its coordinates. This registration trace is not a per-map instantiation
+or gameplay-use trace.
+
+The additional case-insensitive ASCII queries for `InterestPoint` and
+`interest point` returned only the two known schema names. They supplied no
+named selector lead. No broad virtual-offset scan, runtime, or archive read
+was performed. The required next evidence remains an actual module-11
+receiver passed to virtual `+0x30`, including the index's origin and the
+returned position/forward's consumer. No record is selected for map 379 by
+this result, and neither player/NPC placement nor exclusive camera/debug use
+is established.
+
+Evidence: exact references
+`ev_bbd16211ff46c1321c29d229eaf5ed85cd910e7a718621951d2f94621ca9c527`;
+literal pointers
+`ev_592b44af050b444ff434a07363ae5f32db7e62b8fb88284daab2d06f44c086d4`;
+map lookup
+`ev_e692aea9f59acb86014912b16c78c0ed05c59a6ae6d82c338c60cecaef16f6db`;
+registration
+`ev_5985bdaa49ab1873b8fcfe5df0595042cbcc347a1e264d77c9e6d8de1e39f74f`;
+name seeds
+`ev_cd82b48e5f1ba2be418b8b88574f4c0dff941f8c14e1da8ff1ff76f211f5d8e6`.
+All nine reader captures exited zero; their raw and normalized terminal
+records are complete. Full private bundle:
+`~/re/gw2/notes/209026-norn-mission-typed-consumer-followup-20261105.json`,
+SHA-256 `c611eb6cce695202b553a6fcd813d943358e74bb0c96f227287e8d6e882153c0`.
