@@ -89,6 +89,8 @@ struct Fixtures<'a> {
     population_delay: Duration,
     /// Opt-in talkable test NPC (docs/re/209026-npc-talk-loop.md).
     talk_npc: Option<mission::TalkNpc>,
+    /// Opt-in hostile test NPC: species and position.
+    hostile_npc: Option<(u32, [f32; 3])>,
     /// Service mode: create no capture or preamble files. The auth stream can
     /// carry account strings typed into the client, so a server facing a
     /// person must run with this set.
@@ -112,6 +114,7 @@ fn observe(
         creation,
         population_delay,
         talk_npc,
+        hostile_npc,
         no_capture,
     } = fixtures;
     let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
@@ -139,6 +142,13 @@ fn observe(
     }
     if let Some(npc) = talk_npc {
         mission = Some(mission.ok_or_else(|| invalid("talk NPC requires a mission phase"))?.with_talk_npc(npc));
+    }
+    if let Some((species, position)) = hostile_npc {
+        mission = Some(
+            mission
+                .ok_or_else(|| invalid("hostile NPC requires a mission phase"))?
+                .with_hostile_npc(species, position)?,
+        );
     }
     let mut header = [0u8; 2];
     stream.read_exact(&mut header)?;
@@ -315,6 +325,7 @@ fn main() -> io::Result<()> {
     let mut initial_health: Option<f32> = None;
     let mut talk_npc_spec: Option<(u32, [f32; 3])> = None;
     let mut talk_npc_speaker: Option<String> = None;
+    let mut hostile_npc: Option<(u32, [f32; 3])> = None;
     let mut store_path: Option<PathBuf> = None;
     let mut creation_destination: Option<SocketAddr> = None;
     let mut creation_route: Option<SocketAddr> = None;
@@ -454,6 +465,19 @@ fn main() -> io::Result<()> {
                 let [x, y, z] = position;
                 talk_npc_spec = Some((species, [x?, y?, z?]));
             }
+            "--mission-hostile-npc" => {
+                if hostile_npc.is_some() {
+                    return Err(invalid("duplicate --mission-hostile-npc"));
+                }
+                let text = args.next().ok_or_else(|| invalid("missing hostile NPC SPECIES,X,Y,Z"))?;
+                let parts: Vec<&str> = text.split(',').collect();
+                let [species, x, y, z] = parts[..] else {
+                    return Err(invalid("hostile NPC needs exactly SPECIES,X,Y,Z"));
+                };
+                let species: u32 = species.parse().map_err(|_| invalid("invalid hostile NPC species key"))?;
+                let [x, y, z] = [x, y, z].map(|v| v.parse::<f32>().map_err(|_| invalid("invalid hostile NPC position")));
+                hostile_npc = Some((species, [x?, y?, z?]));
+            }
             "--mission-talk-npc-speaker" => {
                 if talk_npc_speaker.is_some() {
                     return Err(invalid("duplicate --mission-talk-npc-speaker"));
@@ -509,7 +533,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]]]]]",
+                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]]]]",
                 ));
             }
         }
@@ -573,6 +597,9 @@ fn main() -> io::Result<()> {
     }
     if initial_health.is_some() && !has_population {
         return Err(invalid("--mission-health requires --mission-population"));
+    }
+    if hostile_npc.is_some() && !has_population {
+        return Err(invalid("--mission-hostile-npc requires a population"));
     }
     if (talk_npc_spec.is_some() && !has_population) || (talk_npc_speaker.is_some() && talk_npc_spec.is_none()) {
         return Err(invalid("--mission-talk-npc requires a population; --mission-talk-npc-speaker requires --mission-talk-npc"));
@@ -717,6 +744,7 @@ fn main() -> io::Result<()> {
                 creation,
                 population_delay,
                 talk_npc,
+                hostile_npc,
                 no_capture,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {

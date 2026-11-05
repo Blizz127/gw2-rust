@@ -279,3 +279,27 @@ real text IDs. Only the plain ~4% render without server-supplied decryption keys
 
 Still open: the 0x80 chat echo with coded text, timers and costs (756 definitions),
 and real retail dialogue/NPC data.
+
+## 5. Hostile NPC and the first decoded attack/skill requests (run 125)
+
+`--mission-hostile-npc 1544,-3000,-25600,-3742` spawns agent 3 with attitude 1 and no
+378 (same 37/183/282/151/256/170/46 spawn). The client shows a **red "Branded
+Minotaur"** nameplate, confirming that attitude 1 is hostile. Non-interact client-23
+payloads are now logged in hex. With Tab, key 1 and key 6 pressed:
+
+| Order | Behavior value | Payload | Reading |
+| ---: | --- | --- | --- |
+| 1 | 0x80000006 | `29 05` | Opcode 0x29 with byte 5. Unnamed; precedes the cast. |
+| 2 | 0x80000007 | `2a 00` | Opcode 0x2a with byte 0. Unnamed. |
+| 3 | 0x80000009 | `23 00000000 c0270000 00` | **SkillBegin 0x23**: target 0, skill **10176** (0x27c0, the heal Codex selected), slot byte 0. Matches `docs/re/209026-mesmer-skill-command-path.md` exactly. |
+| 4 | 0x8000000a | `29 00` | Opcode 0x29 with byte 0. |
+
+- The behavior value is `0x80000000 | sequence`, a per-request counter.
+- Outer command flags are 3 on all of them.
+- Key 1 sent nothing; the weapon slot is locked on the current skill bar.
+- The heal used target 0 even after Tab. Whether Tab targeted the minotaur isn't
+  established from the screenshots.
+- These are the 15/23/15-byte frames Codex recorded only by length in run 116.
+
+The server sends no reply yet. Executing the skill (the 0x78 order, server 84
+notifications and recharge) is the open step in Codex's skill note.

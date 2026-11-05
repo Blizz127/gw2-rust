@@ -97,6 +97,8 @@ impl TalkNpc {
             species_key,
             position,
             facing: [1.0, 0.0, 0.0], // placeholder: unit vector, direction unestablished
+            attitude: 0,
+            talkable: true,
         };
         plan.spawn_frames()?;
         let pages = vec![
@@ -328,6 +330,8 @@ pub struct MissionPhase {
     /// The population sequence and when it is due, while held.
     held: Option<(Instant, Bytes)>,
     talk: Option<TalkNpc>,
+    /// Opt-in hostile test NPC (attitude 1, no talk flag) for combat research.
+    hostile: Option<TalkNpcPlan209026>,
 }
 
 impl MissionPhase {
@@ -353,6 +357,7 @@ impl MissionPhase {
             population_delay: Duration::ZERO,
             held: None,
             talk: None,
+            hostile: None,
         })
     }
 
@@ -384,6 +389,22 @@ impl MissionPhase {
     pub fn with_talk_npc(mut self, npc: TalkNpc) -> Self {
         self.talk = Some(npc);
         self
+    }
+
+    /// Spawn a hostile test NPC (agent 3) after BeginPlaying. Research input:
+    /// it does not fight; it lets the client's attack requests be observed.
+    pub fn with_hostile_npc(mut self, species_key: u32, position: [f32; 3]) -> io::Result<Self> {
+        let plan = TalkNpcPlan209026 {
+            agent_index: 3,
+            species_key,
+            position,
+            facing: [1.0, 0.0, 0.0], // placeholder
+            attitude: 1,             // attackable (inferred: hostile)
+            talkable: false,
+        };
+        plan.spawn_frames()?;
+        self.hostile = Some(plan);
+        Ok(self)
     }
 
     /// When the held population is due, if one is held.
@@ -465,6 +486,17 @@ impl MissionPhase {
                         eprintln!(
                             "Mission phase: spawning talk NPC agent {} (species {}) with 378 talk flag",
                             npc.plan.agent_index, npc.plan.species_key
+                        );
+                    }
+                }
+                if let Some(plan) = &self.hostile {
+                    if u32::from(plan.agent_index) == fixture.plan.character_index {
+                        eprintln!("Mission phase: hostile NPC agent index collides with the player; not spawned");
+                    } else {
+                        out.extend_from_slice(&plan.spawn_frames()?);
+                        eprintln!(
+                            "Mission phase: spawning hostile NPC agent {} (species {})",
+                            plan.agent_index, plan.species_key
                         );
                     }
                 }
@@ -585,10 +617,13 @@ impl MissionPhase {
                 match InteractRequest209026::from_behavior_data(&behavior.behavior_data) {
                     Ok(request) => Some(Seen::Interact(request)),
                     Err(_) => {
+                        // Skill/target bytes only (no account data); at most 250.
+                        let hex: Vec<String> = behavior.behavior_data.iter().map(|b| format!("{b:02x}")).collect();
                         eprintln!(
-                            "Mission phase: client 23 opcode {:?} ({} payload bytes)",
-                            behavior.behavior_data.first(),
-                            behavior.behavior_data.len()
+                            "Mission phase: client 23 flags {:#04x} value {} data [{}]",
+                            behavior.command_flags,
+                            behavior.behavior_value,
+                            hex.join(" ")
                         );
                         None
                     }

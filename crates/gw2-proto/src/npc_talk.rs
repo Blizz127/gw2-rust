@@ -605,6 +605,12 @@ pub struct TalkNpcPlan209026 {
     pub position: [f32; 3],
     /// Unit map-space facing.
     pub facing: [f32; 3],
+    /// Server-151 attitude toward the player: 0 friendly / 3 neutral pass the
+    /// interaction gate's talk test; 1/2 are the attackable pair (inferred
+    /// labels: hostile/indifferent). Must be below 4.
+    pub attitude: u32,
+    /// Send 378 {index, 1, 0} (talk flag, bit 13). Off for enemies.
+    pub talkable: bool,
 }
 
 impl TalkNpcPlan209026 {
@@ -621,6 +627,9 @@ impl TalkNpcPlan209026 {
     /// is populated and in the world.
     pub fn spawn_frames(&self) -> Result<BytesMut> {
         let identity = self.identity()?;
+        if self.attitude >= 4 {
+            return Err(invalid_input("attitude must be below 4"));
+        }
         if !self.position.iter().all(|v| v.is_finite()) {
             return Err(invalid_input("NPC position must be finite"));
         }
@@ -666,11 +675,11 @@ impl TalkNpcPlan209026 {
         // With coreStats present, 170 requires inventory
         // (docs/re/209026-character-finalization-dependencies.md).
         CharacterSetupFrame209026::CreateInventory { character_index }.encode_frame(&mut out);
-        // Attitude 0 (friendly, inferred) passes both 170's bound and the
-        // interaction gate's friendly-or-neutral test.
+        // 170 requires attitude below 4; 0 (friendly, inferred) also passes
+        // the interaction gate's friendly-or-neutral test.
         CharacterSetupFrame209026::Attitude {
             character_index,
-            attitude: 0,
+            attitude: self.attitude,
         }
         .encode_frame(&mut out);
         // Alive: the gate needs alive (or flag bit 49). placeholder meter.
@@ -702,12 +711,14 @@ impl TalkNpcPlan209026 {
             facing,
         }
         .encode_frame(&mut out);
-        NpcInteractFlag209026::Talk {
-            character_index,
-            talk: 1,
-            byte_2: 0,
+        if self.talkable {
+            NpcInteractFlag209026::Talk {
+                character_index,
+                talk: 1,
+                byte_2: 0,
+            }
+            .encode_frame(&mut out);
         }
-        .encode_frame(&mut out);
         Ok(out)
     }
 }
@@ -1160,6 +1171,8 @@ mod tests {
             species_key: 3172,
             position: [10.0, 20.0, 30.0],
             facing: [1.0, 0.0, 0.0],
+            attitude: 0,
+            talkable: true,
         }
     }
 
@@ -1180,6 +1193,10 @@ mod tests {
             assert!(TalkNpcPlan209026 { species_key: bad, ..npc() }.spawn_frames().is_err());
         }
         assert!(TalkNpcPlan209026 { facing: [0.0, 0.0, 0.0], ..npc() }.spawn_frames().is_err());
+        assert!(TalkNpcPlan209026 { attitude: 4, ..npc() }.spawn_frames().is_err());
+        // An enemy: attitude 1 and no talk flag.
+        let enemy = TalkNpcPlan209026 { attitude: 1, talkable: false, ..npc() }.spawn_frames().unwrap();
+        assert_eq!(ids(&messages, &enemy), [37, 183, 282, 151, 256, 170, 46]);
     }
 
     #[test]
