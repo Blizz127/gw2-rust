@@ -81,3 +81,36 @@ Checks:
 - Sandbox kit smoke run 167 with the kit binaries: two kills with level-ups; Broken Claw
   and Tiny Claw shown in the backpack (2/20); respawn at 118; NPC hits of 19; no asserts.
 - The live game process was read back with `--mission-npc-attack 19`.
+
+## Update: kit d324165 (live 2026-11-05 17:32:45Z)
+
+- Source: `d324165`, from merging `claude/npc-talk-loop` at `33d661d`, plus deploy support
+  for several hostile NPCs.
+- Kit: `/home/blizz/gw2-rust-d324165`.
+- Rollback: `/home/blizz/gw2-rust-5fbb4b5`.
+- Game binary SHA-256: `bab25389a6545eeab594f1b7cc965bc14106b52e91d2442bc9c4bfab0e62ab18`.
+- SHA256SUMS SHA-256: `0c4699a4d84a2331e7e9135fed6136c9dbf5b2cedfc93ea77d0316520f69b359`.
+- 39 files verified locally and on Banshee.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+Changes:
+- Four hostile NPCs, read back from the live game process: Branded Minotaur
+  `1544,-3000,-25300,-3742`, Wolf `4079,-2900,-25850,-3742`, Juvenile Boar
+  `8013,-3500,-25350,-3742`, Son of Svanir `7200,-3400,-25900,-3742`.
+- Each NPC has its own health, respawn and aggro.
+- Auto-attack follows the client's target selection (227) and only hits living NPCs.
+
+Checks:
+- `cargo test --workspace`: 35 test targets passed, 0 failed.
+- Local supervisor smoke: four `--mission-hostile-npc` flags reached the game process.
+- Kit smoke run 170: four NPCs spawned; Tab to the wolf, auto-attack killed it three times
+  with level-ups and loot; no asserts.
+
+Owner play on 5fbb4b5, read from the Banshee server log:
+- killed the minotaur twice (skill 10176 and auto-attack), reaching level 3;
+- received Broken Claw and Tiny Claw;
+- the minotaur respawned at 118;
+- the session ended with a normal client EOF.
+
+The log also showed auto-attack hitting the dead minotaur (`health 0 -> 0`). The
+multi-NPC targeting in this kit only hits living NPCs.
