@@ -1068,3 +1068,46 @@ With `--mission-respawn-flag`, run 179 went: downed → rally → downed → def
 
 The player stood up with the normal skill bar and no asserts. They revive in place; the
 waypoint teleport is still missing.
+
+**Run 180: server 86 does not teleport the controlled player.** The respawn also sent
+`86 {player agent, tick 0, flags 0, Point3(-9057.7, -24303.5, -3736.1, tag 0)}`, which is
+Horncall Waypoint (POI 372). The player revived but stayed in place: the screenshots
+match run 179. Client-side movement owns the controlled character.
+
+Retail waypoint travel shows a loading screen, so a respawn at a waypoint is probably a
+fresh map join with the waypoint as the spawn. That would mean re-running the
+1063/1060 → 420 → population → 412 sequence on the existing connection, or a 1065
+route to a new connection. Not implemented; `--mission-respawn-point` stays a research
+option.
+
+**Run 181: a second 1063 + 1060 during gameplay asserts.** On the respawn request the
+observer reset its join state and resent the opening, 1063 MapData then 1060 LoadMap with
+the waypoint as the spawn. The client asserted `view != VIEW_GAMEPLAY` and closed.
+
+A map load can't be restarted in place from gameplay. Retail waypoint travel needs to
+leave the gameplay view first, most likely the 1065 map-join route onto a new game
+connection, as the creator lane uses for creation → world. Reverted:
+`--mission-respawn-point` again only sends the (ineffective) 86. The respawn itself
+(169/210 → 0x49) is live in kit f751c25 and later.
+
+### Run 182: waypoint respawn by map rejoin (1065) works
+
+The run used `--mission-respawn-flag --mission-respawn-point -9057.7,-24303.5,-3736.1
+--mission-rejoin-route 127.1.0.4:6112` (Horncall Waypoint, POI 372). After the defeat:
+
+1. "Return to a Waypoint" sent **client 210**.
+2. The observer stored a carry-over in process (spawn, experience 2500 / level 2, 1 loot
+   drop, heart 56 progress 1). It answered with **1065** `{127.1.0.4:6112, 0, 0, Word 379,
+   0, 0}`, the same shape the creator uses for creation → world.
+3. The client closed the connection (ConnectionReset) and opened a **new game
+   connection**: key exchange, 1063/1060, 420.
+4. At 420 the observer applied the carry-over: spawn = waypoint, XP, loot count, heart.
+5. The population was sent, then 412 → BeginPlaying. At AgentsLoaded the observer resent
+   the dropped item (968 + 276), 191/188 experience, and the heart opening plus `1089
+   progress`.
+
+Screenshot 40 s later: the player stands at Horncall (tents, pumpkins, a different area),
+health 388, tracker "Honor the Spirit of Raven" **1/5**. No asserts.
+
+Carry-over is per observer process and single-player (research). The hostile NPCs are
+respawned with the new connection at their configured positions.
