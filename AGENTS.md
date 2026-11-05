@@ -22,8 +22,15 @@ it:
   dependencies, single-writer/resource locks, active-player protection,
   availability notices, data-loss/migration safeguards, backup or rollback.
 - Verify published hashes/readback, retain rollback, and report the live
-  version and path. Never present an unrun check as passed or a staged build
+  version and path, deployment/publication time, and health/smoke or feed
+  readback evidence. Never present an unrun check as passed or a staged build
   as published. Do not publish known broken or untested builds.
+- The owner's reinforced 2026-11-05 continuous deploy mandate keeps the
+  existing sole integrator/publisher and publisher baton. Prefer established
+  server updates, then existing client feeds; no routine signoff is needed.
+  Reference: `~/.local/share/devbox-coordinator/COORDINATOR.md`, section
+  `OWNER CONTINUOUS DEPLOY MANDATE 20261105`. This does not clear any hold or
+  authorize new targets, credentials, policy, or schema changes.
 - Preserve explicit owner pauses, unresolved owner restrictions, genuine
   release holds, native trust/login/tool-permission prompts and actual denials.
   Do not evade a denial through another publication path. Report the exact
