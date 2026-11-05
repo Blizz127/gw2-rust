@@ -520,3 +520,15 @@ Spawning NPCs after load, as retail does when they stream in near the player, ne
 client's post-load model-streaming trigger. That isn't established.
 
 The scan tooling (`model-refs.*`) is kept in `~/re/gw2/notes/209026-mesmer-re-handoff-20261105/`.
+
+### Run 137 combat observations (visible minotaur)
+
+- **Targeting:** Tab gives the full target frame with portrait. The heal SkillBegin
+  carried **target 3** (the minotaur); without a target it was 0.
+- **NPC cast:** with `--mission-npc-cast 10176`, the minotaur's pose changes between
+  0.5 s and 1.5 s after the order. That isn't distinguishable from its idle animation,
+  so the cast is **still unconfirmed**. A skill with a clear effect, or a cast-bar
+  check, is needed.
+- **Player heal:** the slot-6 heal icon shows a darkened, cooldown-like overlay at
+  1.5 s, which earlier runs didn't show. That may be the client's own predicted cast.
+  Unconfirmed.
