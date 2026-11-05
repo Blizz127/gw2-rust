@@ -92,6 +92,7 @@ struct Fixtures<'a> {
     /// Opt-in hostile test NPCs: species and position, one per flag (agent 3, 4, ...).
     hostile_npcs: Vec<(u32, [f32; 3])>,
     late_npc: Option<(u32, [f32; 3])>,
+    heart: Option<(u16, u32)>,
     /// Research: answer SkillBegin with server 34 + 0x78.
     skill_order_echo: bool,
     /// Research: hostile NPC casts this skill on each player SkillBegin.
@@ -133,6 +134,7 @@ fn observe(
         talk_npc,
         hostile_npcs,
         late_npc,
+        heart,
         skill_order_echo,
         npc_cast,
         damage_on_skill,
@@ -169,6 +171,9 @@ fn observe(
     }
     if let Some(npc) = talk_npc {
         mission = Some(mission.ok_or_else(|| invalid("talk NPC requires a mission phase"))?.with_talk_npc(npc));
+    }
+    if let Some((key, target)) = heart {
+        mission = Some(mission.ok_or_else(|| invalid("heart requires a mission phase"))?.with_heart(key, target)?);
     }
     if let Some((species, position)) = late_npc {
         mission = Some(mission.ok_or_else(|| invalid("late NPC requires a mission phase"))?.with_late_npc(species, position)?);
@@ -384,6 +389,7 @@ fn main() -> io::Result<()> {
     let mut talk_npc_speaker: Option<String> = None;
     let mut hostile_npcs: Vec<(u32, [f32; 3])> = Vec::new();
     let mut late_npc: Option<(u32, [f32; 3])> = None;
+    let mut heart: Option<(u16, u32)> = None;
     let mut skill_order_echo = false;
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
@@ -573,6 +579,15 @@ fn main() -> io::Result<()> {
             "--mission-npc-cast" => {
                 let text = args.next().ok_or_else(|| invalid("missing NPC cast skill key"))?;
                 npc_cast = Some(text.parse().map_err(|_| invalid("invalid NPC cast skill key"))?);
+            }
+            "--mission-heart" => {
+                let text = args.next().ok_or_else(|| invalid("missing heart KEY,TARGET"))?;
+                let Some((key, target)) = text.split_once(',') else {
+                    return Err(invalid("heart needs KEY,TARGET"));
+                };
+                let key: u16 = key.parse().map_err(|_| invalid("invalid heart key"))?;
+                let target: u32 = target.parse().map_err(|_| invalid("invalid heart target"))?;
+                heart = Some((key, target));
             }
             "--mission-late-npc" => {
                 let text = args.next().ok_or_else(|| invalid("missing late NPC SPECIES,X,Y,Z"))?;
@@ -894,6 +909,7 @@ fn main() -> io::Result<()> {
                 talk_npc,
                 hostile_npcs,
                 late_npc,
+                heart,
                 skill_order_echo,
                 npc_cast,
                 damage_on_skill,
