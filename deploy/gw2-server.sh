@@ -65,6 +65,8 @@ fi
 # is a sandbox-tested placeholder, not a retail encounter definition.
 # GW2_HOSTILE_NPC may list several SPECIES,X,Y,Z entries separated by spaces.
 for npc in ${GW2_HOSTILE_NPC:-}; do mission_args+=(--mission-hostile-npc "$npc"); done
+# GW2_AMBIENT_NPC: neutral load-time NPCs, space-separated SPECIES,X,Y,Z entries.
+for npc in ${GW2_AMBIENT_NPC:-}; do mission_args+=(--mission-ambient-npc "$npc"); done
 [[ -z "${GW2_DAMAGE_ON_SKILL:-}" ]] || mission_args+=(--mission-damage-on-skill "$GW2_DAMAGE_ON_SKILL")
 [[ -z "${GW2_AUTOATTACK_SKILL:-}" ]] || mission_args+=(--mission-autoattack-skill "$GW2_AUTOATTACK_SKILL")
 [[ -z "${GW2_XP_PER_KILL:-}" ]] || mission_args+=(--mission-xp-per-kill "$GW2_XP_PER_KILL")
