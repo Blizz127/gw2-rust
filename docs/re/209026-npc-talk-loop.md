@@ -703,3 +703,43 @@ Opening the inventory afterwards showed "Starter Backpack" 2/20 with both weapon
 slots 0 and 1, and no assert. The weapon copy only tests the drop path. Retail loot tables
 are server data.
 Server 285 `{character, item instance}` removes a bag item.
+
+### Runs 153–157: sourced damage (255), NPC counter-attack, combat events
+
+**Combat-event path.** The UI CombatTracker
+(`Game\Ui\Services\CombatTracker\CombatTracker.cpp`) builds generic events
+(constructor `0x1402de030`, vtable `0x14193c7d0`, type at +0x2c). It then calls the
+AsCombatEventManager listener (vtable `0x141ae0208` slot +0x10 = `0x1403a0b70`), which adds
+floaters through `0x14039fa80` (asserts `type < AGENT_STATUS_COMBAT_EVENT_TYPES`, 0x36).
+In run 153 a run-local gdb stack probe on `0x1403a0b70` showed events only at death
+(the 0x33 handler) and on experience (handler 191). **257 Currents produces no combat
+event.**
+
+**Server 255** `{Dword character, Float delta, Float second delta, Word, Byte kind,
+Dword skill, Dword source agent}` (handler `0x14124f990`):
+- It resolves the skill (content type 0x40) and the source agent (`0x141024060`).
+- It **adds** the deltas to both meters (`0x141275ee0`: `current = clamp(current + delta, 0,
+  max)`).
+- It notifies the health listeners (`0x141207350` → list +0x48, slot 0).
+- Kind bytes 0..3 pass through; any other value fails.
+
+The CombatTracker handler `0x1402e3be0` drops a negative change when `kind == 0` and the
+source agent's +0x58 is not 1. Every other case posts an event through `0x1402e2d20`.
+
+| Run | Wire values | Result |
+|---|---|---|
+| 154 | Absolute values (kind 0) | Clamped as heals: bars stayed full, events fired. |
+| 155 | Negative deltas, kind 0 | Health applied (minotaur 40% → 10%, player orb 388 → 348 → 308); no events. |
+| 156 | Negative deltas, kind 1 | Health applied and an event per hit (17). |
+| 157 | Kind 1, with probes | `0x14039fa80` added floaters of types 0x18 and 0x13 on every hit and 0xc at death. |
+
+In run 157 the screenshots 0.4 s after a hit show the client's red damage vignette when
+the minotaur hits the player. **No floating number was visible.** The minotaur stands
+almost inside the player model at this spawn, so its anchor may be hidden. This is
+unresolved; the next step is the AsFloaterManager draw path.
+
+`--mission-npc-attack DAMAGE`: after the player's first hit, the hostile NPC lowers the
+player's health every 2 s until the NPC dies. It stops before the player's defeat; downed
+handling isn't implemented. `--mission-sourced-damage KIND` sends combat health changes as
+255 with the skill and the attacker. The player hits the NPC with skill 10170; the NPC
+hits the player with no skill.
