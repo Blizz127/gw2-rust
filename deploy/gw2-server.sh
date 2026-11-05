@@ -67,6 +67,16 @@ fi
 [[ -z "${GW2_SKILLS:-}" ]] || mission_args+=(--mission-skills "$GW2_DATA/$GW2_SKILLS")
 [[ -z "${GW2_HEALTH:-}" ]] || mission_args+=(--mission-health "$GW2_HEALTH")
 [[ -z "${GW2_QUEST:-}" ]] || mission_args+=(--mission-quest "$GW2_QUEST")
+# Opt-in research combat loop (docs/re/209026-npc-talk-loop.md); every value
+# is a sandbox-tested placeholder, not a retail encounter definition.
+[[ -z "${GW2_HOSTILE_NPC:-}" ]] || mission_args+=(--mission-hostile-npc "$GW2_HOSTILE_NPC")
+[[ -z "${GW2_DAMAGE_ON_SKILL:-}" ]] || mission_args+=(--mission-damage-on-skill "$GW2_DAMAGE_ON_SKILL")
+[[ -z "${GW2_AUTOATTACK_SKILL:-}" ]] || mission_args+=(--mission-autoattack-skill "$GW2_AUTOATTACK_SKILL")
+[[ -z "${GW2_XP_PER_KILL:-}" ]] || mission_args+=(--mission-xp-per-kill "$GW2_XP_PER_KILL")
+[[ -z "${GW2_STARTER_BAG:-}" ]] || mission_args+=(--mission-starter-bag "$GW2_STARTER_BAG")
+[[ "${GW2_KILL_LOOT:-0}" != 1 ]] || mission_args+=(--mission-kill-loot)
+[[ -z "${GW2_NPC_ATTACK:-}" ]] || mission_args+=(--mission-npc-attack "$GW2_NPC_ATTACK")
+[[ -z "${GW2_SOURCED_DAMAGE:-}" ]] || mission_args+=(--mission-sourced-damage "$GW2_SOURCED_DAMAGE")
 "$GW2_BIN/gw2-game-observe" --no-capture --listen "$GW2_BIND:6112" --mission-preamble \
   --params "$GW2_ID/dh-params.bin" --private "$GW2_ID/dh-private.bin" --log "$GW2_RUN/unused" \
   --mission-map-key "${GW2_MAP_KEY:-15}" --mission-population "$GW2_DATA/character-record.bin" \
