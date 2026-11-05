@@ -429,3 +429,25 @@ With the minotaur placed off-axis (`-3000,-25300,-3742`):
   skeleton or animation, or LOD/culling. That is untraced.
 - With no model, an NPC cast can't be judged visually. Run 129 again showed no assert
   for the server-34 cast with Word 1000.
+
+### Run 131: the NPC passes view creation, model selection, scene entry and REVEALED
+
+Per-stage probes on object pointers, from a run-local runner copy (each distinct
+pointer prints, so the two agents separate):
+
+| Stage | Player (13:31:30, population) | NPC (13:31:45, AgentsLoaded batch) |
+| --- | --- | --- |
+| View factory `0x14110f150` (rdx = character) | hit 1 | **hit 2** |
+| Species model route `0x141169ff0` | not hit (appearance composite path) | **hit 1** |
+| Collision scene entry `0x1410c1710` | hit 1 | **hit 2** |
+| REVEALED set `0x141032ab0` | hit 1 | **hit 2** |
+| REVEALED clear `0x141032ad0` | — | — |
+
+So the NPC gets a view, selects its species model, enters the collision scene and
+becomes REVEALED, and it is never concealed. **The drop is after model selection:**
+completion of the species model's asynchronous load, or render/LOD/culling of the
+loaded model. `0x140cf7000` turned out to be a generic loader helper (thousands of hits),
+so it can't isolate the NPC. The next probe should sit on the species branch's own
+completion path, from `0x141166db4` through `0x14130c150` to the model component stored
+at view +0x820 (`docs/re/209026-npc-character-foundation.md`).
+
