@@ -1111,3 +1111,7 @@ health 388, tracker "Honor the Spirit of Raven" **1/5**. No asserts.
 
 Carry-over is per observer process and single-player (research). The hostile NPCs are
 respawned with the new connection at their configured positions.
+
+**Run 183:** Hero's Moot Waypoint (POI 371, 597.3, -30352.1, -1563.2) also works as a
+rejoin spawn. The player stood on the hillside by archery targets, at full health, with
+the heart at 1/5. It is now the live respawn point.
