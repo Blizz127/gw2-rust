@@ -1149,5 +1149,8 @@ The observer now does the following:
 Run 185 spawned the player inside, at (-500, -26500, -3800), with the four NPCs moved
 into the area at z -3800. All four stood on the hillside and rendered; one shows as
 "Champion Son of Svanir". The tracker opened, and three kills completed the heart with
-the reward icon and no asserts. Holding W for 12 s did not visibly cross the boundary,
-so the 656/655 transition is covered by unit tests only so far.
+the reward icon and no asserts. Holding W for 12 s did not visibly cross the boundary.
+**Correction:** the unit tests cover the polygon membership and the 18/19 decoding, but
+not the `respond(Seen::Moved)` 655/656 transition itself. That transition is so far
+unverified. The creator lane is adding a focused boundary/rejoin regression, and run 186
+attempts a live crossing.

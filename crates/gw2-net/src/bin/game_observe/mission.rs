@@ -428,6 +428,8 @@ pub struct MissionPhase {
     restore_loot: u32,
     /// Experience restored from CARRY, resent at AgentsLoaded (total, level).
     restore_xp: Option<(u32, u8)>,
+    /// Count of client 18/19 movement reports (sparse logging).
+    moves_seen: u32,
     /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
     /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
@@ -793,6 +795,7 @@ impl MissionPhase {
             rejoin_route: None,
             restore_loot: 0,
             restore_xp: None,
+            moves_seen: 0,
             kill_loot: None,
             npc_attack: None,
             sourced_damage: None,
@@ -1582,7 +1585,13 @@ impl MissionPhase {
                     eprintln!("Mission phase: client message {id} ({used} bytes) [{}]", hex.join(" "))
                 }
                 Seen::Target(agent) => eprintln!("Mission phase: client 227 target agent {agent}"),
-                Seen::Moved { .. } => {}
+                Seen::Moved { id, position } => {
+                    // Sparse research log of the player's reported position.
+                    self.moves_seen = self.moves_seen.wrapping_add(1);
+                    if self.moves_seen % 20 == 1 {
+                        eprintln!("Mission phase: client {id} movement #{} at {position:?}", self.moves_seen);
+                    }
+                }
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
