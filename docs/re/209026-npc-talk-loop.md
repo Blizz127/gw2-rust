@@ -589,3 +589,27 @@ the attack skill (the heal is only a trigger), loot, XP and respawn are not impl
 Base weapon skill 10170 is the palette's base candidate (chain 10170 → 10171 → 10172).
 The damage values are placeholders, and chain advance and range checks aren't
 implemented.
+
+### XP lead (not implemented)
+
+The experience UI service (`Game\Ui\Services\Experience\Experience.cpp`) tracks
+**coreStats** (`m_coreStats == character->GetCoreStats()`, asserts `character->IsPlayer()`).
+Changes carry a reason (`reason < CHAR_EXPERIENCE_REASONS`, `experienceRemainingToSend`).
+
+CoreStats server messages, mapped from their handlers to setters (ChCliCoreStats.cpp):
+
+| ID | Fields | Setter / effect |
+| ---: | --- | --- |
+| 182 / 183 | creation (see `docs/re/209026-character-core-stats.md`) | 182's extra Dword is unassigned |
+| 186 | char, Float | `0x141208d80`: **bonus experience** at +0x78, asserting `0 ≤ bonus ≤ maxBonusExperience` |
+| 187 | char, Byte, Word | `0x141208e90`: attribute (`attribute != CHAR_ATTRIBUTE_NONE`) |
+| 188 | char, Byte | `0x141208f50`: **earned level** |
+| 189 | char, Byte, Word, Word | `0x141208d00`: earned attribute [index < 12] at +0x48 |
+| 190 | char, Byte | `0x141209100`: second level |
+| 191 | char, Dword, Dword, Byte | `0x1412091e0`: value at +0xe4, capped by `0x1412df420` (cap 15 or 80; effective level, *inferred*) |
+| 192 | char, Float ×3 | `0x141209340`: floats at +0x120..+0x128 |
+
+Rewards 1209/1210 resolve a type-0x15f (351) content key, a reward definition, not a raw
+XP amount. **No plain "experience gained" message is identified.** The next candidates
+are 182's unassigned Dword and a reason-tagged experience event; the UI's reason
+registration is the entry point.
