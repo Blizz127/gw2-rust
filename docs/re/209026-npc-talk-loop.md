@@ -303,3 +303,44 @@ payloads are now logged in hex. With Tab, key 1 and key 6 pressed:
 
 The server sends no reply yet. Executing the skill (the 0x78 order, server 84
 notifications and recharge) is the open step in Codex's skill note.
+
+## 6. Skill execution hypothesis: server 34 + packed 0x78 (run 126, inconclusive)
+
+**Command flags of every buffer-carrying agent message** (handler → constructor
+→ command kind → constant ORed into the flags):
+
+| ID | Command kind | Flags OR | Bit 12? |
+| ---: | ---: | --- | --- |
+| 32, 55 | 15 | 0x8010000 | no |
+| **34** | **2** | **0x801000** | **yes** |
+| 35 | 3 | 0x8801000 | yes |
+| 37, 38, 40 | 5, 6, 7 | 0x18080 | no |
+| 42 | 9 | bit 16 | no |
+| 52, 53, 54, 56, 66, 79, 80 | 12, 13, 14, 16, 26, 35, 36 | 0x8010000 | no |
+| 57 | 17 | 0x8b01000 | yes |
+| 58, 59 | 18, 19 | 0x8301200 | yes |
+| 60, 69 | 20, 29 | 0x301000 | yes |
+| 62 | 22 | 0x901000 | yes |
+| 63, 65, 68 | 23, 25, 28 | 0x101000 | yes |
+| 67 | 27 | 0x8301000 | yes |
+| 81, **84** | 37, 41 | 0x12000 | **no** |
+| 85 | 42 | 0x8112000 | no |
+
+Codex's executor trace says order start needs **bit 12 set and bit 17 clear**. None of
+these sets bit 17. Server **34** (`0x1410333e0` → `0x141035880`, kind 2, vtable
+`0x14211c290`) is the plain behavior header plus one Word (stored at command +0x70).
+It is the simplest bit-12 carrier.
+
+**Run 126** (`--mission-skill-order-echo`) answered the client's SkillBegin
+`[23][0][10176][0]` (value 0x80000009, tick 1799, flags 3). The answer was server 34 with
+the same agent, tick, flags and value, data `[78 00 c0270000 00 00 01000000 00]`, and
+Word 0. The client **accepted it without an assert or disconnect**, but **nothing visible
+happened**: no cast, no cooldown, health unchanged.
+
+Candidates for the next trace:
+- the executor's other completion guards for kind 2;
+- whether order +8's agent identifier uses the 37 index space (`0x141024060`);
+- packed order-flags gates (masks 0x10/0x4);
+- the client's own predicted order (kind 0x53) for the same value.
+
+`skill_order.rs` provides the codecs (SkillBegin parse, 0x78 builder, server 34).

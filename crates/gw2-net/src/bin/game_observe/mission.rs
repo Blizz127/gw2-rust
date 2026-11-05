@@ -29,6 +29,7 @@ use gw2_proto::{
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
     npc_talk::{ConversationReply209026, InteractRequest209026, TalkNpcPlan209026, TalkSession209026},
+    skill_order::{AgentBehaviorOrderFrame209026, SkillBeginRequest209026, SkillOrder209026},
     player_startup::PlayerStartupFrame209026,
     population::{self, PopulationPlan, PopulationProfession209026},
     quest::{QuestLifecycleFrame209026, QuestLifecycleOperation209026},
@@ -74,7 +75,19 @@ pub enum Seen {
     Interact(InteractRequest209026),
     /// Client 275/276 conversation replies.
     Conversation(ConversationReply209026),
+    /// Client 23 carrying SkillBegin 0x23, with its outer behavior header.
+    Skill(SkillSeen),
     Other(u16),
+}
+
+/// A SkillBegin request and the client-23 header fields an answer echoes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SkillSeen {
+    pub agent_index: u16,
+    pub remote_tick: u32,
+    pub command_flags: u8,
+    pub behavior_value: u32,
+    pub request: SkillBeginRequest209026,
 }
 
 /// Opt-in talkable test NPC (docs/re/209026-npc-talk-loop.md). Spawned once
@@ -332,6 +345,8 @@ pub struct MissionPhase {
     talk: Option<TalkNpc>,
     /// Opt-in hostile test NPC (attitude 1, no talk flag) for combat research.
     hostile: Option<TalkNpcPlan209026>,
+    /// Research: answer SkillBegin with server 34 carrying a 0x78 order.
+    skill_order_echo: bool,
 }
 
 impl MissionPhase {
@@ -358,6 +373,7 @@ impl MissionPhase {
             held: None,
             talk: None,
             hostile: None,
+            skill_order_echo: false,
         })
     }
 
@@ -405,6 +421,13 @@ impl MissionPhase {
         plan.spawn_frames()?;
         self.hostile = Some(plan);
         Ok(self)
+    }
+
+    /// Research hypothesis (docs/re/209026-npc-talk-loop.md section 6): answer
+    /// each SkillBegin with server 34 carrying the packed 0x78 order.
+    pub fn with_skill_order_echo(mut self) -> Self {
+        self.skill_order_echo = true;
+        self
     }
 
     /// When the held population is due, if one is held.
@@ -512,6 +535,33 @@ impl MissionPhase {
                 );
                 Ok(reply.map(BytesMut::freeze))
             }
+            Seen::Skill(skill) if self.began && self.skill_order_echo => {
+                let request = skill.request;
+                let order = SkillOrder209026 {
+                    order_flags: 0,
+                    skill_key: request.skill_key,
+                    slot: request.slot,
+                    raw_7: 0,
+                    // Target 0 (none): the caster itself (placeholder choice).
+                    agent: if request.target == 0 { fixture.plan.character_index } else { request.target },
+                    byte_12: 0,
+                };
+                let mut out = BytesMut::new();
+                AgentBehaviorOrderFrame209026 {
+                    agent_index: skill.agent_index,
+                    remote_tick: skill.remote_tick,
+                    command_flags: skill.command_flags,
+                    behavior_value: skill.behavior_value,
+                    behavior_data: order.to_behavior_data().to_vec(),
+                    word: 0,
+                }
+                .encode_frame(&mut out)?;
+                eprintln!(
+                    "Mission phase: answering SkillBegin (skill {}, slot {}, value {:#x}) with server 34 0x78 order",
+                    request.skill_key, request.slot, skill.behavior_value
+                );
+                Ok(Some(out.freeze()))
+            }
             Seen::Conversation(reply) if self.began => {
                 let Some(npc) = self.talk.as_mut() else { return Ok(None) };
                 let answer = npc.session.on_reply(*reply)?;
@@ -599,6 +649,7 @@ impl MissionPhase {
                 }
                 Seen::Interact(request) => eprintln!("Mission phase: client 23 interact {request:?}"),
                 Seen::Conversation(reply) => eprintln!("Mission phase: client conversation {reply:?}"),
+                Seen::Skill(skill) => eprintln!("Mission phase: client 23 {skill:?}"),
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
@@ -614,6 +665,15 @@ impl MissionPhase {
         match id {
             AgentBehaviorFrame209026::CLIENT_MESSAGE_ID => {
                 let behavior = AgentBehaviorFrame209026::decode_client_frame(&mut input).ok()?;
+                if let Ok(request) = SkillBeginRequest209026::from_behavior_data(&behavior.behavior_data) {
+                    return Some(Seen::Skill(SkillSeen {
+                        agent_index: behavior.agent_index,
+                        remote_tick: behavior.remote_tick,
+                        command_flags: behavior.command_flags,
+                        behavior_value: behavior.behavior_value,
+                        request,
+                    }));
+                }
                 match InteractRequest209026::from_behavior_data(&behavior.behavior_data) {
                     Ok(request) => Some(Seen::Interact(request)),
                     Err(_) => {
@@ -772,7 +832,7 @@ pub(crate) mod tests {
                         Seen::Map(ClientMapEvent::MapLoaded) => 420,
                         Seen::Map(ClientMapEvent::FailedToLoad) => 418,
                         Seen::Map(ClientMapEvent::AgentsLoaded) => 412,
-                        Seen::Interact(_) => 23,
+                        Seen::Interact(_) | Seen::Skill(_) => 23,
                         Seen::Conversation(ConversationReply209026::Choose { .. }) => 275,
                         Seen::Conversation(ConversationReply209026::Closed { .. }) => 276,
                     })
@@ -1266,10 +1326,27 @@ pub(crate) mod tests {
     #[test]
     fn other_client_23_payloads_stay_raw_and_keep_the_phase() {
         let mut phase = talk_phase();
-        // The 10-byte skill request (0x23) is not an interact.
-        let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0x80, 0x27, 0, 0, 0]));
-        assert_eq!(seen, [Seen::Other(23)]);
+        // A 2-byte signal (run125's 0x29) is neither interact nor skill.
+        assert_eq!(phase.push(&client_23(&[0x29, 5])), [Seen::Other(23)]);
+        // SkillBegin is recognised but unanswered without the research flag.
+        let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
+        assert!(matches!(seen[..], [Seen::Skill(SkillSeen { request: SkillBeginRequest209026 { skill_key: 10176, .. }, .. })]));
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        assert!(phase.respond(&seen[0]).unwrap().is_none());
         assert!(phase.enabled());
+    }
+
+    #[test]
+    fn skill_order_echo_answers_with_server_34_and_the_request_value() {
+        let mut phase = populated_phase().with_skill_order_echo();
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
+        let reply = phase.respond(&seen[0]).unwrap().unwrap();
+        let frame = AgentBehaviorOrderFrame209026::decode_frame(&mut &reply[..]).unwrap();
+        assert_eq!((frame.agent_index, frame.remote_tick, frame.command_flags, frame.behavior_value), (1, 77, 3, 0));
+        assert_eq!(frame.behavior_data, [0x78, 0, 0xc0, 0x27, 0, 0, 0, 0, 1, 0, 0, 0, 0]);
     }
 
     #[test]
