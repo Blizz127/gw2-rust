@@ -95,6 +95,7 @@ struct Fixtures<'a> {
     skill_order_echo: bool,
     /// Research: hostile NPC casts this skill on each player SkillBegin.
     npc_cast: Option<u32>,
+
     /// Service mode: create no capture or preamble files. The auth stream can
     /// carry account strings typed into the client, so a server facing a
     /// person must run with this set.

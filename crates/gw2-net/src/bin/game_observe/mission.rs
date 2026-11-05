@@ -465,7 +465,30 @@ impl MissionPhase {
         match seen {
             Seen::Map(ClientMapEvent::MapLoaded) if !self.populated => {
                 self.populated = true;
-                let stream = fixture.population_stream()?;
+                let mut stream = fixture.population_stream()?;
+                // Test NPCs go out with the population, inside the loader's agent and
+                // model streaming: spawned after BeginPlaying their models never
+                // streamed in and they stayed invisible (sandbox runs 122-135; run 136/
+                // 137 render). docs/re/209026-npc-talk-loop.md section 6.
+                let mut npcs = BytesMut::new();
+                let talk = self.talk.as_ref().map(|npc| (&npc.plan, "talk"));
+                let hostile = self.hostile.as_ref().map(|plan| (plan, "hostile"));
+                for (plan, kind) in talk.into_iter().chain(hostile) {
+                    if u32::from(plan.agent_index) == fixture.plan.character_index {
+                        eprintln!("Mission phase: {kind} NPC agent index collides with the player; not spawned");
+                        continue;
+                    }
+                    npcs.extend_from_slice(&plan.spawn_frames()?);
+                    eprintln!(
+                        "Mission phase: spawning {kind} NPC agent {} (species {}) with the population",
+                        plan.agent_index, plan.species_key
+                    );
+                }
+                if !npcs.is_empty() {
+                    let mut joined = BytesMut::from(&stream[..]);
+                    joined.extend_from_slice(&npcs);
+                    stream = joined.freeze();
+                }
                 if !self.population_delay.is_zero() {
                     eprintln!(
                         "Mission phase: holding the population sequence for {} ms",
@@ -509,30 +532,6 @@ impl MissionPhase {
                             .encode_frame(&mut out);
                     }
                     eprintln!("Mission phase: sending explicit quest Create, SelectGoal and Notify once");
-                }
-                if let Some(npc) = &self.talk {
-                    // After the player's 46 and 1036: the NPC is a separate agent
-                    // and only needs the world (docs/re/209026-npc-talk-loop.md).
-                    if u32::from(npc.plan.agent_index) == fixture.plan.character_index {
-                        eprintln!("Mission phase: talk NPC agent index collides with the player; not spawned");
-                    } else {
-                        out.extend_from_slice(&npc.plan.spawn_frames()?);
-                        eprintln!(
-                            "Mission phase: spawning talk NPC agent {} (species {}) with 378 talk flag",
-                            npc.plan.agent_index, npc.plan.species_key
-                        );
-                    }
-                }
-                if let Some(plan) = &self.hostile {
-                    if u32::from(plan.agent_index) == fixture.plan.character_index {
-                        eprintln!("Mission phase: hostile NPC agent index collides with the player; not spawned");
-                    } else {
-                        out.extend_from_slice(&plan.spawn_frames()?);
-                        eprintln!(
-                            "Mission phase: spawning hostile NPC agent {} (species {})",
-                            plan.agent_index, plan.species_key
-                        );
-                    }
                 }
                 Ok(Some(out.freeze()))
             }
@@ -1310,23 +1309,27 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn talk_npc_spawns_with_begin_playing_and_answers_interact_and_replies() {
+    fn talk_npc_spawns_with_the_population_and_answers_interact_and_replies() {
         use gw2_proto::npc_talk::{ConversationFrame209026, NpcInteractFlag209026};
         let mut phase = talk_phase();
         let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
         let interact = Seen::Interact(InteractRequest209026::Interact { target: 2 });
         // Before BeginPlaying an interact is not answered.
         assert!(phase.respond(&interact).unwrap().is_none());
-        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
-        let begin = phase.respond(&agents).unwrap().unwrap();
-        // 1036, 431 and 83 first (unchanged), then the NPC spawn ending in 378.
-        assert_eq!(&begin[..9], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01]);
+        let population = phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+        // The NPC spawn (ending in 378) follows the player's population, inside map loading.
+        let plan = phase.population.as_ref().unwrap().plan.clone();
+        let player = population::population_stream(&plan).unwrap();
         let spawn = phase.talk.as_ref().unwrap().plan.spawn_frames().unwrap();
-        assert_eq!(&begin[9..], &spawn[..]);
+        assert_eq!(&population[..player.len()], &player[..]);
+        assert_eq!(&population[player.len()..], &spawn[..]);
         assert_eq!(
-            NpcInteractFlag209026::decode_frame(&mut &begin[begin.len() - 5..]).unwrap(),
+            NpcInteractFlag209026::decode_frame(&mut &population[population.len() - 5..]).unwrap(),
             NpcInteractFlag209026::Talk { character_index: 2, talk: 1, byte_2: 0 }
         );
+        // BeginPlaying is unchanged: 1036, 431 and 83 only.
+        let begin = phase.respond(&agents).unwrap().unwrap();
+        assert_eq!(&begin[..], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01]);
 
         // Client 23 [0x14][2] reaches the phase as an interact and opens a conversation.
         let seen = phase.push(&client_23(&[0x14, 2, 0, 0, 0]));
@@ -1394,8 +1397,8 @@ pub(crate) mod tests {
         let mut npc = TalkNpc::new(3172, [5.0, 0.0, 0.0], "Eir".to_owned()).unwrap();
         npc.plan.agent_index = 1;
         let mut phase = populated_phase().with_talk_npc(npc);
-        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
-        let begin = phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().unwrap();
-        assert_eq!(begin.len(), 9, "only 1036, 431 and 83");
+        let population = phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+        let plan = phase.population.as_ref().unwrap().plan.clone();
+        assert_eq!(population, population::population_stream(&plan).unwrap(), "no NPC frames appended");
     }
 }

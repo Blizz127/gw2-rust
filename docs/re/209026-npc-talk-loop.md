@@ -494,29 +494,29 @@ constructor installs vtable `0x142149138` (`0x1411589c5`, `rbx`). It dumps each 
 REVEALED and a position. The remaining cause is inside model-component rendering
 (pose/animation, material/skin, LOD). That's the next trace.
 
-### Likely root cause: the creature models reference files absent from this Gw2.dat
+### Root cause and fix: spawn NPCs during map loading (runs 135–138)
 
-A file-reference scan of the two NPC models uses the encoded `(low, high, 0)` tuples,
-id = high×0xff00 + low + 0xff00ff01. The present references are what they should be:
-- model **19830** (Branded Minotaur) references textures (ATEX 314887, 2331955, 65282)
-  and two more MODL files (19818; 19819, 2.3 MB, likely skeleton or animation), all
-  present;
-- it also repeatedly references **2257612** and **2492707**, next to its texture
-  references;
-- model **26012** (Juvenile Boar) references the same **2257612** and **2492707**.
+**The missing-file theory was wrong.** A heuristic file-reference scan of models 19830
+and 26012 flagged 2257612 and 2492707 as absent from both Gw2.dat copies. Those two IDs
+occur in about 1,900 of 2,724 creature models, which makes them false matches rather
+than real dependencies, and they don't matter:
+- **Run 135:** a species whose scanned references are all present, Juvenile Forest
+  Spider (8007, model 24254), spawned after BeginPlaying. It was still invisible.
+- **Run 136:** the same spider spawned **with the population at client 420 MapLoaded**,
+  inside the loader's agent/model streaming. **It renders.**
+- **Run 137:** the Branded Minotaur (1544), also spawned with the population, renders
+  with its brand crystals, despite the "missing" references.
 
-**Both files are missing from the frozen `build-209026/Gw2.dat` and the working copy**
-(`gw2-dat-cat` returns nothing). A retail client streams missing files from ArenaNet's
-asset CDN. Here:
-- no manifest names them;
-- the sandbox CDN logged no request (`cdn.log` has only `/latest64/101`);
-- offline-only rules forbid fetching them.
+**Cause:** an NPC created after loading has finished gets a view, a model handle,
+REVEALED and a position, but its model never streams in.
 
-So these creatures probably can't render with this archive. That is consistent with
-every other stage (view, model handle, model component, REVEALED, position) succeeding.
-Their type isn't known, since they're absent; material or shader is *inferred*.
+**Fix (now the default):** `MissionPhase` appends the talk and hostile test NPC spawn
+frames to the population stream at MapLoaded. BeginPlaying is back to 1036/431/83 only.
 
-**Workaround in progress:** scan species models for ones whose references are all
-present locally, then spawn one of those as the test NPC
-(`~/re/gw2/notes/209026-mesmer-re-handoff-20261105/model-refs.*`).
+**Run 138:** with the new timing the talk loop still works end to end (Greet [F] →
+dialogue → Continue → page 2 → Goodbye → 762/276).
 
+Spawning NPCs after load, as retail does when they stream in near the player, needs the
+client's post-load model-streaming trigger. That isn't established.
+
+The scan tooling (`model-refs.*`) is kept in `~/re/gw2/notes/209026-mesmer-re-handoff-20261105/`.
