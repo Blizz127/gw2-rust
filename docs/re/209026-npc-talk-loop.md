@@ -1175,3 +1175,13 @@ So the polygon's west edge here runs along steep terrain. The enter/leave logic 
 by the focused regression (`heart_area_crossings_and_waypoint_rejoin_use_current_position`)
 and the polygon tests. A client-observed 655/656 still needs a route that terrain does not
 block, or an owner walk-in.
+
+**Run 192:** the player spawned inside at (1200, -25600, z -4300, above the ground) and
+dropped onto the ground at (1147, -25591, -3890). Walking forward (+x) toward the east
+edge at x ≈ 1575 did not move them: they were blocked at x ≈ 1150. Walking backward
+worked.
+
+Three of heart 56's edges were tried (the east-of-spawn approach, the west edge at
+x ≈ -1266, and the east edge at y -25600), and each is bounded by impassable terrain
+where tested. Scripted crossings were stopped there; a client-observed 655/656 needs a
+known walkable entrance or an owner walk-in.
