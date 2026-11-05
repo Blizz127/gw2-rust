@@ -3,10 +3,11 @@
 The observer has opt-in, single-account persistence and a creation scene.
 Support is deployed in owner release `56242d1` at
 `/home/blizz/gw2-rust-56242d1`; saved mode is not enabled in the host config.
-Actual UI creation, save-to-world entry and relog have not passed runtime
-validation. Run125 resolved the test harness's missing navigation controls
-and reached the Mesmer mask biography page; the character preview remains
-unresolved.
+Run126 observed actual UI creation, durable save and transfer to a playable
+world connection. Run127 passed process-restart relog using the same record,
+and its final screenshot shows the visible player model. Run125
+resolved the test harness's missing navigation controls; the character model
+remains invisible in the sandbox preview and run126 world screenshot.
 
 ## Implemented local behavior
 
@@ -91,6 +92,67 @@ Screenshot/intervention audit
 binds the resulting 1280×900 mask-page image to SHA-256
 `520fb9134b9ff10834314d2dedeb8557e00003eb85bafd590892f835bff6a01e`.
 Complete private evidence: `/home/blizz/re/gw2/notes/209026-norn-creator-run125-20261105.json`.
+
+## Run126: actual creation and world transfer
+
+The dynamic X-parent helper repeated the successful resize without fixed
+window IDs. From Norn/male/Mesmer appearance, Next opened the mask biography
+and Skip To End opened the character-name page. A synthetic name was entered
+through the visible UI. The client sent its actual 116-byte415; the server
+persisted one 146-byte, mode0600 record and returned1048. Client430 followed,
+then the1065 continuation to map379. The new world connection reached420
+MapLoaded, population,412 AgentsLoaded and1036 BeginPlaying.
+
+The saved record has SHA-256
+`74a17e292ca395074e5ad6555628f27b44da9b0a6ac4f98602e4c13b8703e52d`.
+The envelope build is209026, its declared request length matches, and the
+same record is retained privately for process-restart validation. No name,
+GUID or request contents are copied into this note.
+
+The final screenshot shows the world HUD, health388 and skills; the player
+model is invisible. This is not a complete visual acceptance result or a
+retail tutorial claim. The UI script exited5 because its bounded120-second
+wait for the controller's completion marker expired; the controller did not
+mark that wait complete. The outer wrapper exited0 after cleanup and hash
+checks, so wrapper success must not be mistaken for a full UI-script pass.
+No relog occurred in this run.
+
+Evidence:
+
+- Submission and persisted-record count: `ev_763e31e0a0f42cd3e661caefc6e7d6f0fe6679237dac40693740cec685f17247`.
+- Record envelope and intermediate world loading: `ev_3a1b0b5bf2ba97ff549c9220f151252201f82f21a9eeeb9e06e2088a55ddeeb4`.
+- Completed runtime, container cleanup and unchanged executable hashes: `ev_90784c5436259666c2d1fcc0e3297edbfdf88dbb49d769f4dddd88f9dbed2593`.
+- Final checkpoints/UI status/image hash: `ev_d459456b99e81d4c085676ae58201dda28ece80b10041ed98d63cf55b34adcca`.
+
+`shots/shot-015.png` SHA-256:
+`6d9c419a50cd04a402383cc9c92d2518eea9fe68fafe2c6ea24786b36c132485`.
+Private root bundle: `/home/blizz/re/gw2/notes/209026-norn-creator-run126-20261105.json`.
+The live release's mode switch is separate from this offline evidence; no
+publication is implied by these runtime results.
+
+## Run127: process-restart relog
+
+A fresh client and fresh auth/world processes reopened the exact run126
+store through a separate mount. No record was copied or synthesized. The
+saved level1 Norn Mesmer appeared in character select; selecting its card
+entered map379 through420,412 and1036. The UI sent a bounded walking input
+and completed with status0. The final screenshot shows the player model
+visibly. Thus a client restart/relog is an observed workaround for run126's
+invisible direct-entry avatar; the underlying texture-loading cause remains
+under investigation.
+
+The record count remained1 and the146-byte record's SHA-256 stayed
+`74a17e292ca395074e5ad6555628f27b44da9b0a6ac4f98602e4c13b8703e52d`.
+Wrapper and UI both exited0. Container removal, unchanged client executable
+hashes and archive entry count1,124,232 were verified. This establishes
+creation-profile persistence and selected-GUID world entry, not persistence
+of later combat, movement or quest progress.
+
+Runtime evidence: `ev_73d5ad0c0ac17b3cc1f7edaed5b37aff3757d6e1efea3679ddf4ba230e830bf4`.
+Final UI/record/image audit: `ev_512eece42f8e2d651417b8b7d3b4ab5108c97e359df58d59996994fb5bac1d92`.
+Final `saved-relog-after-walk.png` SHA-256:
+`efc18d255e009181fe356fe196212851c3e54589e8f417809b6b1a978df9a3f1`.
+Private bundle: `/home/blizz/re/gw2/notes/209026-norn-saved-relog-run127-20261105.json`.
 
 ## Retained REA evidence
 
