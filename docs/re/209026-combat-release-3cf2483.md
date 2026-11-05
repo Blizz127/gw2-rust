@@ -181,3 +181,30 @@ Checks:
 - Workspace tests: no failures.
 - Supervisor smoke (prepared default): 4 listeners ready, 4 hostile-NPC flags.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+## Update: kit 1adda67 (live 2026-11-05 18:20:25Z)
+
+- Source: `1adda67`, which merges `claude/npc-talk-loop` at `abe45d6` onto `f224348`. The
+  merge resolved a conflict by keeping the creator lane's phase-scoped combat block and
+  adding the heart and late-NPC options inside it. This merge commit also carries the
+  `GW2_HEART` deploy variable.
+- Kit: `/home/blizz/gw2-rust-1adda67`, 40 files.
+- Rollback: `/home/blizz/gw2-rust-56242d1`.
+- Game binary SHA-256: `15144676db6f370ceadd7b4c7f33d7468b312256a0af764afbf60847ed77fae6`.
+- SHA256SUMS SHA-256: `5a9e1efd94d6a68c06fd2a02d49c3a8908539bd706ffd4659a842a1df2613960`.
+- Verified locally and on Banshee.
+
+Change: renown heart 56 "Honor the Spirit of Raven".
+- It is shown at spawn (651, 1090, 657, 655) and goes up by one with each NPC kill (1089).
+- It completes at 5 kills (654), with the client's completion toast.
+- The profile adds `GW2_HEART=56,5`, and the live game process was read back with
+  `--mission-heart 56,5`.
+
+Checks:
+- `cargo test --workspace`: no failures.
+- saved-mode tests 6/6; `shared_creation` 6/6.
+- Sandbox run 174, branch build at 3 kills: the heart was shown, advanced and completed.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+Run 174 also showed a floating damage number ("30") on screen.
