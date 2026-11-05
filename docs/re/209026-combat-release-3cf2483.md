@@ -208,3 +208,31 @@ Checks:
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
 
 Run 174 also showed a floating damage number ("30") on screen.
+
+## Update: kit f751c25 (live 2026-11-05 19:16:10Z)
+
+- Source: `f751c25`, which merges `claude/npc-talk-loop` at `211b4fc`. The merge resolved
+  the conflict inside the phase-scoped block and also carries the `GW2_RESPAWN` deploy
+  variable.
+- Kit: `/home/blizz/gw2-rust-f751c25`, 40 files.
+- Rollback: `/home/blizz/gw2-rust-1adda67`.
+- Game binary SHA-256: `3512cebfe540aa29bf65261bfc018446cd8f29e8442f5079960dabc70c4f16e7`.
+- SHA256SUMS SHA-256: `1f6b232ca65e545afbe439d31213c6974df971b22b3fd15ac0009ba09db493c1`.
+- Verified locally and on Banshee.
+
+Changes:
+- The defeat screen's "Return to a Waypoint" now revives the player in place. On defeat
+  the server sends `169 {char, 1}`; the client then sends 210, answered with 0x49 and full
+  health.
+- `m_inventorySlots` is now 160, because the client scans 5 × 32 slots on defeat.
+- The heart-NPC marker and dialogue code is included but inactive, since there is no talk
+  NPC in this profile.
+- The profile adds `GW2_RESPAWN=1`, and the live game process was read back with
+  `--mission-respawn-flag`.
+
+Checks:
+- `cargo test --workspace`: no failures.
+- saved-mode tests 6/6; `shared_creation` 6/6.
+- Sandbox run 179: defeat → 210 → revived; the inventory still showed 20 cells; no asserts.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
