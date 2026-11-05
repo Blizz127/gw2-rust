@@ -768,3 +768,94 @@ If the NPC dies while the player is downed, the observer rallies the player: it 
 the defeat, sends packed **0x49** alive on the player, then 255 restoring half of the
 starting health. The defeat window (10 s) and the restored amount are placeholders.
 Retail downed health, downed skills and the waypoint respawn are not modelled.
+
+### Client-sourced values and open leads (static research, 2026-11-05)
+
+Six read-only research passes. Their notes are private, under
+`~/re/gw2/notes/swarm-20261105/`.
+
+**Damage model (`damage-loot.md`).** The tooltip damage handler is at `0x140893c50`:
+`max(1, coeff × Power / (monsterDefense[L] + monsterAttribute[L]) × (weapon strength + 1))`.
+
+| Input | Level-1 value |
+|---|---|
+| monsterDefense / monsterAttribute (`ConstTable.cpp`) | 128 / 10 |
+| Player Power | 37 |
+| Starter weapon "Dull Blade" (33355, a Sword) strength | 105–116 |
+| Skill 10170 "Mind Slash", the Sword auto-attack, PvE coefficient | 1.0 |
+
+That gives **30 per hit**, so the placeholder already matches. A level-1 NPC has
+**118 health** (monsterHealth 18 + 10 × vitality 10, with species and rank multipliers
+assumed to be 1.0), and the observer now uses `LEVEL1_NPC_HEALTH`. NPC hits come out at
+about 15–23 under the same model, so the sandbox now uses 19 instead of 40.
+
+**Item creation by class (`loot-items.md`).**
+
+| Item kind | Creation message |
+|---|---|
+| Armor | 960 |
+| Weapon | 971 |
+| Bag | 962 (959 also works) |
+| Stackables: consumable, container, material, gizmo, mini, trophy, upgrade | **968** |
+
+968 is `{Dword instance, Dword key, Byte flags, Dword count, Optional Guid}`; its
+initializer `0x1413cb930` asserts `count <= 250`. Kill loot now rotates through real
+level-1 items, each a stack of 1 created by 968 and placed by 276:
+
+| Key | Item |
+|---|---|
+| 19526 | Broken Claw |
+| 24346 | Tiny Claw |
+| 19538 | Broken Fang |
+| 87275 | Branded Shard |
+| 19561 | Patch of Fur |
+| 24352 | Tiny Fang |
+
+The client holds no drop tables, so the table and its order are our choice.
+
+**Downed (`downed.md`).** The downed bar (`DwnHealth.cpp` `0x1404f4130`) reads only
+meter 1. On going down the observer swaps meter 1 to a pool with 259 and sends 260 with
+a negative rate; the client drains it locally. On rally it restores the normal maximum
+the same way. Packed 0x34 rebuilds the skill bar to the profession's downed skills by
+itself (`0x1411fa910`, palette key 111, slots 5–9). The Mesmer keys are 10196, 10366,
+10224, 1175 and 37873.
+
+**Floaters (`floaters.md`).** Floater type 0x18 is an outgoing hit and 0x13 an incoming
+one. In run 164, paint `0x1403ab670` and reposition `0x1403a1b10` ran only around the
+death floater (0xc); the per-hit floaters never reached layout. Run 166 set 255's Word to
+|delta|. Reposition and paint then ran from the first hit, more than 10 times, so the
+Word feeds the floater. In the zoomed screenshots 0.4 s after each hit **no number is
+visible yet**. The next suspect is alpha: it starts at 0 and the lifetime is about
+0.5–1.5 s.
+
+Run 166 also confirmed:
+- NPC health 118 (75% after one 30-damage hit);
+- NPC damage 19 (388 → 369);
+- real loot: Broken Claw and Tiny Claw land in backpack slots 0 and 1;
+- client 17 is `{Word}`, seen as `0x0050` and then `0x0000`; it is not the target agent
+  index;
+- client 47 is `[2f 00 00]` and client 248 `[f8 00 04 00]`. Their meanings are open.
+
+**"Return to a Waypoint" (`waypoint-respawn.md`).** The button is
+`CDownedRallyFrame` (`DwnRally.cpp` `0x1404f2880`), text 48656, with click handler
+`0x1404f3030`. In open world it probably posts UI command `0x1000001b` with `{1}`, which
+would open the waypoint map. The client message it sends is still unidentified.
+
+**Post-load NPC spawn (`post-load-spawn.md`).** A post-load NPC's view keeps bit 0x4
+(model loading) in +0xb78. It is cleared only once model IsReady (`0x14116a610`)
+returns true, inside per-frame Advance `0x141105e90`. Advance is gated by two
+predicates at `0x14115d01f` and `0x14115d04a`. Next step: probe those in a run.
+
+**Starting-area content (`starting-area-content.md`).** Map 379 is "The Great Hunt"
+and shares terrain with map 28, Wayfarer Foothills. The client holds no NPC or event
+placements for it. Real keys with coordinates, all taken from map 28:
+
+| Feature | Key | Position |
+|---|---|---|
+| Heart "Honor the Spirit of Raven" | 56 | 465, -26227, -3821 |
+| Vista | 1362 | — |
+| Landmark "Heart of the Raven" | 362 | — |
+| Waypoints | 371, 372 | — |
+
+Candidate species: 4079 Wolf, 4080 Alpha Wolf, 7200 Son of Svanir, 7951 Modniir Hunter,
+8013 Juvenile Boar. The story text is encrypted; its keys are server-supplied.

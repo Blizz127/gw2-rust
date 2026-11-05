@@ -122,26 +122,40 @@ impl InventoryItemFrame209026 {
     }
 }
 
+/// Server 968 `{Dword instance, Dword item key, Byte flags, Dword count,
+/// Optional Guid}`: the creation message for stackable items (consumables,
+/// containers, crafting materials, gizmos, mini pets, trophies, upgrade
+/// components). Its initializer `0x1413cb930` asserts `count <= 250` and stores
+/// the stack count. The Guid is absent.
+pub fn encode_stack_item_creation(instance: u32, item_key: u32, count: u32, output: &mut BytesMut) -> Result<()> {
+    if !(1..=250).contains(&count) {
+        return Err(Error::new(ErrorKind::InvalidInput, "stack count must be 1..=250"));
+    }
+    968u16.encode(output);
+    instance.encode(output);
+    item_key.encode(output);
+    0u8.encode(output);
+    count.encode(output);
+    0u8.encode(output);
+    Ok(())
+}
+
 /// Minimal item creation `{instance, item key, flags, Optional Guid absent}`
-/// for messages 959/962 (970 adds one Byte, 968 one Dword, before the Guid). Each message runs
+/// for messages 959/962 (970 adds one Byte before the Guid). Each message runs
 /// the shared factory `0x1413c7720(instance, key)` then its own initializer
 /// (959: item vtable +0x290, 962: +0x2a8, 970: `0x1413c7580`), so the message
 /// must match the item's class. Research codec; field roles beyond the prefix
 /// are unnamed.
 pub fn encode_minimal_item_creation(message_id: u16, instance: u32, item_key: u32, output: &mut BytesMut) -> Result<()> {
-    if ![959u16, 962, 968, 970].contains(&message_id) {
-        return Err(Error::new(ErrorKind::InvalidInput, "minimal item creation supports 959, 962, 968 and 970"));
+    if ![959u16, 962, 970].contains(&message_id) {
+        return Err(Error::new(ErrorKind::InvalidInput, "minimal item creation supports 959, 962 and 970"));
     }
     message_id.encode(output);
     instance.encode(output);
     item_key.encode(output);
     0u8.encode(output);
-    match message_id {
-        970 => 0u8.encode(output),
-        // 968's extra Dword is unnamed; 20 (the Starter Backpack's size) is a
-        // research guess at a capacity field.
-        968 => 20u32.encode(output),
-        _ => {}
+    if message_id == 970 {
+        0u8.encode(output);
     }
     0u8.encode(output); // Optional Guid: absent
     Ok(())
@@ -186,9 +200,19 @@ mod tests {
         assert_eq!(dynamic::decode_frame(&messages, &rules, &mut input).unwrap().0.id, 305);
         assert_eq!(dynamic::decode_frame(&messages, &rules, &mut input).unwrap().0.id, 276);
         assert!(input.is_empty());
-        for id in [959u16, 962, 968, 970] {
-            let mut frame = BytesMut::new();
-            encode_minimal_item_creation(id, 0x7000, STARTER_BACKPACK_ITEM, &mut frame).unwrap();
+        let mut stack = BytesMut::new();
+        encode_stack_item_creation(0x7100, 19526, 1, &mut stack).unwrap();
+        assert!(encode_stack_item_creation(1, 19526, 251, &mut BytesMut::new()).is_err());
+        assert!(encode_stack_item_creation(1, 19526, 0, &mut BytesMut::new()).is_err());
+        for (id, frame) in [959u16, 962, 970]
+            .into_iter()
+            .map(|id| {
+                let mut frame = BytesMut::new();
+                encode_minimal_item_creation(id, 0x7000, STARTER_BACKPACK_ITEM, &mut frame).unwrap();
+                (id, frame)
+            })
+            .chain([(968, stack)])
+        {
             let mut input = &frame[..];
             let all: Vec<_> = schema::parse(include_str!("../../../data/protocol/209026/server-tables.xml"))
                 .unwrap()
