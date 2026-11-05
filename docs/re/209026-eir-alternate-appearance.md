@@ -99,8 +99,8 @@ in this setter.
 Thus the established appearance dependency is: create the species-3172
 character, install one 377 composite record with **q1 =
 `0x0000ac0b4a6749ee`**, **q2 = `0x0000000001249650`**, then finalize
-with 170. The authored array's auxiliary input is zero; using q0 zero is
-a source-derived candidate, not a captured retail 377. The ordinary builder
+with 170. The authored array's auxiliary input is zero, but that input has
+not been linked to q0 and does not establish a safe q0 default. The ordinary builder
 does not read compositeData `+0` in the traced selection path; its complete
 role remains unresolved. Name, flag Word and optional field 4 must remain
 explicit choices, since 377 also invokes their setters. This is not a
@@ -113,9 +113,9 @@ identified above. This source investigation makes no implementation change.
 ## Limits and evidence
 
 No model file, individual preset component assets, NPC placement or story
-role was guessed. The exact `nornfemale/preir` preset's registration and
-resolved component assets are the remaining content dependency; this pass
-does not claim a successful preset lookup or rendered Eir. Great Hunt
+role was guessed. The [preset registration and asset follow-up](209026-eir-preset-assets.md)
+resolves the exact `nornfemale/preir` registration and eight component references;
+neither pass claims a runtime preset lookup or rendered Eir. Great Hunt
 association remains separate from the established label and appearance pair.
 
 Complete private bundle:
