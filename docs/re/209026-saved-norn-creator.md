@@ -1,13 +1,25 @@
 # Build 209026 saved Norn Mesmer creator experiment
 
 The observer has opt-in, single-account persistence and a creation scene.
-Support is deployed in owner release `56242d1` at
-`/home/blizz/gw2-rust-56242d1`; saved mode is not enabled in the host config.
+Support first deployed in owner release `56242d1`. The integrator's latest
+receipt is `018cb96` at `/home/blizz/gw2-rust-018cb96`, live at
+2026-11-05 19:22:47 UTC in prepared mode, with rollback
+`/home/blizz/gw2-rust-f751c25`; saved mode is not enabled in the host config.
 Run126 observed actual UI creation, durable save and transfer to a playable
 world connection. Run127 passed process-restart relog using the same record,
 and its final screenshot shows the visible player model. Run125
 resolved the test harness's missing navigation controls; the character model
 remains invisible in the sandbox preview and run126 world screenshot.
+
+The live integrator holds activation under the owner's exclusion of known
+broken builds: the creator preview and direct-entry avatar must render.
+The concrete private activation plan uses `GW2_CHARACTER_MODE=saved-norn` and
+`GW2_CHARACTER_STORE=/home/blizz/gw2-rust-state/characters-norn-owner`, an
+initially empty private owner store, stopped-service backup and rollback that
+preserves later-created records. No synthetic character is imported. Plan:
+`/home/blizz/re/gw2/notes/saved-norn-activation-handoff-20261105.json`.
+The separate heart preflight/combination-coverage fix `d175bd5` shipped in
+`018cb96`; it does not clear the rendering hold.
 
 ## Implemented local behavior
 
