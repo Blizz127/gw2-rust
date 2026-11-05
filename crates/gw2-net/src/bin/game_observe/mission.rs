@@ -417,6 +417,14 @@ pub struct MissionPhase {
     /// Research: where a respawn places the player (server 86), e.g. a
     /// waypoint's client POI position. None revives in place.
     respawn_point: Option<[f32; 3]>,
+    /// Research (run 182): answer the respawn request with 1065 to this game
+    /// address so the client rejoins the map at `respawn_point`, carrying the
+    /// character's progress over to the next connection (CARRY).
+    rejoin_route: Option<std::net::SocketAddr>,
+    /// Loot drops restored from CARRY, resent at AgentsLoaded.
+    restore_loot: u32,
+    /// Experience restored from CARRY, resent at AgentsLoaded (total, level).
+    restore_xp: Option<(u32, u8)>,
     /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
     /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
@@ -519,6 +527,18 @@ fn rally_on_kill(attack: &mut Option<NpcAttack>, character_index: u32, out: &mut
     eprintln!("Mission phase: player rallied (server 84 packed 0x49), health -> {restored}");
     Ok(true)
 }
+
+/// Progress carried from one game connection to the next by a waypoint
+/// rejoin (research; one player per observer process).
+#[derive(Clone, Copy, Debug)]
+struct CarryOver {
+    spawn: [f32; 3],
+    xp: Option<(u32, u8)>,
+    loot_drops: Option<u32>,
+    heart: Option<(u32, bool)>,
+}
+
+static CARRY: std::sync::Mutex<Option<CarryOver>> = std::sync::Mutex::new(None);
 
 /// Server 169 `{Dword character, Byte}` (handler `0x14124be30` ->
 /// `0x1411da200`): nonzero sets character flag bit 1 (defeated, may respawn),
@@ -718,6 +738,9 @@ impl MissionPhase {
             heart: None,
             respawn_flag: false,
             respawn_point: None,
+            rejoin_route: None,
+            restore_loot: 0,
+            restore_xp: None,
             kill_loot: None,
             npc_attack: None,
             sourced_damage: None,
@@ -824,6 +847,12 @@ impl MissionPhase {
     /// Requires with_starter_bag (276 needs 305's slots).
     pub fn with_kill_loot(mut self) -> Self {
         self.kill_loot = Some(0);
+        self
+    }
+
+    /// Requires a respawn point: the respawn request then rejoins the map there.
+    pub fn with_rejoin_route(mut self, route: std::net::SocketAddr) -> Self {
+        self.rejoin_route = Some(route);
         self
     }
 
@@ -1039,6 +1068,28 @@ impl MissionPhase {
     /// MapLoaded (once), then BeginPlaying after AgentsLoaded (once, and only
     /// after population). Nothing without a population fixture.
     pub fn respond(&mut self, seen: &Seen) -> io::Result<Option<Bytes>> {
+        if self.rejoin_route.is_some()
+            && !self.populated
+            && matches!(seen, Seen::Map(ClientMapEvent::MapLoaded))
+            && let Some(carry) = CARRY.lock().ok().and_then(|mut c| c.take())
+        {
+            if let Some(fixture) = self.population.as_mut() {
+                fixture.plan.position = carry.spawn;
+            }
+            if let (Some((_, total, level)), Some((t, l))) = (self.xp.as_mut(), carry.xp) {
+                (*total, *level) = (t, l);
+                self.restore_xp = Some((t, l));
+            }
+            if let (Some(drops), Some(n)) = (self.kill_loot.as_mut(), carry.loot_drops) {
+                *drops = n;
+                self.restore_loot = n;
+            }
+            if let (Some(heart), Some((progress, done))) = (self.heart.as_mut(), carry.heart) {
+                heart.progress = progress;
+                heart.done = done;
+            }
+            eprintln!("Mission phase: rejoin carry-over applied {carry:?}");
+        }
         let Some(fixture) = &self.population else {
             return Ok(None);
         };
@@ -1136,8 +1187,30 @@ impl MissionPhase {
                     }
                     eprintln!("Mission phase: sending explicit quest Create, SelectGoal and Notify once");
                 }
+                for slot in 0..self.restore_loot.min(STARTER_BAG_SLOTS) {
+                    let (item_key, _) = KILL_LOOT_TABLE[slot as usize % KILL_LOOT_TABLE.len()];
+                    let instance = LOOT_INSTANCE_BASE + slot;
+                    encode_stack_item_creation(instance, item_key, 1, &mut out)?;
+                    InventoryItemFrame209026 { character_index: fixture.plan.character_index, item_instance: instance, reason: 0, slot }
+                        .encode_frame(&mut out)?;
+                }
+                if let Some((total, level)) = self.restore_xp {
+                    ExperienceFrame209026 { character_index: fixture.plan.character_index, experience: total, dword_2: 0, byte_3: 0 }
+                        .encode_frame(&mut out);
+                    EarnedLevelFrame209026 { character_index: fixture.plan.character_index, level }.encode_frame(&mut out);
+                }
+                if self.restore_loot > 0 || self.restore_xp.is_some() {
+                    eprintln!("Mission phase: restored {} loot items and experience {:?} after rejoin", self.restore_loot, self.restore_xp);
+                }
                 if let Some(heart) = self.heart.as_mut() {
                     show_heart(heart, fixture.plan.player_index, &mut out)?;
+                    if heart.progress > 0 {
+                        RenownFrame209026::SetCounter { objective: HEART_OBJECTIVE, value: heart.progress }.encode_frame(&mut out)?;
+                    }
+                    if heart.done {
+                        RenownFrame209026::CompleteSubRegion { player: fixture.plan.player_index, region: HEART_REGION, heart: heart.key }
+                            .encode_frame(&mut out)?;
+                    }
                     // 384 ties the talk NPC to the heart: the client puts the
                     // heart marker (map, compass, "!" bang) on it. The sub-region
                     // already exists (657 above), so the marker is created now.
@@ -1158,6 +1231,30 @@ impl MissionPhase {
                 // {poi}: a waypoint picked on the map. Both mean respawn here.
                 let mut out = BytesMut::new();
                 let character_index = fixture.plan.character_index;
+                if let (Some(route), Some(point)) = (self.rejoin_route, self.respawn_point) {
+                    // Rejoin the map at the waypoint on a new connection (1065,
+                    // as the creator's creation -> world redirect). Fields:
+                    // destination, unused, join scalar 0, map Word, 0, unused.
+                    let carry = CarryOver {
+                        spawn: point,
+                        xp: self.xp.map(|(_, total, level)| (total, level)),
+                        loot_drops: self.kill_loot,
+                        heart: self.heart.map(|h| (h.progress, h.done)),
+                    };
+                    if let Ok(mut slot) = CARRY.lock() {
+                        *slot = Some(carry);
+                    }
+                    use gw2_proto::Encode;
+                    1065u16.encode(&mut out);
+                    route.encode(&mut out);
+                    0u32.encode(&mut out);
+                    0u32.encode(&mut out);
+                    (self.map_key as u16).encode(&mut out);
+                    0u32.encode(&mut out);
+                    0u32.encode(&mut out);
+                    eprintln!("Mission phase: client {id} respawn -> rejoin map {} at {point:?} via 1065 {route} (carry {carry:?})", self.map_key);
+                    return Ok(Some(out.freeze()));
+                }
                 if let Some(attack) = self.npc_attack.as_mut() {
                     respawn_player(attack, character_index, &mut out)?;
                 }

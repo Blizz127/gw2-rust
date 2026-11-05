@@ -1089,3 +1089,25 @@ leave the gameplay view first, most likely the 1065 map-join route onto a new ga
 connection, as the creator lane uses for creation → world. Reverted:
 `--mission-respawn-point` again only sends the (ineffective) 86. The respawn itself
 (169/210 → 0x49) is live in kit f751c25 and later.
+
+### Run 182: waypoint respawn by map rejoin (1065) works
+
+The run used `--mission-respawn-flag --mission-respawn-point -9057.7,-24303.5,-3736.1
+--mission-rejoin-route 127.1.0.4:6112` (Horncall Waypoint, POI 372). After the defeat:
+
+1. "Return to a Waypoint" sent **client 210**.
+2. The observer stored a carry-over in process (spawn, experience 2500 / level 2, 1 loot
+   drop, heart 56 progress 1). It answered with **1065** `{127.1.0.4:6112, 0, 0, Word 379,
+   0, 0}`, the same shape the creator uses for creation → world.
+3. The client closed the connection (ConnectionReset) and opened a **new game
+   connection**: key exchange, 1063/1060, 420.
+4. At 420 the observer applied the carry-over: spawn = waypoint, XP, loot count, heart.
+5. The population was sent, then 412 → BeginPlaying. At AgentsLoaded the observer resent
+   the dropped item (968 + 276), 191/188 experience, and the heart opening plus `1089
+   progress`.
+
+Screenshot 40 s later: the player stands at Horncall (tents, pumpkins, a different area),
+health 388, tracker "Honor the Spirit of Raven" **1/5**. No asserts.
+
+Carry-over is per observer process and single-player (research). The hostile NPCs are
+respawned with the new connection at their configured positions.

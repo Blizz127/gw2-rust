@@ -143,6 +143,7 @@ struct Fixtures<'a> {
     heart: Option<(u16, u32)>,
     respawn_flag: bool,
     respawn_point: Option<[f32; 3]>,
+    rejoin_route: Option<SocketAddr>,
     /// Research: answer SkillBegin with server 34 + 0x78.
     skill_order_echo: bool,
     /// Research: hostile NPC casts this skill on each player SkillBegin.
@@ -187,6 +188,7 @@ fn observe(
         heart,
         respawn_flag,
         respawn_point,
+        rejoin_route,
         skill_order_echo,
         npc_cast,
         damage_on_skill,
@@ -259,6 +261,9 @@ fn observe(
         }
         if let Some(point) = respawn_point {
             mission = Some(mission.ok_or_else(|| invalid("respawn point requires a mission phase"))?.with_respawn_point(point));
+        }
+        if let Some(route) = rejoin_route {
+            mission = Some(mission.ok_or_else(|| invalid("rejoin route requires a mission phase"))?.with_rejoin_route(route));
         }
         if let Some((species, position)) = late_npc {
             mission = Some(mission.ok_or_else(|| invalid("late NPC requires a mission phase"))?.with_late_npc(species, position)?);
@@ -484,6 +489,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut heart: Option<(u16, u32)> = None;
     let mut respawn_flag = false;
     let mut respawn_point: Option<[f32; 3]> = None;
+    let mut rejoin_route: Option<SocketAddr> = None;
     let mut skill_order_echo = false;
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
@@ -679,6 +685,14 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 npc_cast = Some(text.parse().map_err(|_| invalid("invalid NPC cast skill key"))?);
             }
             "--mission-respawn-flag" => respawn_flag = true,
+            "--mission-rejoin-route" => {
+                let text = args.next().ok_or_else(|| invalid("missing rejoin route LOOPBACK:PORT"))?;
+                let route: SocketAddr = text.parse().map_err(|_| invalid("invalid rejoin route"))?;
+                if !route.ip().is_loopback() {
+                    return Err(invalid("rejoin route must be a loopback (bubble-side) address"));
+                }
+                rejoin_route = Some(route);
+            }
             "--mission-respawn-point" => {
                 let text = args.next().ok_or_else(|| invalid("missing respawn point X,Y,Z"))?;
                 let parts: Vec<f32> = text.split(',').map(|v| v.parse::<f32>()).collect::<Result<_, _>>().map_err(|_| invalid("invalid respawn point"))?;
@@ -1029,6 +1043,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 heart,
                 respawn_flag,
                 respawn_point,
+                rejoin_route,
                 skill_order_echo,
                 npc_cast,
                 damage_on_skill,
