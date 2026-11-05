@@ -344,3 +344,36 @@ Candidates for the next trace:
 - the client's own predicted order (kind 0x53) for the same value.
 
 `skill_order.rs` provides the codecs (SkillBegin parse, 0x78 builder, server 34).
+
+### Why run 126 did nothing: the controlled-character 0x78 gate (`0x14127ef80`)
+
+The order-start entry on the character's order component (+0x4b0) checks, in order:
+1. **Packed order flags.** Bit 0x10 rejects the order. An existing order in slot
+   `(outer flags >> 5) & 1` is compared via `0x1412874a0` and kept or cancelled. Bit 0x4
+   takes the alternate path.
+2. **Controlled character** (order component +0x58 bit 0, the local player): for a
+   packed **0x78**, the skill definition is resolved by the key at +2. The order is
+   **dropped unless skill definition +0x38 has 0x80000**. That is the same mask the
+   client's own request producer tests. Heal 10176 evidently lacks it, so the server-34
+   0x78 order for the player was discarded before creation. For skills without that
+   flag, the client keeps its **own predicted order (kind 0x53)**.
+3. **Predicted-order replacement:** a packed **0x7a** order arriving for slot 1 (outer
+   flag bit 5), while slot 0 holds a kind-0x53 order whose action lacks flag 0x8000,
+   cancels and replaces that predicted order.
+
+**0x7a layout** (factory entry `0x14128145f`, 0x68-byte object, vtable `0x142179a70`):
+exactly **11 bytes**:
+- `[0x7a]`
+- `[order flags]`
+- `[u32 agent]`, resolved through `0x141024060`
+- `[u32]`, stored at +0x40
+- `[byte]`
+
+Its gameplay role isn't established.
+
+**Consequence:** for the player's own predicted skills, the server answer is not a 0x78
+start. It is most likely the order notifications Codex traced (server 84 opcodes
+0x44/0x45/0x47, keyed by behavior value), which Codex found require an existing kind-0x78
+order. A 0x78 start for the player only applies to 0x80000-flag skills. For NPC (not
+controlled) casters, 0x78 via a bit-12 carrier such as server 34 remains the candidate
+for making enemies cast. Untested.
