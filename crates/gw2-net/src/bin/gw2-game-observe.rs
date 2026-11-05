@@ -272,6 +272,7 @@ fn main() -> io::Result<()> {
     let mut spawn: Option<[f32; 3]> = None;
     let mut mesmer_values: Option<[u8; 2]> = None;
     let mut reward_tracks: Option<[u32; 4]> = None;
+    let mut quest: Option<(u32, u8, u32)> = None;
     let mut population_delay = Duration::ZERO;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -338,6 +339,20 @@ fn main() -> io::Result<()> {
                     "reward tracks need exactly four unsigned Dwords: A,B,C,D",
                 )?);
             }
+            "--mission-quest" => {
+                if quest.is_some() {
+                    return Err(invalid("duplicate --mission-quest"));
+                }
+                let [key, flags, goal]: [u32; 3] = parse_csv(
+                    &args.next().ok_or_else(|| invalid("missing quest KEY,FLAGS,GOAL"))?,
+                    "quest needs exactly three unsigned values: KEY,FLAGS,GOAL",
+                )?;
+                let flags = u8::try_from(flags).map_err(|_| invalid("quest FLAGS must fit a byte"))?;
+                if flags & 1 != 0 {
+                    return Err(invalid("initial quest goal requires completion flag bit 0 clear"));
+                }
+                quest = Some((key, flags, goal));
+            }
             "--mission-spawn" => {
                 let text = args.next().ok_or_else(|| invalid("missing spawn X,Y,Z"))?;
                 let parts: Vec<f32> = text
@@ -387,7 +402,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D]]]]",
+                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-quest KEY,FLAGS,GOAL]]]]",
                 ));
             }
         }
@@ -425,6 +440,9 @@ fn main() -> io::Result<()> {
     {
         return Err(invalid("--mission-mesmer-values and --mission-reward-tracks go together and require --mission-population"));
     }
+    if quest.is_some() && population_record.is_none() {
+        return Err(invalid("--mission-quest requires --mission-population"));
+    }
     let population = match (&population_record, spawn) {
         (Some(record), Some(spawn)) => Some(match (mesmer_values, reward_tracks) {
             (Some(values), Some(tracks)) => mission::PopulationFixture::with_profession(
@@ -433,6 +451,10 @@ fn main() -> io::Result<()> {
             _ => mission::PopulationFixture::new(record, spawn)?,
         }),
         _ => None,
+    };
+    let population = match (population, quest) {
+        (Some(fixture), Some((key, flags, goal))) => Some(fixture.with_quest(key, flags, goal)?),
+        (fixture, _) => fixture,
     };
     if let Some(key) = mission_map_key {
         // Validate before binding; each connection builds its own phase.

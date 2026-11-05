@@ -50,6 +50,9 @@ API/wiki names may locate content but do not replace client verification.
   the client upgrade callback; real Norn and Queensdale probes pass.
 - [Fixture CLIs](re/209026-character-fixture-cli.md): explicit archived
   appearance extraction and bounded synthetic auth framing replace manual bytes.
+- [Quest initialization](re/209026-quest-lifecycle.md): direct quest154/goal1
+  link to map379, explicit 527/532/528 observer experiment and once-only guard.
+  Run113 shows a story marker but blank objective text; no encounter implemented.
 - Next source work: Norn start/entry coordinates, creation-template equipment,
   Mesmer palette/availability selection, then first tutorial encounter.
 

@@ -17,6 +17,9 @@
 //! view state (docs/re/209026-mission-entry.md); its order after 1036 follows
 //! the bootstrap candidate order. Both are candidates from static analysis
 //! (docs/re/209026-bootstrap-sequence.md), not a validated bootstrap.
+//! An explicit quest fixture adds 527/532/528 once after that startup sequence.
+//! Goal selection is intentionally not repeated: selecting an existing active
+//! goal can complete it (docs/re/209026-quest-lifecycle.md).
 use bytes::{Bytes, BytesMut};
 use gw2_proto::{
     Guid,
@@ -26,6 +29,7 @@ use gw2_proto::{
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
     player_startup::PlayerStartupFrame209026,
     population::{self, PopulationPlan, PopulationProfession209026},
+    quest::{QuestLifecycleFrame209026, QuestLifecycleOperation209026},
     schema::{self, Message},
 };
 use std::io::{self, ErrorKind};
@@ -73,6 +77,14 @@ pub enum Seen {
 pub struct PopulationFixture {
     plan: PopulationPlan,
     map_key: u16,
+    quest: Option<QuestFixture>,
+}
+
+#[derive(Clone, Copy)]
+struct QuestFixture {
+    quest_id: u32,
+    flags: u8,
+    goal_id: u32,
 }
 
 impl PopulationFixture {
@@ -116,7 +128,19 @@ impl PopulationFixture {
         Ok(Self {
             plan,
             map_key: summary.map_definition_key(),
+            quest: None,
         })
+    }
+
+    /// Explicit research input, not a retail quest selector. The caller must
+    /// establish that the definition contains the goal. Bit 0 means complete,
+    /// which the client's goal setter forbids; other flag semantics are open.
+    pub fn with_quest(mut self, quest_id: u32, flags: u8, goal_id: u32) -> io::Result<Self> {
+        if flags & 1 != 0 {
+            return Err(io::Error::new(ErrorKind::InvalidInput, "initial quest goal requires completion flag bit 0 clear"));
+        }
+        self.quest = Some(QuestFixture { quest_id, flags, goal_id });
+        Ok(self)
     }
 
     /// The summary's map key, which the client also sends in route 29.
@@ -306,6 +330,21 @@ impl MissionPhase {
                 // scheduled world entry (46) has run, so the flag can't make it drop 46.
                 AgentControl209026 { agent_index: fixture.plan.character_index as u16, value: 1 }
                     .encode_frame(&mut out);
+                if let Some(QuestFixture { quest_id, flags, goal_id }) = fixture.quest {
+                    // All character/player components now exist. 532 is not
+                    // idempotent: it completes an old active goal. Send exactly
+                    // once after a fresh 527, then notify with 528. See the
+                    // quest-lifecycle source note; this remains opt-in.
+                    for operation in [
+                        QuestLifecycleOperation209026::Create { quest_data_id: quest_id, raw_byte: flags },
+                        QuestLifecycleOperation209026::SelectGoal { goal_id },
+                        QuestLifecycleOperation209026::Notify,
+                    ] {
+                        QuestLifecycleFrame209026 { player_index: fixture.plan.player_index, operation }
+                            .encode_frame(&mut out);
+                    }
+                    eprintln!("Mission phase: sending explicit quest Create, SelectGoal and Notify once");
+                }
                 Ok(Some(out.freeze()))
             }
             _ => Ok(None),
@@ -808,6 +847,38 @@ pub(crate) mod tests {
         assert!(phase.respond(&loaded).unwrap().is_none(), "population is sent once");
         assert_eq!(&phase.respond(&agents).unwrap().unwrap()[..], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01], "1036, 431, then 83 client control for agent 1");
         assert!(phase.respond(&agents).unwrap().is_none(), "1036 is sent once");
+    }
+
+    #[test]
+    fn explicit_quest_starts_once_after_population_and_agent_readiness() {
+        let fixture = PopulationFixture::new(&guardian_record(15, 1), [0.0; 3]).unwrap();
+        assert!(fixture.clone().with_quest(154, 1, 1).is_err());
+        assert!(fixture.clone().with_quest(154, 255, 1).is_err());
+        // Distinct synthetic IDs/flags check transport; no content selection.
+        let fixture = fixture.with_quest(16384, 2, 300).unwrap();
+        let mut phase = MissionPhase::new(15).unwrap().with_population(fixture).unwrap()
+            .with_population_delay(Duration::from_secs(1));
+        let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
+        let loaded = Seen::Map(ClientMapEvent::MapLoaded);
+        assert!(phase.respond(&agents).unwrap().is_none());
+        assert!(phase.respond(&loaded).unwrap().is_none());
+        assert!(phase.respond(&agents).unwrap().is_none());
+        assert!(phase.take_due(phase.due_at().unwrap()).is_some());
+        let reply = phase.respond(&agents).unwrap().unwrap();
+        assert_eq!(&reply[..9], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01]);
+        let mut tail = &reply[9..];
+        for operation in [
+            QuestLifecycleOperation209026::Create { quest_data_id: 16384, raw_byte: 2 },
+            QuestLifecycleOperation209026::SelectGoal { goal_id: 300 },
+            QuestLifecycleOperation209026::Notify,
+        ] {
+            assert_eq!(QuestLifecycleFrame209026::decode_frame(&mut tail).unwrap(),
+                QuestLifecycleFrame209026 { player_index: 1, operation });
+        }
+        assert!(tail.is_empty());
+        for seen in [loaded, agents, agents] {
+            assert!(phase.respond(&seen).unwrap().is_none(), "never reselect an active goal");
+        }
     }
 
     /// With a delay the population is held after 420 and released once due (once);

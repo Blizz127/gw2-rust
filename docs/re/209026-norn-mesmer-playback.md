@@ -83,3 +83,29 @@ Bundles: `~/re/gw2/notes/209026-norn-mesmer-run11{1,2}-20261105.json`.
 | `ev_2735e186d58277705b77f685ad09f4a2ebbf2d0bafcf184765062e51bbad22c8` | Run 111, map entry and rendered character. |
 | `ev_819dd224eb242ce57be9ff752a4e42dccf23d055017b497805f6c25d8b099919` | Run 112, delayed movement input and retained before/after screenshots. |
 | `ev_a2fdfeed4c520d4bab829025ef9f20cb947285be87f9976d2995fda838148d99` | Hash-checked profession-specialization reward-track references. |
+
+## Quest initialization follow-up: run 113
+
+The [quest source trace](209026-quest-lifecycle.md) establishes a direct
+quest154 → goal1 → map379 reference. Run 113 adds the explicit observer
+option **`--mission-quest 154,0,1`**, retaining run 112's other inputs and
+delayed movement check. Flag byte zero is a research choice with the proven
+completion bit clear; it is not a claimed retail default.
+
+After the usual population/readiness/startup sequence, the observer sends
+527 Create, 532 SelectGoal and 528 Notify exactly once. The client remains
+in the map, renders and moves without a captured assertion or fatal signal.
+The objective area changes from generic exploration guidance to a green
+story star and `(Level 1)`. **Quest title and objective text remain blank**
+in the before/after/soak screenshots. This verifies a bounded initialization
+path, not correct objective presentation or functioning tutorial gameplay.
+The missing text is an active investigation, not an accepted visual result.
+
+REA evidence:
+`ev_7100e4d3cb54b67cc4aa4a9c4a505a59c14bc9a154a155edbe5f2d80ca0eda65`.
+Private run: `~/gw2-sandbox/runs/run113-norn-mesmer-quest/`.
+Bundle: `~/re/gw2/notes/209026-norn-mesmer-run113-20261105.json`.
+Soak screenshot SHA-256:
+`af2d84133eb565d6a44e72ca479d959479b5e321120e6a693d0a877dcb40acf8`.
+The run exited 0 with exact container cleanup, unchanged executable hashes,
+full archive entry count and credential-safe logging verified as above.

@@ -15,6 +15,8 @@ equipment and palette records. [Isolated runs 111/112](re/209026-norn-mesmer-pla
 now render a Norn Mesmer in The Great Hunt and demonstrate local movement.
 The character has empty equipment/skills and an explicit diagnostic spawn;
 Norn terrain v14 support and source-backed fixture CLIs are implemented.
+An explicit quest154/goal1 experiment (run113) shows a story marker, but the
+title and objective text are blank and remain under investigation.
 No deployment changed. NPCs, combat, tutorial objectives, progression and persistence
 remain incomplete; this is not a 100% claim.
 
