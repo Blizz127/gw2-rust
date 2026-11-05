@@ -236,42 +236,47 @@ fn observe(
         mission = Some(mission.ok_or_else(|| invalid("saved population requires a mission phase"))?
             .with_population(fixture)?.with_population_delay(population_delay));
     }
-    if let Some(npc) = talk_npc {
-        mission = Some(mission.ok_or_else(|| invalid("talk NPC requires a mission phase"))?.with_talk_npc(npc));
-    }
-    for (species, position) in hostile_npcs {
-        mission = Some(
-            mission
-                .ok_or_else(|| invalid("hostile NPC requires a mission phase"))?
-                .with_hostile_npc(species, position)?,
-        );
-    }
-    if skill_order_echo {
-        mission = Some(mission.ok_or_else(|| invalid("skill order echo requires a mission phase"))?.with_skill_order_echo());
-    }
-    if let Some(skill) = npc_cast {
-        mission = Some(mission.ok_or_else(|| invalid("NPC cast requires a mission phase"))?.with_npc_cast(skill));
-    }
-    if let Some(id) = starter_bag {
-        mission = Some(mission.ok_or_else(|| invalid("starter bag requires a mission phase"))?.with_starter_bag(id));
-    }
-    if let Some(kind) = sourced_damage {
-        mission = Some(mission.ok_or_else(|| invalid("sourced damage requires a mission phase"))?.with_sourced_damage(kind));
-    }
-    if let Some((damage, health)) = npc_attack {
-        mission = Some(mission.ok_or_else(|| invalid("NPC attack requires a mission phase"))?.with_npc_attack(damage, health));
-    }
-    if kill_loot {
-        mission = Some(mission.ok_or_else(|| invalid("kill loot requires a mission phase"))?.with_kill_loot());
-    }
-    if let Some(per_kill) = xp_per_kill {
-        mission = Some(mission.ok_or_else(|| invalid("experience requires a mission phase"))?.with_xp_per_kill(per_kill));
-    }
-    if let Some(skill) = autoattack_skill {
-        mission = Some(mission.ok_or_else(|| invalid("auto-attack requires a mission phase"))?.with_autoattack_skill(skill));
-    }
-    if let Some(amount) = damage_on_skill {
-        mission = Some(mission.ok_or_else(|| invalid("damage requires a mission phase"))?.with_damage_on_skill(amount));
+    // In combined mode the map0 connection has selected the creator. These
+    // options configure its later world join, not the creation scene itself.
+    // Noncombined configurations retain their existing missing-phase errors.
+    if !combined || mission.is_some() {
+        if let Some(npc) = talk_npc {
+            mission = Some(mission.ok_or_else(|| invalid("talk NPC requires a mission phase"))?.with_talk_npc(npc));
+        }
+        for (species, position) in hostile_npcs {
+            mission = Some(
+                mission
+                    .ok_or_else(|| invalid("hostile NPC requires a mission phase"))?
+                    .with_hostile_npc(species, position)?,
+            );
+        }
+        if skill_order_echo {
+            mission = Some(mission.ok_or_else(|| invalid("skill order echo requires a mission phase"))?.with_skill_order_echo());
+        }
+        if let Some(skill) = npc_cast {
+            mission = Some(mission.ok_or_else(|| invalid("NPC cast requires a mission phase"))?.with_npc_cast(skill));
+        }
+        if let Some(id) = starter_bag {
+            mission = Some(mission.ok_or_else(|| invalid("starter bag requires a mission phase"))?.with_starter_bag(id));
+        }
+        if let Some(kind) = sourced_damage {
+            mission = Some(mission.ok_or_else(|| invalid("sourced damage requires a mission phase"))?.with_sourced_damage(kind));
+        }
+        if let Some((damage, health)) = npc_attack {
+            mission = Some(mission.ok_or_else(|| invalid("NPC attack requires a mission phase"))?.with_npc_attack(damage, health));
+        }
+        if kill_loot {
+            mission = Some(mission.ok_or_else(|| invalid("kill loot requires a mission phase"))?.with_kill_loot());
+        }
+        if let Some(per_kill) = xp_per_kill {
+            mission = Some(mission.ok_or_else(|| invalid("experience requires a mission phase"))?.with_xp_per_kill(per_kill));
+        }
+        if let Some(skill) = autoattack_skill {
+            mission = Some(mission.ok_or_else(|| invalid("auto-attack requires a mission phase"))?.with_autoattack_skill(skill));
+        }
+        if let Some(amount) = damage_on_skill {
+            mission = Some(mission.ok_or_else(|| invalid("damage requires a mission phase"))?.with_damage_on_skill(amount));
+        }
     }
     let mut creation = creation.map(|(store, address)| creation_scene::CreationScene::new(store, address)).transpose()?;
     let mut header = [0u8; 2];
@@ -621,7 +626,11 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
             }
             "--mission-starter-bag" => {
                 let text = args.next().ok_or_else(|| invalid("missing bag creation message id"))?;
-                starter_bag = Some(text.parse().map_err(|_| invalid("invalid bag creation message id"))?);
+                let id = text.parse().map_err(|_| invalid("invalid bag creation message id"))?;
+                if !matches!(id, 959 | 962 | 968 | 970) {
+                    return Err(invalid("bag creation message id must be 959, 962, 968 or 970"));
+                }
+                starter_bag = Some(id);
             }
             "--mission-xp-per-kill" => {
                 let text = args.next().ok_or_else(|| invalid("missing experience per kill"))?;
@@ -858,9 +867,14 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     };
     if let Some(key) = mission_map_key {
         // Validate before binding; each connection builds its own phase.
-        let phase = mission::MissionPhase::new(key)?;
+        let mut phase = mission::MissionPhase::new(key)?;
         if let Some(fixture) = &population {
-            phase.with_population(fixture.clone())?;
+            phase = phase.with_population(fixture.clone())?;
+        }
+        // Validate world-only NPC values even when the first connection will
+        // select the creator. Dispatch must not conceal an invalid profile.
+        for &(species, position) in &hostile_npcs {
+            phase = phase.with_hostile_npc(species, position)?;
         }
     }
     if character.is_some() && auth_body.is_none() {

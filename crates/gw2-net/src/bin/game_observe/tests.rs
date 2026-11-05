@@ -316,6 +316,119 @@ fn shared_creation_world_listener_uses_map_and_preserves_each_saved_identity() {
 }
 
 #[test]
+fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
+    use gw2_proto::{agent_behavior::AgentBehaviorFrame209026, map_load::ClientMapEvent};
+    let scenario = saved_population::tests::SavedScenario::new();
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let paths = [scenario.capture_path("combat-creator"), scenario.capture_path("combat-world")];
+    let server_paths = paths.clone();
+    let profile = scenario.profile.clone();
+    // Synthetic combat inputs exercise routing, not a retail encounter.
+    let talk = mission::TalkNpc::new(100, [1.0, 2.0, 3.0], "Test NPC".into()).unwrap();
+    let server_talk = talk.clone();
+    let server = std::thread::spawn(move || {
+        let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+        for path in server_paths {
+            observe(listener.accept().unwrap().0, &key, &path, Fixtures {
+                mission_map_key: Some(379),
+                creation: Some((profile.store.clone(), address)),
+                saved_population: Some(profile.clone()),
+                talk_npc: Some(server_talk.clone()),
+                hostile_npcs: vec![(101, [4.0, 5.0, 6.0])],
+                skill_order_echo: true, npc_cast: Some(10176), damage_on_skill: Some(200.0),
+                autoattack_skill: Some(10176), xp_per_kill: Some(50), starter_bag: Some(959),
+                kill_loot: true, npc_attack: Some((10.0, 777.0)), sourced_damage: Some(1),
+                no_capture: true,
+                ..Fixtures::default()
+            }, Preamble::Mission).unwrap();
+        }
+    });
+    let mut prefix = scenario.preamble(0);
+    prefix[24..28].fill(0);
+    let (mut client, mut codec, mut pending) = shared_listener_peer(address, prefix, 26);
+    assert_eq!(next_shared_frame(&mut client, &mut codec, &mut pending).as_ref(),
+        &1049u16.to_le_bytes());
+    let mut ready = BytesMut::new();
+    410u16.encode(&mut ready);
+    411u16.encode(&mut ready);
+    send_shared_frame(&mut client, &mut codec, ready.freeze());
+    assert_eq!(next_shared_frame(&mut client, &mut codec, &mut pending).as_ref(),
+        &1050u16.to_le_bytes());
+    assert!(pending.is_empty());
+    client.shutdown(Shutdown::Both).unwrap();
+
+    // A subsequent world join on that same listener keeps every combat option.
+    // Compare to a standalone world phase with the same explicit population.
+    let mut expected = mission::MissionPhase::new(379).unwrap()
+        .with_population(scenario.expected(0)).unwrap()
+        .with_talk_npc(talk).with_hostile_npc(101, [4.0, 5.0, 6.0]).unwrap()
+        .with_skill_order_echo().with_npc_cast(10176).with_damage_on_skill(200.0)
+        .with_autoattack_skill(10176).with_xp_per_kill(50).with_starter_bag(959)
+        .with_kill_loot().with_npc_attack(10.0, 777.0).with_sourced_damage(1);
+    let mut prefix = scenario.preamble(0);
+    prefix[24..28].copy_from_slice(&379u32.to_le_bytes());
+    let (mut client, mut codec, mut pending) = shared_listener_peer(address, prefix, 55);
+    assert_eq!(next_shared_frame(&mut client, &mut codec, &mut pending), expected.opening());
+    let mut loaded = BytesMut::new();
+    420u16.encode(&mut loaded);
+    412u16.encode(&mut loaded);
+    send_shared_frame(&mut client, &mut codec, loaded.freeze());
+    for event in [ClientMapEvent::MapLoaded, ClientMapEvent::AgentsLoaded] {
+        let reply = expected.respond(&mission::Seen::Map(event)).unwrap().unwrap();
+        assert_eq!(next_shared_frame(&mut client, &mut codec, &mut pending), reply);
+    }
+    let mut skill = BytesMut::new();
+    AgentBehaviorFrame209026 {
+        agent_index: 1, remote_tick: 77, command_flags: 3, behavior_value: 0,
+        behavior_data: vec![0x23, 3, 0, 0, 0, 0xc0, 0x27, 0, 0, 1],
+    }.encode_client_frame(&mut skill).unwrap();
+    let seen = expected.push(&skill);
+    assert!(matches!(seen.as_slice(), [mission::Seen::Skill(_)]));
+    let reply = expected.respond(&seen[0]).unwrap().unwrap();
+    send_shared_frame(&mut client, &mut codec, skill.freeze());
+    assert_eq!(next_shared_frame(&mut client, &mut codec, &mut pending), reply);
+    assert!(pending.is_empty());
+    client.shutdown(Shutdown::Both).unwrap();
+    server.join().unwrap();
+    for path in paths {
+        assert!(!path.exists());
+        assert!(!path.with_extension("preamble.bin").exists());
+    }
+}
+
+#[test]
+fn shared_creation_combat_configuration_is_validated_before_binding() {
+    let scenario = saved_population::tests::SavedScenario::new();
+    let store = scenario.capture_path("combat-cli-store");
+    let args: Vec<String> = [
+        "--no-capture", "--mission-preamble", "--character-store", store.to_str().unwrap(),
+        "--creation-scene", "127.1.0.4:6112", "--mission-map-key", "379",
+        "--mission-spawn", "0,0,0", "--mission-mesmer-values", "3,0",
+        "--mission-reward-tracks", "1,2,3,4", "--mission-health", "777",
+        "--mission-hostile-npc", "101,4,5,6", "--mission-damage-on-skill", "10",
+        "--mission-npc-attack", "5", "--mission-starter-bag", "959", "--mission-kill-loot",
+    ].into_iter().map(str::to_owned).collect();
+    assert_eq!(run(args.clone().into_iter()).unwrap_err().to_string(), "missing --params");
+    let npc = args.iter().position(|s| s == "--mission-hostile-npc").unwrap();
+    for value in ["0,4,5,6", "268435456,4,5,6", "101,NaN,5,6", "101,4,inf,6"] {
+        let mut bad = args.clone();
+        bad[npc + 1] = value.into();
+        assert_ne!(run(bad.into_iter()).unwrap_err().to_string(), "missing --params", "{value}");
+    }
+    for option in ["--mission-hostile-npc", "--mission-damage-on-skill", "--mission-health", "--mission-starter-bag"] {
+        let mut bad = args.clone();
+        let at = bad.iter().position(|s| s == option).unwrap();
+        bad.drain(at..at + 2);
+        assert_ne!(run(bad.into_iter()).unwrap_err().to_string(), "missing --params", "{option}");
+    }
+    let mut bad = args;
+    let at = bad.iter().position(|s| s == "--mission-starter-bag").unwrap();
+    bad[at + 1] = "123".into();
+    assert!(run(bad.into_iter()).unwrap_err().to_string().contains("bag creation message id"));
+}
+
+#[test]
 fn shared_creation_world_listener_rejects_bad_world_selection_and_other_maps_before_key_reply() {
     use saved_population::tests::SavedScenario;
     let scenario = SavedScenario::new();
