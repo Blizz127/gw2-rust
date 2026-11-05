@@ -494,3 +494,29 @@ constructor installs vtable `0x142149138` (`0x1411589c5`, `rbx`). It dumps each 
 REVEALED and a position. The remaining cause is inside model-component rendering
 (pose/animation, material/skin, LOD). That's the next trace.
 
+### Likely root cause: the creature models reference files absent from this Gw2.dat
+
+A file-reference scan of the two NPC models uses the encoded `(low, high, 0)` tuples,
+id = high×0xff00 + low + 0xff00ff01. The present references are what they should be:
+- model **19830** (Branded Minotaur) references textures (ATEX 314887, 2331955, 65282)
+  and two more MODL files (19818; 19819, 2.3 MB, likely skeleton or animation), all
+  present;
+- it also repeatedly references **2257612** and **2492707**, next to its texture
+  references;
+- model **26012** (Juvenile Boar) references the same **2257612** and **2492707**.
+
+**Both files are missing from the frozen `build-209026/Gw2.dat` and the working copy**
+(`gw2-dat-cat` returns nothing). A retail client streams missing files from ArenaNet's
+asset CDN. Here:
+- no manifest names them;
+- the sandbox CDN logged no request (`cdn.log` has only `/latest64/101`);
+- offline-only rules forbid fetching them.
+
+So these creatures probably can't render with this archive. That is consistent with
+every other stage (view, model handle, model component, REVEALED, position) succeeding.
+Their type isn't known, since they're absent; material or shader is *inferred*.
+
+**Workaround in progress:** scan species models for ones whose references are all
+present locally, then spawn one of those as the test NPC
+(`~/re/gw2/notes/209026-mesmer-re-handoff-20261105/model-refs.*`).
+
