@@ -4,7 +4,7 @@ use gw2_dat::{
     mapc::MapCollide,
     packfile::Packfile,
     pfread::{Limits, PfValue, read_chunk},
-    pfschema::{find_all, parse},
+    pfschema::{PackfileSchema, find_all, parse},
     scene_bounds::{Bounds3, SceneBounds209026},
     surface::{VerticalHit, vertical_segment_hit},
     terrain::{TerrainHeights209026, TerrainTiles209026},
@@ -91,6 +91,37 @@ fn consider(
         *best = Some((hit, source));
     }
 }
+
+fn read_geometry_chunk(
+    schemas: &[PackfileSchema],
+    name: &str,
+    version: u16,
+    bytes: &[u8],
+    ptr64: bool,
+) -> Result<PfValue> {
+    if !matches!(
+        (name, version),
+        ("parm", 0) | ("trn", 14 | 15) | ("havk", 16)
+    ) {
+        return Err(bad(&format!("unsupported {name} version {version}")));
+    }
+    let schema = find_all(schemas, "mapc", name)
+        .into_iter()
+        .find_map(|s| s.version(u32::from(version)))
+        .ok_or_else(|| bad("required schema missing"))?;
+    let mut value = read_chunk(bytes, schema, ptr64, Limits::default())?;
+    if name == "trn" && version == 14 {
+        // Build 209026's v15 upgrade callback (0x140cd6900) initializes the
+        // appended +0x38 field to 32. Decode v14's own layout first; a missing
+        // field in a v15 chunk must still fail. See the Norn terrain RE note.
+        let PfValue::Struct(fields) = &mut value else {
+            return Err(bad("terrain schema is not a struct"));
+        };
+        fields.push(("verticesPerChunkSide".into(), PfValue::U32(32)));
+    }
+    Ok(value)
+}
+
 fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
     let archive = Archive::open(path)?;
     let pf = Packfile::new(archive.read(id)?)?;
@@ -102,26 +133,18 @@ fn run(path: &str, id: u32, xy: [f32; 2], range: [f32; 2]) -> Result<()> {
     let mut values = Vec::new();
     for c in pf.chunks() {
         let c = c?;
-        let (name, version) = match &c.name() {
-            b"parm" => ("parm", 0),
-            b"trn\0" => ("trn", 15),
-            b"havk" => ("havk", 16),
+        let name = match &c.name() {
+            b"parm" => "parm",
+            b"trn\0" => "trn",
+            b"havk" => "havk",
             _ => continue,
         };
-        if c.version() != version {
-            return Err(bad("unsupported parm/trn/havk version"));
-        }
         if values.iter().any(|(n, _)| *n == name) {
             return Err(bad("duplicate required chunk"));
         }
-        let candidates = find_all(&schemas, "mapc", name);
-        let schema = candidates
-            .iter()
-            .find_map(|s| s.version(version as u32))
-            .ok_or_else(|| bad("required schema missing"))?;
         values.push((
             name,
-            read_chunk(c.bytes(), schema, pf.is_64bit(), Limits::default())?,
+            read_geometry_chunk(&schemas, name, c.version(), c.bytes(), pf.is_64bit())?,
         ));
     }
     let get = |name| {
@@ -338,6 +361,77 @@ fn main() -> ExitCode {
         Err(e) => {
             eprintln!("map probe failed: {e}");
             ExitCode::FAILURE
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn terrain_bytes(version: u16, cells: u32) -> Vec<u8> {
+        let header = if version == 14 { 56 } else { 60 };
+        let samples = (cells as usize + 3).pow(2);
+        let words = cells as usize * cells as usize / 16;
+        let mut bytes = vec![0; header + samples * 4 + words * 4];
+        bytes[0..4].copy_from_slice(&cells.to_le_bytes());
+        bytes[4..8].copy_from_slice(&cells.to_le_bytes());
+        bytes[12..16].copy_from_slice(&(samples as u32).to_le_bytes());
+        bytes[16..24].copy_from_slice(&((header - 16) as i64).to_le_bytes());
+        bytes[24..28].copy_from_slice(&(words as u32).to_le_bytes());
+        bytes[28..36].copy_from_slice(&((header + samples * 4 - 28) as i64).to_le_bytes());
+        if version == 15 {
+            bytes[56..60].copy_from_slice(&cells.to_le_bytes());
+        }
+        for sample in bytes[header..header + samples * 4].chunks_exact_mut(4) {
+            sample.copy_from_slice(&(-64_f32).to_le_bytes());
+        }
+        bytes
+    }
+
+    #[test]
+    fn upgrades_v14_and_preserves_explicit_v15_cell_size() {
+        let schemas = parse(include_str!("../../reference/packfiles-208039.xml")).unwrap();
+        let parm = PfValue::Struct(vec![(
+            "rect".into(),
+            PfValue::Floats(vec![0., 0., 3072., 3072.]),
+        )]);
+        for (version, cells) in [(14, 32), (15, 16)] {
+            let trn = read_geometry_chunk(
+                &schemas,
+                "trn",
+                version,
+                &terrain_bytes(version, cells),
+                true,
+            )
+            .unwrap();
+            assert_eq!(trn.get("verticesPerChunkSide"), Some(&PfValue::U32(cells)));
+            let heights = TerrainHeights209026::from_values(&parm, &trn).unwrap();
+            let tiles = TerrainTiles209026::from_value(&trn).unwrap();
+            assert_eq!(heights.height_at([150., 150.]), Some(-64.));
+            assert_eq!(tiles.surface_index([cells - 1, cells - 1]), Some(0));
+            assert_eq!(tiles.surface_index([cells, 0]), None);
+            assert_eq!(
+                heights.primary_map_physics_triangles([0, 0]).unwrap()[0][2],
+                [96. / cells as f32, 96., 2.]
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_unknown_versions_and_truncated_terrain() {
+        let schemas = parse(include_str!("../../reference/packfiles-208039.xml")).unwrap();
+        for (name, version) in [("trn", 13), ("trn", 16), ("parm", 1), ("havk", 15)] {
+            let error = read_geometry_chunk(&schemas, name, version, &[], true).unwrap_err();
+            assert_eq!(
+                error.to_string(),
+                format!("unsupported {name} version {version}")
+            );
+        }
+        for version in [14, 15] {
+            let mut bytes = terrain_bytes(version, 32);
+            bytes.pop();
+            assert!(read_geometry_chunk(&schemas, "trn", version, &bytes, true).is_err());
         }
     }
 }

@@ -15,10 +15,10 @@ API/wiki names may locate content but do not replace client verification.
 
 | Requirement | Current state | Evidence needed for completion |
 | --- | --- | --- |
-| Norn Mesmer creation/selection and correct appearance | Incomplete; current deployed fixture is Guardian | Real client creation, biography/appearance/equipment validation, saved character and relog. |
+| Norn Mesmer creation/selection and correct appearance | Partial: archived Norn Mesmer appearance renders in isolated playback; actual creation missing | Real client creation, biography/appearance/equipment validation, saved character and relog. |
 | Correct Mesmer components and startup skills/equipment | Partial: 481–483 codec and explicit profession-aware candidate bootstrap | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
-| Norn opening tutorial (Great Hunt, key 379) | Map identity established; gameplay missing | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
-| Wayfarer Foothills (key 28) terrain, movement and travel | Archive identified; only Queensdale walking previously played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
+| Norn opening tutorial (Great Hunt, key 379) | Isolated map entry and local movement pass at diagnostic position; gameplay missing | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
+| Wayfarer Foothills (key 28) terrain, movement and travel | Shared terrain loaded through Great Hunt; open map 28 not played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
 | Mesmer combat and profession mechanics | Missing | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | Missing | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | Missing | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
@@ -34,7 +34,9 @@ API/wiki names may locate content but do not replace client verification.
   live kit f36bb98). No existing NPC/combat/progression implementation.
 - [Mesmer state](re/209026-mesmer-profession.md): raw messages and explicit
   candidate population path implemented and checked against client schemas.
-  No retail startup values or client playback claimed.
+  No retail startup values established. [Runs 111/112](re/209026-norn-mesmer-playback.md)
+  render the Norn Mesmer in map 379 and demonstrate local movement; skills and
+  equipment remain empty.
 - [Starter maps](re/209026-human-norn-starter-maps.md): Norn tutorial379/open28
   share archive187611, with game types9/3. Human tutorial138/open15 share
   archive192711, with game types9/3. Auth already preserves requested types.
@@ -44,6 +46,10 @@ API/wiki names may locate content but do not replace client verification.
 - [Skill candidates](re/209026-mesmer-palette-candidates.md): all-container
   Rust census and independent Python traversal agree on three Mesmer
   category2 palettes; default selection and skill execution remain open.
+- [Norn terrain](re/209026-norn-terrain-v14.md): version-14 decoding follows
+  the client upgrade callback; real Norn and Queensdale probes pass.
+- [Fixture CLIs](re/209026-character-fixture-cli.md): explicit archived
+  appearance extraction and bounded synthetic auth framing replace manual bytes.
 - Next source work: Norn start/entry coordinates, creation-template equipment,
   Mesmer palette/availability selection, then first tutorial encounter.
 

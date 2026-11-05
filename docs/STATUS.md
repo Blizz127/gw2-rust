@@ -11,8 +11,11 @@ runtime evidence. Local changes add Mesmer481–483 framing, explicit
 profession-aware population, bounded creation-equipment readers, and Mesmer
 palette checks. Focused protocol/reader tests, observer build and synthetic
 Norn tutorial TCP loopback pass; real-archive readers reproduce the client
-equipment and palette records. No Mesmer client playback or deployment has
-occurred. NPCs, combat, tutorial objectives, progression and persistence
+equipment and palette records. [Isolated runs 111/112](re/209026-norn-mesmer-playback.md)
+now render a Norn Mesmer in The Great Hunt and demonstrate local movement.
+The character has empty equipment/skills and an explicit diagnostic spawn;
+Norn terrain v14 support and source-backed fixture CLIs are implemented.
+No deployment changed. NPCs, combat, tutorial objectives, progression and persistence
 remain incomplete; this is not a 100% claim.
 
 ## Blocker
