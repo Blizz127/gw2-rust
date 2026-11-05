@@ -274,3 +274,17 @@ Checks:
 - Sandbox run 182 passed.
 - Supervisor smoke passed.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+## Update: kit 9961b56-hm (live 2026-11-05 19:58:44Z)
+
+- This is a profile-only update of 9961b56; the binaries are identical.
+- The respawn point is now **Hero's Moot Waypoint**: POI 371, `597.3,-30352.1,-1563.2`,
+  inside heart 56's area and closer to the starting NPCs.
+- In sandbox run 183 the defeat → 210 → 1065 rejoin put the player standing on a hillside
+  by archery targets, at full health with the heart at 1/5, and no asserts.
+- Kit: `/home/blizz/gw2-rust-9961b56-hm`; SHA256SUMS SHA-256
+  `8c67470ce5cbda0c6cfdf0e7d2c86d8026e5b0e79b386f6dda0531cdb6366ef1`.
+- Verified locally and on Banshee.
+- Rollback: `/home/blizz/gw2-rust-9961b56`.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s. The live game process
+  was read back with `--mission-respawn-point 597.3,-30352.1,-1563.2`.
