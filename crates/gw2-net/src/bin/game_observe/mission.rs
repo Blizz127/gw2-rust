@@ -535,7 +535,8 @@ struct CarryOver {
     spawn: [f32; 3],
     xp: Option<(u32, u8)>,
     loot_drops: Option<u32>,
-    heart: Option<(u32, bool)>,
+    /// Progress, completion, and whether the one-time reward was issued.
+    heart: Option<(u32, bool, bool)>,
 }
 
 static CARRY: std::sync::Mutex<Option<CarryOver>> = std::sync::Mutex::new(None);
@@ -1116,9 +1117,10 @@ impl MissionPhase {
                 *drops = n;
                 self.restore_loot = n;
             }
-            if let (Some(heart), Some((progress, done))) = (self.heart.as_mut(), carry.heart) {
+            if let (Some(heart), Some((progress, done, rewarded))) = (self.heart.as_mut(), carry.heart) {
                 heart.progress = progress;
                 heart.done = done;
+                heart.rewarded = rewarded;
             }
             eprintln!("Mission phase: rejoin carry-over applied {carry:?}");
         }
@@ -1271,7 +1273,7 @@ impl MissionPhase {
                         spawn: point,
                         xp: self.xp.map(|(_, total, level)| (total, level)),
                         loot_drops: self.kill_loot,
-                        heart: self.heart.map(|h| (h.progress, h.done)),
+                        heart: self.heart.map(|h| (h.progress, h.done, h.rewarded)),
                     };
                     if let Ok(mut slot) = CARRY.lock() {
                         *slot = Some(carry);
@@ -2469,5 +2471,100 @@ pub(crate) mod tests {
         phase.hostiles[1].health = LEVEL1_NPC_HEALTH;
         assert!(phase.respond(&skill_at(4)).unwrap().is_none());
         assert_eq!(health_of(&phase, 4), LEVEL1_NPC_HEALTH);
+    }
+
+    #[test]
+    fn heart_reward_is_issued_once_across_waypoint_rejoins() {
+        // CARRY belongs to the observer process. Run this lifecycle in its own
+        // process so parallel mission/TCP tests cannot consume its handoff.
+        const CHILD: &str = "GW2_TEST_HEART_REWARD_REJOIN_CHILD";
+        if std::env::var_os(CHILD).is_none() {
+            let output = std::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", "mission::tests::heart_reward_is_issued_once_across_waypoint_rejoins", "--nocapture"])
+                .env(CHILD, "1")
+                .output()
+                .unwrap();
+            assert!(output.status.success(), "isolated heart lifecycle failed:\n{}\n{}",
+                String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+            return;
+        }
+        assert!(CARRY.lock().unwrap().is_none());
+        let fresh = || populated_phase()
+            .with_hostile_npc(100, [5.0, 0.0, 0.0]).unwrap()
+            .with_damage_on_skill(LEVEL1_NPC_HEALTH)
+            .with_xp_per_kill(10)
+            .with_npc_attack(10.0, 100.0)
+            .with_heart(56, 2).unwrap()
+            .with_respawn_point([1.0, 2.0, 3.0])
+            .with_rejoin_route("127.1.0.4:6112".parse().unwrap());
+        let enter = |phase: &mut MissionPhase| {
+            phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+            phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().unwrap()
+        };
+        let tables = schema::parse(include_str!("../../../../../data/protocol/209026/server-tables.xml")).unwrap();
+        let game_tables: Vec<_> = [
+            "table-0x14216e940", "table-0x14211be70", "table-0x1422ddbf0",
+            "table-0x141923b80", "table-0x1422e03b0",
+        ].iter().map(|name| tables.protocols.iter().flat_map(|p| &p.groups)
+            .find(|g| g.name == *name).unwrap()).collect();
+        // Decode boundaries using the frozen game schemas, so a byte pattern
+        // inside another frame cannot masquerade as a missing/extra reward.
+        let frames = |bytes: &[u8]| {
+            let mut input = bytes;
+            let mut found = Vec::new();
+            while !input.is_empty() {
+                let before = input;
+                let id = u16::from_le_bytes([input[0], input[1]]);
+                let table = game_tables.iter().find(|t| t.server.iter().any(|m| m.id == id))
+                    .unwrap_or_else(|| panic!("unregistered server frame {id}"));
+                let (message, _) = dynamic::decode_frame(&table.server, &rules(), &mut input).unwrap();
+                found.push((message.id, before[..before.len() - input.len()].to_vec()));
+            }
+            found
+        };
+        let xp_frames = |totals: &[u32]| totals.iter().map(|&experience| {
+            let mut out = BytesMut::new();
+            ExperienceFrame209026 { character_index: 1, experience, dword_2: 0, byte_3: 0 }.encode_frame(&mut out);
+            (191, out.to_vec())
+        }).collect::<Vec<_>>();
+        let rejoin = |phase: &mut MissionPhase| {
+            phase.npc_attack.as_mut().unwrap().defeated = true;
+            let redirect = phase.respond(&Seen::Other(210)).unwrap().unwrap();
+            assert_eq!(frames(&redirect).iter().map(|f| f.0).collect::<Vec<_>>(), [1065]);
+            let mut next = fresh();
+            let opening = frames(&enter(&mut next));
+            assert!(CARRY.lock().unwrap().is_none(), "MapLoaded consumes the carry-over once");
+            assert_eq!(next.population.as_ref().unwrap().plan.position, [1.0, 2.0, 3.0]);
+            assert!(!opening.iter().any(|f| f.0 == 556), "rejoin must not issue a reward panel");
+            (next, opening)
+        };
+
+        let mut phase = fresh();
+        enter(&mut phase);
+        let first = frames(&phase.respond(&skill_at(3)).unwrap().unwrap());
+        assert!(!first.iter().any(|f| f.0 == 556));
+        assert_eq!(first.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[10]));
+
+        // Incomplete progress survives, and the first completion still pays.
+        let (mut phase, opening) = rejoin(&mut phase);
+        assert_eq!(opening.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[10]));
+        assert!(phase.heart.is_some_and(|h| h.progress == 1 && !h.done));
+        let completion = frames(&phase.respond(&skill_at(3)).unwrap().unwrap());
+        let mut reward = BytesMut::new();
+        RenownFrame209026::HeartReward {
+            reward: 1, heart: 56, currencies: vec![(1, HEART_COINS), (2, HEART_KARMA)],
+        }.encode_frame(&mut reward).unwrap();
+        assert_eq!(completion.iter().filter(|f| f.0 == 556).cloned().collect::<Vec<_>>(), [(556, reward.to_vec())]);
+        assert_eq!(completion.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[20, 20 + HEART_XP]));
+
+        // A completed, rewarded heart survives another connection. Its next
+        // kill retains ordinary kill XP without replaying panel or heart XP.
+        let (mut phase, opening) = rejoin(&mut phase);
+        assert_eq!(opening.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[20 + HEART_XP]));
+        assert!(phase.heart.is_some_and(|h| h.progress == 2 && h.done));
+        let next_kill = frames(&phase.respond(&skill_at(3)).unwrap().unwrap());
+        assert!(!next_kill.iter().any(|f| f.0 == 556), "completed heart reward must not repeat after respawn");
+        assert_eq!(next_kill.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[30 + HEART_XP]));
+        assert_eq!(phase.xp.unwrap().1, 30 + HEART_XP);
     }
 }
