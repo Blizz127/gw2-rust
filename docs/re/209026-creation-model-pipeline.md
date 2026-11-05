@@ -1309,3 +1309,98 @@ All listed reader captures exited zero with complete output and verified
 owned-process cleanup. Any unrelated process-environment sampling failures
 remain separate. This audit performed no client attachment, control,
 launch, archive access or frozen-input edit.
+
+## Next probe: paired pool decision and actual client completion poll
+
+The next private helper is
+`/home/blizz/re/gw2/notes/creator-pool-poll-probe-20261105.py`, entry
+`arm_creator_pool_poll(inf, slide)`, prefix `GW2_CREATOR_POOL_POLL`.
+Frozen SHA-256:
+**`fa0361504cc9d0ef41f17b78d8caf64b18e6d8dbf44657c1b7eb3419d49a90eb`**,
+44,921 bytes. Run 131's `953c8d...` input remains unchanged. The two marker
+files, initial-snapshot event, five-second post-handshake soak, 210-second
+ownership cap, 20-second final cap and 128-record cap are preserved.
+
+The new **19-site** probe keeps one exact component invocation per marker.
+It pairs each of that invocation's at most eight acquisition attempts
+(optional plus seven channels) to the active thread and pre-call stack
+pointer **B**. This avoids stopping at channel 0 success while missing the
+subsequent null acquisition. Inner observations are buffered into that
+attempt's return record; no global pool enumeration occurs.
+
+The retained source plan establishes the exact stack pairing:
+
+- Cache constructor callback: `RSP=B-0x4d0`, callback argument at `+0x68`
+  equals `0x1412d8930`.
+- Selected-pool return: `RSP=B-0x510`, saved return at `+0x38` equals
+  `0x140a72760`, with RAX containing the selected pool.
+- Pool body and common return: `RSP=B-0x520`, RSI equals that selected pool.
+- Component acquisition return: `RSP=B`, with the same component state,
+  thread, and optional/channel identity.
+
+R14 is deliberately **not** used to filter the inner cache/pool sites:
+`0x140a72530` reuses it for a cache key. The selected pool's count, limit,
+format, dimensions, flags and levels are bounded reads. At `0x14156297f`,
+the probe captures the actual unsigned-JA predicate from EFLAGS, the limit
+in EAX, and count/limit memory values. Allocation return, reuse selection,
+pool return and final acquisition return remain separate observations.
+Thus count greater than limit followed by null can be distinguished from
+capacity allowing allocation followed by allocator-null. Count equal to
+limit is not refusal. Missing pairing or local field errors remain visible;
+a null pool pointer is anomalous/unknown and is never dereferenced.
+
+Job completion now comes from **`0x140a6fdda`**, immediately after the
+client's `0x14026f540` getter. The latter's complete seven-byte body only
+loads EAX from `[RCX+0xf8]` and returns. RCX must match the current job of a
+live watched `0x141bfc7c0` operation with the known destination and non-null
+group. The probe reads **EAX**, without requiring callback equality or
+independently reading job contents. It records a first zero result, then
+only a nonzero result for that live identity. Destructor entry retires the
+watch before release. Unexpected job changes are separately bounded. This
+is a completion poll value, not a job count or proof of submission.
+
+One additional site, **`0x140a74ce5`**, is enabled before the markers only
+for the first four verified current owners' concrete scratch data. Native
+conditions admit at most one EAX-zero and one EAX-one rectangle result per
+destination/owner. Every observation refreshes current UI/manager/model and
+scratch membership. It records the client's result, bounded clamped local
+rectangle and destination point, source/destination metadata, and opaque
+job/group tags. An exact operation is named only when the current concrete
+head's destination/job/group all match. Owner changes replace this filter.
+This may observe work starting after post-build binding; it cannot recover
+an already completed pre-binding branch. Marker snapshots also retain the
+operation's original point/rectangle as request context, without claiming
+an observed empty-rectangle branch from those bytes alone.
+
+All other internal hooks remain marker gated. No target method is called,
+no job/texture field is changed, and no completion or readiness override is
+included. Callback mismatch alone still does not establish the empty branch.
+
+Preparation evidence:
+
+- `ev_d372457bf5e1a75ab5bc627fc8a8b835f03a9820a8f08a38e8a657ad71503b90`:
+  all nineteen frozen site guards, full getter, component order table and
+  matching pool-plan guard bytes.
+- `ev_5d00b5e6572dd1847e14607b542b55701c7ffd2e6a2e4f6f32be97914d31027d`:
+  syntax and **25** focused host checks, including strict capacity boundary,
+  allocator-null, reuse, callback/frame mismatch, repurposed R14, partial
+  reads, owner expiry, finite early rectangle sampling and job retirement.
+- `ev_cae1dc6aa8723eaf58f13c36ebb5d301300031894aef175d8cde251638ff72fe`:
+  six actual GDB **16.3** condition checks using an owned C fixture, covering
+  register poll values, exact stack/return-address conditions, pool identity
+  and bounded early rectangle filters. Its distinct networkless container
+  mounted only fixture files and was removed; no GW2 process was used.
+
+The source plans and followups are retained in
+`209026-owned-component-pool-source-20261105.json` (SHA-256
+`1368b5770972f2f30281560979f00db36c4f6787b882b3c8dd2432c474685a1f`),
+`209026-owned-component-pool-probe-plan-20261105.json` (SHA-256
+`c4ddd0258af3970d09344e5ce2b1cac39c6a3d8f9da840d58aee23d18926a5b6`),
+and job/rectangle guard evidence
+`ev_9cfdbf46e9d13e713375c07249a1d8922862fbad8361f57f35f008c800564fa3`.
+These private files live under `/home/blizz/re/gw2/notes/`; complete probe
+preparation export is `209026-creator-pool-poll-probe-20261105.json`.
+The native fixture is retained in `creator-pool-native-26lk9ks8` there.
+Successful captures were nontruncated, exited zero and verified owned
+cleanup. Preparation performed no client launch, attachment or archive
+access; runtime conclusions await the next controlled run.
