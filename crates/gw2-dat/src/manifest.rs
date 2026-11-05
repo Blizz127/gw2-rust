@@ -96,10 +96,12 @@ pub fn records_from_archive<R: std::io::Read + std::io::Seek>(a: &crate::archive
 
 /// One `MFST` v6 property: `type` and its data bytes, attached to the record whose
 /// `baseId` is `base_id`. The client's MultiArchive keeps them per file
-/// (MultiManifest.cpp `0x140d91cf0` -> `0x140d973e0`) and reads them back by
-/// (file, type) through `0x140d97290`. Type 0 with 4 bytes is what the texture loader
-/// asks for (`0x140d8fc20` via `0x140d90480`): nonzero selects the 0x400 mip-drop base,
-/// so a texture keeps all its levels at the highest texture quality.
+/// (MultiManifest.cpp `0x140d91cf0` -> `0x140d97540`) and reads them back by
+/// (file, type) through `0x140d97290`. Type 0 with 4 bytes contains a remapped
+/// numeric file ID (`0x140d8fc20` via `0x140d90480`), not a boolean quality hint.
+/// Its presence affects texture key/task flags; the selected task path can open
+/// that remapped ID instead of the original ID. See
+/// `docs/re/209026-texture-remapped-file-selection.md` for the source contract.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Property {
     pub base_id: u32,

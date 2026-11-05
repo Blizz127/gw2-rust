@@ -45,7 +45,8 @@ fn main() -> ExitCode {
             // Keep only the first N records of the --from-dat list.
             "--limit" => limit = v.parse().ok(),
             // --property FILEID:TYPE:HEX attaches an MFST property to the first manifest's
-            // record for that file (e.g. 135679:0:01000000, docs/STATUS.md 2026-11-04).
+            // record for that file. Type 0's four-byte payload is a remapped file ID,
+            // not a boolean quality flag (docs/re/209026-texture-remapped-file-selection.md).
             "--property" => {
                 let parts: Vec<&str> = v.split(':').collect();
                 let parsed = (parts.len() == 3)
