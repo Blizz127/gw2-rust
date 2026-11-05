@@ -1046,9 +1046,25 @@ vtable-called slot getter `0x1411eee60`. Something read an inventory slot at ind
 or higher while only the 20 backpack slots exist. The 20 is correct for item 8932
 (subtype +0x28).
 
-**Current state.** 169 is opt-in (`--mission-respawn-flag`) until the reader of slots
-≥ 20 is identified. Without it, the defeat button stays inert, which is today's live
+**State then.** 169 was made opt-in (`--mission-respawn-flag`) until the reader of slots
+≥ 20 was identified; run 179 below identifies and fixes it. Without it, the defeat button stays inert, which is today's live
 behaviour.
 
 **Client facts on rewards:** kill XP and heart rewards are server-defined; the client has
 no table. Level-up cost at levels 1–5 is 2000 / 2110 / 2379 / 2674 / 2999 XP.
+
+**Run 179: respawn works.** The cause of the run-178 assert: on defeat, with flag bit 1
+set, GpDownedManager (`0x1402c25a0` → `0x1411f24e0` / `0x1411ee520` → `0x1411ee490`)
+scans `bag-slot count (5) << 5` = **160** inventory slots through the asserting getter
+(vtable +0x190 = `0x1411eee60`). See `inventory-slot-assert.md`. The fix is to send
+`305 {char, 160}`. Capacity still follows each bag's own size, so the backpack still
+shows 20 cells (1/20).
+
+With `--mission-respawn-flag`, run 179 went: downed → rally → downed → defeated.
+"Return to a Waypoint" then sent **client 210** (`d2 00`), and the observer answered with:
+- packed 0x49 alive;
+- 259/260 full health (388);
+- `169 {char, 0}`.
+
+The player stood up with the normal skill bar and no asserts. They revive in place; the
+waypoint teleport is still missing.

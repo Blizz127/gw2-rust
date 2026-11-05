@@ -619,8 +619,13 @@ fn advance_heart(heart: &mut Option<Heart>, out: &mut BytesMut) -> io::Result<()
     Ok(())
 }
 
-/// Backpack slots sized by 305 (Starter Backpack item 8932, def +0x4c).
+/// Starter Backpack 8932 capacity (subtype +0x28 = 20); loot fills these.
 const STARTER_BAG_SLOTS: u32 = 20;
+/// m_inventorySlots size sent with 305: the client scans `bag-slot count (5)
+/// << 5` = 160 inventory slots with an asserting getter (GpDownedManager on
+/// defeat, `0x1411ee490`), so the array must cover 5 x 32 even though only
+/// the backpack's 20 are usable (run 178, swarm note inventory-slot-assert.md).
+const INVENTORY_SLOT_ARRAY: u32 = 5 * 32;
 /// Research instance IDs for the backpack and drops (registry is sparse).
 const STARTER_BAG_INSTANCE: u32 = 0x6f00;
 const LOOT_INSTANCE_BASE: u32 = 0x6f10;
@@ -1099,9 +1104,9 @@ impl MissionPhase {
                         .encode_frame(&mut out);
                     // 300 does not size m_inventorySlots; 305 grows it to the
                     // backpack's 20 slots (item 8932 def +0x4c).
-                    InventorySlotCountFrame209026 { character_index: fixture.plan.character_index, slot_count: STARTER_BAG_SLOTS }
+                    InventorySlotCountFrame209026 { character_index: fixture.plan.character_index, slot_count: INVENTORY_SLOT_ARRAY }
                         .encode_frame(&mut out)?;
-                    eprintln!("Mission phase: Starter Backpack via server {message_id} + 300 bag slot 0 + 305 20 slots");
+                    eprintln!("Mission phase: Starter Backpack via server {message_id} + 300 bag slot 0 + 305 {INVENTORY_SLOT_ARRAY} slots");
                 }
                 if let Some(plan) = &self.late_npc {
                     out.extend_from_slice(&plan.spawn_frames()?);
