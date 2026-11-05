@@ -410,6 +410,10 @@ pub struct MissionPhase {
     /// Research: one renown heart shown at spawn whose counter advances on
     /// each NPC kill (docs/re/209026-npc-talk-loop.md, renown heart).
     heart: Option<Heart>,
+    /// Research (run 178): send 169 {char, 1} on defeat so "Return to a
+    /// Waypoint" sends client 210. Opt-in: with it, run 178 later asserted
+    /// ChCliInventory.cpp:3079 `inventorySlot < m_inventorySlots.Count()`.
+    respawn_flag: bool,
     /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
     /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
@@ -511,6 +515,37 @@ fn rally_on_kill(attack: &mut Option<NpcAttack>, character_index: u32, out: &mut
     attack.player_health = restored;
     eprintln!("Mission phase: player rallied (server 84 packed 0x49), health -> {restored}");
     Ok(true)
+}
+
+/// Server 169 `{Dword character, Byte}` (handler `0x14124be30` ->
+/// `0x1411da200`): nonzero sets character flag bit 1 (defeated, may respawn),
+/// zero clears it.
+fn encode_respawn_flag(out: &mut BytesMut, character_index: u32, on: bool) {
+    use gw2_proto::Encode;
+    169u16.encode(out);
+    character_index.encode(out);
+    u8::from(on).encode(out);
+}
+
+/// Respawn the defeated player in place: packed 0x49 alive, the normal health
+/// meter at full, the respawn flag cleared. Retail moves the player to the
+/// chosen waypoint; that teleport is not implemented.
+fn respawn_player(attack: &mut NpcAttack, character_index: u32, out: &mut BytesMut) -> io::Result<()> {
+    AgentBehaviorFrame209026 {
+        agent_index: character_index as u16,
+        remote_tick: 0,
+        command_flags: 0x10,
+        behavior_value: 0x4000_0600,
+        behavior_data: HealthTransitionPayload209026::Alive { detail_byte: 0, trailing_byte: 0 }.encode_payload(),
+    }
+    .encode_frame(out)?;
+    encode_health_pool(out, character_index, attack.max_health, attack.max_health, 0.0);
+    encode_respawn_flag(out, character_index, false);
+    attack.player_health = attack.max_health;
+    attack.defeated = false;
+    attack.defeat_at = None;
+    attack.next = None;
+    Ok(())
 }
 
 /// A packed health transition (0x34 downed / 0x33 dead) on `agent` through
@@ -673,6 +708,7 @@ impl MissionPhase {
             starter_bag: None,
             late_npc: None,
             heart: None,
+            respawn_flag: false,
             kill_loot: None,
             npc_attack: None,
             sourced_damage: None,
@@ -779,6 +815,11 @@ impl MissionPhase {
     /// Requires with_starter_bag (276 needs 305's slots).
     pub fn with_kill_loot(mut self) -> Self {
         self.kill_loot = Some(0);
+        self
+    }
+
+    pub fn with_respawn_flag(mut self) -> Self {
+        self.respawn_flag = true;
         self
     }
 
@@ -908,6 +949,12 @@ impl MissionPhase {
             let npc = u32::from(self.aggro.last().copied().or_else(|| self.hostiles.first().map(|h| h.plan.agent_index))?);
             let mut out = BytesMut::new();
             encode_transition(&mut out, character_index as u16, false, npc, 0x4000_0400).ok()?;
+            // 169 {char, 1} sets character flag bit 1, the guard that lets the
+            // defeat screen's "Return to a Waypoint" send client 210 (swarm note
+            // rewards-waypoint.md; the 0x33 transition does not set it).
+            if self.respawn_flag {
+                encode_respawn_flag(&mut out, character_index, true);
+            }
             eprintln!("Mission phase: player defeated by NPC {npc} (server 84 packed 0x33)");
             return Some(out.freeze());
         }
@@ -1090,6 +1137,17 @@ impl MissionPhase {
                         eprintln!("Mission phase: renown heart {} on NPC {character} (server 384)", heart.key);
                     }
                 }
+                Ok(Some(out.freeze()))
+            }
+            Seen::Other(id @ (208 | 210)) if self.npc_attack.is_some_and(|a| a.defeated) => {
+                // 210 {}: "Return to a Waypoint" with no known waypoint; 208
+                // {poi}: a waypoint picked on the map. Both mean respawn here.
+                let mut out = BytesMut::new();
+                let character_index = fixture.plan.character_index;
+                if let Some(attack) = self.npc_attack.as_mut() {
+                    respawn_player(attack, character_index, &mut out)?;
+                }
+                eprintln!("Mission phase: client {id} respawn request -> player alive at full health (84 packed 0x49, 259/260, 169 0)");
                 Ok(Some(out.freeze()))
             }
             Seen::Target(agent) if self.living_hostile(*agent).is_some() => {

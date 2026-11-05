@@ -1021,3 +1021,34 @@ They are sent through the `%str1%` coded-literal template. In run 177, F opened 
 "Shaman Sigrytha" dialogue: page 1 showed with Continue/Goodbye, Continue showed page 2,
 and Goodbye closed it. The heart marker stayed over the NPC, with no asserts. The species
 is still a stand-in (8013).
+
+### Run 178: respawn request (169 / 210) and an inventory assert
+
+**Client flow (static, `rewards-waypoint.md`).** The defeat screen's "Return to a
+Waypoint" handler (`0x1404f3030`) behaves in one of two ways:
+- If a waypoint is known (server 1141/1142), it opens the map. Picking a waypoint sends
+  client **208 `{poi key}`** (or 209 with a Guid). Wire bytes: 371 = `d0 00 f3 02`,
+  372 = `f4 02`, 970 = `ca 07`, 971 = `cb 07`.
+- Otherwise it calls character vtable +0x5d0, which sends client **210 `{}`**. It does
+  that only when three conditions hold: the character is owned, its agent is not alive,
+  and character flag bit 1 is set. Bit 1 is set by server **169 `{Dword character, Byte}`**
+  (`0x14124be30` → `0x1411da200`). The 0x33 dead transition does not set it.
+
+That is why the clicks in runs 161 and 164 sent nothing.
+
+**What run 178 tried.** On defeat the observer also sent `169 {char, 1}`. It would have
+answered 210/208 with packed 0x49, a 259/260 full-health meter and `169 {char, 0}`.
+
+**What happened.** About 30 s after the defeat (the server log shows no 210 respawn
+request), the client crashed:
+`ChCliInventory.cpp:3079 "inventorySlot < m_inventorySlots.Count()"`, inside the
+vtable-called slot getter `0x1411eee60`. Something read an inventory slot at index 20
+or higher while only the 20 backpack slots exist. The 20 is correct for item 8932
+(subtype +0x28).
+
+**Current state.** 169 is opt-in (`--mission-respawn-flag`) until the reader of slots
+≥ 20 is identified. Without it, the defeat button stays inert, which is today's live
+behaviour.
+
+**Client facts on rewards:** kill XP and heart rewards are server-defined; the client has
+no table. Level-up cost at levels 1–5 is 2000 / 2110 / 2379 / 2674 / 2999 XP.
