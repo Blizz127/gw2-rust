@@ -37,6 +37,7 @@ pub mod player_creation;
 pub mod player_startup;
 pub mod population;
 pub mod progress;
+pub mod npc_talk;
 pub mod pvp;
 pub mod quest;
 pub mod reward_track;
