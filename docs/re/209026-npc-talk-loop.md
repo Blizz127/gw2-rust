@@ -654,3 +654,23 @@ New post-load spawns would hit the model-streaming problem.
    The server sent 188 for level 3, and the client showed its **"Level Up!" banner**.
 
 There were no asserts.
+
+### Loot route (traced, not implemented)
+
+- **Server 300** `{Dword character, Dword item instance, Dword bag slot}` (handler
+  `0x141251100`): resolves the character and its inventory, then the item through
+  item-service `0x1413c71f0`, and calls bag setter `0x141291a10` (ChCliItemStorageBags.cpp).
+  The setter asserts **`bagSlot < GetBagSlotCount()`** and dispatches on the item's kind.
+- **Server 286** `{Dword container key, Byte, ArrayVarSmall[≤10] Dword}` (handler
+  `0x141250710`): applies to the **controlled character**. It resolves the key through
+  content +0x178 (type 35, item definitions) and asserts `containerDef`, so it builds a
+  bag from a container item. The array presumably holds item instances (*inferred*).
+
+So a kill drop needs:
+1. a bag (286 with a container item key, such as a starter backpack; key not established);
+2. an item instance (generic item creation; only armor and weapon creation codecs exist
+   today, `item.rs`);
+3. 300 into a bag slot.
+
+Server 285 `{character, item instance}` removes a bag item. Loot tables themselves are
+server data.
