@@ -1404,3 +1404,155 @@ The native fixture is retained in `creator-pool-native-26lk9ks8` there.
 Successful captures were nontruncated, exited zero and verified owned
 cleanup. Preparation performed no client launch, attachment or archive
 access; runtime conclusions await the next controlled run.
+
+## Run 132: actual empty rectangle, pool refusal, zero client completion poll
+
+Run 132 used frozen helper `fa03615...` in
+`/home/blizz/gw2-sandbox/runs/run132-norn-creator-pool-job`, input manifest
+SHA-256 `a7e5a11af91a33546f6a4caa0cdecc2c20bcd12a222c65db2dc41bb243065cfe`.
+The helper finished normally at **+141.605 seconds** with 20 safe-prefix
+records, 18 sparse heartbeat callbacks, 22 post-build callbacks, six owner
+bindings and one marker-bound multi-source operation. All emitted state
+snapshots were complete and current identities verified. No local read
+errors, observation errors or malformed records occurred. Only the first
+four owners received early records; the final owner ordinal six is not a
+claim that six early snapshots were emitted.
+
+Two actual `0x140a74ce5` results were captured for initial owner 1's scratch
+data tag **3**, a 1024-square format-26 destination:
+
+| Time | Client empty result | Clamped source rectangle | Local destination point | Identity at that moment |
+| --- | --- | --- | --- | --- |
+| +0.843 s | EAX **0** | `[0,0,320,128]` | `[384,768]` | Current head operation tag 6 matched job tag 5 and group |
+| +0.876 s | EAX **1** | `[512,128,512,128]` | `[896,896]` | Job tag 7 present; exact operation **not established** |
+
+Both used source data tag **4**, ready with flags `0x13036`, format 26,
+**512 × 128**, one level, tagged-empty head and zero outstanding groups.
+The destination outstanding count was respectively one and two. The second
+record is direct evidence of an owned empty-rectangle result, not a
+geometric inference. It does not identify the exact operation that issued
+that call.
+
+The early observer did not register or retire operation/job lifetimes until
+the marker. Address tags reused across that interval therefore do **not**
+prove allocation continuity. In particular, later job tag 7 must not by
+itself be linked to the early empty call. Fresh group/job state was also
+not captured. These observations alone do not qualify an empty-job repair.
+
+At the initial marker **+54.732**, owner 1 remained scene 0, now at
+component index/slot **9**, state 5, completion stage zero, flags `0x5007`,
+with global scratch-set count one and model finalization clear. Both model
+alternate bindings matched its scratch wrappers. The format-26 target had
+outstanding count four and a four-byte-aligned concrete multi-source head,
+now operation tag **9** and job tag **7**, with a non-null group:
+
+- Original source rectangle: **`[512,128,640,256]`**.
+- Original destination point: **`[896,896]`**.
+- Pass count **3**; mask zero null as permitted.
+- Primary tag 4 and non-null mask tags 10/11: each **512 × 128**, one level,
+  ready, tagged-empty head, zero outstanding groups. Primary format 26,
+  masks format 27; all flags `0x13036`.
+
+The original requested rectangle lies outside the sampled source's dimensions
+and is consistent with the observed empty-clamp geometry. This does not
+explain why the source dimensions and authored/requested rectangle differ,
+nor replace the missing early-to-marker operation lifetime evidence.
+
+Normal frame advance was observed at **+54.949**, processing of destination
+tag 3 at **+54.978**, and **the client's actual completion getter returned
+EAX 0 at +55.004** for the exact live marker-bound operation/job/destination
+relation. This result came from `0x140a6fdda` after `0x14026f540`; no callback
+identity assumption or raw job completion read was used. It establishes a
+zero completion poll at that point, not a zero job count or submission
+history. The filter then admitted only a nonzero result for that job, so
+it does not measure later polling frequency.
+
+The initial component's source failure is now localized to an actual
+capacity branch rather than inferred from null acquisition:
+
+| Owned slot-9 acquisition | Channel 0 | Channel 2 |
+| --- | --- | --- |
+| Requested format | 26 | 27 |
+| Requested dimensions / flags | 1024-square / `0x1032` | 1024-square / `0x1032` |
+| Selected pool tag / count / limit | 15 / **5 / 8** | 18 / **9 / 8** |
+| Observed path | Reuse selected | Capacity comparison, actual unsigned JA predicate true |
+| Pool and component returns | Same non-null wrapper tag 16 | Both null |
+| Source result | New unready source tag 17, flags `0x3036` | No object returned |
+
+Both attempts were tied to the exact component invocation, native thread,
+pre-call stack, constructor callback and selected pool. Channel 2's memory
+count nine, memory/register limit eight, actual branch predicate and final
+null all agreed. The helper returned **0 at +55.400**. This is a proven
+**format-27 source-pool capacity refusal** for that sampled attempt. It is
+separate from the global four-scratch-set limit. No candidate enumeration
+identified every retained pool entry, and this observation does not prove
+which pending operation accounts for the unavailable reusable entries.
+
+Later owner bindings occurred at **+59.957**, **+64.315** and **+68.834**;
+additional changes are represented by the final owner ordinal. Unlike run
+131, the final scene-3 owner, ordinal **6**, had **no scratch wrappers**.
+Its complete snapshots at **+125.651** and **+141.605** agreed: state
+**4**, component index **0**, completion stage **0**, flags `0x5007`, invalid
+mask `0x7fff`, global scratch-set count **4**, model finalization clear and
+both alternate model bindings null.
+
+A normal frame advance occurred at **+125.915**, followed at **+125.939** by
+processing of retained **initial destination tag 3**, still nonempty with
+outstanding count four. It was not a current-owner scratch. No current
+component invocation was captured. The current owner is therefore observed
+at the global limit with null scratches, but this probe did not hook its
+setup/cap branch or every composite service call. It does not establish an
+executed late refusal branch or absent current-owner processing from these
+phase-capped records. The earlier exact source-pool refusal remains a
+separate positive result.
+
+No nonzero completion poll or watched destructor was captured within the
+finite watch. No statement about all jobs, every frame, allocation continuity
+before the marker, fresh task bookkeeping, or correct character rendering
+follows. This run changes no job completion, texture readiness or queue state.
+The source-rectangle/dimension relationship and exact empty-operation
+lifetime are the next bounded questions, not grounds for an unguarded fix.
+
+Final audit `client.out`: **84,266 bytes**, SHA-256
+**`cb8a72698239838e095aa47c49f4f97874229f4fcb676bb23094750d4efc7af0`**;
+UI exit **0**. The first line was the known isolation banner, with no 64-hex
+container ID. This lane did not infer container absence from it or manipulate
+any container; controller cleanup is a separate scope.
+
+Evidence:
+
+- `ev_edf0c721f940092934c26ec50a300097f7d7fcee7ac1ee990a10312870299e9f`:
+  armed nineteen-site probe and stated early-hook exception.
+- `ev_5cef0facd2bb54cb896870dadc77d7eb27c814b77f6421a194e5c532024efd62`:
+  first binding and both actual owned rectangle results.
+- `ev_a79c4e8541bd4cf9a9a00b12d7b41fe82fc1bfd3d4c27a5294a529629dabd628`:
+  initial complete marker, retained input geometry, actual zero completion
+  poll, exact source-pool capacity refusal and owner changes.
+- `ev_4c39f06dcccb4aa2862ec75a2aa1dea9e6b8eabb7ade42225dbd06983858ea2e`:
+  final null-scratch state, phase-capped normal processing and clean finish.
+- `ev_ab26ed14cc8dcbccb01c11db01a5c43bdc670c306d4efd07482b38e048b799b9`:
+  unchanged final digest, UI status and safe first-line classification.
+
+Private readers are `creator-pool-run132-filter-20261105.py` and
+`creator-pool-run132-final-filter-20261105.py`. Complete export:
+`/home/blizz/re/gw2/notes/209026-creator-run132-pool-poll-audit-20261105.json`.
+All listed readers exited zero with complete output and verified owned
+process cleanup. Unrelated process-environment sampling permission failures
+remain separate. This audit made no client attachment, launch, control,
+archive access or frozen-input change.
+
+Controller completion for run 132 is independently retained as
+`ev_7a7b38d406764394702b81aaccf91f0f19459486129229b7f1f537a2fc7508cf`
+in `209026-norn-creator-run132-20261105.json`. The wrapper and UI both exited
+zero; Docker network isolation, exact owned-container removal, unchanged
+frozen/working executable hashes, archive inventory of 1,124,232 entries,
+and credential-safe console checks passed. Root also verified the shared
+container name absent and returned window 12 at **20:51:55 UTC**. Unrelated
+process-environment sampling denials remain outside this cleanup claim.
+
+The next candidate is private and conditional: complete only an exactly
+identified fresh, unsubmitted empty composite job, allowing normal poll and
+destruction. The [same-call contract](209026-empty-composite-repair-contract.md)
+requires guarded frame, owner, operation, group and job identities before any
+write. No renderer fix or saved-Norn activation has been published from this
+evidence. The live server remains separately recorded in the release note.
