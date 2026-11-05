@@ -485,6 +485,101 @@ def arm_command_trace(inf, slide):
     CommandTrace('*%#x' % (CMD_ACCEPT + slide), 'accepted')
     print('GW2_RUNNER: command trace armed')
 
+# Opt-in diagnostic (GW2_RUNNER_MOVE_TRACE=1, off by default): read-only ladder through the
+# movement-input path (MvCliContext, Game\Movement\Cli). Each point prints its first hit and
+# then only when its observed value changes, so per-frame points stay quiet. Every
+# address is an instruction boundary in the frozen exe.
+MOVE_POINTS = (
+    (0x14141d380, 'MvCli Start', None),
+    (0x14141d476, 'MvCli Start sets +0x178|=0x20', None),
+    (0x14141a4d0, 'MvCli tick (+0x178)', ('mem32', 'rcx', 0x178)),
+    (0x14141b473, 'update: controlled char', ('reg', 'rax')),
+    (0x14141b6fa, 'update: input blocked (0x14141da80)', ('reg', 'eax')),
+    (0x14141dabb, 'blocked: char+0x360 (state==1)', ('reg', 'eax')),
+    (0x14141dad2, 'blocked: char+0x370 (state==2)', ('reg', 'eax')),
+    (0x14141db1d, 'blocked: view lookup', ('reg', 'rax')),
+    (0x14141db30, 'blocked: view+0x738', ('reg', 'eax')),
+    (0x14141db25, 'can-move: +0x738 object vtable (rax)', ('reg', 'rax')),
+    (0x14141db27, 'can-move: +0x738 object byte +0xe8', ('mem32', 'rdi', 0xe8)),
+    (0x14141db40, 'can-move: char +0x298 (must be null)', ('reg', 'rax')),
+    (0x14141db45, 'can-move: arg esi (0 = also check speed)', ('reg', 'esi')),
+    (0x14141db55, 'can-move: agent +0x630 speed (xmm0, must be nonzero)', ('xmm', 'xmm0')),
+    (0x14141db6b, 'can-move: agent +0xd8 (must be null)', ('reg', 'rax')),
+    (0x14141b88a, 'update: M+0xc8 path', ('reg', 'eax')),
+    (0x141284c20, 'V+0x228 entry (V+0x40)', ('mem8', 'rcx', 0x40)),
+    (0x141284c83, 'V+0x228 state 0x78 found', None),
+    (0x141284c7e, 'V+0x228 exit (no state 0x78)', None),
+    (0x14102d3b0, 'agent vtable +0xa8 command entry (type)', ('reg', 'edx')),
+    (0x14141b77f, 'update: move vector (+0x9c..+0xa8)', ('vec', 'rdi', 0x9c)),
+    (0x14102dd30, 'motion-state recompute entry', None),
+    (0x14109ede0, 'collider +0x2c0: vector +0x170', ('vec', 'rcx', 0x170)),
+    (0x14109ee20, 'collider +0x2c8: flags +0x58 (low 32)', ('mem32', 'rcx', 0x58)),
+    (0x14109edc0, 'collider +0x2b8 entry (rcx+0xf8 state block)', ('reg', 'rcx')),
+    (0x14102dda9, 'motion-state: collision +0x238 value', ('reg', 'eax')),
+    (0x14102dd86, 'motion-state: from parent +0x660', ('reg', 'eax')),
+    (0x14102dd8d, 'motion-state: parent without +0x660 -> 1', None),
+    (0x14102e095, 'motion-state: new state (edi)', ('reg', 'edi')),
+    (0x14141b7bf, 'update: 0x1410fbfe0()->+0x98', ('reg', 'eax')),
+    (0x14141b7c3, 'update: calls 0x14141be20', None),
+    (0x14141b7cf, 'update: calls 0x141420960(ctx, 1)', None),
+    (0x141420960, 'apply entry (edx)', ('reg', 'edx')),
+    (0x1414209bb, 'apply: [r8+0x48]() result', ('reg', 'rax')),
+    (0x1414209d3, 'apply: +0x80() result', ('reg', 'rax')),
+    (0x141420a25, 'apply: +0x20() result', ('reg', 'eax')),
+    (0x141420a40, 'apply: state object vtable (rcx) and +0x660 target (rdx)', ('reg', 'rdx')),
+    (0x141420a45, 'apply: state passed to 0x141025cc0 (1/6/10/13 block)', ('reg', 'eax')),
+    (0x141420a4c, 'apply: 0x141025cc0 result', ('reg', 'eax')),
+    (0x141420a90, 'apply: +0x1c0() result', ('reg', 'eax')),
+    (0x141420aa1, 'apply: calls 0x1409c4450', None),
+    (0x141420af2, 'apply: early exit', None),
+)
+
+class MoveTrace(gdb.Breakpoint):
+    def __init__(self, addr, label, probe, slide):
+        super().__init__('*%#x' % (addr + slide), internal=True)
+        self.label, self.probe, self.hits, self.last = label, probe, 0, object()
+    def stop(self):
+        try:
+            if not in_client() or not is_x86_64():
+                return False
+            self.hits += 1
+            value = None
+            if self.probe:
+                kind, reg = self.probe[0], self.probe[1]
+                if kind == 'xmm':
+                    value = (float(gdb.parse_and_eval('$%s.v4_float[0]' % reg)),)
+                    r = None
+                else:
+                    r = int(gdb.parse_and_eval('$' + reg))
+                if kind == 'xmm':
+                    pass
+                elif kind == 'reg':
+                    value = r
+                elif kind == 'vec':
+                    value = struct.unpack('<4f', gdb.selected_inferior().read_memory(r + self.probe[2], 16).tobytes())
+                else:
+                    size = 4 if kind == 'mem32' else 1
+                    value = int.from_bytes(gdb.selected_inferior().read_memory(r + self.probe[2], size).tobytes(), 'little')
+            decade = self.probe is None and self.hits in (10, 100, 1000, 10000, 100000)
+            if self.hits == 1 or value != self.last or decade:
+                self.last = value
+                shown = '-' if value is None else (' '.join('%.3g' % v for v in value) if isinstance(value, tuple) else '%#x' % value)
+                extra = ' rcx %#x' % int(gdb.parse_and_eval('$rcx')) if 'vtable' in self.label else ''
+                print('GW2_RUNNER: move %s %s hit %d value %s%s' % (
+                    time.strftime('%H:%M:%SZ', time.gmtime()), self.label, self.hits, shown, extra))
+        except (gdb.MemoryError, gdb.error):
+            pass
+        return False
+
+def arm_move_trace(inf, slide):
+    if os.environ.get('GW2_RUNNER_MOVE_TRACE', '0') != '1':
+        return
+    only = [w for w in os.environ.get('GW2_RUNNER_MOVE_ONLY', '').split(',') if w]
+    points = [p for p in MOVE_POINTS if not only or any(w in p[1] for w in only)]
+    for addr, label, probe in points:
+        MoveTrace(addr, label, probe, slide)
+    print('GW2_RUNNER: move trace armed (%d points)' % len(points))
+
 class Arm(gdb.Breakpoint):
     """First IPv4 connect after the image is mapped: install the two patch points."""
     def stop(self):
@@ -527,6 +622,7 @@ class Arm(gdb.Breakpoint):
         arm_texture_diag(inf, slide)
         arm_send_trace(inf, slide)
         arm_command_trace(inf, slide)
+        arm_move_trace(inf, slide)
         self.enabled = False
         return False
 

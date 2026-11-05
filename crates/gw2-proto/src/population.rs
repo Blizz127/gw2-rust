@@ -569,8 +569,13 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
                 // docs/re/209026-agent-world-entry.md: the constructor ORs
                 // only 0x12000, not 0x80; docs/re/209026-agent-point-admission.md:
                 // bit 7 then selects immediate over queued execution.
-                // placeholder: valid value not established; open.
-                command_flags: 0,
+                // 0x12 (bits 0x02 and 0x10): command completion 0x1410261c0
+                // grants the agent's action slot 0 (+0xe8/+0xec |= 0x80) only
+                // for a command whose flags have both (0x141026240); bit 0x20
+                // would pick slot 1. The movement context's can-move check
+                // 0x14141da80 needs that bit (agent +0x738(0), 0x14102d7d0):
+                // with 0, W only turned the camera (sandbox runs 100-109).
+                command_flags: 0x12,
                 // ORed into the agent collision flags. placeholder: valid
                 // value not established.
                 collision_flags: 0,
@@ -776,6 +781,14 @@ mod tests {
         assert_eq!(created.creation_flags[0] & 0x28, 0);
         assert_ne!(created.creation_flags[1] & 0x09, 0);
         assert_eq!(created.creation_flags[1] & 0x12, 0);
+        // Movement: a nonzero base speed (agent +0x138, getter 0x1410273b0) is
+        // needed by the can-move check; 0x40 is server 83's (client control),
+        // and setting it here would make the client drop 46.
+        assert_eq!(created.creation_flags[1] & 0x40, 0);
+        assert!(created.parameters[0] > 0.0, "base speed must be nonzero to move");
+        let entry = only(&frames, 46, |i| AgentWorldEntry209026::decode_frame(i).unwrap());
+        assert_eq!(entry.command_flags & 0x12, 0x12, "46 completion must grant action slot 0");
+        assert_eq!(entry.command_flags & 0x20, 0, "bit 0x20 would select slot 1");
         assert_eq!(created.position, Point3(plan.position, 0));
         assert!(created.radius > 0.0);
         assert!(created.parameters[0] >= 0.0);
