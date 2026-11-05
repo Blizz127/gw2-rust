@@ -141,6 +141,7 @@ struct Fixtures<'a> {
     hostile_npcs: Vec<(u32, [f32; 3])>,
     late_npc: Option<(u32, [f32; 3])>,
     heart: Option<(u16, u32)>,
+    respawn_flag: bool,
     /// Research: answer SkillBegin with server 34 + 0x78.
     skill_order_echo: bool,
     /// Research: hostile NPC casts this skill on each player SkillBegin.
@@ -183,6 +184,7 @@ fn observe(
         hostile_npcs,
         late_npc,
         heart,
+        respawn_flag,
         skill_order_echo,
         npc_cast,
         damage_on_skill,
@@ -249,6 +251,9 @@ fn observe(
         }
         if let Some((key, target)) = heart {
             mission = Some(mission.ok_or_else(|| invalid("heart requires a mission phase"))?.with_heart(key, target)?);
+        }
+        if respawn_flag {
+            mission = Some(mission.ok_or_else(|| invalid("respawn flag requires a mission phase"))?.with_respawn_flag());
         }
         if let Some((species, position)) = late_npc {
             mission = Some(mission.ok_or_else(|| invalid("late NPC requires a mission phase"))?.with_late_npc(species, position)?);
@@ -472,6 +477,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut hostile_npcs: Vec<(u32, [f32; 3])> = Vec::new();
     let mut late_npc: Option<(u32, [f32; 3])> = None;
     let mut heart: Option<(u16, u32)> = None;
+    let mut respawn_flag = false;
     let mut skill_order_echo = false;
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
@@ -666,6 +672,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 let text = args.next().ok_or_else(|| invalid("missing NPC cast skill key"))?;
                 npc_cast = Some(text.parse().map_err(|_| invalid("invalid NPC cast skill key"))?);
             }
+            "--mission-respawn-flag" => respawn_flag = true,
             "--mission-heart" => {
                 let text = args.next().ok_or_else(|| invalid("missing heart KEY,TARGET"))?;
                 let Some((key, target)) = text.split_once(',') else {
@@ -1008,6 +1015,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 hostile_npcs,
                 late_npc,
                 heart,
+                respawn_flag,
                 skill_order_echo,
                 npc_cast,
                 damage_on_skill,

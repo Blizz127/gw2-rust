@@ -73,6 +73,7 @@ for npc in ${GW2_HOSTILE_NPC:-}; do mission_args+=(--mission-hostile-npc "$npc")
 [[ -z "${GW2_NPC_ATTACK:-}" ]] || mission_args+=(--mission-npc-attack "$GW2_NPC_ATTACK")
 [[ -z "${GW2_SOURCED_DAMAGE:-}" ]] || mission_args+=(--mission-sourced-damage "$GW2_SOURCED_DAMAGE")
 [[ -z "${GW2_HEART:-}" ]] || mission_args+=(--mission-heart "$GW2_HEART")
+[[ "${GW2_RESPAWN:-0}" != 1 ]] || mission_args+=(--mission-respawn-flag)
 auth_args=(--no-capture --listen "$GW2_BIND:6113"
   --params "$GW2_ID/dh-params.bin" --private "$GW2_ID/dh-private.bin" --log "$GW2_RUN/unused"
   --reply-frame "$GW2_DATA/auth-ready.bin" --auth-reply-body "$GW2_DATA/auth-account-body.bin"
