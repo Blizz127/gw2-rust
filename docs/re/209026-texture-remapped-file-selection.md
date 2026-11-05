@@ -146,7 +146,7 @@ coordinate rescale, readiness override or probe change follows here.
 
 ## Proposed read-only load/transfer diagnostic contract
 
-This is a source-derived contract, not an implemented or executed probe.
+This is the source-derived contract; implementation and checks follow below.
 The minimum lifetime-safe design has two observations and one destruction
 site. It can admit only the eleven original slot-9 IDs from runs 136/137:
 `140521, 140515, 140517, 140519, 140523` and
@@ -234,7 +234,65 @@ two generations each, 34 total, 160 records and 210 seconds from the first
 matched load. Nineteen focused host tests and all four frozen instruction
 guards passed (`ev_a739496ee0e51b9f2748dc17caea82bdfc88735077fd00d828b31ba1cb29b21b`,
 `ev_2209688a9411a3af6c563a180ae6f1779055361dfe4c6d9c3768755002bed250`).
-Those checks establish preparation, not a client runtime result.
+Those checks establish preparation; the separately recorded run below has
+its own incomplete-controller boundary.
+
+## Run 138: original files loaded; controller timeout
+
+`run138-norn-creator-texture-loads` used the unchanged property-free CDN,
+server cd4c3b6 and production runner63bc59a, plus the passive load observer
+and unchanged paired kind-9 observer. The 1,834-entry input manifest SHA-256
+was `7f092010d67f57d68e2dd3c13379ab0ae97f17c68b8271affe9c7b3c333d619f`;
+combined GDB SHA-256 was
+`a991cc97565d84f5ab9dd50cf34cc767c0de5285724171003b397ce2b7b4e400`.
+Two configuration preflights, five shell checks and both GDB Python blocks
+passed before its single launch.
+
+The root capture's **180-second idle deadline was too short for the silent
+wrapper**. It sent SIGTERM; the wrapper finalized with exit **130** after
+2.317 seconds. There is **no UI exit-status file or final appearance image**.
+This run is incomplete, not a passed startup/UI/visual acceptance result.
+It must not be relaunched over the retained outputs. Runtime evidence:
+`ev_1125e094af466f2d528fc58fb9ca207861946e108c0497ff6ed31454364b1868`.
+
+The final safe reader nevertheless retained **20 selected-load events,
+20 paired transfer entries/returns and 20 destructor retirements**. Every
+observed task selected its original file ID, with key flags **0x19** and
+task flags **0x420**. Incoming and post-call dimensions agreed:
+
+| Original IDs | Observed generations | Incoming/post dimensions |
+| --- | --- | --- |
+| 142103 | 2 | 256×128 |
+| 140123, 140121, 140115, 140117, 140119, 140125 | 2 each | 512×256 |
+| 140521 | 2 | 512×512 |
+| 140515, 140517, 140519, 140523 | 1 each | 512×512 |
+
+Each post-call record had backing present, ready bit set, flags **0x13036**,
+raw return 1 and rejection output 0. None of these observations establishes
+pixels, later graphics readiness or complete rendering. The five 139xxx
+allowlist IDs were not observed; eight IDs reached their two-generation cap.
+There were no guard, read, parser or pairing failures, and no remaining
+watched generations at the final read. Neither observer emitted `finished`.
+
+Separately, the current kind-9 owner was record **7**, scene **3**, with
+tuple `[140521,null,140515,140517,140519,null,140523]`, masks `0x820/0x800`,
+five paired advanced submissions and an exact return below the cap. Its
+late snapshot at +85.01 seconds still had texture-invalid mask **0x7fff**
+and graphics ready cache false, despite 12/12 sampled material pairs being
+(1,1). Coincident numeric source IDs do not establish that the allowlisted
+load generations belonged to this exact owner.
+
+Final safe-read evidence:
+`ev_14f1f1e2bd7280c1432da9f8cd9544f46dade57cd5ff78e3751f0f4fccf56a69`.
+Independent post-timeout checks confirmed shared-container absence, both
+executable hashes, the working archive identity and 1,124,232-entry index,
+and capture/console privacy. The only appearance image is the early blank
+PNG `2a1ea51f59098e2041853603e4b672939700d771aa8972fa393607148e06c42f`.
+Cleanup evidence:
+`ev_11093ade040ec08644d6f1db92130073bdf47fa70ca561540ae54e870dae211f`;
+controller bundle `~/re/gw2/notes/209026-norn-creator-run138-timeout-20261105.json`.
+The next isolated comparison uses a longer controller idle bound; no
+production change or saved-norn activation follows from this interrupted run.
 
 Private complete bundle:
 `/home/blizz/re/gw2/notes/209026-texture-remapped-file-selection-20261105.json`.
