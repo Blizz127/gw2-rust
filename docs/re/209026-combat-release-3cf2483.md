@@ -114,3 +114,28 @@ Owner play on 5fbb4b5, read from the Banshee server log:
 
 The log also showed auto-attack hitting the dead minotaur (`health 0 -> 0`). The
 multi-NPC targeting in this kit only hits living NPCs.
+
+## Update: kit 76fe405 (live 2026-11-05 17:52:45Z)
+
+- Source: `76fe405` = combat release `d324165` merged with main `9dc75e2`, which includes the
+  creator lane's tested `b8afb71`:
+  - opt-in shared creation/world mission listener;
+  - 1065 first-join scalar set to 0;
+  - auth replies grouped at message boundaries.
+- One conflict in `gw2-game-observe.rs`. Resolved by keeping the combat fixture block and
+  then main's relocated CreationScene construction.
+- Kit: `/home/blizz/gw2-rust-76fe405`.
+- Rollback: `/home/blizz/gw2-rust-d324165`.
+- Game binary SHA-256: `aac306f11307480a59d5d7c1a6f176e34ad37374f9fb7ea87e3682640dd02eef`.
+- SHA256SUMS SHA-256: `d1064d5d1100a275e67eea28aa1bc9f37937e491aa5f97623ae3d155d67fa621`.
+- 39 files verified locally and on Banshee.
+- The supervisor is unchanged, so the creator path stays disabled.
+
+Checks:
+- `cargo test --workspace` passed. `gw2-game-observe` passed 101 tests, including the
+  creator lane's 14 focused tests.
+- Local supervisor smoke: 4 listeners ready and 4 hostile-NPC flags reached the game
+  process.
+- The sandbox kit smoke (run 173) runs after the deploy, as a diagnostic.
+- Known: combining combat flags with the creator's map-0 phase aborts. This affects only
+  the opt-in creator path. The creator lane is preparing a phase-scoped fix.
