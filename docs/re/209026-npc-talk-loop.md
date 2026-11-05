@@ -395,3 +395,19 @@ own value counter starting at 0x40000000, and the packed 0x78 order is
   camera. That needs a better camera placement, or a hostile skill with a visible effect.
 
 The skill used (10176, the Mesmer heal) is a placeholder. NPC skill content is server data.
+
+### Run 129: targeting works; NPC models don't render
+
+With the minotaur placed off-axis (`-3000,-25300,-3742`):
+- **Tab targets it.** The client shows the full target frame: `Branded Minotaur`, level 1,
+  a 100% health bar, description `Throws Foes` (from content), and a red target marker.
+  Even so, the heal's SkillBegin still carried target 0.
+- **No model renders**, for either the minotaur or the boar in runs 122–124: only the
+  nameplate and marker. The likely cause (*inferred*) is that the sandbox's root asset
+  manifest lists only Launcher64, English, MapAlpineSnowline and RegionAlpine
+  (`docs/re/209026-norn-mesmer-playback.md`), so creature model files such as 19830 for
+  species 1544 may not be in the trimmed working Gw2.dat.
+- The next check for NPC visibility is model-asset delivery (CDN manifest) for the
+  species' model file.
+- With no model, an NPC cast can't be judged visually. Run 129 again showed no assert
+  for the server-34 cast with Word 1000.
