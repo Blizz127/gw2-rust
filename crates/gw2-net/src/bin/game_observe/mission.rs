@@ -118,6 +118,7 @@ impl PopulationFixture {
             character_index: 1,     // placeholder: valid value not established
             name,
             portal_user_id: Guid([0; 16]), // placeholder: synthetic identity
+            initial_health: 1645.0, // Legacy research value; explicit override below.
             position: spawn,
             facing: [1.0, 0.0, 0.0], // placeholder: unit vector, direction unestablished
             appearance: summary
@@ -158,6 +159,14 @@ impl PopulationFixture {
     /// Content existence and eligibility are not checked by the wire parser.
     pub fn with_skills(mut self, frames: &[u8]) -> io::Result<Self> {
         self.skills = Some(super::skills::SkillFixture::parse(frames, self.plan.player_index)?);
+        Ok(self)
+    }
+
+    /// Full health for an explicitly chosen profile; no additional modifiers
+    /// are inferred. Rate, second meter and F5 remain separate fixture values.
+    pub fn with_initial_health(mut self, value: f32) -> io::Result<Self> {
+        self.plan.initial_health = value;
+        self.plan.validate()?;
         Ok(self)
     }
 
@@ -1011,6 +1020,10 @@ pub(crate) mod tests {
             let summary_start = record.len() - 159;
             record[summary_start + 0x21] = race;
             let fixture = PopulationFixture::with_profession(&record, [0.0; 3], state, tracks).unwrap();
+            assert_eq!(fixture.plan.initial_health, 1645.0, "legacy observer value is unchanged without an override");
+            assert!(fixture.clone().with_initial_health(f32::NAN).is_err());
+            let fixture = fixture.with_initial_health(388.0).unwrap();
+            assert_eq!(fixture.plan.initial_health, 388.0);
             assert_eq!(fixture.map_key(), map);
             assert_eq!(fixture.plan.appearance[27], race);
             assert_eq!(fixture.plan.reward_track_ids, tracks);

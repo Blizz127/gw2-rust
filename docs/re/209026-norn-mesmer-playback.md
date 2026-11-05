@@ -223,3 +223,30 @@ bound these screenshots:
 
 Private run: `~/gw2-sandbox/runs/run116-norn-mesmer-skill-selection/`.
 Bundle: `~/re/gw2/notes/209026-norn-mesmer-run116-20261105.json`.
+
+## Explicit health baseline: run 118
+
+Run118 retains run116's equipment/skill/quest inputs and adds
+`--mission-health 388`. The [equipment-health trace](209026-mesmer-starter-equipment-health.md)
+supports this explicit full-health, unmodified level1/default-curve profile.
+The inspected ready screenshot shows **388** in the health globe, alongside
+starter armor and the weapon/healing icons. This verifies transport and
+presentation of that value, not all stat modifiers or functional healing.
+The remaining auxiliary health inputs, endurance and movement parameters
+retain their earlier research status.
+
+REA orchestration:
+`ev_6c72a68c21a9c0c650c87a5de3b9bf80ebc062f4bd1512218682a6cc6bf337f0`.
+The run reached readiness, exited0, removed its exact container, retained
+both executable hashes and full archive, and passed credential-safe logging.
+Audit `ev_31639faf26d78e37f7385fd3ad513148d047e33a7b9f79d67ee665fc964a4773`
+found no captured assertion/fatal marker and bound the explicit option to:
+
+| Screenshot | SHA-256 |
+| --- | --- |
+| `norn-mesmer-health-ready.png` | `4c49022e61f10433488afd8b15debcdb35807c1c696225a3780704c92447fe51` |
+| `norn-mesmer-health-after-key6.png` | `a71f3c0952ff7e718990931215ff4f771fc6823b163ab5b910759312a4a3003e` |
+| `norn-mesmer-health-soak.png` | `4daf401264c3aab9b58b7fcdd4ffa74b4e43f829dbf7c233065f33626cdbbb32` |
+
+Private run: `~/gw2-sandbox/runs/run118-norn-mesmer-health-baseline/`.
+Bundle: `~/re/gw2/notes/209026-norn-mesmer-run118-20261105.json`.

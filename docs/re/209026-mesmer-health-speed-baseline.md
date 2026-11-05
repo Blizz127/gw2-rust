@@ -48,8 +48,9 @@ definition through character-context virtual0, and tail-calls the formula.
 CoreStats virtual +0x10 reads the **second level field**, not earned-level
 virtual0; both levels are1 in the current candidate bootstrap. Another
 caller, `0x1411c7540`, supplies the same level-table value, then applies
-additional content multipliers. The latter is not evidence that the raw
-baseline is the final health maximum in every context.
+skill-content percentages. The [starter-equipment follow-up](209026-mesmer-starter-equipment-health.md)
+establishes that its caller compares the result with current health as
+a skill threshold; it does not calculate or store an alternate maximum.
 
 ## Attribute curve and configuration selector
 

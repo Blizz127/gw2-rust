@@ -63,14 +63,18 @@ API/wiki names may locate content but do not replace client verification.
   Its placement is inside the [first objective sector](re/209026-norn-sector-polygons.md),
   not a claimed retail spawn.
 - [Health baseline](re/209026-mesmer-health-speed-baseline.md): the default
-  level1 Mesmer calculation yields388; final server values and movement speed
-  remain unverified. [NPC foundation](re/209026-npc-character-foundation.md)
+  level1 Mesmer calculation yields388; run118 displays it through an explicit
+  full-health option. Starter prefix112 contributes no attributes. Other
+  modifiers and movement speed remain unverified.
+  [NPC foundation](re/209026-npc-character-foundation.md)
   establishes species-based character creation; actual encounter content is open.
 - [Initial skills](re/209026-mesmer-starter-skill-requirements.md): explicit
   605/612 observer input adds a healing icon in run116. Selection and
   presentation pass; cast execution, effects and cooldowns remain missing.
-- Next source work: Norn start/entry coordinates, creation-template equipment,
-  Mesmer palette/availability selection, then first tutorial encounter.
+- Latest owner question: whether they can make a Norn Mesmer now. Answer:
+  actual character creation/save flow is not available; current playback is an
+  isolated prepared fixture. **Immediate priority: real creator, saved record,
+  selection and relog**, then continue tutorial/combat work.
 
 No live service or owner-device changes were made in this checkpoint. Local
 synthetic fixtures remain explicitly labeled; deployment/playback follows a

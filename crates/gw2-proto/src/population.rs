@@ -15,7 +15,7 @@
 //! constraint, not evidence of a useful gameplay value.
 //!
 //! The caller owns the values with no documented default: the identities, the
-//! spawn position/facing, the 45 appearance bytes, profession selection and
+//! spawn position/facing, initial full health, the 45 appearance bytes, profession selection and
 //! reward-track IDs ([`PopulationPlan`]). Mesmer's two creation bytes must
 //! also be supplied explicitly; the builder does not infer retail defaults.
 //! Scene bounds for the position are not checked here; for the primary map
@@ -139,6 +139,11 @@ pub struct PopulationPlan {
     /// Synthetic portal identity (`m_portalUserId`). Not established as any
     /// STS field; use a synthetic value, never a real account identifier.
     pub portal_user_id: Guid,
+    /// Explicit full first health meter for the living character. Positive and
+    /// finite; no profession default is chosen here. Rate, second meter and F5
+    /// retain the fixture's separate research zeros. See
+    /// `docs/re/209026-mesmer-health-speed-baseline.md` for the baseline formula.
+    pub initial_health: f32,
     /// Spawn position in map units, with transform tag zero. Used by both 37
     /// and 46. Must be finite; bounds are the caller's concern.
     pub position: [f32; 3],
@@ -178,6 +183,9 @@ impl PopulationPlan {
         }
         if !self.position.iter().all(|v| v.is_finite()) {
             return Err(invalid("position must be finite"));
+        }
+        if !self.initial_health.is_finite() || self.initial_health <= 0.0 {
+            return Err(invalid("initial full health must be finite and positive"));
         }
         if facing_words_209026(self.facing).is_none() {
             return Err(invalid("facing must be finite and unit length"));
@@ -231,13 +239,9 @@ const RADIUS: f32 = 1.0;
 /// other element, is established from content.
 const PARAMETERS: [f32; 8] = [294.0, 3.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0];
 
-/// Health for 256: full first meter, no regeneration, empty second meter, state
-/// 0 (alive; `docs/re/209026-character-health-endurance.md`: a non-alive player
-/// gets character flag +0x178 mask 2). The maximum setter asserts
-/// `valueMax >= 0` and current is clamped to [0, maximum]. placeholder: the
-/// real health for either supported profession, the second meter and F5 are
-/// not established. This remains a shared fixture, not a profession profile.
-const HEALTH: f32 = 1645.0;
+/// State 0 is alive (`docs/re/209026-character-health-endurance.md`). The
+/// first full meter is caller-supplied. Rate, second meter and F5 below remain
+/// research zeros, not established retail values.
 const HEALTH_STATE_ALIVE: u8 = 0;
 
 /// Endurance for 217: points, maximum, effective maximum, segment divisor
@@ -446,8 +450,8 @@ pub fn population_frames(plan: &PopulationPlan) -> Result<Vec<(u16, Bytes)>> {
                 operation: HealthOperation209026::CreateOrUpdate {
                     state: HEALTH_STATE_ALIVE,
                     values: HealthValues209026 {
-                        current: HEALTH,
-                        maximum: HEALTH,
+                        current: plan.initial_health,
+                        maximum: plan.initial_health,
                         second_current: 0.0,
                         second_maximum: 0.0,
                         extra: 0.0,
@@ -675,6 +679,7 @@ mod tests {
             character_index: 0x1234,
             name: "Fixture".to_string(),
             portal_user_id: Guid([0x5a; 16]),
+            initial_health: 1645.0, // Retains the original synthetic fixture.
             position: [32.0, -64.0, 96.0],
             facing: [0.0, 1.0, 0.0],
             appearance,
@@ -683,6 +688,34 @@ mod tests {
 
     fn frames() -> Vec<(u16, Bytes)> {
         population_frames(&plan()).unwrap()
+    }
+
+    #[test]
+    fn explicit_full_health_only_changes_first_meter_and_rejects_invalid_values() {
+        let baseline = frames();
+        let mut plan = plan();
+        plan.initial_health = 388.0;
+        let changed = population_frames(&plan).unwrap();
+        for ((id, before), (changed_id, after)) in baseline.iter().zip(&changed) {
+            assert_eq!(id, changed_id);
+            if *id != 256 {
+                assert_eq!(before, after, "health selection changed unrelated frame {id}");
+                continue;
+            }
+            let mut input = &after[..];
+            let frame = HealthFrame209026::decode_frame(&mut input).unwrap();
+            assert!(input.is_empty());
+            assert_eq!(frame.character_index, plan.character_index);
+            let HealthOperation209026::CreateOrUpdate { state, values, rate } = frame.operation else {
+                panic!("expected health creation");
+            };
+            assert_eq!((state, values.current, values.maximum), (0, 388.0, 388.0));
+            assert_eq!([rate, values.second_current, values.second_maximum, values.extra], [0.0; 4]);
+        }
+        for value in [0.0, -1.0, f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+            plan.initial_health = value;
+            assert!(population_frames(&plan).is_err());
+        }
     }
 
     fn mesmer_plan() -> PopulationPlan {

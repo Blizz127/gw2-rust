@@ -279,6 +279,7 @@ fn main() -> io::Result<()> {
     let mut quest: Option<(u32, u8, u32)> = None;
     let mut equipment_frames: Option<Vec<u8>> = None;
     let mut skill_frames: Option<Vec<u8>> = None;
+    let mut initial_health: Option<f32> = None;
     let mut population_delay = Duration::ZERO;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -377,6 +378,17 @@ fn main() -> io::Result<()> {
                 File::open(path)?.take((skills::SKILL_BYTES_LIMIT + 1) as u64).read_to_end(&mut frames)?;
                 skill_frames = Some(frames);
             }
+            "--mission-health" => {
+                if initial_health.is_some() {
+                    return Err(invalid("duplicate --mission-health"));
+                }
+                let text = args.next().ok_or_else(|| invalid("missing initial full health"))?;
+                let value: f32 = text.parse().map_err(|_| invalid("invalid initial full health"))?;
+                if !value.is_finite() || value <= 0.0 {
+                    return Err(invalid("initial full health must be finite and positive"));
+                }
+                initial_health = Some(value);
+            }
             "--mission-spawn" => {
                 let text = args.next().ok_or_else(|| invalid("missing spawn X,Y,Z"))?;
                 let parts: Vec<f32> = text
@@ -426,7 +438,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-quest KEY,FLAGS,GOAL]]]]",
+                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL]]]]",
                 ));
             }
         }
@@ -473,6 +485,9 @@ fn main() -> io::Result<()> {
     if skill_frames.is_some() && population_record.is_none() {
         return Err(invalid("--mission-skills requires --mission-population"));
     }
+    if initial_health.is_some() && population_record.is_none() {
+        return Err(invalid("--mission-health requires --mission-population"));
+    }
     let population = match (&population_record, spawn) {
         (Some(record), Some(spawn)) => Some(match (mesmer_values, reward_tracks) {
             (Some(values), Some(tracks)) => mission::PopulationFixture::with_profession(
@@ -492,6 +507,10 @@ fn main() -> io::Result<()> {
     };
     let population = match (population, skill_frames) {
         (Some(fixture), Some(frames)) => Some(fixture.with_skills(&frames)?),
+        (fixture, _) => fixture,
+    };
+    let population = match (population, initial_health) {
+        (Some(fixture), Some(value)) => Some(fixture.with_initial_health(value)?),
         (fixture, _) => fixture,
     };
     if let Some(key) = mission_map_key {
