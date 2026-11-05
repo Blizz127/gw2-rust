@@ -92,7 +92,9 @@ pub enum Seen {
     /// target uses), 0 when none. Run 168: sent after Tab.
     Target(u32),
     /// Client 18/19 (AgMsg) `{Dword, Dword, Float3 position, ...}`: the
-    /// player's movement report; the position in whole map units.
+    /// player's movement report. The wire position is collision space
+    /// `[X/32, Y/32, -Z/32]` (run 186: spawn 0,-26300,-3800 reported as
+    /// 0,-822,118); this holds it converted back to whole map units.
     Moved { id: u16, position: [i32; 3] },
     Other(u16),
 }
@@ -1614,7 +1616,10 @@ impl MissionPhase {
                 position
                     .iter()
                     .all(|v| v.is_finite() && v.abs() < 1.0e7)
-                    .then(|| Seen::Moved { id, position: position.map(|v| v.round() as i32) })
+                    .then(|| {
+                        let map = [position[0] * 32.0, position[1] * 32.0, -position[2] * 32.0];
+                        Seen::Moved { id, position: map.map(|v| v.round() as i32) }
+                    })
             }
             227 => {
                 use gw2_proto::Decode;
