@@ -859,3 +859,14 @@ placements for it. Real keys with coordinates, all taken from map 28:
 
 Candidate species: 4079 Wolf, 4080 Alpha Wolf, 7200 Son of Svanir, 7951 Modniir Hunter,
 8013 Juvenile Boar. The story text is encrypted; its keys are server-supplied.
+
+## Several hostile NPCs (server behaviour, not client evidence)
+
+`--mission-hostile-npc SPECIES,X,Y,Z` may be repeated (up to 16): the i-th gets agent
+index 3+i (talk NPC 2, player 1). Each has its own health (`LEVEL1_NPC_HEALTH`) and
+respawns independently 10 s after its death. A SkillBegin damages `request.target`
+when that is a living hostile NPC. Auto-attack (repeat start, no target on the wire)
+hits the NPC last attacked with a SkillBegin if alive, else the living hostile NPC
+nearest the player spawn. With `--mission-npc-attack` the attacker is the NPC the
+player hit most recently; when it dies another hit, living NPC takes over, and the
+attacks stop when none is left. Downed/defeat/rally rules are unchanged.
