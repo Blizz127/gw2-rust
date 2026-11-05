@@ -259,6 +259,7 @@ The runs are copies of Codex's run118 Norn Mesmer flow on map 379, with
 | 121 | First version (no coreStats) | Client stuck on the loading screen. Assert `ChCliCharacter.h:565 "m_coreStats"` when the NPC entered the world. **The NPC needs coreStats** (Codex's foundation note flagged that consumers might need it). |
 | 122 | + 183 coreStats, 282 inventory | **In world.** The NPC renders as a friendly green-named Juvenile Boar, and the client shows **"Greet [F]"**, so the interaction gate passes with 378. Pressing F sends **client 23 `[0x14][2]`**: target 2 = the server agent/character index. The server opens the conversation, then the client asserts `CtApi.cpp:141 "TextValidateCoded(codedName)"`: the 0x80 chat echo needs a **coded** speaker name. |
 | 123 | Page flags 0 (no chat echo) | **The dialogue window opens without an assert**, with two response rows (heart icons, i.e. Continue/Goodbye). The text areas are blank: **the dialogue strings must be coded text**, not plain UTF-16. |
+| 124 | Coded text via `coded_literal` (plain template 46217 `%str1%`) | **Full loop in game, no asserts.** The window shows speaker `TalkTest`, the line `[test] Well met, traveler.` and the responses `Continue.`/`Goodbye.`. Clicking Continue sends **275 {1, 1}** and page 2 renders with only Goodbye. Clicking Goodbye sends **275 {1, 2}** and the server sends 762. The client closes the window and acks with **276 {1}**, and the "Greet [F]" prompt returns. |
 
 **Coded text format** (`TextValidateCoded` `0x1410dcca0`, grammar `0x1410e7350`):
 - The first unit, with bit 15 clear, must be at least 0x100: a text-ID token (bit 15 =
@@ -269,4 +270,12 @@ The runs are copies of Codex's run118 Norn Mesmer flow on map 379, with
 - Retail dialogue would use the NPC's real text IDs. Most English strings are encrypted
   (marker ≠ 0) and need server-supplied keys. About 4% are plain.
 
-Not yet exercised: choosing a response (275), paging and closing.
+**Coded literal text (used since run 124):** `[0x8101 0x3689][0x107]<UTF-16 units>[0x0001]`.
+That is text ID 46217, whose plain English template is `%str1%`, with STR1 set to the
+literal. A scan of all 1,176 English string packs found **207,236 plain (keyless)
+strings**, 80 of them pure `%str1%` templates (`plain-texts.py`/`plain-texts.json` in
+`~/re/gw2/notes/209026-mesmer-re-handoff-20261105/`). Retail lines would use the NPC's
+real text IDs. Only the plain ~4% render without server-supplied decryption keys.
+
+Still open: the 0x80 chat echo with coded text, timers and costs (756 definitions),
+and real retail dialogue/NPC data.

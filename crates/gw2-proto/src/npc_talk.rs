@@ -43,6 +43,41 @@ fn text_units(text: &str, size: usize) -> Result<Vec<u16>> {
     Ok(units)
 }
 
+/// Plain (unencrypted) English text whose whole template is `%str1%`. Found by
+/// a scan of every language-0 string pack in the frozen Gw2.dat (80 such IDs;
+/// this is the lowest). See `docs/re/209026-npc-talk-loop.md` section 4.
+pub const LITERAL_TEMPLATE_TEXT_ID: u32 = 46217;
+
+/// Coded text (the form `TextValidateCoded` accepts) that renders `text`
+/// literally: the `%str1%` template, STR1 literal-parameter marker 0x107, the
+/// literal units, and the parameter terminator 1. Text IDs are base-0x7f00
+/// digits offset by 0x100, bit 15 marking a following digit (`0x1410e53f0`).
+pub fn coded_literal(text: &str) -> Result<String> {
+    if text.encode_utf16().any(|unit| unit < 0x0a) {
+        return Err(invalid_input("literal text contains a control unit below 0x0a"));
+    }
+    let mut digits = Vec::new();
+    let mut id = LITERAL_TEMPLATE_TEXT_ID;
+    loop {
+        digits.push((id % 0x7f00) as u16);
+        id /= 0x7f00;
+        if id == 0 {
+            break;
+        }
+    }
+    let last = digits.len() - 1;
+    let mut units: Vec<u16> = digits
+        .iter()
+        .rev()
+        .enumerate()
+        .map(|(i, digit)| 0x100 + digit + if i < last { 0x8000 } else { 0 })
+        .collect();
+    units.push(0x107);
+    units.extend(text.encode_utf16());
+    units.push(1);
+    String::from_utf16(&units).map_err(|_| invalid_input("literal text is not valid UTF-16"))
+}
+
 fn put_units(units: &[u16], output: &mut BytesMut) {
     units.iter().for_each(|unit| unit.encode(output));
     0u16.encode(output);
@@ -703,7 +738,11 @@ impl TalkSession209026 {
         if pages.is_empty() {
             return Err(invalid_input("a talk session needs at least one page"));
         }
+        // The client only renders coded text (sandbox run 123 showed blank
+        // fields for plain UTF-16), so every string is stored coded.
+        let speaker = coded_literal(&speaker)?;
         text_units(&speaker, SPEAKER_UNITS)?;
+        let pages = pages.iter().map(|page| coded_literal(page)).collect::<Result<Vec<_>>>()?;
         for page in &pages {
             text_units(page, LINE_UNITS)?;
         }
@@ -806,7 +845,7 @@ impl TalkSession209026 {
                 definition: 0,
                 dword_4: 0,
                 byte_5: 0,
-                text: "Continue.".into(),
+                text: coded_literal("Continue.")?,
             }
             .encode_frame(out)?;
         }
@@ -817,7 +856,7 @@ impl TalkSession209026 {
             definition: 0,
             dword_4: 0,
             byte_5: 0,
-            text: "Goodbye.".into(),
+            text: coded_literal("Goodbye.")?,
         }
         .encode_frame(out)?;
         ConversationFrame209026::PageReady { conversation, stage }.encode_frame(out)?;
@@ -1185,5 +1224,15 @@ mod tests {
         assert_eq!(session.active(), None);
         assert!(TalkSession209026::new(2, "Eir".into(), Vec::new()).is_err());
         assert!(TalkSession209026::new(2, "x".repeat(64), vec!["a".into()]).is_err());
+    }
+
+    #[test]
+    fn coded_literal_wraps_text_in_the_plain_str1_template() {
+        let units: Vec<u16> = coded_literal("Hi").unwrap().encode_utf16().collect();
+        // 46217 = 1 * 0x7f00 + 13705: digits 0x101 (continued) and 0x3689.
+        assert_eq!(units, [0x8101, 0x3689, 0x107, 0x48, 0x69, 0x0001]);
+        assert!(coded_literal("a\tb").is_err());
+        // Still a valid terminated schema String: no zero unit.
+        assert!(!units.contains(&0));
     }
 }
