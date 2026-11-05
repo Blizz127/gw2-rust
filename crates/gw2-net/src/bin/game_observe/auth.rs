@@ -13,6 +13,8 @@ use std::io::{self, ErrorKind, Write};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
+use crate::character_store::CharacterStore;
+
 pub const CHARACTER_BODY_LIMIT: usize = 238;
 
 /// Explicit local fixtures. No Debug implementation: bodies can contain names.
@@ -20,6 +22,7 @@ pub const CHARACTER_BODY_LIMIT: usize = 238;
 pub struct ReplyFixture {
     body: Bytes,
     character: Option<Bytes>,
+    character_store: Option<CharacterStore>,
     agreement: Option<AgreementState>,
 }
 
@@ -74,7 +77,19 @@ impl ReplyFixture {
         if let Some(record) = &character {
             validate_character(record)?;
         }
-        Ok(Self { body, character, agreement: None })
+        Ok(Self { body, character, character_store: None, agreement: None })
+    }
+
+    /// List and select saved characters for the explicitly configured local account.
+    pub fn with_character_store(mut self, store: CharacterStore) -> io::Result<Self> {
+        if self.character.is_some() {
+            return Err(io::Error::new(
+                ErrorKind::InvalidInput,
+                "saved characters and a static character fixture are mutually exclusive",
+            ));
+        }
+        self.character_store = Some(store);
+        Ok(self)
     }
 
     /// Remember the accepted User Agreement version in `state` (see [`AgreementState`]).
@@ -169,6 +184,7 @@ fn auth_server8() -> io::Result<Message> {
 pub struct PlayRoute {
     address: SocketAddr,
     character: Guid,
+    creation_address: Option<SocketAddr>,
 }
 
 impl PlayRoute {
@@ -179,7 +195,23 @@ impl PlayRoute {
                 "play-route address must be loopback",
             ));
         }
-        Ok(Self { address, character })
+        Ok(Self {
+            address,
+            character,
+            creation_address: None,
+        })
+    }
+
+    /// Route game type 1 (character creation) to a separate local listener.
+    pub fn with_creation_address(mut self, address: SocketAddr) -> io::Result<Self> {
+        if !address.ip().is_loopback() {
+            return Err(io::Error::new(
+                ErrorKind::InvalidInput,
+                "creation-route address must be loopback",
+            ));
+        }
+        self.creation_address = Some(address);
+        Ok(self)
     }
 }
 
@@ -377,9 +409,9 @@ impl AuthProbe {
         Ok(self)
     }
 
-    /// Second phase: answer client 22 with server 8 + 3 and client 29 with
-    /// server 20. An undecodable frame disables the phase instead of aborting
-    /// the capture.
+    /// Second phase: answer client 22 with server 8 + 3, client 25 with
+    /// saved records + completion, and client 29 with server 20. An undecodable
+    /// frame disables the phase instead of aborting the capture.
     fn push_play(&mut self, bytes: &[u8]) -> io::Result<Option<Bytes>> {
         let Some(play) = &self.play else {
             return Ok(None);
@@ -394,8 +426,8 @@ impl AuthProbe {
         let mut reply = BytesMut::new();
         while !self.pending.is_empty() {
             let mut cursor = &self.pending[..];
-            let id = match dynamic::decode_frame(&play.client, &rules, &mut cursor) {
-                Ok((message, _)) => message.id,
+            let (id, value) = match dynamic::decode_frame(&play.client, &rules, &mut cursor) {
+                Ok((message, value)) => (message.id, value),
                 Err(e) if e.kind() == ErrorKind::UnexpectedEof => break,
                 Err(e) => {
                     eprintln!("Play phase disabled: {e}");
@@ -409,9 +441,19 @@ impl AuthProbe {
             eprintln!("Play phase parsed client message {id} ({used} bytes)");
             match id {
                 22 => {
-                    let mut body = &frame[2..];
-                    let request = <u32 as gw2_proto::Decode>::decode(&mut body)?;
-                    reply.extend_from_slice(&name_select_8(&play.server8, request, play.route.character)?);
+                    // The client schema bounds this name to String(20), including
+                    // its terminator. Keep the decoded name out of diagnostics.
+                    let Value::Struct(fields) = value else { unreachable!() };
+                    let Value::U32(request) = fields[0].1 else { unreachable!() };
+                    let Value::Text(name) = &fields[1].1 else { unreachable!() };
+                    let character = if let Some(store) = &self.fixture.character_store {
+                        store.find_name(name)?.ok_or_else(|| {
+                            io::Error::new(ErrorKind::NotFound, "selected character is not saved")
+                        })?.guid()
+                    } else {
+                        play.route.character
+                    };
+                    reply.extend_from_slice(&name_select_8(&play.server8, request, character)?);
                     NameSelectComplete3 {
                         request,
                         scalar: 0,
@@ -458,6 +500,23 @@ impl AuthProbe {
                         value.encode(&mut reply);
                     }
                 }
+                25 if self.fixture.character_store.is_some() => {
+                    // Client 25 starts type-0x18 list refresh. Server 17 accepts
+                    // its request while pending; server 4 completes that request.
+                    // docs/re/209026-character-protocol.md, "Explicit character-list refresh".
+                    let Value::Struct(fields) = value else { unreachable!() };
+                    let Value::U32(request) = fields[0].1 else { unreachable!() };
+                    let store = self.fixture.character_store.as_ref().unwrap();
+                    for record in store.list()? {
+                        17u16.encode(&mut reply);
+                        request.encode(&mut reply);
+                        reply.extend_from_slice(&record.auth_body());
+                    }
+                    4u16.encode(&mut reply);
+                    for value in [request, 0, 0, 0, 0] {
+                        value.encode(&mut reply);
+                    }
+                }
                 29 => {
                     let mut input = &frame[..];
                     let route = RouteRequest29::decode_frame(&mut input)?;
@@ -467,7 +526,11 @@ impl AuthProbe {
                     RouteResult20 {
                         request: route.request,
                         values: [route.game_type, route.reserved, route.map_key],
-                        address: play.route.address,
+                        address: if route.game_type == 1 {
+                            play.route.creation_address.unwrap_or(play.route.address)
+                        } else {
+                            play.route.address
+                        },
                         scalar: 0,
                     }
                     .encode_frame(&mut reply);
@@ -539,6 +602,13 @@ impl AuthProbe {
                     17u16.encode(&mut reply);
                     request.encode(&mut reply);
                     reply.extend_from_slice(record);
+                }
+                if let Some(store) = &self.fixture.character_store {
+                    for record in store.list()? {
+                        17u16.encode(&mut reply);
+                        request.encode(&mut reply);
+                        reply.extend_from_slice(&record.auth_body());
+                    }
                 }
                 7u16.encode(&mut reply);
                 request.encode(&mut reply);
@@ -884,6 +954,240 @@ pub(crate) mod tests {
         let mut probe = AuthProbe::new(fixture).with_play_route(route).unwrap();
         assert!(probe.push(&login_input()).unwrap().is_some());
         probe
+    }
+
+    fn saved_store() -> (PathBuf, CharacterStore) {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        let path = std::env::temp_dir().join(format!(
+            "gw2-auth-saved-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed),
+        ));
+        let store = CharacterStore::open(path.clone()).unwrap();
+        (path, store)
+    }
+
+    fn saved_fixture(store: CharacterStore) -> ReplyFixture {
+        let frame = name_select_8(&auth_server8().unwrap(), 0, Guid([0; 16])).unwrap();
+        ReplyFixture::new(frame.freeze().slice(3..), None)
+            .unwrap()
+            .with_character_store(store)
+            .unwrap()
+    }
+
+    fn name_request(request: u32, name: &str) -> BytesMut {
+        let mut input = BytesMut::new();
+        22u16.encode(&mut input);
+        request.encode(&mut input);
+        for unit in name.encode_utf16().chain(std::iter::once(0)) {
+            unit.encode(&mut input);
+        }
+        input
+    }
+
+    #[test]
+    fn saved_characters_are_listed_before_completion_and_survive_relogin() {
+        let (path, store) = saved_store();
+        // Construct the fixture before saving: each login must read current records.
+        let fixture = saved_fixture(store.clone());
+        let first = store.create(&crate::character_store::test_request("Saved One")).unwrap();
+        let second = store.create(&crate::character_store::test_request("Saved Ω🦀")).unwrap();
+        assert_ne!(first.guid(), second.guid());
+        let server = schema::parse(AUTH_SCHEMA).unwrap().protocols[0].groups[0].server.clone();
+        for fixture in [fixture, saved_fixture(CharacterStore::open(path.clone()).unwrap())] {
+            let mut probe = AuthProbe::new(fixture);
+            let reply = probe.push(&login_input()).unwrap().unwrap();
+            let mut cursor = &reply[..];
+            let mut ids = Vec::new();
+            let mut records = Vec::new();
+            while !cursor.is_empty() {
+                let (message, value) = dynamic::decode_frame(&server, &census_rules(), &mut cursor).unwrap();
+                ids.push(message.id);
+                let Value::Struct(fields) = value else { panic!() };
+                if matches!(message.id, 8 | 10 | 17 | 7) {
+                    assert_eq!(fields[0].1, Value::U32(123456));
+                }
+                if message.id == 17 {
+                    records.push((fields[1].1.clone(), fields[5].1.clone(), fields[6].1.clone()));
+                }
+            }
+            assert_eq!(ids, [8, 23, 25, 24, 10, 17, 17, 7]);
+            let expected: Vec<_> = store.list().unwrap().into_iter().map(|record| (
+                Value::Guid(record.guid()),
+                Value::Text(record.name().to_owned()),
+                Value::Bytes(record.summary().to_vec()),
+            )).collect();
+            assert_eq!(records, expected);
+            assert!(probe.push(&login_input()).unwrap().is_none());
+        }
+        assert!(ReplyFixture::new(Bytes::from_static(&[0x44]), Some(character_record("Fixture", 0)))
+            .unwrap().with_character_store(store).is_err());
+        std::fs::remove_dir_all(path).unwrap();
+    }
+
+
+    #[test]
+    fn saved_list_refresh_reads_new_records_and_correlates_before_completion() {
+        const SERVER_TABLES: &str =
+            include_str!("../../../../../data/protocol/209026/server-tables.xml");
+        let server = schema::parse(SERVER_TABLES).unwrap().protocols
+            .into_iter().flat_map(|protocol| protocol.groups)
+            .find(|group| group.name == "table-0x141923fe0").unwrap().server;
+        let refresh = |request: u32| {
+            let mut input = BytesMut::new();
+            25u16.encode(&mut input);
+            request.encode(&mut input);
+            input
+        };
+        let input = refresh(123456);
+        for cut in 0..=input.len() {
+            let (path, store) = saved_store();
+            let fixture = saved_fixture(store.clone());
+            let route = PlayRoute::new("127.1.0.3:6112".parse().unwrap(), Guid([0x55; 16])).unwrap();
+            let mut probe = AuthProbe::new(fixture).with_play_route(route).unwrap();
+            probe.push(&login_input()).unwrap().unwrap();
+
+            // An empty account still needs completion to leave the refresh state.
+            let reply = probe.push(&refresh(300)).unwrap().unwrap();
+            let mut cursor = &reply[..];
+            let (message, value) = dynamic::decode_frame(&server, &census_rules(), &mut cursor).unwrap();
+            assert_eq!(message.id, 4);
+            let Value::Struct(fields) = value else { panic!() };
+            assert_eq!(fields[0].1, Value::U32(300));
+            assert!(fields[1..].iter().all(|(_, value)| *value == Value::U32(0)));
+            assert!(cursor.is_empty());
+
+            // Another handle creates records after login. Refresh must reread
+            // the durable store, not reuse the original login's empty snapshot.
+            let writer = CharacterStore::open(path.clone()).unwrap();
+            writer.create(&crate::character_store::test_request("Refresh One")).unwrap();
+            writer.create(&crate::character_store::test_request("Refresh Two")).unwrap();
+            let expected = store.list().unwrap();
+            let mut reply = BytesMut::new();
+            for part in [&input[..cut], &input[cut..]] {
+                if let Some(bytes) = probe.push(part).unwrap() {
+                    reply.extend_from_slice(&bytes);
+                }
+            }
+            let mut cursor = &reply[..];
+            for record in &expected {
+                let (message, value) = dynamic::decode_frame(&server, &census_rules(), &mut cursor).unwrap();
+                assert_eq!(message.id, 17);
+                let Value::Struct(fields) = value else { panic!() };
+                assert_eq!(fields[0].1, Value::U32(123456));
+                assert_eq!(fields[1].1, Value::Guid(record.guid()));
+                assert_eq!(fields[5].1, Value::Text(record.name().to_owned()));
+                assert_eq!(fields[6].1, Value::Bytes(record.summary().to_vec()));
+            }
+            let (message, value) = dynamic::decode_frame(&server, &census_rules(), &mut cursor).unwrap();
+            assert_eq!(message.id, 4, "completion must follow all records");
+            let Value::Struct(fields) = value else { panic!() };
+            assert_eq!(fields[0].1, Value::U32(123456));
+            assert!(fields[1..].iter().all(|(_, value)| *value == Value::U32(0)));
+            assert!(cursor.is_empty());
+
+            // Multiple refresh transactions on one connection remain correlated.
+            let combined = [refresh(7).as_ref(), refresh(u32::MAX).as_ref()].concat();
+            let reply = probe.push(&combined).unwrap().unwrap();
+            let mut cursor = &reply[..];
+            for request in [7, u32::MAX] {
+                for id in [17, 17, 4] {
+                    let (message, value) = dynamic::decode_frame(&server, &census_rules(), &mut cursor).unwrap();
+                    assert_eq!(message.id, id);
+                    let Value::Struct(fields) = value else { panic!() };
+                    assert_eq!(fields[0].1, Value::U32(request));
+                }
+            }
+            assert!(cursor.is_empty());
+            assert!(probe.play_enabled());
+            std::fs::remove_dir_all(path).unwrap();
+        }
+    }
+
+
+    #[test]
+    fn saved_name_selection_returns_the_requested_guid_for_every_split() {
+        let (path, store) = saved_store();
+        let first = store.create(&crate::character_store::test_request("First Mesmer")).unwrap();
+        let second = store.create(&crate::character_store::test_request("Second Ω🦀")).unwrap();
+        let fixture = saved_fixture(store);
+        let route = PlayRoute::new("127.1.0.3:6112".parse().unwrap(), Guid([0x55; 16])).unwrap();
+        let server = schema::parse(AUTH_SCHEMA).unwrap().protocols[0].groups[0].server.clone();
+        for record in [&second, &first] {
+            let input = name_request(123456, record.name());
+            for cut in 0..=input.len() {
+                let mut probe = AuthProbe::new(fixture.clone()).with_play_route(route).unwrap();
+                probe.push(&login_input()).unwrap().unwrap();
+                let mut replies = BytesMut::new();
+                for part in [&input[..cut], &input[cut..]] {
+                    if let Some(reply) = probe.push(part).unwrap() {
+                        replies.extend_from_slice(&reply);
+                    }
+                }
+                let mut cursor = &replies[..];
+                let (message, value) = dynamic::decode_frame(&server, &census_rules(), &mut cursor).unwrap();
+                assert_eq!(message.id, 8);
+                let Value::Struct(fields) = value else { panic!() };
+                assert_eq!(fields[0].1, Value::U32(123456));
+                assert_eq!(fields[2].1, Value::Guid(record.guid()));
+                let (message, value) = dynamic::decode_frame(&server, &census_rules(), &mut cursor).unwrap();
+                assert_eq!(message.id, 3);
+                let Value::Struct(fields) = value else { panic!() };
+                assert_eq!(fields[0].1, Value::U32(123456));
+                assert!(fields[3..].iter().all(|(_, value)| *value == Value::U32(0)));
+                assert!(cursor.is_empty());
+            }
+        }
+        let mut probe = AuthProbe::new(fixture.clone()).with_play_route(route).unwrap();
+        probe.push(&login_input()).unwrap().unwrap();
+        let error = probe.push(&name_request(500, "Not Saved")).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::NotFound);
+        assert_eq!(error.to_string(), "selected character is not saved");
+        let mut probe = AuthProbe::new(fixture).with_play_route(route).unwrap();
+        probe.push(&login_input()).unwrap().unwrap();
+        assert!(probe.push(&name_request(501, "12345678901234567890")).unwrap().is_none());
+        assert!(!probe.play_enabled(), "name beyond String(20) must not be selected");
+        std::fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn creation_route_uses_its_listener_and_other_routes_keep_world_listener() {
+        let world = "127.1.0.3:6112".parse().unwrap();
+        let creation = "127.1.0.4:6112".parse().unwrap();
+        let original = PlayRoute::new(world, Guid([0x55; 16])).unwrap();
+        let separate = original.with_creation_address(creation).unwrap();
+        assert!(original.with_creation_address("192.0.2.1:6112".parse().unwrap()).is_err());
+        let server = schema::parse(AUTH_SCHEMA).unwrap().protocols[0].groups[0].server.clone();
+        for route in [original, separate] {
+            for game_type in [1, 3, 9] {
+                let fixture = ReplyFixture::new(Bytes::from_static(&[0x44; 2]), None).unwrap();
+                let mut probe = AuthProbe::new(fixture).with_play_route(route).unwrap();
+                probe.push(&login_input()).unwrap().unwrap();
+                let mut input = BytesMut::new();
+                RouteRequest29 {
+                    request: 700,
+                    game_type,
+                    reserved: 17,
+                    map_key: 379,
+                    argument: 0,
+                    hash: 0,
+                    context: Guid([0; 16]),
+                }.encode_frame(&mut input);
+                let reply = probe.push(&input).unwrap().unwrap();
+                let mut cursor = &reply[..];
+                let (message, value) = dynamic::decode_frame(&server, &census_rules(), &mut cursor).unwrap();
+                assert_eq!(message.id, 20);
+                let Value::Struct(fields) = value else { panic!() };
+                assert_eq!(fields[0].1, Value::U32(700));
+                assert_eq!(fields[1].1, Value::U32(game_type));
+                assert_eq!(fields[2].1, Value::U32(17));
+                assert_eq!(fields[3].1, Value::U32(379));
+                let expected = if game_type == 1 { route.creation_address.unwrap_or(world) } else { world };
+                assert_eq!(fields[4].1, Value::Address(expected));
+                assert!(cursor.is_empty());
+            }
+        }
     }
 
     #[test]

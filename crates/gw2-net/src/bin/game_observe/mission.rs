@@ -51,7 +51,7 @@ const GAME_CLIENT_TABLE: &str = "ctable-0x14216e260";
 const CLIENT_TABLES_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/client-tables.xml");
 const PENDING_LIMIT: usize = 65536;
 
-fn rules() -> Rules {
+pub(super) fn rules() -> Rules {
     Rules {
         string: Some(StringEncoding::Utf16Terminated),
         cstring: Some(CStringEncoding::Terminated),
@@ -202,6 +202,82 @@ impl PopulationFixture {
     }
 }
 
+pub(super) fn client_messages() -> io::Result<Vec<Message>> {
+    let invalid = |_| io::Error::new(ErrorKind::InvalidData, "invalid embedded mission schema");
+    let parsed = schema::parse(MISSION_SCHEMA).map_err(invalid)?;
+    let client = parsed
+        .protocols
+        .into_iter()
+        .find(|p| p.name == "0")
+        .ok_or_else(|| io::Error::new(ErrorKind::InvalidData, "mission schema lacks protocol 0"))?
+        .groups
+        .into_iter()
+        .filter(|g| g.name == "39" || g.name == "40")
+        .flat_map(|g| g.client)
+        .collect::<Vec<_>>();
+    if client.is_empty() {
+        return Err(io::Error::new(ErrorKind::InvalidData, "mission schema lacks client messages"));
+    }
+    let mut client = client;
+    let agent = schema::parse(AGENT_CLIENT_SCHEMA).map_err(invalid)?;
+    let agent_client = agent
+        .protocols
+        .into_iter()
+        .find(|p| p.name == "0")
+        .and_then(|p| p.groups.into_iter().find(|g| g.name == "0"))
+        .ok_or_else(|| io::Error::new(ErrorKind::InvalidData, "agent schema lacks group 0"))?
+        .client;
+    for message in agent_client {
+        if client.iter().any(|m| m.id == message.id) {
+            return Err(io::Error::new(ErrorKind::InvalidData, "agent and mission client IDs collide"));
+        }
+        client.push(message);
+    }
+    // Then every other client table: add ids not yet framed. The auth connection's own
+    // table is skipped, and the game's main table (next to its 624-entry server table
+    // 0x14216e940) goes first, so it wins the ids it shares with smaller tables. An id
+    // that the remaining tables define with different layouts is left out (framing it
+    // wrongly is worse).
+    let tables = schema::parse(CLIENT_TABLES_SCHEMA).map_err(invalid)?;
+    let mut groups: Vec<_> = tables
+        .protocols
+        .into_iter()
+        .flat_map(|p| p.groups)
+        .filter(|g| g.name != AUTH_CLIENT_TABLE)
+        .collect();
+    groups.sort_by_key(|g| g.name != GAME_CLIENT_TABLE);
+    let mut extra: Vec<Message> = Vec::new();
+    let mut ambiguous: Vec<u16> = Vec::new();
+    let before = client.len();
+    for group in groups {
+        let authoritative = group.name == GAME_CLIENT_TABLE;
+        for message in group.client {
+            if client.iter().any(|m| m.id == message.id) || ambiguous.contains(&message.id) {
+                continue;
+            }
+            if authoritative {
+                client.push(message);
+                continue;
+            }
+            if let Some(seen) = extra.iter().position(|m| m.id == message.id) {
+                if extra[seen].fields != message.fields {
+                    extra.remove(seen);
+                    ambiguous.push(message.id);
+                }
+                continue;
+            }
+            extra.push(message);
+        }
+    }
+    eprintln!(
+        "Mission phase: {} more client ids from the client tables; ambiguous ids left unframed: {:?}",
+        client.len() - before + extra.len(),
+        ambiguous
+    );
+    client.extend(extra);
+    Ok(client)
+}
+
 pub struct MissionPhase {
     map_key: u32,
     client: Vec<Message>,
@@ -227,78 +303,7 @@ impl MissionPhase {
                 "map key must fit in 30 bits",
             ));
         }
-        let invalid = |_| io::Error::new(ErrorKind::InvalidData, "invalid embedded mission schema");
-        let parsed = schema::parse(MISSION_SCHEMA).map_err(invalid)?;
-        let client = parsed
-            .protocols
-            .into_iter()
-            .find(|p| p.name == "0")
-            .ok_or_else(|| io::Error::new(ErrorKind::InvalidData, "mission schema lacks protocol 0"))?
-            .groups
-            .into_iter()
-            .filter(|g| g.name == "39" || g.name == "40")
-            .flat_map(|g| g.client)
-            .collect::<Vec<_>>();
-        if client.is_empty() {
-            return Err(io::Error::new(ErrorKind::InvalidData, "mission schema lacks client messages"));
-        }
-        let mut client = client;
-        let agent = schema::parse(AGENT_CLIENT_SCHEMA).map_err(invalid)?;
-        let agent_client = agent
-            .protocols
-            .into_iter()
-            .find(|p| p.name == "0")
-            .and_then(|p| p.groups.into_iter().find(|g| g.name == "0"))
-            .ok_or_else(|| io::Error::new(ErrorKind::InvalidData, "agent schema lacks group 0"))?
-            .client;
-        for message in agent_client {
-            if client.iter().any(|m| m.id == message.id) {
-                return Err(io::Error::new(ErrorKind::InvalidData, "agent and mission client IDs collide"));
-            }
-            client.push(message);
-        }
-        // Then every other client table: add ids not yet framed. The auth connection's own
-        // table is skipped, and the game's main table (next to its 624-entry server table
-        // 0x14216e940) goes first, so it wins the ids it shares with smaller tables. An id
-        // that the remaining tables define with different layouts is left out (framing it
-        // wrongly is worse).
-        let tables = schema::parse(CLIENT_TABLES_SCHEMA).map_err(invalid)?;
-        let mut groups: Vec<_> = tables
-            .protocols
-            .into_iter()
-            .flat_map(|p| p.groups)
-            .filter(|g| g.name != AUTH_CLIENT_TABLE)
-            .collect();
-        groups.sort_by_key(|g| g.name != GAME_CLIENT_TABLE);
-        let mut extra: Vec<Message> = Vec::new();
-        let mut ambiguous: Vec<u16> = Vec::new();
-        let before = client.len();
-        for group in groups {
-            let authoritative = group.name == GAME_CLIENT_TABLE;
-            for message in group.client {
-                if client.iter().any(|m| m.id == message.id) || ambiguous.contains(&message.id) {
-                    continue;
-                }
-                if authoritative {
-                    client.push(message);
-                    continue;
-                }
-                if let Some(seen) = extra.iter().position(|m| m.id == message.id) {
-                    if extra[seen].fields != message.fields {
-                        extra.remove(seen);
-                        ambiguous.push(message.id);
-                    }
-                    continue;
-                }
-                extra.push(message);
-            }
-        }
-        eprintln!(
-            "Mission phase: {} more client ids from the client tables; ambiguous ids left unframed: {:?}",
-            client.len() - before + extra.len(),
-            ambiguous
-        );
-        client.extend(extra);
+        let client = client_messages()?;
         Ok(Self {
             map_key,
             client,

@@ -19,12 +19,18 @@ use tokio_util::codec::{Decoder, Encoder};
 
 #[path = "game_observe/auth.rs"]
 mod auth;
+#[path = "game_observe/character_store.rs"]
+mod character_store;
 #[path = "game_observe/equipment.rs"]
 mod equipment;
 #[path = "game_observe/skills.rs"]
 mod skills;
 #[path = "game_observe/mission.rs"]
 mod mission;
+#[path = "game_observe/creation_scene.rs"]
+mod creation_scene;
+#[path = "game_observe/saved_population.rs"]
+mod saved_population;
 #[path = "game_observe/preamble.rs"]
 mod preamble;
 use preamble::Preamble;
@@ -77,6 +83,8 @@ struct Fixtures<'a> {
     play: Option<auth::PlayRoute>,
     mission_map_key: Option<u32>,
     population: Option<mission::PopulationFixture>,
+    saved_population: Option<saved_population::SavedPopulation>,
+    creation: Option<(character_store::CharacterStore, SocketAddr)>,
     /// Diagnostic hold between client 420 and the population (zero: none).
     population_delay: Duration,
     /// Service mode: create no capture or preamble files. The auth stream can
@@ -98,6 +106,8 @@ fn observe(
         play,
         mission_map_key,
         population,
+        saved_population,
+        creation,
         population_delay,
         no_capture,
     } = fixtures;
@@ -109,8 +119,9 @@ fn observe(
         (Some(probe), Some(route)) => Some(probe.with_play_route(route)?),
         (probe, _) => probe,
     };
+    let mut creation = creation.map(|(store, address)| creation_scene::CreationScene::new(store, address)).transpose()?;
     let play_enabled = auth.as_ref().is_some_and(auth::AuthProbe::play_enabled);
-    let idle = read_timeout(play_enabled || mission.is_some());
+    let idle = read_timeout(play_enabled || mission.is_some() || creation.is_some());
     stream.set_read_timeout(Some(idle))?;
     stream.set_write_timeout(Some(Duration::from_secs(30)))?;
     // Sizes-only byte timeline (no contents), like the launcher relay's trace: it showed
@@ -118,6 +129,11 @@ fn observe(
     let t0 = Instant::now();
     let ms = |t: Instant| t.elapsed().as_millis();
     let preamble = preamble.read(&mut stream)?;
+    if let Some(saved) = saved_population {
+        let fixture = saved.for_join(&preamble)?;
+        mission = Some(mission.ok_or_else(|| invalid("saved population requires a mission phase"))?
+            .with_population(fixture)?.with_population_delay(population_delay));
+    }
     let mut header = [0u8; 2];
     stream.read_exact(&mut header)?;
     let len = usize::from(header[1]);
@@ -154,6 +170,9 @@ fn observe(
     if let Some(mission) = &mission {
         codec.encode(mission.opening(), &mut first)?;
     }
+    if let Some(creation) = &creation {
+        codec.encode(creation.opening(), &mut first)?;
+    }
     eprintln!("net +{}ms: up {} B (preamble + key record)", ms(t0), preamble.len() + len);
     stream.write_all(&first)?;
     eprintln!("net +{}ms: down {} B (key reply + first frames, one write)", ms(t0), first.len());
@@ -163,6 +182,9 @@ fn observe(
     }
     if mission.is_some() {
         eprintln!("Mission phase sent server 1063 MapData and 1060 LoadMap");
+    }
+    if creation.is_some() {
+        eprintln!("Creation scene sent server 1049 readiness");
     }
     let mut chunk = [0u8; 8192];
     let mut total = 0;
@@ -235,6 +257,11 @@ fn observe(
                     codec.encode(held, &mut wire)?;
                 }
             }
+            if let Some(creation) = &mut creation
+                && let Some(reply) = creation.push(&decoded)?
+            {
+                codec.encode(reply, &mut wire)?;
+            }
             if !wire.is_empty() {
                 stream.write_all(&wire)?;
                 eprintln!("net +{}ms: down {} B", ms(t0), wire.len());
@@ -280,10 +307,25 @@ fn main() -> io::Result<()> {
     let mut equipment_frames: Option<Vec<u8>> = None;
     let mut skill_frames: Option<Vec<u8>> = None;
     let mut initial_health: Option<f32> = None;
+    let mut store_path: Option<PathBuf> = None;
+    let mut creation_destination: Option<SocketAddr> = None;
+    let mut creation_route: Option<SocketAddr> = None;
     let mut population_delay = Duration::ZERO;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "--character-store" => {
+                if store_path.is_some() { return Err(invalid("duplicate --character-store")); }
+                store_path = Some(PathBuf::from(args.next().ok_or_else(|| invalid("missing character store directory"))?));
+            }
+            "--creation-scene" | "--auth-create-route" => {
+                let target = if arg == "--creation-scene" { &mut creation_destination } else { &mut creation_route };
+                if target.is_some() { return Err(invalid("duplicate creation route option")); }
+                let address: SocketAddr = args.next().ok_or_else(|| invalid("missing creation route address"))?
+                    .parse().map_err(|_| invalid("invalid creation route address"))?;
+                if !address.ip().is_loopback() { return Err(invalid("creation route address must be loopback")); }
+                *target = Some(address);
+            }
             "--auth-character-record" => {
                 if character.is_some() {
                     return Err(invalid("only one character record fixture is supported"));
@@ -438,7 +480,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL]]]]",
+                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL]]]]",
                 ));
             }
         }
@@ -458,8 +500,23 @@ fn main() -> io::Result<()> {
             "--mission-map-key requires --mission-preamble and excludes --reply-frame",
         ));
     }
-    if population_record.is_some() != spawn.is_some()
-        || (population_record.is_some() && mission_map_key.is_none())
+    if creation_destination.is_some() && (preamble != Preamble::Mission || store_path.is_none()
+        || mission_map_key.is_some() || reply.is_some() || auth_body.is_some()) {
+        return Err(invalid("--creation-scene requires --mission-preamble and --character-store, without map/auth/reply fixtures"));
+    }
+    if store_path.is_some() && (!no_capture || (auth_body.is_none() && mission_map_key.is_none() && creation_destination.is_none())) {
+        return Err(invalid("--character-store requires --no-capture and an auth, mission, or creation role"));
+    }
+    if store_path.is_some() && (character.is_some() || population_record.is_some()) {
+        return Err(invalid("saved characters and static character/population fixtures are mutually exclusive"));
+    }
+    if creation_route.is_some() && (auth_body.is_none() || play_address.is_none() || store_path.is_none()) {
+        return Err(invalid("--auth-create-route requires auth body, play route and character store"));
+    }
+    let saved_population_mode = store_path.is_some() && mission_map_key.is_some();
+    let has_population = population_record.is_some() || saved_population_mode;
+    if has_population != spawn.is_some()
+        || (has_population && mission_map_key.is_none())
     {
         return Err(invalid(
             "--mission-population and --mission-spawn go together and require --mission-map-key",
@@ -468,26 +525,42 @@ fn main() -> io::Result<()> {
     if agreement_state.is_some() && auth_body.is_none() {
         return Err(invalid("--auth-agreement-state requires --auth-reply-body"));
     }
-    if !population_delay.is_zero() && population_record.is_none() {
+    if !population_delay.is_zero() && !has_population {
         return Err(invalid("--mission-population-delay-ms requires --mission-population"));
     }
     if mesmer_values.is_some() != reward_tracks.is_some()
-        || (mesmer_values.is_some() && population_record.is_none())
+        || (mesmer_values.is_some() && !has_population)
     {
         return Err(invalid("--mission-mesmer-values and --mission-reward-tracks go together and require --mission-population"));
     }
-    if quest.is_some() && population_record.is_none() {
+    if quest.is_some() && !has_population {
         return Err(invalid("--mission-quest requires --mission-population"));
     }
-    if equipment_frames.is_some() && population_record.is_none() {
+    if equipment_frames.is_some() && !has_population {
         return Err(invalid("--mission-equipment requires --mission-population"));
     }
-    if skill_frames.is_some() && population_record.is_none() {
+    if skill_frames.is_some() && !has_population {
         return Err(invalid("--mission-skills requires --mission-population"));
     }
-    if initial_health.is_some() && population_record.is_none() {
+    if initial_health.is_some() && !has_population {
         return Err(invalid("--mission-health requires --mission-population"));
     }
+    if saved_population_mode && (mission_map_key != Some(379) || mesmer_values.is_none()) {
+        return Err(invalid("saved population currently requires Norn map379 and explicit Mesmer state/tracks"));
+    }
+    let store = store_path.map(character_store::CharacterStore::open).transpose()?;
+    let saved_population = if saved_population_mode {
+        let profile = saved_population::SavedPopulation {
+            store: store.clone().unwrap(), spawn: spawn.unwrap(),
+            profession: gw2_proto::population::PopulationProfession209026::Mesmer { values: mesmer_values.unwrap() },
+            reward_tracks: reward_tracks.unwrap(), quest,
+            equipment: equipment_frames.as_deref().map(Bytes::copy_from_slice),
+            skills: skill_frames.as_deref().map(Bytes::copy_from_slice), initial_health,
+        };
+        profile.validate()?;
+        Some(profile)
+    } else { None };
+    let creation = creation_destination.map(|address| (store.clone().unwrap(), address));
     let population = match (&population_record, spawn) {
         (Some(record), Some(spawn)) => Some(match (mesmer_values, reward_tracks) {
             (Some(values), Some(tracks)) => mission::PopulationFixture::with_profession(
@@ -525,7 +598,7 @@ fn main() -> io::Result<()> {
             "character record fixture requires --auth-reply-body",
         ));
     }
-    if play_address.is_some() && character.is_none() {
+    if play_address.is_some() && character.is_none() && store.is_none() {
         return Err(invalid(
             "play-route fixture requires --auth-character-record",
         ));
@@ -536,11 +609,20 @@ fn main() -> io::Result<()> {
             address,
             gw2_proto::Guid(record[..16].try_into().unwrap()),
         )?),
+        (Some(address), None) if store.is_some() => Some(auth::PlayRoute::new(address, gw2_proto::Guid([0; 16]))?),
         _ => None,
+    };
+    let play = match (play, creation_route) {
+        (Some(route), Some(address)) => Some(route.with_creation_address(address)?),
+        (route, _) => route,
     };
     let auth_body = auth_body
         .map(|body| {
             let fixture = auth::ReplyFixture::new(body, character).and_then(auth::ReplyFixture::with_home_world)?;
+            let fixture = match &store {
+                Some(store) => fixture.with_character_store(store.clone())?,
+                None => fixture,
+            };
             Ok::<_, io::Error>(match agreement_state {
                 Some(path) => fixture.with_agreement(auth::AgreementState::new(path)),
                 None => fixture,
@@ -583,6 +665,8 @@ fn main() -> io::Result<()> {
         let reply = reply.clone();
         let auth_body = auth_body.clone();
         let population = population.clone();
+        let saved_population = saved_population.clone();
+        let creation = creation.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
             let fixtures = Fixtures {
@@ -591,6 +675,8 @@ fn main() -> io::Result<()> {
                 play,
                 mission_map_key,
                 population,
+                saved_population,
+                creation,
                 population_delay,
                 no_capture,
             };

@@ -4,6 +4,158 @@ use gw2_proto::Encode;
 use std::net::Shutdown;
 
 #[test]
+fn saved_population_over_tcp_selects_reopened_character_at_exact_preamble_offset() {
+    use saved_population::tests::{SavedScenario, frames};
+    let scenario = SavedScenario::new();
+    for selected in 0..2 {
+        let expected = frames(scenario.expected(selected));
+        // Fragment immediately before, inside and after the selected GUID.
+        for cut in [48, 55, 64] {
+            let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+            let address = listener.local_addr().unwrap();
+            let path = scenario.capture_path(&format!("selected-{selected}-cut-{cut}"));
+            let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+            let shared = key.public().modpow(&BigUint::from(5u32), &key.p);
+            let server_path = path.clone();
+            let profile = scenario.profile.clone();
+            // A fixed population must not override the selected saved record.
+            let other_character = scenario.expected(1 - selected);
+            let server = std::thread::spawn(move || {
+                observe(
+                    stream_of(listener),
+                    &key,
+                    &server_path,
+                    Fixtures {
+                        mission_map_key: Some(379),
+                        population: Some(other_character),
+                        saved_population: Some(profile),
+                        no_capture: true,
+                        ..Fixtures::default()
+                    },
+                    Preamble::Mission,
+                )
+            });
+            let mut client = TcpStream::connect(address).unwrap();
+            client
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .unwrap();
+            let mut input = scenario.preamble(selected);
+            input.extend_from_slice(&[0, 6, 0, 4, 0, 0]);
+            client.write_all(&input[..cut]).unwrap();
+            client.flush().unwrap();
+            std::thread::sleep(Duration::from_millis(10));
+            client.write_all(&input[cut..]).unwrap();
+            let mut reply = [0; 22];
+            client.read_exact(&mut reply).unwrap();
+            assert_eq!(&reply[..2], &[1, 22]);
+            let mut codec =
+                ClientCodec::new(&session_secret(&shared, &reply[2..].try_into().unwrap()));
+            let mut pending = BytesMut::new();
+            let mut actual = Vec::new();
+            while actual.len() < expected.len() {
+                if let Some(frame) = codec.decode(&mut pending).unwrap() {
+                    actual.push(frame);
+                    if actual.len() == 1 {
+                        let mut plain = BytesMut::new();
+                        gw2_proto::map_load::encode_empty(
+                            gw2_proto::map_load::MAP_LOADED_420,
+                            &mut plain,
+                        );
+                        gw2_proto::map_load::encode_empty(
+                            gw2_proto::map_load::AGENTS_LOADED_412,
+                            &mut plain,
+                        );
+                        let mut wire = BytesMut::new();
+                        codec.encode(plain.freeze(), &mut wire).unwrap();
+                        client.write_all(&wire).unwrap();
+                    }
+                    continue;
+                }
+                let mut chunk = [0; 4096];
+                let count = client.read(&mut chunk).unwrap();
+                assert_ne!(count, 0, "selected {selected}, cut {cut}: premature close");
+                pending.extend_from_slice(&chunk[..count]);
+            }
+            assert_eq!(
+                actual.as_slice(),
+                &expected,
+                "selected {selected}, cut {cut}"
+            );
+            client.shutdown(Shutdown::Both).unwrap();
+            server.join().unwrap().unwrap();
+            assert!(!path.exists());
+            assert!(!path.with_extension("preamble.bin").exists());
+        }
+    }
+}
+
+#[test]
+fn saved_population_over_tcp_rejects_unknown_or_unvalidated_selection_before_key_reply() {
+    use saved_population::tests::SavedScenario;
+    let scenario = SavedScenario::new();
+    let mut unknown = scenario.preamble(0);
+    // Neighbor 32..48 still contains a real saved GUID, and a fixed fallback
+    // is supplied below. Neither may rescue an unknown selected GUID.
+    unknown[48..64].fill(0);
+    let mut wrong_build = unknown[..16].to_vec();
+    wrong_build[4] ^= 1;
+    let mut wrong_length = unknown[..16].to_vec();
+    wrong_length[12] ^= 1;
+    for (label, input, expected_kind) in [
+        ("unknown", unknown, io::ErrorKind::NotFound),
+        ("wrong-build", wrong_build, io::ErrorKind::InvalidData),
+        ("wrong-length", wrong_length, io::ErrorKind::InvalidData),
+        (
+            "incomplete",
+            scenario.preamble(0)[..63].to_vec(),
+            io::ErrorKind::UnexpectedEof,
+        ),
+    ] {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let path = scenario.capture_path(label);
+        let server_path = path.clone();
+        let profile = scenario.profile.clone();
+        let fallback = scenario.expected(1);
+        let server = std::thread::spawn(move || {
+            let key = ServerKey::from_private(7919u32.into(), 4u32.into(), 7u32.into());
+            observe(
+                stream_of(listener),
+                &key,
+                &server_path,
+                Fixtures {
+                    mission_map_key: Some(379),
+                    population: Some(fallback),
+                    saved_population: Some(profile),
+                    no_capture: true,
+                    ..Fixtures::default()
+                },
+                Preamble::Mission,
+            )
+        });
+        let mut client = TcpStream::connect(address).unwrap();
+        client
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .unwrap();
+        client.write_all(&input).unwrap();
+        client.shutdown(Shutdown::Write).unwrap();
+        let mut reply = Vec::new();
+        client.read_to_end(&mut reply).unwrap();
+        assert!(
+            reply.is_empty(),
+            "{label}: sent data before validating selection"
+        );
+        assert_eq!(
+            server.join().unwrap().unwrap_err().kind(),
+            expected_kind,
+            "{label}"
+        );
+        assert!(!path.exists());
+        assert!(!path.with_extension("preamble.bin").exists());
+    }
+}
+
+#[test]
 fn explicit_profession_fixture_csv_checks_width_and_range() {
     assert_eq!(parse_csv::<u8, 2>("3,0", "bad").unwrap(), [3, 0]);
     assert_eq!(parse_csv::<u32, 4>("1,128,16384,4294967295", "bad").unwrap(), [1, 128, 16384, u32::MAX]);
