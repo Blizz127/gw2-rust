@@ -603,7 +603,18 @@ struct Heart {
     progress: u32,
     player: Option<u32>,
     done: bool,
+    /// The completion reward (556 + bonus XP) has been sent.
+    rewarded: bool,
 }
+
+/// Heart completion reward. Coins and karma are placeholders (the client
+/// holds no heart reward values); XP is the client's level-2 content-XP base
+/// (`s_experienceForContentLut[3] - [2]` = 7354) times the 70% factor of the
+/// client Reward.cpp formula, a rough client-derived scale (swarm note
+/// rewards-waypoint.md section A).
+const HEART_COINS: u32 = 30;
+const HEART_KARMA: u32 = 50;
+const HEART_XP: u32 = 7354 * 7 / 10;
 
 /// Server-chosen ids for the single research heart.
 const HEART_REGION: u32 = 1;
@@ -690,11 +701,18 @@ const RESPAWN_DELAY: Duration = Duration::from_secs(10);
 /// On an NPC kill: add experience, send 191, and 188 when the client's
 /// experience table crosses a level (docs/re/209026-npc-talk-loop.md, XP).
 fn award_kill_xp(xp: &mut Option<(u32, u32, u8)>, character_index: u32, out: &mut BytesMut) {
-    let Some((per_kill, total, level)) = xp.as_mut() else { return };
-    *total = total.saturating_add(*per_kill);
+    let Some(per_kill) = xp.map(|(per_kill, ..)| per_kill) else { return };
+    award_xp(xp, per_kill, "kill", character_index, out);
+}
+
+/// Add `amount` experience for `reason`: 191 with the new total, and 188 when
+/// the client's experience table crosses a level.
+fn award_xp(xp: &mut Option<(u32, u32, u8)>, amount: u32, reason: &str, character_index: u32, out: &mut BytesMut) {
+    let Some((_, total, level)) = xp.as_mut() else { return };
+    *total = total.saturating_add(amount);
     ExperienceFrame209026 { character_index, experience: *total, dword_2: 0, byte_3: 0 }.encode_frame(out);
     let reached = level_for_experience(*total);
-    eprintln!("Mission phase: kill experience +{per_kill} -> {total} (server 191)");
+    eprintln!("Mission phase: {reason} experience +{amount} -> {total} (server 191)");
     if reached > *level {
         *level = reached;
         EarnedLevelFrame209026 { character_index, level: reached }.encode_frame(out);
@@ -871,7 +889,7 @@ impl MissionPhase {
         if target == 0 {
             return Err(io::Error::new(ErrorKind::InvalidInput, "heart target must be nonzero"));
         }
-        self.heart = Some(Heart { key, target, progress: 0, player: None, done: false });
+        self.heart = Some(Heart { key, target, progress: 0, player: None, done: false, rewarded: false });
         Ok(self)
     }
 
@@ -945,6 +963,20 @@ impl MissionPhase {
             eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
             award_kill_xp(&mut self.xp, player, out);
             advance_heart(&mut self.heart, out)?;
+            if let Some(heart) = self.heart.as_mut()
+                && heart.done
+                && !heart.rewarded
+            {
+                heart.rewarded = true;
+                RenownFrame209026::HeartReward {
+                    reward: 1,
+                    heart: u32::from(heart.key),
+                    currencies: vec![(1, HEART_COINS), (2, HEART_KARMA)],
+                }
+                .encode_frame(out)?;
+                eprintln!("Mission phase: renown heart {} reward panel (server 556 type 14)", heart.key);
+                award_xp(&mut self.xp, HEART_XP, "renown heart", player, out);
+            }
             if self.heart.is_some_and(|h| h.done && h.key == 56)
                 && let Some(talk) = self.talk.as_mut()
             {

@@ -1115,3 +1115,19 @@ respawned with the new connection at their configured positions.
 **Run 183:** Hero's Moot Waypoint (POI 371, 597.3, -30352.1, -1563.2) also works as a
 rejoin spawn. The player stood on the hillside by archery targets, at full health, with
 the heart at 1/5. It is now the live respawn point.
+
+### Run 184: heart completion reward (556 type 14) and bonus XP
+
+When heart 56 completes, the observer now also sends **556**:
+`{reward id 1, Byte type 14, 0, currencies [(1, 30), (2, 50)], [], [], Optionals 6..25
+absent except #21 = Dword 56}`. It then adds **5147 experience**: the client's level-2
+content-XP base (7354) × the 70% factor of its Reward.cpp formula.
+
+The client showed the completion toast, then a **gold heart reward icon** in the lower
+right: the retail reward notification for CHAR_REWARD_TASK_SUB_REGION. The bonus XP
+crossed two levels (191/188), with the "Level Up!" banner and another skill slot
+unlocked. No asserts.
+
+Coin and karma amounts are placeholders, and the currency keys 1/2 are inferred. 556 is
+display data only and does not credit a wallet. The reward id must be unique per session
+(it is 1 because the heart completes once).

@@ -38,6 +38,12 @@ pub enum RenownFrame209026 {
     CreateCounter { objective: u32, target: u32 },
     /// 1089: set the counter; a plain counter asserts `0 <= value <= target`.
     SetCounter { objective: u32, value: u32 },
+    /// 556 type 14 (CHAR_REWARD_TASK_SUB_REGION): the heart completion reward
+    /// panel. `reward` must be unique per session (asserting lookup).
+    /// Currencies are `(content type 14 key, amount)`; key 1 coin and 2 karma
+    /// are inferred (low confidence). Optional #21 carries the heart key; all
+    /// other optionals are absent. Display only: it does not credit a wallet.
+    HeartReward { reward: u32, heart: u32, currencies: Vec<(u32, u32)> },
 }
 
 impl RenownFrame209026 {
@@ -51,6 +57,7 @@ impl RenownFrame209026 {
             Self::HeartNpc { .. } => 384,
             Self::CreateCounter { .. } => 1090,
             Self::SetCounter { .. } => 1089,
+            Self::HeartReward { .. } => 556,
         }
     }
 
@@ -61,8 +68,34 @@ impl RenownFrame209026 {
         {
             return Err(Error::new(ErrorKind::InvalidInput, "counter needs a nonzero uid and target"));
         }
+        if let Self::HeartReward { reward, currencies, .. } = self
+            && (*reward == 0 || currencies.len() > 255)
+        {
+            return Err(Error::new(ErrorKind::InvalidInput, "reward needs a nonzero id and at most 255 currencies"));
+        }
         self.message_id().encode(out);
         let empty_string = |out: &mut BytesMut| 0u16.encode(out);
+        if let Self::HeartReward { reward, heart, currencies } = self {
+            reward.encode(out);
+            14u8.encode(out); // reward type: task sub-region
+            0u32.encode(out);
+            (currencies.len() as u8).encode(out);
+            for (key, amount) in currencies {
+                key.encode(out);
+                amount.encode(out);
+            }
+            0u8.encode(out); // no items
+            0u8.encode(out); // no items
+            for optional in 6..=25 {
+                if optional == 21 {
+                    1u8.encode(out);
+                    heart.encode(out);
+                } else {
+                    0u8.encode(out);
+                }
+            }
+            return Ok(());
+        }
         match *self {
             Self::AddRegion { player, region } => {
                 player.encode(out);
@@ -107,6 +140,7 @@ impl RenownFrame209026 {
                 objective.encode(out);
                 value.encode(out);
             }
+            Self::HeartReward { .. } => unreachable!("encoded above"),
         }
         Ok(())
     }
@@ -143,6 +177,7 @@ mod tests {
             RenownFrame209026::LeaveSubRegion { player: 1, heart: 56 },
             RenownFrame209026::CompleteSubRegion { player: 1, region: 1, heart: 56 },
             RenownFrame209026::HeartNpc { character: 2, heart: 56 },
+            RenownFrame209026::HeartReward { reward: 1, heart: 56, currencies: vec![(1, 30), (2, 50)] },
         ];
         for frame in frames {
             let mut out = BytesMut::new();
