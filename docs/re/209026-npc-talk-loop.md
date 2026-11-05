@@ -745,3 +745,26 @@ player's health every 2 s until the NPC dies. It stops before the player's defea
 handling isn't implemented. `--mission-sourced-damage KIND` sends combat health changes as
 255 with the skill and the attacker. The player hits the NPC with skill 10170; the NPC
 hits the player with no skill.
+
+### Runs 159–161: player downed, defeat and rally
+
+When an NPC hit would leave the player below 1 health, the observer:
+1. sends 255 bringing health to 0;
+2. sends packed **0x34 downed** through server 84 on the player's agent (flags 0x10,
+   killer = the NPC, skill key 0).
+
+Run 159 showed retail's downed view, and the transitions then ran as follows:
+
+| Step | What the client showed |
+|---|---|
+| 0x34 downed | "Fight to Survive!", desaturated screen, player prone, minotaur standing over them. |
+| Packed **0x33** dead after `DOWNED_TO_DEFEAT` | "You are defeated." with a **"Return to a Waypoint"** button. |
+| A second 0x34 after the defeat | Crash: `GpDownedManager.cpp:878 "Invalid state transition: 5 -> 2"`. The UI downed manager rejects downed after defeat. |
+
+That second 0x34 was an observer bug: the player's next hit restarted the NPC attack. Now
+a player at 0 health is never attacked again, and a defeated player's hits no longer land.
+
+If the NPC dies while the player is downed, the observer rallies the player: it cancels
+the defeat, sends packed **0x49** alive on the player, then 255 restoring half of the
+starting health. The defeat window (10 s) and the restored amount are placeholders.
+Retail downed health, downed skills and the waypoint respawn are not modelled.

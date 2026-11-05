@@ -410,16 +410,64 @@ fn encode_health_change(
 struct NpcAttack {
     damage: f32,
     player_health: f32,
+    max_health: f32,
     next: Option<Instant>,
+    /// Set when the player goes down: when the defeat transition is due.
+    defeat_at: Option<Instant>,
+    /// The player was defeated; their attacks no longer land.
+    defeated: bool,
+}
+
+/// Placeholder time between the player going down and being defeated.
+const DOWNED_TO_DEFEAT: Duration = Duration::from_secs(10);
+
+/// Rally: the downed player killed the foe. Cancel defeat, send the packed
+/// 0x49 alive transition and restore half health (placeholder amount).
+fn rally_on_kill(
+    attack: &mut Option<NpcAttack>,
+    sourced: Option<u8>,
+    character_index: u32,
+    npc: u32,
+    out: &mut BytesMut,
+) -> io::Result<()> {
+    let Some(attack) = attack.as_mut() else { return Ok(()) };
+    attack.next = None;
+    if attack.defeat_at.take().is_none() {
+        return Ok(());
+    }
+    AgentBehaviorFrame209026 {
+        agent_index: character_index as u16,
+        remote_tick: 0,
+        command_flags: 0x10,
+        behavior_value: 0x4000_0500,
+        behavior_data: HealthTransitionPayload209026::Alive { detail_byte: 0, trailing_byte: 0 }.encode_payload(),
+    }
+    .encode_frame(out)?;
+    let restored = attack.max_health / 2.0;
+    encode_health_change(out, sourced, character_index, (0.0, restored), 0, npc)?;
+    attack.player_health = restored;
+    eprintln!("Mission phase: player rallied (server 84 packed 0x49), health -> {restored}");
+    Ok(())
+}
+
+/// A packed health transition (0x34 downed / 0x33 dead) on `agent` through
+/// server 84 (docs/re/209026-health-transitions.md), `killer` as the agent.
+fn encode_transition(out: &mut BytesMut, agent: u16, downed: bool, killer: u32, behavior_value: u32) -> io::Result<()> {
+    let details = HealthTransitionDetails209026 { detail_word: 0, detail_byte: 0, content_key: 0, agent_id: killer, trailing_byte: 0 };
+    let payload = if downed { HealthTransitionPayload209026::Downed(details) } else { HealthTransitionPayload209026::Dead(details) };
+    AgentBehaviorFrame209026 { agent_index: agent, remote_tick: 0, command_flags: 0x10, behavior_value, behavior_data: payload.encode_payload() }
+        .encode_frame(out)
 }
 
 const NPC_ATTACK_INTERVAL: Duration = Duration::from_secs(2);
 const NPC_ATTACK_FIRST_DELAY: Duration = Duration::from_millis(1500);
 
-/// The player's hit aggroes the NPC: schedule its first attack once.
+/// The player's hit aggroes the NPC: schedule its first attack once. A
+/// downed or defeated player (health 0) is not attacked again.
 fn start_npc_attack(attack: &mut Option<NpcAttack>) {
     if let Some(attack) = attack.as_mut()
         && attack.next.is_none()
+        && attack.player_health > 0.0
     {
         attack.next = Some(Instant::now() + NPC_ATTACK_FIRST_DELAY);
     }
@@ -601,7 +649,7 @@ impl MissionPhase {
 
     /// Requires a hostile NPC and the player's starting health.
     pub fn with_npc_attack(mut self, damage: f32, player_health: f32) -> Self {
-        self.npc_attack = Some(NpcAttack { damage, player_health, next: None });
+        self.npc_attack = Some(NpcAttack { damage, player_health, max_health: player_health, next: None, defeat_at: None, defeated: false });
         self
     }
 
@@ -620,7 +668,8 @@ impl MissionPhase {
     pub fn due_at(&self) -> Option<Instant> {
         let held = self.held.as_ref().map(|(due, _)| *due);
         let attack = self.npc_attack.and_then(|a| a.next);
-        [held, self.respawn, attack].into_iter().flatten().min()
+        let defeat = self.npc_attack.and_then(|a| a.defeat_at);
+        [held, self.respawn, attack, defeat].into_iter().flatten().min()
     }
 
     /// The held population once `now` has reached its due time (once).
@@ -630,16 +679,36 @@ impl MissionPhase {
             return self.held.take().map(|(_, bytes)| bytes);
         }
         if let Some(attack) = self.npc_attack.as_mut()
+            && attack.defeat_at.is_some_and(|due| now >= due)
+        {
+            attack.defeat_at = None;
+            attack.defeated = true;
+            let character_index = self.population.as_ref()?.plan.character_index;
+            let npc = u32::from(self.hostile.as_ref()?.agent_index);
+            let mut out = BytesMut::new();
+            encode_transition(&mut out, character_index as u16, false, npc, 0x4000_0400).ok()?;
+            eprintln!("Mission phase: player defeated (server 84 packed 0x33)");
+            return Some(out.freeze());
+        }
+        if let Some(attack) = self.npc_attack.as_mut()
             && attack.next.is_some_and(|due| now >= due)
         {
             let character_index = self.population.as_ref()?.plan.character_index;
             let npc = u32::from(self.hostile.as_ref()?.agent_index);
             let remaining = attack.player_health - attack.damage;
             if remaining < 1.0 {
-                // Downed/defeat handling is not implemented; stop first.
+                // The hit takes the player to 0, then the packed 0x34 downed
+                // transition; defeat (0x33) follows after DOWNED_TO_DEFEAT.
+                // Retail downed health and downed skills are not modelled.
+                let previous = attack.player_health;
+                attack.player_health = 0.0;
                 attack.next = None;
-                eprintln!("Mission phase: NPC attack stopped before player defeat");
-                return None;
+                attack.defeat_at = Some(now + DOWNED_TO_DEFEAT);
+                let mut out = BytesMut::new();
+                let id = encode_health_change(&mut out, self.sourced_damage, character_index, (previous, 0.0), 0, npc).ok()?;
+                encode_transition(&mut out, character_index as u16, true, npc, 0x4000_0300).ok()?;
+                eprintln!("Mission phase: NPC hit player for {previous}: health -> 0 (server {id}), player downed (server 84 packed 0x34)");
+                return Some(out.freeze());
             }
             attack.player_health = remaining;
             attack.next = Some(now + NPC_ATTACK_INTERVAL);
@@ -803,7 +872,9 @@ impl MissionPhase {
                     "Mission phase: repeat-start slot {} answered with server 34 0x78 skill {skill_key} on NPC {npc}",
                     start.request.slot
                 );
-                if let Some((amount, health)) = self.damage_on_skill {
+                if let Some((amount, health)) = self.damage_on_skill
+                    && !self.npc_attack.is_some_and(|a| a.defeated)
+                {
                     let remaining = (health - amount).max(0.0);
                     self.damage_on_skill = Some((amount, remaining));
                     start_npc_attack(&mut self.npc_attack);
@@ -836,9 +907,7 @@ impl MissionPhase {
                         award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
                         award_kill_loot(&mut self.kill_loot, fixture.equipment.as_ref(), fixture.plan.character_index, &mut out)?;
                         self.respawn = Some(Instant::now() + RESPAWN_DELAY);
-                        if let Some(attack) = self.npc_attack.as_mut() {
-                            attack.next = None;
-                        }
+                        rally_on_kill(&mut self.npc_attack, self.sourced_damage, fixture.plan.character_index, u32::from(npc), &mut out)?;
                     }
                 }
                 Ok(Some(out.freeze()))
@@ -846,6 +915,7 @@ impl MissionPhase {
             Seen::Skill(skill)
                 if self.began
                     && self.damage_on_skill.is_some()
+                    && !self.npc_attack.is_some_and(|a| a.defeated)
                     && self.hostile.as_ref().is_some_and(|plan| u32::from(plan.agent_index) == skill.request.target) =>
             {
                 let npc = self.hostile.as_ref().unwrap().agent_index;
@@ -886,9 +956,7 @@ impl MissionPhase {
                     award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
                     award_kill_loot(&mut self.kill_loot, fixture.equipment.as_ref(), fixture.plan.character_index, &mut out)?;
                     self.respawn = Some(Instant::now() + RESPAWN_DELAY);
-                    if let Some(attack) = self.npc_attack.as_mut() {
-                        attack.next = None;
-                    }
+                    rally_on_kill(&mut self.npc_attack, self.sourced_damage, fixture.plan.character_index, u32::from(npc), &mut out)?;
                 }
                 Ok(Some(out.freeze()))
             }
