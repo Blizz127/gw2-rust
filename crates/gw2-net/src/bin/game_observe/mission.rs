@@ -92,7 +92,9 @@ pub enum Seen {
     /// target uses), 0 when none. Run 168: sent after Tab.
     Target(u32),
     /// Client 18/19 (AgMsg) `{Dword, Dword, Float3 position, ...}`: the
-    /// player's movement report; the position in whole map units.
+    /// player's movement report. The wire position is collision space
+    /// `[X/32, Y/32, -Z/32]` (run 186: spawn 0,-26300,-3800 reported as
+    /// 0,-822,118); this holds it converted back to whole map units.
     Moved { id: u16, position: [i32; 3] },
     Other(u16),
 }
@@ -428,6 +430,8 @@ pub struct MissionPhase {
     restore_loot: u32,
     /// Experience restored from CARRY, resent at AgentsLoaded (total, level).
     restore_xp: Option<(u32, u8)>,
+    /// Count of client 18/19 movement reports (sparse logging).
+    moves_seen: u32,
     /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
     /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
@@ -793,6 +797,7 @@ impl MissionPhase {
             rejoin_route: None,
             restore_loot: 0,
             restore_xp: None,
+            moves_seen: 0,
             kill_loot: None,
             npc_attack: None,
             sourced_damage: None,
@@ -1582,7 +1587,13 @@ impl MissionPhase {
                     eprintln!("Mission phase: client message {id} ({used} bytes) [{}]", hex.join(" "))
                 }
                 Seen::Target(agent) => eprintln!("Mission phase: client 227 target agent {agent}"),
-                Seen::Moved { .. } => {}
+                Seen::Moved { id, position } => {
+                    // Sparse research log of the player's reported position.
+                    self.moves_seen = self.moves_seen.wrapping_add(1);
+                    if self.moves_seen % 20 == 1 {
+                        eprintln!("Mission phase: client {id} movement #{} at {position:?}", self.moves_seen);
+                    }
+                }
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
@@ -1605,7 +1616,10 @@ impl MissionPhase {
                 position
                     .iter()
                     .all(|v| v.is_finite() && v.abs() < 1.0e7)
-                    .then(|| Seen::Moved { id, position: position.map(|v| v.round() as i32) })
+                    .then(|| {
+                        let map = [position[0] * 32.0, position[1] * 32.0, -position[2] * 32.0];
+                        Seen::Moved { id, position: map.map(|v| v.round() as i32) }
+                    })
             }
             227 => {
                 use gw2_proto::Decode;
