@@ -381,6 +381,187 @@ def apply_full_textures(inf, slide):
         return
     print('GW2_RUNNER: full-texture patch applied')
 
+# BEGIN EMPTY_COMPOSITE_COMPLETION
+# Frozen ProcessComposite's empty-only branch skips submission after allocating a
+# fresh job/group. Complete only that no-pixel-work job, then let the normal poll,
+# destructor and later mip/ready writer run. No UI ownership, cached allocation,
+# repair-count or time limit: world composites use the same concrete operation.
+# Source/limits: docs/re/209026-empty-composite-runner.md. Set
+# GW2_RUNNER_EMPTY_COMPOSITE=0 to leave this path unchanged.
+EMPTY_COMPOSITE_SITE = 0x140a74ced
+EMPTY_COMPOSITE_GUARDS = {
+    0x140a747c0: bytes.fromhex('405355565741544155415641574881ec08030000'),
+    0x140a750d5: bytes.fromhex('488d4424604889442428488b433848894424200f29442460e8cef6ffff'),
+    0x140a74ce5: bytes.fromhex('85c00f84ba000000498b56584885d275'),
+    EMPTY_COMPOSITE_SITE: bytes.fromhex('498b56584885d2'),
+    0x140a6fdda: bytes.fromhex('85c00f85b70000004883c428c3488b51'),
+    0x14026f540: bytes.fromhex('8b81f8000000c3'),
+    0x140a6c720: bytes.fromhex('48895c2418574883ec204883b9000100'),
+}
+EMPTY_COMPOSITE = None
+
+
+class EmptyCompositeReject(ValueError):
+    pass
+
+
+class EmptyCompositeCompletion:
+    def __init__(self, inf, slide):
+        self.inf, self.slide, self.bp = inf, slide, None
+        self.logs = 0
+
+    def log(self, status):
+        # Only constant status classes. Exhausting logs never disables repair.
+        if self.logs < 8:
+            print('GW2_RUNNER: empty-composite ' + status)
+        elif self.logs == 8:
+            print('GW2_RUNNER: empty-composite further status lines suppressed; handler remains armed')
+        self.logs = min(self.logs + 1, 9)
+
+    def read(self, address, size):
+        if not address or not 0 < size <= 256:
+            raise EmptyCompositeReject('invalid bounded read')
+        return self.inf.read_memory(address, size).tobytes()
+
+    def q(self, address):
+        return struct.unpack('<Q', self.read(address, 8))[0]
+
+    def d(self, address):
+        return struct.unpack('<I', self.read(address, 4))[0]
+
+    def reg(self, name):
+        return int(gdb.parse_and_eval('$' + name))
+
+    def code_guard(self):
+        if gdb.parameter('non-stop'):
+            raise EmptyCompositeReject('requires all-stop')
+        for address, expected in EMPTY_COMPOSITE_GUARDS.items():
+            if self.read(address + self.slide, len(expected)) != expected:
+                raise EmptyCompositeReject('instruction mismatch')
+
+    def capture(self):
+        self.code_guard()
+        if self.reg('rip') != EMPTY_COMPOSITE_SITE + self.slide or self.reg('eax') & 0xffffffff != 1:
+            raise EmptyCompositeReject('wrong branch')
+        rsp, destination, source = self.reg('rsp'), self.reg('rdi'), self.reg('r14')
+        if self.q(rsp + 0x348) != 0x140a750f2 + self.slide:
+            raise EmptyCompositeReject('wrong caller')
+        op = self.q(rsp + 0x340)
+        if not op or op & 3 or self.q(op) != 0x141bfc7c0 + self.slide:
+            raise EmptyCompositeReject('wrong operation')
+        if (self.q(op + 0x28), self.q(op + 0x30)) != (destination, source):
+            raise EmptyCompositeReject('operation input mismatch')
+        job, group = self.q(rsp + 0xa8), self.q(rsp + 0xb0)
+        if not job or not group or job & 15 or group & 15 or len({job, group, op, destination, source}) != 5:
+            raise EmptyCompositeReject('allocation mismatch')
+        if (self.q(op + 0x108), self.q(op + 0x100)) != (job, group):
+            raise EmptyCompositeReject('operation job mismatch')
+        if self.reg('r13') != rsp + 0x3b0 or self.q(rsp + 0x378) != rsp + 0x3b0:
+            raise EmptyCompositeReject('rectangle pointer mismatch')
+        rectangle = struct.unpack('<4I', self.read(rsp + 0x3b0, 16))
+        if rectangle[2] > rectangle[0] and rectangle[3] > rectangle[1]:
+            raise EmptyCompositeReject('nonempty rectangle')
+        group_state = (self.d(group), self.q(group + 8), self.d(group + 0x10),
+                       self.q(group + 0x20), self.q(group + 0x28), self.d(group + 0x30))
+        if group_state != (1, 0, 1, 0, group, 1):
+            raise EmptyCompositeReject('group not fresh')
+        job_state = (self.d(job + 0x18), self.d(job + 0x1c), self.d(job + 0xf8))
+        if job_state != (5, 1, 0):
+            raise EmptyCompositeReject('job not fresh zero completion')
+        outstanding, count = self.d(destination + 0x94), self.d(op + 0x50)
+        if not outstanding or outstanding == 0xffffffff or not 1 <= count <= 5:
+            raise EmptyCompositeReject('operation count mismatch')
+        destination_state = (self.q(destination), self.q(destination + 0x40), self.d(destination + 0x60),
+                             self.d(destination + 0x64), self.d(destination + 0x48), self.d(destination + 0x4c))
+        table, backing, flags, fmt, _, _ = destination_state
+        if table != 0x141bfc700 + self.slide or not backing or not flags & 4 or flags & 0x1200000 or fmt != 0x1a:
+            raise EmptyCompositeReject('destination backing mismatch')
+        pointers = (source,) + tuple(self.q(op + 0x58 + i * 8) for i in range(count))
+        inputs, source_dims = [], None
+        for index, data in enumerate(pointers):
+            if not data and index == 1:
+                inputs.append(None); continue  # Only mask zero may be absent.
+            if not data:
+                raise EmptyCompositeReject('missing input')
+            state = (self.q(data), self.q(data + 0x40), self.d(data + 0x60), self.q(data + 0xa8),
+                     self.d(data + 0x64), self.d(data + 0x48), self.d(data + 0x4c), self.d(data + 0x68))
+            table, backing, flags, head, fmt, width, height, levels = state
+            if table != 0x141bfc700 + self.slide or not backing:
+                raise EmptyCompositeReject('input backing mismatch')
+            if not flags & 0x10000 or (head and not head & 1):
+                raise EmptyCompositeReject('input not ready')
+            if fmt != (0x1a if index == 0 else 0x1b):
+                raise EmptyCompositeReject('input format mismatch')
+            if index == 0:
+                if not flags & 6:
+                    raise EmptyCompositeReject('primary backing flags')
+                source_dims = (width, height)
+            elif not levels or width < source_dims[0] or height < source_dims[1]:
+                raise EmptyCompositeReject('mask dimensions mismatch')
+            inputs.append(state)
+        # Every checked dynamic field is part of the unchanged second snapshot.
+        return (job, group, op, destination, source, rsp, rectangle, group_state, job_state,
+                outstanding, count, destination_state, pointers, tuple(inputs),
+                self.read(rsp + 0x370, 8), self.read(op + 0x38, 24))
+
+    def complete(self):
+        if not in_client() or not is_x86_64() or gdb.selected_inferior().num != self.inf.num:
+            return
+        try:
+            first = self.capture()
+            if self.capture() != first:
+                raise EmptyCompositeReject('state changed before write')
+        except (EmptyCompositeReject, gdb.MemoryError, gdb.error, struct.error):
+            self.log('unqualified invocation left unchanged')
+            return
+        # No lifetime pointers survive this callback. No target function calls,
+        # registers, flags, texture-ready bits or counters are changed.
+        try:
+            self.inf.write_memory(first[0] + 0xf8, struct.pack('<I', 1))
+            if self.d(first[0] + 0xf8) != 1:
+                abort('empty-composite completion readback')
+                return
+        except (gdb.MemoryError, gdb.error, struct.error):
+            abort('empty-composite completion write/readback')
+            return
+        self.log('empty unsubmitted job completed; readback verified')
+
+
+def empty_composite_dispatch():
+    if EMPTY_COMPOSITE is not None:
+        EMPTY_COMPOSITE.complete()
+
+
+def arm_empty_composite(inf, slide):
+    global EMPTY_COMPOSITE
+    if os.environ.get('GW2_RUNNER_EMPTY_COMPOSITE', '1') == '0':
+        print('GW2_RUNNER: empty-composite completion off')
+        return
+    if EMPTY_COMPOSITE is not None:
+        return
+    state = EmptyCompositeCompletion(inf, slide)
+    try:
+        # Arm runs only after the script's SHA-256 and mapped-image checks.
+        for address, expected in EMPTY_COMPOSITE_GUARDS.items():
+            if file_bytes(address, len(expected)) != expected:
+                raise EmptyCompositeReject('file instruction mismatch')
+        state.code_guard()
+        state.bp = gdb.Breakpoint('*%#x' % (EMPTY_COMPOSITE_SITE + slide), internal=False)
+        state.bp.enabled = False
+        if state.bp.number <= 0:
+            raise EmptyCompositeReject('public breakpoint required')
+        state.bp.condition = '$eax == 1 && *(unsigned long long*)($rsp+0x348) == %#x' % (0x140a750f2 + slide)
+        gdb.execute('commands %d\nsilent\npython empty_composite_dispatch()\ncontinue\nend' % state.bp.number)
+    except (EmptyCompositeReject, gdb.MemoryError, gdb.error, struct.error, ValueError):
+        if state.bp is not None and state.bp.is_valid():
+            state.bp.delete()
+        print('GW2_RUNNER: empty-composite completion guard failed; skipped')
+        return
+    EMPTY_COMPOSITE = state
+    state.bp.enabled = True
+    print('GW2_RUNNER: empty-composite completion armed')
+# END EMPTY_COMPOSITE_COMPLETION
+
 # Opt-in diagnostic (GW2_RUNNER_TEXTURE_DIAG=1, off by default): just before the load task's
 # "generate missing levels" call at 0x140a6f625 (only reached without the full-texture patch),
 # print the texture's file id (encoded reference at task [+0x8]: id = w1*0xff00 + w0 + 0xff00ff01),
@@ -619,6 +800,7 @@ class Arm(gdb.Breakpoint):
         arm_downloader_check(inf, slide)
         arm_crash_report(inf, slide)
         apply_full_textures(inf, slide)
+        arm_empty_composite(inf, slide)
         arm_texture_diag(inf, slide)
         arm_send_trace(inf, slide)
         arm_command_trace(inf, slide)
