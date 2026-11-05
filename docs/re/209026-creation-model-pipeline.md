@@ -2027,3 +2027,148 @@ shows the clothed avatar; the defect remains specific to the observed
 creator appearance path until further evidence narrows it. Saved-norn
 activation remains held for this incomplete preview and the outstanding
 launcher runner publication receipt.
+
+## Run 136: current component file identities and material validity
+
+`run136-norn-creator-authored-sources` observed the current component's
+authored inputs at `1412d8c9e`, plus post-build ownership and sparse UI state.
+Manifest SHA-256 was
+`b1726d4725da672ac1942bf177676176c3f9bd81dddbf3f6fe751656bae66786`;
+helper `creator-authored-sources-probe-20261105.py` was
+`8cd69a7bb816cba25acb5fdfddc94e79c35bfd4aefa49fad29272d65be01dd6e`.
+The passive prefix was `GW2_CREATOR_AUTHORED_SOURCES`. The helper used three
+sites, made no target calls or writes, and admitted the first dispatch of
+each component slot per owner in scenes 2/3. The existing production
+empty-job completion handler remained a separate active intervention.
+
+The source contract is documented in
+[the authored-input and alpha-content slice](209026-composite-alpha-content.md).
+Each dispatch revalidated the current scene manager/model and exact
+`R14 == manager + 0x18 + 0x48 * slot` relation. It then sampled the
+descriptor, rectangle-set ID, authored/requested dimensions, seven current
+source wrappers and compact filename IDs. Address tags do not establish
+allocation continuity across records. Dispatch is allowed while texture
+inputs are pending; these observations do not imply completed acquisition.
+
+The **final appearance owner, record 7 in scene 3**, supplied ten component
+records at **+74.864 through +76.336 seconds** from first binding. This is
+actual final-owner coverage, not a table copied from a previous race or sex
+selection. The descriptor kind equalled the component slot in these records.
+Channel 0 is the primary input; the remaining columns preserve the exact
+source channel ordering without assigning new semantic names.
+
+| Component slot | Rectangle-set ID | Channel 0 | Channel 1 | Channel 2 | Channel 3 | Channel 4 | Channel 5 | Channel 6 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 2 | 142103 | 142101 | null | null | null | null | 142105 |
+| 2 | 2 | 142115 | 142113 | null | null | null | null | 142117 |
+| 3 | 2 | 142121 | 142119 | null | null | null | null | 142123 |
+| 5 | 2 | 141859 | 141857 | null | null | null | null | 141861 |
+| 6 | 3 | 142097 | 142095 | 142091 | 142093 | null | null | 142099 |
+| 7 | 3 | null | null | null | null | null | null | null |
+| 4 | 2 | 141899 | 141897 | 141893 | 141895 | null | null | 141901 |
+| 8 | 3 | 140511 | null | null | 140507 | 140509 | null | 140513 |
+| **9** | **3** | **140521** | null | **140515** | **140517** | **140519** | null | **140523** |
+| 12 | 3 | 140537 | null | 140531 | 140533 | 140535 | null | 140539 |
+
+Here `null` means the sampled descriptor filename and corresponding wrapper
+were null, not that a required input was missing. Every non-null filename
+was recognized as a compact numeric file ID. All optional wrappers were
+null for this owner. Slots 1, 10, 11, 13 and 14 had no admitted dispatch
+record; this finite observer does not prove that their definitions were
+absent or that no work occurred outside its filters.
+
+All ten records had authored and requested dimensions **1024 by 1024**,
+half-size argument **0**, and request flags **4146 (`0x1032`)**. All present
+source textures were still **pending at dispatch**: their current fields
+were 1024 by 1024, one level, backing absent, readiness false, low-bit-tagged
+operation head and zero outstanding count. Channel 0 had raw format 26,
+present channels 1–5 format 27, and channel 6 format 30. Consequently
+**1024 by 1024 is not evidence of the files' final loaded dimensions**.
+This probe did not observe selected rectangles, completed source dimensions,
+pixel blocks or a matched prior run's empty operation. In particular, the
+slot-9 IDs establish inputs for a focused archive check; they do not alone
+establish which asset caused the previously observed empty clamp.
+
+At +78.416 the same owner had composite state 5, flags `0x5007`, no skeleton
+or graphics object, and model bit 35 clear. At **+85.294** and the final
+**+91.372** followup, it had model bit 35 set, a skeleton, composite state
+**6**, flags **`0x1007`**, and a type-9 graphics object with **12 entries**.
+Every current material entry, indices 0–11, was sampled successfully with
+**`P+0x50 == 1` and `P+0x30 == 1`** in both observations. There were no null,
+unsupported, count-limited or read-failed material entries. The earlier
+initial owner likewise had all 14 current material pairs equal to `(1,1)`.
+These results exclude the specific current `P+0x50 == 0` initialization
+failure for the sampled arrays, using
+[the material-validity source contract](209026-creator-graphics-material-validity.md).
+They do not prove correct texture content, geometry or final drawing.
+
+The final graphics flags were **0**, ready cache false, rejected flag false;
+animation readiness was not cached, graphics bypass was false, and the
+composite texture-invalid mask remained **`0x7fff`**. Unlike run 135, run 136
+did not hook the native readiness return or consumer setup. These field
+samples therefore do not establish a native predicate failure or success,
+and should not replace run 135's actual EAX-one observation with an invented
+cross-run state equivalence.
+
+Coverage was **33 total records**, **seven owner bindings** and **17 component
+records**: seven for owner 4 in scene 2, ten for owner 7 in scene 3. The
+32-component cap did **not** exhaust. The observer ended normally at
+**+91.373**, `late_followup_complete`, with no malformed JSON, unknown event,
+probe-error or rejection record. `coverage_partial: true` is its explicit
+finite-coverage label. The 128-record, eight-owner and 210-second limits did
+not terminate the observation. Production constant statuses recorded five
+verified empty-job writes/readbacks and three unchanged unqualified calls
+before suppression; these remain lower bounds rather than total counts.
+
+Final `client.out` was **125,899 bytes**, SHA-256
+`357d210d1fd59036aebe997f51eed53b3ecfce172ca519e2d7a434f06c0a39fd`;
+UI exit **0**. Its first line was the known isolation banner, not an exact
+container ID. This audit only read the retained safe-prefix log and status
+files; controller cleanup, archive checks and images are separate evidence.
+
+Evidence:
+
+- `ev_bef57d2fc093b897cd93c8e2f88b99a0cefd470b9a197290bf88a153adfb72e5`:
+  initial material pairs and the earlier scene-2 source records.
+- `ev_9f736ae4b8c682e4709b46df904890bd54b0ed8b60a14cece52d9fdf87c64801`:
+  complete final-owner source table, late state, counts and normal finish.
+- `ev_596316b93628f4fd29ad7b3a6ca7d6e2e557f28a9667b2fdbd26fe9124666c51`:
+  full slot-9/12 records and all twelve final material pairs at both times.
+- `ev_415143d6a69d63fa88b1a7585abe6599f04a78c12036ebb63e185c15577574d0`:
+  matching final log digest and UI exit.
+
+The read-only captures exited zero without truncation, with verified owned
+reader-process cleanup. An unrelated process-environment permission failure
+in one capture remains a separate limitation. Complete private audit export:
+`/home/blizz/re/gw2/notes/209026-creator-run136-authored-sources-audit-20261105.json`.
+
+### Run 136 controller, image and asset followup
+
+The controller/UI both exited zero. Owned-container removal, independent
+shared-name absence, unchanged frozen/working executable hashes, readable
+working archive (1,124,232 entries) and credential-safe logs passed.
+Window 16 was returned at **2026-11-05 21:56:59 UTC**. Complete runtime:
+`ev_bfe4a558114ee39f4bbff55a527133e06f11c81ef6d2f49e0577c41cc0c0b06d`;
+private bundle `/home/blizz/re/gw2/notes/209026-norn-creator-run136-20261105.json`.
+Before launch, eleven focused host checks, two configuration preflights,
+both embedded GDB Python blocks and five shell-script syntax checks passed.
+The private store contained only its empty mode-0600 lock and no saved records.
+
+The initial image remains blank, SHA-256
+`2a1ea51f59098e2041853603e4b672939700d771aa8972fa393607148e06c42f`.
+Root reviewed the final 1280-by-900 appearance image: it again shows the
+severely incomplete Norn, with head/hair, hands, belt/cloth edges and boots,
+while most of the body is absent. The 886,382-byte final image has SHA-256
+`2dd39736a08c16396625d65416010dfcaa5c991ce99ab92fca6672aa412b97af`.
+Image identity: `ev_40993024819d335cedac8dcbf400d3348de9c286a1b1568953db886f671244ed`.
+This is a repeated visual defect, not a passed appearance smoke.
+
+A subsequent immutable-archive check recovered the exact slot-9 source
+headers: primary 140521 and masks 140515/140517/140519 are all **512-square**;
+channel 6 asset 140523 is also 512-square. The slot-0 primary control 142103
+is **256 by 128**. See [the asset-header evidence](209026-creator-texture-asset-headers.md).
+These file dimensions must remain distinct from pending dispatch dimensions,
+final loaded dimensions, selected rectangle extents and the unidentified
+run-132 initial-scene source. Neither the material pairs nor these headers
+alone identify the cause of the incomplete preview. No new production fix
+or saved-norn activation follows from this diagnostic run.
