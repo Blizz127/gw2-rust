@@ -412,6 +412,9 @@ pub struct MissionPhase {
     /// AgentsLoaded batch, after BeginPlaying, the path whose model never
     /// streams (docs/re/209026-npc-talk-loop.md, render root cause).
     late_npc: Option<TalkNpcPlan209026>,
+    /// Neutral, non-talkable ambient NPCs (agents 40..), spawned with the
+    /// population at map load (post-load spawns do not render; runs 171-193).
+    ambients: Vec<TalkNpcPlan209026>,
     /// Research: one renown heart shown at spawn whose counter advances on
     /// each NPC kill (docs/re/209026-npc-talk-loop.md, renown heart).
     heart: Option<Heart>,
@@ -791,6 +794,7 @@ impl MissionPhase {
             xp: None,
             starter_bag: None,
             late_npc: None,
+            ambients: Vec::new(),
             heart: None,
             respawn_flag: false,
             respawn_point: None,
@@ -935,6 +939,25 @@ impl MissionPhase {
     }
 
     /// Agent 20, attitude 3 (neutral), not talkable.
+    /// Append an ambient NPC: agent 40 + n, attitude 3 (neutral, inferred), not
+    /// attackable by the combat loop and not talkable. At most 16.
+    pub fn with_ambient_npc(mut self, species_key: u32, position: [f32; 3]) -> io::Result<Self> {
+        if self.ambients.len() >= MAX_HOSTILE_NPCS {
+            return Err(io::Error::new(ErrorKind::InvalidInput, "at most 16 ambient NPCs"));
+        }
+        let plan = TalkNpcPlan209026 {
+            agent_index: 40 + self.ambients.len() as u16,
+            species_key,
+            position,
+            facing: [1.0, 0.0, 0.0],
+            attitude: 3,
+            talkable: false,
+        };
+        plan.spawn_frames()?;
+        self.ambients.push(plan);
+        Ok(self)
+    }
+
     pub fn with_late_npc(mut self, species_key: u32, position: [f32; 3]) -> io::Result<Self> {
         let plan = TalkNpcPlan209026 { agent_index: 20, species_key, position, facing: [1.0, 0.0, 0.0], attitude: 3, talkable: false };
         plan.spawn_frames()?;
@@ -1187,7 +1210,8 @@ impl MissionPhase {
                 let mut npcs = BytesMut::new();
                 let talk = self.talk.as_ref().map(|npc| (&npc.plan, "talk"));
                 let hostile = self.hostiles.iter().map(|h| (&h.plan, "hostile"));
-                for (plan, kind) in talk.into_iter().chain(hostile) {
+                let ambient = self.ambients.iter().map(|plan| (plan, "ambient"));
+                for (plan, kind) in talk.into_iter().chain(hostile).chain(ambient) {
                     if u32::from(plan.agent_index) == fixture.plan.character_index {
                         eprintln!("Mission phase: {kind} NPC agent index collides with the player; not spawned");
                         continue;

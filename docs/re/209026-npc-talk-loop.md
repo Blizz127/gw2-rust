@@ -1195,3 +1195,17 @@ and left the other invocations unchanged. The wolf still never rendered at
 
 So the post-load NPC stall is not the empty-composite case. It is still open; the
 workaround remains spawning at load.
+
+### Run 194: ambient Juvenile Ravens in heart 56 (Spirit of Raven)
+
+`--mission-ambient-npc SPECIES,X,Y,Z` (repeatable, at most 16) spawns neutral,
+non-talkable NPCs: agents 40 and up, attitude 3, spawned with the population at map load.
+Run 194 placed three **Juvenile Ravens** (species 6045, a client plain name, model 27200
+fully present in the client) at (150, -26150), (250, -26350) and (100, -26450), z -3800,
+inside the heart area. They rendered as small dark birds on the hillside next to the
+player, and the tracker showed "Honor the Spirit of Raven." No asserts.
+
+The pool agent (`post-load-pool.md`) found that the creator lane's source-pool cap only
+covers composite models; the post-load wolf takes the plain model route. Run 195 tests a
+post-load wolf while a load-time wolf of the same species is alive, to tell a
+cold-file/dependency stall from a per-view one.
