@@ -414,6 +414,9 @@ pub struct MissionPhase {
     /// Waypoint" sends client 210. Opt-in: with it, run 178 later asserted
     /// ChCliInventory.cpp:3079 `inventorySlot < m_inventorySlots.Count()`.
     respawn_flag: bool,
+    /// Research: where a respawn places the player (server 86), e.g. a
+    /// waypoint's client POI position. None revives in place.
+    respawn_point: Option<[f32; 3]>,
     /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
     /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
@@ -714,6 +717,7 @@ impl MissionPhase {
             late_npc: None,
             heart: None,
             respawn_flag: false,
+            respawn_point: None,
             kill_loot: None,
             npc_attack: None,
             sourced_damage: None,
@@ -820,6 +824,11 @@ impl MissionPhase {
     /// Requires with_starter_bag (276 needs 305's slots).
     pub fn with_kill_loot(mut self) -> Self {
         self.kill_loot = Some(0);
+        self
+    }
+
+    pub fn with_respawn_point(mut self, point: [f32; 3]) -> Self {
+        self.respawn_point = Some(point);
         self
     }
 
@@ -1151,6 +1160,18 @@ impl MissionPhase {
                 let character_index = fixture.plan.character_index;
                 if let Some(attack) = self.npc_attack.as_mut() {
                     respawn_player(attack, character_index, &mut out)?;
+                }
+                if let Some(point) = self.respawn_point {
+                    // Server 86 position update (docs/re/209026-agent-position-update.md);
+                    // research: whether it moves the controlled player.
+                    gw2_proto::agent_position::AgentPosition209026 {
+                        agent_index: character_index as u16,
+                        remote_tick: 0,
+                        command_flags: 0,
+                        position: gw2_proto::Point3(point, 0),
+                    }
+                    .encode_frame(&mut out);
+                    eprintln!("Mission phase: respawn at {point:?} (server 86)");
                 }
                 eprintln!("Mission phase: client {id} respawn request -> player alive at full health (84 packed 0x49, 259/260, 169 0)");
                 Ok(Some(out.freeze()))

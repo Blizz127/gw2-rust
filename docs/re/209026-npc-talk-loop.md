@@ -1068,3 +1068,14 @@ With `--mission-respawn-flag`, run 179 went: downed → rally → downed → def
 
 The player stood up with the normal skill bar and no asserts. They revive in place; the
 waypoint teleport is still missing.
+
+**Run 180: server 86 does not teleport the controlled player.** The respawn also sent
+`86 {player agent, tick 0, flags 0, Point3(-9057.7, -24303.5, -3736.1, tag 0)}`, which is
+Horncall Waypoint (POI 372). The player revived but stayed in place: the screenshots
+match run 179. Client-side movement owns the controlled character.
+
+Retail waypoint travel shows a loading screen, so a respawn at a waypoint is probably a
+fresh map join with the waypoint as the spawn. That would mean re-running the
+1063/1060 → 420 → population → 412 sequence on the existing connection, or a 1065
+route to a new connection. Not implemented; `--mission-respawn-point` stays a research
+option.

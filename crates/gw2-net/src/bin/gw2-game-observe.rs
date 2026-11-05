@@ -142,6 +142,7 @@ struct Fixtures<'a> {
     late_npc: Option<(u32, [f32; 3])>,
     heart: Option<(u16, u32)>,
     respawn_flag: bool,
+    respawn_point: Option<[f32; 3]>,
     /// Research: answer SkillBegin with server 34 + 0x78.
     skill_order_echo: bool,
     /// Research: hostile NPC casts this skill on each player SkillBegin.
@@ -185,6 +186,7 @@ fn observe(
         late_npc,
         heart,
         respawn_flag,
+        respawn_point,
         skill_order_echo,
         npc_cast,
         damage_on_skill,
@@ -254,6 +256,9 @@ fn observe(
         }
         if respawn_flag {
             mission = Some(mission.ok_or_else(|| invalid("respawn flag requires a mission phase"))?.with_respawn_flag());
+        }
+        if let Some(point) = respawn_point {
+            mission = Some(mission.ok_or_else(|| invalid("respawn point requires a mission phase"))?.with_respawn_point(point));
         }
         if let Some((species, position)) = late_npc {
             mission = Some(mission.ok_or_else(|| invalid("late NPC requires a mission phase"))?.with_late_npc(species, position)?);
@@ -478,6 +483,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut late_npc: Option<(u32, [f32; 3])> = None;
     let mut heart: Option<(u16, u32)> = None;
     let mut respawn_flag = false;
+    let mut respawn_point: Option<[f32; 3]> = None;
     let mut skill_order_echo = false;
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
@@ -673,6 +679,12 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 npc_cast = Some(text.parse().map_err(|_| invalid("invalid NPC cast skill key"))?);
             }
             "--mission-respawn-flag" => respawn_flag = true,
+            "--mission-respawn-point" => {
+                let text = args.next().ok_or_else(|| invalid("missing respawn point X,Y,Z"))?;
+                let parts: Vec<f32> = text.split(',').map(|v| v.parse::<f32>()).collect::<Result<_, _>>().map_err(|_| invalid("invalid respawn point"))?;
+                let [x, y, z] = parts[..] else { return Err(invalid("respawn point needs X,Y,Z")) };
+                respawn_point = Some([x, y, z]);
+            }
             "--mission-heart" => {
                 let text = args.next().ok_or_else(|| invalid("missing heart KEY,TARGET"))?;
                 let Some((key, target)) = text.split_once(',') else {
@@ -1016,6 +1028,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 late_npc,
                 heart,
                 respawn_flag,
+                respawn_point,
                 skill_order_echo,
                 npc_cast,
                 damage_on_skill,
