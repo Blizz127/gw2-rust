@@ -414,5 +414,18 @@ With the minotaur placed off-axis (`-3000,-25300,-3742`):
 
   The coreStats appearance is the first to test, for example by sending 182/183 only
   where required, or by tracing the override test.
+- **Run 130 (runtime trace, run-local runner copy):** model-loader points fired once, at
+  06:36:13Z, just after `STATE_READY_WAIT`, i.e. with the AgentsLoaded batch that carries
+  the NPC spawn:
+  - route entry `0x141169ff0`;
+  - loader `0x141166aef`;
+  - `0x1411098f0` = 0;
+  - default branch `0x141166c0b`;
+  - **direct species branch `0x141166db4`**.
+
+  So the NPC most likely selects its species model directly, and the appearance-override
+  theory is unlikely. The trace prints only first hits, so the attribution is by timing.
+  Invisibility therefore lies downstream of model selection: the asynchronous model load,
+  skeleton or animation, or LOD/culling. That is untraced.
 - With no model, an NPC cast can't be judged visually. Run 129 again showed no assert
   for the server-34 cast with Word 1000.
