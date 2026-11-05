@@ -131,3 +131,81 @@ Private REA bundle:
 | `ev_c936663156ede73f1daddfe3ac49ff13be5b001730c98184b25dbc0a1675e258` | Pump traversal and owned done-check/finalizer call sites |
 | `ev_07a913b6e6a58241186c6c200408457823cd06d79dac770f83b9d1ffb506b566` | ModelAdvanceFiles pump calls |
 | `ev_87abdf8b9744d1056dd481296450b97de77060e312c6ea20a966613a22dcabed` | Syntax and twelve host-only mock checks, exit zero, cleanup verified |
+
+## Run 123: direct files complete, then owned done-check visits stop
+
+Run 123, `/home/blizz/gw2-sandbox/runs/run123-norn-creator-render-submit`, uses
+the guarded helper above in the existing isolated runner. Read-only REA
+extraction after the appearance soak finds **an active pump, successful initial
+file completion, and one deferred finalizer entry, followed by no further
+owned-model done-check visits even after the combined file becomes ready**.
+This narrows the outstanding failure to progress after combined-file creation;
+it does not yet distinguish list removal from starvation behind other work.
+
+The preview's copied initial reference decodes to archive file **29213**, suffix
+zero. At elapsed 16.450 seconds, the owned model receives geometry submission
+count **9**, with these references in order, all suffix zero:
+
+`39997, 39853, 39911, 39845, 39565, 39167, 39168, 39169, 39171`.
+
+These are observed submitted archive references. No conclusion about their
+rendering semantics or complete transitive dependencies is implied. Earlier
+preview objects reference 29193 and 30126; the final appearance object remains
+the same owned model throughout the interval below.
+
+All elapsed times are seconds from the probe's first owned post-build callback.
+
+| Time | Observation |
+| --- | --- |
+| 16.118 | Appearance scene 3 begins; model unfinalized, base and pending file states 1 |
+| 16.450 | Nine geometry references submitted |
+| 16.462 | Composite state 4; nine pending files; done-check returns zero |
+| 34.231–35.309 | Direct files progress through states 1/2 to 4; by 35.309 all nine pending files plus base/animation-bank file are 4 |
+| 35.548 | Owned done-check succeeds and finalizer entry is observed with argument zero |
+| 35.551 | Pending count becomes zero; new combined file is present in state 3; model remains unfinalized |
+| 35.764 | Last observed owned done-check returns zero with combined file still state 3 |
+| 36.189 | Combined file reaches state 4; base and animation-bank file also remain 4 |
+| 64.046 | Same direct files remain ready, pending count zero, bit 35 clear, skeleton null, composite waiting flag set |
+
+The combined-file creation and clearing of pending inputs match the inspected
+`0x140cf6150` path, which returns zero after starting this work when its argument
+is zero. The probe records entry and resulting state, rather than that helper's
+return instruction directly.
+
+Shared pump calls continue with observed **flags 8**. Between the combined
+file's state-4 observation at 36.189 seconds and the final heartbeat 27.857
+seconds later, the pump count advances **169 → 291**. The owned done-check count
+stays **164**, finalizer-entry count stays **1**, and no finalized-bit continuation
+or composite callback is recorded. UI-frame count reaches 291, with the same
+owned model and manager and no later post-build/rebinding. Thus neither absence
+of the pump nor a continuing direct-file state-1/2/3 wait explains the late
+observation. It remains possible that queue position, budget, or another
+scheduling condition prevents the model from reaching its next done check.
+The child-dependency walk itself is not reevaluated by this probe.
+
+No probe failure, stop limit, or array truncation is reported. There are 113
+output records, including 25 sampled done-check records (24 zero, one nonzero),
+one submission, and one finalizer entry. These output-record counts differ from
+the unsampled callback counters. The post-soak marker exists. The last scene-3
+observation is 47.928 seconds after its first recorded appearance entry.
+
+The next targeted observation should inspect the model-manager `+0x170` list's
+membership/order and per-pass stop location around the already observed model,
+including whether work ahead repeatedly consumes the normal budget. No new
+server message or permanent client change follows from this evidence alone.
+
+Private final log `client.out`: 216707 bytes, SHA-256
+`6b792c283214e1f7a69e5e632cc9a992a6c6e0a99925d4d3305242a44a88e2bb`.
+Safe-prefix extractor:
+`/home/blizz/re/gw2/notes/creator-model-run123-filter-20261105.py`.
+Private REA bundle:
+`/home/blizz/re/gw2/notes/209026-creator-run123-model-pipeline-20261105.json`.
+
+- `ev_6b6ae929ae2b2a270496020c613cf832663642cac327cc9535af81c5ab1e133a`
+  retains the first/last scene records, exact submission, deferred finalizer,
+  and final file-state snapshot.
+- `ev_b56f6e2c902228027f122f53b139e40c18e6a1564855fc87438e90e490b6bb95`
+  retains the stable final log hash and compact state-transition timeline.
+
+Both extractions exited zero without truncation. This audit read only the
+existing log; it did not launch or attach to the client or change its state.

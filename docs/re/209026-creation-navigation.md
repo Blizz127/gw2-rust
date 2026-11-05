@@ -3,7 +3,7 @@
 Static REA inspection, 2026-11-05, of frozen `Gw2-64.new.exe`, SHA-256
 `99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`.
 The original static pass launched, attached to, or modified no client. The
-later run121/run122 sections report read-only audits of logs from separately
+later run121/run122/run123 sections report read-only audits of logs from separately
 coordinated, isolated client runs with passive debugger probes.
 
 **The inspected creation and layout paths do not require a server reply or a
@@ -353,6 +353,63 @@ the text callback are retained in
 `/home/blizz/re/gw2/notes/209026-creation-nav-order-text-source-20261105.json`:
 `ev_c48ac6d3d2c81b29b948413d002b50b5d8b29a8d68b55bd57c0ef14d9c77118c`
 and `ev_90dde5775bb0ffa2a02e0e56d83cde26026cd953718993a2d0ce310d5e926f8a`.
+
+### Run123: icon queue and label paint succeed; no Next-owner dispatch observed
+
+Final REA audit
+`ev_7d60bf279c8d33efa73c0db97b598146e7a702ce6a8e290a412613b66424a2d3`
+read the completed `run123-norn-creator-render-submit/client.out` at
+2026-11-05 18:12:21 UTC. The 216707-byte snapshot has SHA-256
+`6b792c283214e1f7a69e5e632cc9a992a6c6e0a99925d4d3305242a44a88e2bb`.
+All 41 navigation records parsed. The probe exited normally, reporting 381
+actual callbacks and 38 relevant samples, with no read error, sample-budget
+termination, or pending unmatched submission.
+
+Nav handles were Back 224, Next 226, Skip 228; their immediate text children
+were 225/227/229. The bounded 236-slot ownership scan was not truncated;
+44 unrelated slots were unreadable, while all six required owners resolved
+and passed subsequent pointer/parent validation.
+
+At initial paint, all three material factory returns were nonnull. Each icon
+submitted a nonnull material, packed color `0xffffffff` (alpha 255), layer 0,
+32×32 dimensions, and pixel scale 1.0. Each reached the queue boundary with
+the same descriptor and a nonnull drawable. Pixel rounding preserved these
+nonzero model rectangles:
+
+| Control | Icon model rectangle at submission and queue |
+| --- | --- |
+| Back | `[0, 0, 32, 32]` |
+| Next | `[47, 0, 79, 32]` |
+| Skip | `[93, 0, 125, 32]` |
+
+All three text children reached both `0x14104a240` and the normal draw call
+at `0x14104a406`. Each had a text pointer and raw start offset 3, so the
+empty-text sentinel did not suppress these calls. All six frames had complete
+ancestor-alpha chains with effective alpha 1.0. Once laid out they retained
+state `0xa104`, full 1280×900 clipping, and the same bottom-edge rectangles
+as run122, including the appearance samples at +8.073 and +12.070 seconds.
+
+Thus **no failed icon boundary is observed through queue insertion**, and
+the label path is observed through invocation of its text-layout draw helper.
+Material object acquisition still does not prove texture readiness; the
+label callback's resulting drawable, subsequent renderer traversal, clipping
+in later render passes, final composition, and occlusion were not observed.
+The icon and text paths must not be described as producing visible pixels.
+
+The probe recorded only three scene-write events: 0→1, 1→2, and 2→3.
+It recorded **no** `0x14029c370` navigation-owner click and no later scene
+advance before normal exit. Correlation with the coordinated UI action log
+is required to bind this absence to the attempted `(710,884)` Next click;
+the navigation log alone does not establish that an input event was delivered
+to the client. If delivery is established, the next input boundary is the
+coordinate conversion/hit test/owner dispatch, before Next's scene advance.
+There remains no source evidence for a missing server response to ordinary
+Next.
+
+Exact filtered lines and parsed records are preserved privately in
+`/home/blizz/re/gw2/notes/run123-creator-nav-output-final-20261105.json`.
+All three REA audits, including the two earlier incomplete snapshots, are in
+`/home/blizz/re/gw2/notes/209026-run123-creator-nav-output-audit-20261105.json`.
 
 ## Evidence and retained scope
 
