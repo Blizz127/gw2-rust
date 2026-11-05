@@ -139,3 +139,25 @@ Checks:
 - The sandbox kit smoke (run 173) runs after the deploy, as a diagnostic.
 - Known: combining combat flags with the creator's map-0 phase aborts. This affects only
   the opt-in creator path. The creator lane is preparing a phase-scoped fix.
+
+## Update: kit 3d079ad (live 2026-11-05 18:00:18Z)
+
+- Source: `3d079ad`, the creator lane's `46c5beb` cherry-picked onto `27a4a2c`.
+- Fix: a combined creator join now skips the world combat setup, and a saved world keeps
+  every combat option.
+- Kit: `/home/blizz/gw2-rust-3d079ad`.
+- Rollback: `/home/blizz/gw2-rust-76fe405`.
+- Game binary SHA-256: `23c7d5ba15f5a048ad6c3ec0b747918bead3be3ca524252e95b6c5e8307267ba`.
+- SHA256SUMS SHA-256: `c03a36882f0c67fbe756967bdf74820033bbdece612d1c8a16fbbeb7c98fcfe7`.
+- 39 files verified locally and on Banshee.
+
+Checks:
+- `cargo test --workspace` had no failures; the 6 `shared_creation` tests passed.
+- Supervisor smoke: 4 listeners ready, 4 hostile-NPC flags.
+- Post-deploy diagnostic run 173 on the 76fe405 kit binaries:
+  - default login and BeginPlaying worked;
+  - four NPCs spawned and 227 targeting worked;
+  - kills, loot and level-ups;
+  - no asserts.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s. The creator stays
+  disabled.
