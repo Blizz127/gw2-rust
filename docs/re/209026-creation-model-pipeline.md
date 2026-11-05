@@ -541,3 +541,234 @@ and `ev_e854081ad87ec71ec5df105fe7a4e22c75ac8bf4d898b8bb0683aeedab3ed79e`
 (exit zero and nontruncated; owned process group verified, with one unrelated
 unreadable process environment listed on the second capture). Private export:
 `/home/blizz/re/gw2/notes/209026-creator-run125-texture-gate-20261105.json`.
+
+
+## Prepared followup: concrete texture predicate identity
+
+A new private replacement helper is ready at
+`/home/blizz/re/gw2/notes/creator-texture-predicate-probe-20261105.py`, entry
+**`arm_creator_texture_predicate(inf, slide)`**, 12024 bytes, SHA-256
+`ef497751bc146656272a2c74c8ba7a099b3b9739b1aaf01e2bbc42a37b056d6c`.
+The run-125 `f6f4...` helper remains unchanged. Install this replacement alone,
+not alongside the earlier queue helper.
+
+It uses three plain public GDB command-list sites: ownership at `0x14029ec21`,
+the distinct UI heartbeat at `0x14029ccd3`, and the texture result at
+`0x140cf1b04`. Before `/sandbox/logs/creator-quiet-soak-complete`, only ownership
+and native-ignore-30 marker checks run. The first late list snapshot precedes
+enabling the texture site. The native condition admits only `EAX==0` for the
+first four queued heads or current owner. After each observation, that model
+is excluded from subsequent callbacks, allowing at most four failed models.
+
+Each failure records the source-backed array index, selection of entry `+0x10`
+or fallback `+8`, opaque texture/nested-object tags, and existing model/file
+readiness fields. For a vtable in the frozen image, it records the preferred
+vtable address and reads slot `+0x48`. For an executable target inside that
+image, it records the preferred method address. It separately checks that the
+live slot matches the relocated frozen slot and that sixteen method bytes
+match. Out-of-image vtables or methods remain explicit unknowns; raw heap or
+external addresses are not printed. No speculative nested-object readiness
+offsets are read: the result labels that layout unknown until the concrete
+method can be inspected.
+
+The image hash, all breakpoint sites, the texture wrapper, and the preceding
+entry-selection/call bytes are guarded before any breakpoint is installed.
+Installation failure removes all owned sites. The helper stops after four
+failed models, one sparse late followup, an owner change, or its bounds:
+15 seconds for the texture window, 120 seconds overall, 64 ownership callbacks,
+40 records, and 128 queue nodes. The blit-entry validation has a separate
+4096-entry diagnostic bound; this is not a claim about a client content limit.
+The helper makes no target function calls or explicit target-memory/register
+writes and changes no queue policy; software breakpoint timing effects still
+apply.
+
+Twenty-one focused host checks pass, covering the actual pinned PE section
+layout, relocated vtable/method guards, outside-image unknowns, fallback
+selection, successful/repeated predicate exclusion, marker ordering, limits,
+and transactional installation failure. The plain-command filtering mechanism
+reuses the separately verified GDB 16.3 fixture. Preparation evidence:
+`ev_ff67f8b60dc703bf00495e8df03b5e6c0594ae3aaa2af68c8aff98c90224e23b`
+(exit zero, nontruncated; owned process group verified, with two unrelated
+unreadable process environments in the census). No client was launched or
+attached. Private export:
+`/home/blizz/re/gw2/notes/209026-creator-texture-predicate-probe-20261105.json`.
+
+
+## Run 126: resolved GrTex2d readiness implementation
+
+Run 126 used the unchanged `ef497...` helper. At elapsed **72.197 seconds**,
+55.821 seconds after its first appearance ownership record, the first late
+snapshot walks a complete five-node queue. The owner is attached at **index 4**.
+The first four heads and owner have base/combined file state 4, pending count
+zero, finalized bit clear, null skeleton, two blit entries, and bits 41/58 clear.
+The controller reports its X-parent resize before the 45-second soak; this
+probe does not independently reconstruct that UI timing.
+
+Four distinct earlier heads then fail **blit entry index 0**, each selecting
+the non-null entry `+0x10` texture. Every selected texture's nested object has
+vtable **`0x141bfc700`**, whose slot `+0x48` resolves to **`0x140a73860`**.
+All four live vtable slots and first sixteen method bytes match the frozen
+executable. The observations span 72.481–73.833 seconds; the helper stops
+normally at the four-model limit with nine sparse heartbeat callbacks,
+22 post-build callbacks, and twelve total records. The current owner's own
+predicate is not sampled, and no later creation/save/world behavior is covered.
+
+A hash-bound instruction slice resolves the entire leaf predicate through its
+return at `0x140a73888`. For the nested object `T`, its result is:
+
+```text
+(Dword[T+0x60] & 0x10000) != 0
+    AND (Qword[T+0xa8] == 0 OR (Qword[T+0xa8] & 1) != 0)
+```
+
+Bit 16 clear returns zero immediately. With that bit set, a nonzero, even
+`+0xa8` value returns zero; zero or a low-bit-set value returns one. This method
+makes no file API, resource submission, or GPU fence calls. That does not mean
+its fields are independent of such work; their producer meanings remain
+unresolved. The method reads `+0xa8` twice on one branch, so a later field
+snapshot must also be distinguished from the exact values read during the call.
+
+The same vtable's slot `+0x58` points to `0x140a73ed0`, whose embedded source
+path is **`Engine/Gr/GrTex2d.cpp`** and whose assertion names `m_bits` at another
+field. This binds the observed implementation to the texture subsystem without
+assigning unsupported meanings to bit 16 or `+0xa8`. The numeric state of those
+two readiness fields was deliberately absent from the generic identity probe;
+run 126 cannot identify which subcondition failed. A minimal next passive
+snapshot can now read Dword `+0x60` and classify Qword `+0xa8` as zero,
+low-bit-set, or nonzero/even, only after matching the observed vtable/method.
+No probe or queue policy was changed during this investigation.
+
+Runtime prefix evidence:
+`ev_ca5775cbcd069cde9da93228dd88fb2f3d8c15642255e01998f56c40bcf239d9`
+and `ev_8eda345f0afd4246d535da712e2543849dcfc0ac4873dc98acea831c360cf7b9`.
+At the latter read (19:01:16 UTC), private
+`/home/blizz/gw2-sandbox/runs/run126-norn-creator-save/client.out` was
+77952 bytes, SHA-256
+`11ddf075c53d8844051efe9193cc2a932458dbf3f9934d619ce108b30eb27a95`;
+this identifies that read, not a claim that the entire runtime log had finished.
+Safe-prefix reader:
+`/home/blizz/re/gw2/notes/creator-texture-run126-filter-20261105.py`.
+
+Static evidence:
+`ev_76d26ec127c8975a8066c85bf87183bbc1672d2965096e7b66236411b5f9c014`
+(complete leaf),
+`ev_d4e73208939246a78ef92ccb6dca0a6901b5497f489e57096e60913a740fbd7f`
+(exact vtable entries), and
+`ev_da7875a0299a2ed0a8b75c11ac39dc28b77c9554f28637335d721323d43f612e`
+(same-vtable GrTex2d source context). These are bounded, hash-checked reads;
+this lane launched or attached no client. Private export:
+`/home/blizz/re/gw2/notes/209026-creator-run126-texture-identity-20261105.json`.
+
+
+## Prepared concrete-state probe and bounded producer inspection
+
+The new private helper is
+`/home/blizz/re/gw2/notes/creator-texture-state-probe-20261105.py`, entry
+**`arm_creator_texture_state(inf, slide)`**, prefix
+`GW2_CREATOR_TEXTURE_STATE`, 13353 bytes, SHA-256
+`8a4874c8685b3cf839a210286237bbfc57d0c041fe609b081af5bc8d7129f140`.
+It replaces the previous probe; neither `ef497...` nor `f6f4...` was changed.
+The marker, three sites, four-model cap, and other observation bounds remain
+the same as the identity probe.
+
+Only for the matched vtable `0x141bfc700` and method `0x140a73860`, with the
+frozen slot and **complete 41-byte leaf** verified, it reads Dword `+0x60` and
+Qword `+0xa8` from the nested texture object. Output includes `flags60`,
+`flag60_bit16`, and `state_a8_class` (`zero`, `low_bit_set`, or `nonzero_even`).
+The raw `+0xa8` value is never printed. It recomputes the source predicate and
+reports whether these fields still match the observed zero result, explicitly
+labeling the field sample **`post_return`**. A mismatch is retained, not forced
+into the earlier call's result. Other implementations or guard mismatches
+remain unsupported with unknown layout; no concrete fields are read.
+
+A bounded inspection from the observed table and direct callees found a
+readiness-bit clear site but did not establish a set site. The pointer at
+vtable-relative `+0x78` leads to **`0x140a76480`**, which clears bit 16 at
+`0x140a76494`, replaces fields `+0x64`, `+0x48`, and `+0x68`, and performs
+reset-like cleanup. In its non-null `+0x18` branch it calls `0x140b13040`,
+clears bit 16 again at `0x140a765ad`, and nulls `+0x18`. The exact semantic
+names of those replacement fields are not established here.
+
+Its direct callee **`0x140a6e660`** skips `+0xa8` when the low bit is set or
+its value is zero. Otherwise it treats that value as an object pointer, follows
+each object's tagged `+0x10` link, invokes virtual slot `+0x18`, then virtual
+slot zero with argument 1. Thus `+0xa8` is a head for a tagged chain of objects;
+it is not merely a numeric GPU-fence value. The objects' concrete types,
+insertion producer, and completion mechanism remain unknown. The neighboring
+bit-access methods inspected from the same source context do not establish
+those producers. No broad offset scan or queue-policy change followed.
+
+Producer-slice evidence:
+`ev_88e4d44e07263d7f2be1ed890272970d215e2d85d250e45b417da950ae239ad8`
+(clear/reset-like method),
+`ev_2472254f0015fd8723bf8d6d64eddff729c89a014ec30a7226f9422b43218424`
+and `ev_2f73742ef88badc460b89a8436c2bbf6bc45de90893f76fc0f5502cffd42669e`
+(direct chain-walk helper). The new probe passes twenty-five focused host
+checks, including every predicate branch, complete-leaf mismatch outside the
+old sixteen-byte guard, post-return mismatch reporting, unsupported concrete
+methods, and pointer redaction. Test evidence:
+`ev_e609aa96d2827b744118c975f299829988159e5bf0417b0fd4ae2cf5b3d7eb71`
+(exit zero, nontruncated; owned process group verified, with two unrelated
+unreadable process environments listed). No client was launched or attached
+for preparation. Private export:
+`/home/blizz/re/gw2/notes/209026-creator-texture-state-probe-20261105.json`.
+
+
+The subsequent bounded source trace resolves `+0xa8` as `m_opList.Head()`,
+identifies readiness-bit setters and deferred CPU-blit insertion, and separates
+normal processing from cleanup/drain. See [GrTex2d operation producers and processing](209026-grtex2d-operations.md) for the exact fields,
+callers, evidence, and remaining runtime limits. Frozen probe inputs remain
+unchanged.
+
+
+## Run 128: common readiness-bit failure with mostly empty operation lists
+
+Run 128 used the unchanged concrete-state helper `8a487...`. At elapsed
+**76.445 seconds**, 59.846 seconds after the first appearance ownership record,
+the first late snapshot walks a complete seven-node model queue. The owner is
+attached at index 6. Sampled model base/combined files are state 4, pending
+counts zero, model finalized bits clear, and skeleton pointers null.
+
+Four different earlier heads then fail blit entry zero, selecting entry
+`+0x10`. Every nested GrTex2d object matches vtable `0x141bfc700`, method
+`0x140a73860`, the frozen slot, and the complete 41-byte leaf. Their immediate
+**post-return** field snapshots are:
+
+| Model tag | Elapsed seconds | `flags60` | Required bit 16 | `m_opList` head |
+| --- | --- | --- | --- | --- |
+| 1 | 76.677 | `0x3104` | Clear | Nonzero/even: nonempty |
+| 2 | 76.697 | `0x3104` | Clear | Low-bit-tagged: empty |
+| 9 | 76.925 | `0x3104` | Clear | Low-bit-tagged: empty |
+| 3 | 77.177 | `0x3104` | Clear | Low-bit-tagged: empty |
+
+Each recomputed source predicate is false and matches the observed zero return.
+The common captured blocker is the clear readiness bit. Three empty operation
+lists show that pending operations are not necessary to explain these sampled
+failures. This does not establish the exact earlier values read inside the
+call, which writer last changed the bit, or the current owner's own texture
+state; that owner was behind the four sampled heads.
+
+The common flags contain source-defined `GR_TEXTURE_CPU_ONLY` (`0x4`) and raw
+bit 8 (`0x100`). The inspected constructor path skips its immediate bit-16 set
+when caller bit 8 is present. That is a concrete source-compatible path for the
+captured state, not proof that this was each object's creation path or that a
+later completion was never attempted. No flag or queue state was overridden.
+
+The helper finishes normally at **77.178 seconds**, after four models,
+11 sparse heartbeat callbacks, 23 ownership callbacks, and twelve records.
+The runtime controller reports normal completion; later UI behavior is outside
+this probe's observation interval.
+
+Final private log:
+`/home/blizz/gw2-sandbox/runs/run128-norn-creator-texture-state/client.out`,
+76871 bytes, SHA-256
+`ad33a1663d45196dfe82af15725718b97e49cdf0388f3030d29671a437b9eda7`.
+Safe-prefix reader:
+`/home/blizz/re/gw2/notes/creator-texture-run128-filter-20261105.py`.
+Runtime evidence:
+`ev_134530181899520424f9614f4c48201ee9774711514a5a8003a8fcde48751000`
+and final unchanged read
+`ev_b8642264c162962c42c21b35a64a1d1c840ae66c106522f29f6189f744f5eb15`
+(exit zero, nontruncated, owned-process cleanup verified).
+Private export:
+`/home/blizz/re/gw2/notes/209026-creator-run128-readiness-bit-20261105.json`.
