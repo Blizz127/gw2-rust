@@ -220,3 +220,43 @@ the extra stack-allocation guard was independently read in
 `ev_4a4083032840c02cd1c17cdec5c450105100d1f9959a31b06b399ba5dbb85330`.
 These checks validate the observer against its source contract; they do not
 supply a runtime failure attribution.
+
+### Run 141 preparation: separate v2 with optional original IDs
+
+A separate v2 preserves the same native site, operation/operand guards and
+sampling bounds, adding only the conservative current-holder decoding
+described in the [filename note](209026-composite-source-filename.md).
+Private helper `creator-composite-size-failure-v2-probe-20261105.py` has
+SHA-256 `d1a63ac12baa23fc92cbe3672a9d5691f79185e0b754052d2b5bbbd1f56799cf`.
+The v1 source and its prepared manifest/GDB/wrapper were preserved separately.
+
+`primary_holders` and `mask_holders` each contain `low` and `high` results:
+absent, recognized original ID with encoding size/optional byte, or unknown
+with a bounded reason. A failed optional read leaves the scalar failure
+qualified. `file_identity_observed` reports whether any holder original was
+recognized; `file_identity_scope` is `current_holder_original_ids_only` and
+`selected_file_identity_observed` remains false. No ordinary text, raw
+pointers, target calls/writes, or cached-object observation was added.
+
+All 19 host tests passed in
+`ev_8c95eead8cdc5485644326711391b3da39345d81f69458873e2960d016b9e27e`.
+The new coverage checks holder tables, interface/back-reference/key-class,
+six/eight-byte decoding, ID equality, local unknown handling and preservation
+of other holder results. The initial malformed test fixture was corrected
+because its first word was actually valid compact encoding; no helper change
+was needed for that test correction.
+
+Run 141 was staged from the completed run-137 prefix, with unchanged remap20
+CDN files, server/UI semantics, kind-9/load observers and production runner.
+The separate v2 staging capture
+`ev_635960b3646fcfb33b4619d4527dbcd87e5ef9a2e95376fc2d6f1b1244ee4e5d`
+verifies 1,838 other manifest entries unchanged, 11 disjoint native command
+list sites, and source-equivalent production code after removing observer
+insertions. The prepared manifest SHA-256 is
+`f545a3128d339deb783d4104d20cee63f316cf1a8252f9571c4bb4b3027fe4a3`.
+This paragraph records preparation only; the resource gate remained present
+and no client, container or working archive was accessed by this lane.
+
+Complete private source/test/preparation receipt:
+`~/re/gw2/notes/209026-run141-size-failure-v2-preparation-20261105.json`,
+SHA-256 `63de2c90209f0565d2ad1aa2ea3f9e1066fdff21ef0304958d6cdb0107b56775`.

@@ -76,3 +76,55 @@ The executable SHA-256 is
 
 No client was launched or attached, no archive was opened, and no probe or
 target memory was changed for this trace.
+
+## Mask-size failure: current-holder type and lifetime contract
+
+The later size-failure investigation confirms the same access pattern for
+**both** operands. In the failure-only branch, `0x140a74a32` reads the
+primary R14's high holder at `+0x58`, then low `+0x50` if high is null.
+At `0x140a74ac9` it does the same for the current mask RBP. Each chosen
+holder's `+8` filename is copied immediately before decoding. These are
+current native operand references, not a scene-owner or asset-ID lookup.
+
+For a conservative optional observer, after the
+[same-call operation and texture guards](209026-composite-mask-size-contract.md),
+read each current high/low holder independently and require:
+
+1. Holder vtable `0x141bfc808` and interface table at `+0x18` equal
+   `0x141bfc810`, both adjusted for image slide.
+2. Holder `+0x28` points back to the exact current texture-data operand.
+3. Holder key flags `+0x10` bit 0 agree with its high/low slot.
+4. Holder `+8` is a non-null recognized compact filename, decoded using at
+   most six bytes, or eight when the third word requires it.
+5. The decoded numeric ID equals the holder's original-ID Dword `+0x30`.
+
+Constructor `0x140a6c120` stores the copied filename at `0x140a6c15a`,
+installs the concrete tables at `0x140a6c165/0x140a6c16f`, stores the
+texture back-reference at `0x140a6c19d`, and decodes/stores the original ID
+at `0x140a6c2c3/0x140a6c2d2`. The named high/low setter is unchanged.
+
+The table guard alone is not a lifetime proof. Deleting destructor
+`0x140a6d4e0` initially retains those concrete tables while running cleanup,
+then changes to the base table and releases the filename at `0x140a6d5d8`;
+it may free the task allocation at `0x140a6d603` or `0x140a6d61e`. Thus the
+proposed read follows only the current field that the native diagnostic
+itself is about to consume, under all-stop inspection, and discards every
+pointer before resuming. It must never reuse an earlier holder address.
+Unsupported variants, absent holders, inconsistent relations, malformed
+encoding or failed reads remain local unknowns; they do not invalidate an
+otherwise qualified scalar operand snapshot.
+
+The resulting number is the **original filename ID**, not the actually
+opened remapped ID. In particular, a high holder can retain original 142103
+while its load task opens 142104 under the
+[type-0 remap contract](209026-texture-remapped-file-selection.md). Both
+holder slots should remain separately labelled. Neither high-first native
+diagnostic preference nor a recognized original proves which backing file
+produced the current pixels.
+
+Fresh frozen-source evidence:
+`ev_0ca3060b9f57e9b8cf77e41c8de493335876e85597afb166569932419a551b80`
+(complete failing consumer) and
+`ev_990de8ab60f761b2015836948f321e13c29af3bb786042071020955629ec1371`
+(setter, constructor, destructor and transfer entry). No runtime attribution
+is added by these source captures.
