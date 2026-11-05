@@ -57,3 +57,27 @@ Not retail yet:
 - the waypoint respawn after defeat isn't implemented;
 - post-load NPC spawning;
 - the real starting-area NPCs, events and story.
+
+## Update: kit 5fbb4b5 (live 2026-11-05 17:15:36Z)
+
+- Source: `5fbb4b5`, the release branch after merging `claude/npc-talk-loop` at `5150a6f`.
+- Kit: `/home/blizz/gw2-rust-5fbb4b5`, now the target of `gw2-rust-current`.
+- Rollback: `/home/blizz/gw2-rust-3cf2483`.
+- Game binary SHA-256: `8d9a05ca13daeb59233dc42a7acf8bdf00a8b09fe33712a92dd9bd99e39dfb34`.
+- SHA256SUMS SHA-256: `04a312a79fb2fa12e47e0bf89b5795746cf7febd1ef89703fa50cf051d65fffb`.
+- 39 files verified locally and on Banshee.
+- The watched cycle stopped the service with 0 humans, switched the link while stopped,
+  and reported ready 3.3 s after start. Afterwards 0 humans were connected.
+
+Changes:
+- level-1 NPC health 118 and NPC damage 19, from the client's damage model (the profile
+  now sets `GW2_NPC_ATTACK=19`);
+- real kill loot through 968 + 276;
+- the downed health pool (259/260) with rally restore;
+- 255 floater amount Word.
+
+Checks:
+- `cargo test --workspace` passed.
+- Sandbox kit smoke run 167 with the kit binaries: two kills with level-ups; Broken Claw
+  and Tiny Claw shown in the backpack (2/20); respawn at 118; NPC hits of 19; no asserts.
+- The live game process was read back with `--mission-npc-attack 19`.
