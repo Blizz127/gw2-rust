@@ -1185,3 +1185,13 @@ Three of heart 56's edges were tried (the east-of-spawn approach, the west edge 
 x ≈ -1266, and the east edge at y -25600), and each is bounded by impassable terrain
 where tested. Scripted crossings were stopped there; a client-observed 655/656 needs a
 known walkable entrance or an owner walk-in.
+
+**Run 193: the creator lane's runner fix does not make post-load NPCs render.** The run
+repeated run 175 (a wolf spawned after BeginPlaying, no probes) with runner `63bc59a`'s
+`gw2-runner.gdb`, which completes guarded empty composite jobs and is on by default. The
+runner logged "empty-composite empty unsubmitted job completed; readback verified" once,
+and left the other invocations unchanged. The wolf still never rendered at
+(-3000, -25300).
+
+So the post-load NPC stall is not the empty-composite case. It is still open; the
+workaround remains spawning at load.
