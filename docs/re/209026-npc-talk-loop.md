@@ -992,3 +992,16 @@ post-load request really stalls in the client's resource pipeline, consistent wi
 creator lane's head-of-queue / deferred-build finding.
 
 The workaround stays: spawn everything during map load.
+
+### Run 176: heart NPC marker (384)
+
+With a talk NPC configured, the observer sends `384 {talk NPC character 2, heart 56}` right
+after 651/1090/657/655. The client then:
+- draws the heart icon over that NPC, next to its "Greet [F]" interaction prompt;
+- keeps the tracker showing "Honor the Spirit of Raven." (Level 2) 0/3.
+
+The heart advanced to 3/3 and completed (654) with no asserts.
+
+Run 176 used species 8013, Juvenile Boar, only as a test stand-in for the heart NPC. The
+real heart NPC, Shaman Sigrytha, has a plain name but no species key in the client, and
+its dialogue is still the research placeholder.

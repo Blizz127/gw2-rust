@@ -1049,6 +1049,15 @@ impl MissionPhase {
                 }
                 if let Some(heart) = self.heart.as_mut() {
                     show_heart(heart, fixture.plan.player_index, &mut out)?;
+                    // 384 ties the talk NPC to the heart: the client puts the
+                    // heart marker (map, compass, "!" bang) on it. The sub-region
+                    // already exists (657 above), so the marker is created now.
+                    // Sent once: a second 384 asserts while the heart is active.
+                    if let Some(talk) = &self.talk {
+                        let character = u32::from(talk.plan.agent_index);
+                        RenownFrame209026::HeartNpc { character, heart: u32::from(heart.key) }.encode_frame(&mut out)?;
+                        eprintln!("Mission phase: renown heart {} on NPC {character} (server 384)", heart.key);
+                    }
                 }
                 Ok(Some(out.freeze()))
             }
