@@ -2,9 +2,9 @@
 
 The observer has opt-in, single-account persistence and a creation scene.
 Support first deployed in owner release `56242d1`. The integrator's latest
-receipt is `cd4c3b6` at `/home/blizz/gw2-rust-cd4c3b6`, live at
-2026-11-05 20:58:54 UTC in prepared mode, with rollback
-`/home/blizz/gw2-rust-0846fcb`; saved mode is not enabled in the host config.
+receipt is `82d8d04` at `/home/blizz/gw2-rust-82d8d04`, live at
+2026-11-05 22:27:03 UTC in prepared mode, with rollback
+`/home/blizz/gw2-rust-cd4c3b6`; saved mode is not enabled in the host config.
 The profile retains the Hero's Moot respawn point from `9961b56-hm`;
 the [release receipt](209026-combat-release-3cf2483.md) records hashes and checks.
 Run126 observed actual UI creation, durable save and transfer to a playable
