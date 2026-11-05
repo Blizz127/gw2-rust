@@ -920,3 +920,27 @@ flag (`0x140951f6f`); after load, nothing ever enqueues or polls this resource.
 The next step is to trace how res+0x90 bit 35 / res+0x238 get set for a load-time view: its
 caller and the queue entry. Then find the equivalent request that a post-load spawn has to
 make, or the server message that triggers it.
+
+### Run 172: the post-load model resource is requested but never finalized
+
+The run added distinct-value probes at the AvManager loop (`0x14115cfe0`), view Advance
+(`0x141105e90`), the resource finalizer's bit-35 store (`0x140cf1be1`) and view init
+(`0x141159290`).
+
+| Object | Address | What happened |
+|---|---|---|
+| Player view | `0x4ef66160` | Its resource `0x4ea32e60` reached the finalizer at hit 83 during loading; IsReady became true. |
+| Late wolf view (17:46:08) | `0x6928fa40` | AvManager **does** call Advance on it. |
+| Wolf model resource | `0x69291000` | **Never** reached the finalizer in the following ~60 s. |
+
+Other resources kept finalizing after load (17:46:31–17:47:09, presumably texture
+streaming), so the play-mode pump is running. The wolf's resource is enqueued at view init
+(`0x140cf5130`, per the static pass) but is never completed. During loading the loader
+force-drains the queue (`0x140951f6f`); our working hypothesis is that a model request
+made after load sits in a class or priority that only that drain services. Not proven.
+
+**Workaround in use:** spawn every NPC with the population at MapLoaded, then reuse those
+agents. Respawn already revives the same agent with packed 0x49, so it works. A dynamic
+event can likewise pre-spawn its NPCs at load and show them later. Open item: find the
+request's priority/queue field (`0x140cf5130` / `0x140d00c90`) and whether a play-time
+request is serviced at all.
