@@ -12,12 +12,17 @@ world connection. Run127 passed process-restart relog using the same record,
 and its final screenshot shows the visible player model. Run125
 resolved the test harness's missing navigation controls. Run134, using
 the tested empty-composite runner fix, now shows the newly created avatar
-on direct world entry and after saved-GUID waypoint rejoin. Run135 shows a
-partially rendered but severely incomplete preview, despite proven native
-model readiness and consumer setup. See the latest
-[pipeline evidence](209026-creation-model-pipeline.md). The runner increment
-was handed to the existing launcher publisher; publication needs its own
-version/hash receipt and is not established by a source commit.
+on direct world entry and after saved-GUID waypoint rejoin. Run135 showed a
+partially rendered preview. **Run142 subsequently rendered the complete male
+Norn Mesmer preview**, with native graphics/animation readiness, no invalid
+textures and no new assertion, after restoring the complete compatible
+historical texture-remap metadata set. See the
+[tested metadata increment](209026-texture-remapall-private-candidate.md).
+It was handed to the sole server publisher at 23:47 UTC; that handoff is not
+a deployment receipt. Runner63bc59a owner objects are published and verified,
+but the last launcher-feed readback at 23:24 UTC still advertised b126 with
+the old runner pin. Matching live metadata/runner availability and existing
+owner-choice restrictions remain prerequisites for saved-mode activation.
 
 The live integrator holds activation under the owner's exclusion of known
 broken builds: the creator preview and direct-entry avatar must render.
@@ -44,7 +49,8 @@ different transition. Run134 subsequently verified it: actual client210 and
 progress1/5 preserved. The original UI waypoint click missed; one separately
 recorded, ownership-checked click completed the flow. The 142-byte character
 record remained unchanged. This establishes same-process carry, not durable
-world progress. The preview remains the unresolved visual gate.
+world progress. Run142 resolves the private preview rendering test separately;
+it does not by itself enable live saved mode or establish durable world progress.
 Release `d7252a8` also preserves whether the heart reward was already issued,
 preventing its panel and bonus XP from repeating after a waypoint rejoin.
 The focused regression reproduced the duplicate on `bc997f0` and passed with

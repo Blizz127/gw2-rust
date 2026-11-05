@@ -4,31 +4,35 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 ## Active Mesmer starting-area work (2026-11-05)
 
-The owner requested 100% retail-accurate starting-area implementation using
-the client as the source of truth, with **Norn first**, then Human. The
-[completion ledger](MESMER-STARTER.md) records the full scope and missing
-runtime evidence. Local changes add Mesmer481–483 framing, explicit
-profession-aware population, bounded creation-equipment readers, and Mesmer
-palette checks. Focused protocol/reader tests, observer build and synthetic
-Norn tutorial TCP loopback pass; real-archive readers reproduce the client
-equipment and palette records. [Isolated runs 111/112](re/209026-norn-mesmer-playback.md)
-now render a Norn Mesmer in The Great Hunt and demonstrate local movement.
-The character has empty equipment/skills and an explicit diagnostic spawn;
-Norn terrain v14 support and source-backed fixture CLIs are implemented.
-An explicit quest154/goal1 experiment (run113) shows a story marker, but the
-title and objective text are blank and remain under investigation.
-Run115 renders the archived starter armor and weapon after moving equipment
-delivery before character finalization. Its diagnostic point is verified
-inside the first objective sector. Quest text-key framing is implemented;
-the actual keys and distant scenery artifacts remain unresolved. The client
-health calculation yields a388 Mesmer baseline; final stats remain unverified.
-Run116 adds the healing-slot icon through explicit605/612 selection. All49
-enabled observer tests pass; actual skill execution remains unimplemented.
-Run118 displays the explicit388 full-health profile. Character creation and
-saving are now the immediate priority after the owner asked whether they can
-make a Norn Mesmer; the existing character remains a prepared sandbox fixture.
-No deployment changed. NPCs, combat, tutorial objectives, progression and persistence
-remain incomplete; this is not a 100% claim.
+The owner requested 100% retail-accurate implementation from the frozen
+client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
+tracks the remaining scope. The latest independently verified live server is
+**82d8d04**, `/home/blizz/gw2-rust-82d8d04`, deployed 2026-11-05 22:27:03 UTC.
+At 23:24 UTC all kit hashes and four owned listeners passed; it remains in
+prepared mode and includes walking, heart-coordinate/reward fixes and three
+ambient ravens. This is a diagnostic starter fixture, not the complete
+retail Great Hunt sequence.
+
+[Saved-character runs](re/209026-saved-norn-creator.md) have verified real UI
+creation, durable initial records, restart relog, visible direct world entry,
+and same-GUID waypoint rejoin with process-local XP/loot/heart state. World
+progress is not durable across server restarts. **Run142 now passes the
+complete male Norn Mesmer creator-preview smoke** with no new assertion:
+[metadata fix and evidence](re/209026-texture-remapall-private-candidate.md).
+The compatible historical texture-remap set was handed to the sole server
+publisher at 23:47 UTC; a handoff is not a deployment receipt. The latest
+launcher readback still advertises b126 with the old runner pin, although
+runner63bc59a's owner objects are uploaded and verified. Saved-mode activation
+and existing owner-choice restrictions remain in effect pending their actual
+dependencies; the prepared live character is not normal character creation.
+
+Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
+healing-slot selection and skill-command framing are implemented. Combat,
+heart56 and reward behaviors are fixture-backed; the authored quest154
+sequence, quest text-key selection, NPC composition/placement, retail skill
+effects/recharge and durable world progression remain incomplete. Norn
+terrain/sector readers and source-backed fixture options are available.
+This work is not a 100% completion claim.
 
 ## Blocker
 
