@@ -316,6 +316,52 @@ fn shared_creation_world_listener_uses_map_and_preserves_each_saved_identity() {
 }
 
 #[test]
+fn check_config_validates_saved_profile_and_identity_without_binding() {
+    let scenario = saved_population::tests::SavedScenario::new();
+    let params = scenario.capture_path("check-params");
+    let private = scenario.capture_path("check-private");
+    let equipment = scenario.capture_path("check-equipment");
+    let store = scenario.capture_path("check-store");
+    let log = scenario.capture_path("check-no-log");
+    // Public synthetic identity for configuration checks; no client is run.
+    let modulus = (BigUint::from(1u32) << 511usize) + BigUint::from(12345u32);
+    let key = ServerKey::from_private(modulus, 4u32.into(), 7u32.into());
+    fs::write(&params, key.param_blob(1).to_bytes(ByteOrder::Little).unwrap()).unwrap();
+    let mut exponent = [0u8; 64];
+    exponent[0] = 7;
+    fs::write(&private, exponent).unwrap();
+    let base = scenario.profile.equipment.as_ref().unwrap();
+    fs::write(&equipment, base).unwrap();
+    let occupied = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = occupied.local_addr().unwrap().to_string();
+    let args: Vec<String> = [
+        "--check-config", "--no-capture", "--listen", &address,
+        "--params", params.to_str().unwrap(), "--private", private.to_str().unwrap(),
+        "--log", log.to_str().unwrap(), "--mission-preamble", "--character-store", store.to_str().unwrap(),
+        "--creation-scene", "127.1.0.4:6112", "--mission-map-key", "379",
+        "--mission-spawn", "0,0,0", "--mission-mesmer-values", "3,0",
+        "--mission-reward-tracks", "1,2,3,4", "--mission-equipment", equipment.to_str().unwrap(),
+    ].into_iter().map(str::to_owned).collect();
+    // This would fail with AddrInUse if the check attempted to bind.
+    run(args.clone().into_iter()).unwrap();
+    assert!(character_store::CharacterStore::open(store.clone()).unwrap().list().unwrap().is_empty());
+    assert!(!log.exists());
+    let with_mask = equipment::EquipmentFixture::parse(base, 1).unwrap().with_mesmer_biography(&[187]).unwrap();
+    fs::write(&equipment, with_mask.bytes()).unwrap();
+    assert!(run(args.clone().into_iter()).unwrap_err().to_string().contains("slot5"));
+    fs::write(&equipment, base).unwrap();
+    exponent[0] = 8;
+    fs::write(&private, exponent).unwrap();
+    assert!(run(args.clone().into_iter()).unwrap_err().to_string().contains("identity mismatch"));
+    exponent[0] = 7;
+    fs::write(&private, exponent).unwrap();
+    fs::write(store.join("unrecognized"), b"preserve me").unwrap();
+    assert!(run(args.into_iter()).is_err());
+    assert_eq!(fs::read(store.join("unrecognized")).unwrap(), b"preserve me");
+    assert!(!log.exists());
+}
+
+#[test]
 fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
     use gw2_proto::{agent_behavior::AgentBehaviorFrame209026, map_load::ClientMapEvent};
     let scenario = saved_population::tests::SavedScenario::new();

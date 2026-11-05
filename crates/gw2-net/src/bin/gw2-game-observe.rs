@@ -448,6 +448,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut mission_map_key: Option<u32> = None;
     let mut population_record: Option<Vec<u8>> = None;
     let mut no_capture = false;
+    let mut check_config = false;
     let mut agreement_state: Option<std::path::PathBuf> = None;
     let mut spawn: Option<[f32; 3]> = None;
     let mut mesmer_values: Option<[u8; 2]> = None;
@@ -509,6 +510,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 )
             }
             "--no-capture" => no_capture = true,
+            "--check-config" => check_config = true,
             "--auth-agreement-state" => {
                 agreement_state = Some(args.next().ok_or_else(|| invalid("missing agreement state file"))?.into());
             }
@@ -720,10 +722,13 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
+                    "usage: gw2-game-observe [--check-config] [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
                 ));
             }
         }
+    }
+    if check_config && !no_capture {
+        return Err(invalid("--check-config requires --no-capture"));
     }
     if !bind_allowed(&listen, no_capture) {
         return Err(invalid(
@@ -934,6 +939,10 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     }
     let key = Arc::new(key);
     let logs = logs.ok_or_else(|| invalid("missing --log"))?;
+    if check_config {
+        eprintln!("Game observer configuration valid; no listener started");
+        return Ok(());
+    }
     if !no_capture {
         fs::create_dir_all(&logs)?;
     }
