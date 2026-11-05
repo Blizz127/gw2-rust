@@ -451,3 +451,26 @@ so it can't isolate the NPC. The next probe should sit on the species branch's o
 completion path, from `0x141166db4` through `0x14130c150` to the model component stored
 at view +0x820 (`docs/re/209026-npc-character-foundation.md`).
 
+### Run 132: the NPC's species model loads (non-null handle)
+
+Species branch probes (`0x141166df0`, `0x141166eea`, `0x141166eef`) at the NPC spawn
+(13:36:19Z):
+- species +0xf0 = `0x29d08c10`, non-null and not the empty-name constant `0x1419244e8`;
+- it is passed as the filename;
+- species +0x120 = 0;
+- the loader returns handle **`0x68bcc7a0`**.
+
+A second handle (`0x65f71a70`) follows at 13:36:57Z, near the Tab/skill input. So the
+model file resolves and a model object exists. **The invisibility is in the view/render
+layer, after the model object is created.** Server 37's eight parameters aren't a scale
+(`docs/re/209026-agent-dimensions.md`), so their zeros are unlikely to be the cause.
+
+Remaining candidates:
+- view visibility state: character flags from 377's Word flags, never sent, or view
+  hide/alpha;
+- the model component attach to view +0x820 not completing;
+- species +0x120 = 0, purpose unknown.
+
+The next probe is the model handle's attach to the view, and a check of the view's
+visibility or alpha fields against the player's view.
+
