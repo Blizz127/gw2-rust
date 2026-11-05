@@ -178,3 +178,73 @@ The next bounded observation is the native failure branch's current compacted
 pass, primary/mask dimensions and same-call source relations. Its
 [source contract](209026-composite-mask-size-contract.md) does not require
 guessing a missing remap or bypassing the assertion.
+
+## Run 141: actual failing dimensions captured, input IDs remain unknown
+
+`run141-norn-creator-size-failure` retained the failed twenty-property
+overlay and added the failure-only v2 observer, SHA-256
+`d1a63ac12baa23fc92cbe3672a9d5691f79185e0b754052d2b5bbbd1f56799cf`.
+The frozen input manifest SHA-256 was
+`f545a3128d339deb783d4104d20cee63f316cf1a8252f9571c4bb4b3027fe4a3`.
+Root launched once. The early authorized snapshot contained only arm records
+and one owner binding; it was incomplete and established no failure cause.
+
+The final snapshot captured **one qualified native size failure** at the
+[source-proven failure site](209026-composite-mask-size-contract.md):
+
+| Current operand | Dimensions | Format / levels | Backing / ready | Flags / operation head |
+| --- | --- | --- | --- | --- |
+| Primary | **512×256** | 26 / 1 | present / true | `0x13036` / tagged |
+| Mask | **256×128** | 27 / 1 | present / true | `0x13036` / tagged |
+| Destination | 1024×1024 | 26 / 9 | present / false | `0x3104` / untagged nonzero |
+
+Both unsigned dimension comparisons failed. The current **compacted** pass
+index was **1**, count **3**, flags **`0x81`**. The observer verified the
+same-call operation/source/group/job relations and agreement among live
+dimensions, native register operands and local copies. It then disabled as
+designed. There were no unqualified entries, guard failures, schema
+rejections or observer lifecycle inconsistencies.
+
+The current primary's low/high holders and the current mask's low/high
+holders were **all absent**. No original file ID, selected file ID or current
+scene identity was established by this failure snapshot. **Absent holders
+do not prove that they were released, nor that either texture is generated
+scratch data.** Their history and source identity remain unknown. The
+compacted pass index and flags do not, by themselves, identify a descriptor
+channel or optional variant.
+
+The separate load observer recorded four generations: two for
+`142103→142104`, each transferred at 512×256, format 26, one level, and
+retired; one `142101→142102` transferred at 512×256, format 27, one level,
+with no observed retirement; one `142125→142126` was selected only, with no
+transfer or retirement. All used key/task flags `0x19/0x440`, state 2.
+The three sampled transfers returned one with rejection output zero,
+backing present and ready bit set. Original 142103 reached its two-generation
+observation cap; no global generation/output cap was reported. Generations
+3 and 4 remained unretired, and no load-observer `finished` event appeared.
+None of these task records was joined to the failing operation by pointer
+or retained lifetime identity. In particular, the sampled 512×256 mask task
+does not identify the failing 256×128 mask.
+
+The kind-9 observer bound four owners: owners 1/2 in scene 0, owner 3 in
+scene 1 and owner 4 in scene 2. It completed the initial snapshot handshake,
+but recorded no paired kind-9 dispatch, scene-3 appearance or `finished`
+event. Root independently viewed a native crash dialog over **Select
+Profession**; that image does not prove Mesmer selection. The exact new
+append-only crash-log suffix again reports `Composite mask smaller than
+source RGB texture`, `GrTex2d.cpp(2169)`, build 209026. The feature smoke
+therefore failed despite wrapper/UI exit zero.
+
+The wrapper completed in **227.19 seconds**. Cleanup, executable-hash,
+1,124,232-entry archive-index and privacy checks passed. Window 20 was
+returned at **2026-11-05 23:37:27.089293 UTC**. No overlay was deployed;
+this documentation used retained evidence only.
+
+- Runtime: `ev_677ee9de1c71f3f3ad885788a77ee91745035f527eeedc86de7e43960e5c8e00`.
+- Controller bundle: `~/re/gw2/notes/209026-norn-creator-run141-size-failure-20261105.json`, 5,219,709 bytes, SHA-256 `c97eb656fa68bc72a049b06d1ea329cee9c7451d37b59e077c2e5fe2c876ffca`.
+- New crash delta and root image check: `ev_417a64a83bd1ca0268ea1fbd4c175aa6efb24d88c771419be70f226a0dee171d`.
+- Final PNG: 1,437,023 bytes, SHA-256 `26c0c6d630d5c102cf9d0010f6aa3c7f7e6d47465a12e97b61304e5a727e964b`.
+- Final safe audit: `ev_b0188c8cd6295be802cccdf62bbf890070052eb5dce08497338739f40b407fd5`, complete and untruncated.
+- Audited client log: 70,717 bytes, SHA-256 `2c8f81a950d382c20c9cad52e5445d256ac546ab6fcf77a48455d146ff57d301`.
+- Final safe bundle: `~/re/gw2/notes/209026-run141-final-size-failure-v2-20261105.json`, SHA-256 `ca989ff28b4fd1330eabd0b062be365cb6791de373da8b08cdf3eba51ffe1e7f`.
+- Preserved early snapshot: `~/re/gw2/notes/209026-run141-intermediate-size-failure-v2-20261105.json`, SHA-256 `f82245e700819b467c0e17a947018f63786b20e6ee5770d96d4252152b8704f8`.
