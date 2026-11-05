@@ -253,3 +253,24 @@ Checks:
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
 
 The prepared profile is unchanged.
+
+## Update: kit 9961b56 (live 2026-11-05 19:43:41Z)
+
+- Source: `9961b56`, which merges `claude/npc-talk-loop` at `34f3bc5` and adds the
+  `GW2_RESPAWN_POINT` and `GW2_REJOIN_ROUTE` deploy variables.
+- Kit: `/home/blizz/gw2-rust-9961b56`.
+- Rollback: `/home/blizz/gw2-rust-018cb96`.
+- Game binary SHA-256: `ba65788f09a2dfc3ec8fd7fc98cea0337aa415a96ba25ffc934ef4dfb57ba275`.
+- SHA256SUMS SHA-256: `c56c54a51b95b49258ab890f9f857b51eb8ffbd1c03772add930cd6c0cd6c15a`.
+- 40 files verified locally and on Banshee.
+
+Change: the defeat respawn now rejoins the map at Horncall Waypoint (POI 372) through
+1065 to `127.1.0.4:6112`, keeping XP, loot and heart progress. The profile adds
+`GW2_RESPAWN_POINT=-9057.7,-24303.5,-3736.1`, and the live game process was read back with
+`--mission-rejoin-route 127.1.0.4:6112`.
+
+Checks:
+- workspace tests ok; saved-mode 6/6; `shared_creation` 6/6.
+- Sandbox run 182 passed.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
