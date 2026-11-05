@@ -216,3 +216,53 @@ and rectangle bodies remain in the two bundles cited by the operation note.
 | Complete group initialization/destruction and job release | `ev_946f2d461642a86279ea87338b3b97c7970712960a192cbef4fdad48434094bc` |
 | Exact incoming-reference query for `0x140a747c0` | `ev_ff750cc24cb28966d82c428550ad6badfc78dced7b94fe6b35c85b9b3dae066a` |
 | Exact guards and release assertion strings | `ev_a7292aaef74f7bb6dbe0b200a30c67d288a1fef04926828a4d4c1e1d9afd7e97` |
+
+## Private run-133 diagnostic candidate
+
+The earlier future-observer plan described how to establish the complete
+unmodified lifetime. Run 132 supplied separate positive empty-branch and
+zero-poll observations, with the continuity limitation above retained. The
+root prepared a private conditional diagnostic at the **current invocation**
+under the existing owner-authorized development scope. No new owner approval
+or hold clearance was given or required for this isolated test. Its
+prewrite zero is explicitly a memory observation; it does not claim that this
+allocation previously produced a native zero poll. Native polls after the
+candidate action are logged separately.
+
+The separate private helper is
+`/home/blizz/re/gw2/notes/creator-empty-composite-candidate-20261105.py`,
+SHA-256 `48a01c74e03f97c1b26387f4cc2b4cac690b23f7fdf37a2aaac1e5a35eec5f22`.
+It defaults to passive mode; the explicit diagnostic entry is
+`arm_creator_empty_composite_candidate(inf, slide, repair=True)`.
+It verifies the active UI global `0x1425595d8`, current ownership, complete
+prologue/caller bytes, same-call operation/group/job pairing, the fresh-state
+table, backing/format/readiness checks, and an unchanged second all-stop
+capture. It arms generation-specific native poll and destructor watches
+before its sole possible target write: four bytes at this job's `+0xf8`,
+zero to one. No target function calls, pixel writes, readiness writes, or
+counter changes are made.
+
+Bounds are eight owner bindings, 128 qualified operations/writes, sixteen
+simultaneous watches, 256 attempts, and 512 output records. Callback checks
+enforce 210 seconds overall and twenty seconds after the late marker; the
+normal late followup occurs after eight seconds. Limit events explicitly
+report partial coverage. Destructor entry retires the generation before
+release and reports `release_completion_observed=false`; it does not assert
+that cleanup finished. Current scene/component context is recorded without
+claiming the original component identity.
+
+Sixteen host fixture tests passed, including submitted/nonempty/mismatched/
+stale/null exclusions, the observed primary-plus-two-mask shape, write and
+readback failures, lifetime retirement, and output/owner limits. A separate
+owned native fixture under GDB 16.3 verified original instruction reads at
+two enabled software breakpoints: three callbacks and six successful code
+guard reads. Its REA record is
+`ev_3276b02d34c59388e7f96cbe48bb76efbde078577f823765be59e06524804145`.
+The fixture mounted only its own tiny directory, used no network, and its
+distinct container was removed. Preparation did not launch or mutate GW2.
+
+The complete artifact hashes, test command, markers, limits, and evidence
+paths are retained in
+`/home/blizz/re/gw2/notes/209026-empty-composite-candidate-handoff-20261105.json`.
+This candidate remains a private diagnostic, not a publishable fix or a
+successful-render claim.
