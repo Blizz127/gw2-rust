@@ -1157,3 +1157,55 @@ transition branch. The subsequent focused
 checks exact 655/656 frames, repeated-movement suppression, and outside/inside
 waypoint rejoin state while retaining incomplete progress. Live boundary
 crossing remains unobserved in this run.
+
+### Runs 186–191: live position decoding verified; scripted crossings blocked by terrain
+
+- **Run 186** measured the client 18/19 wire space: collision `[X/32, Y/32, -Z/32]`. Fixed
+  in `cd4c3b6`, with a unit test for the scale and the Z sign.
+- **Runs 187–191** logged movement in map units that match the expected walk paths (for
+  example, 0,-26300 → 2632,-26561). No scripted walk crossed heart 56's edge:
+  - run 187 was deflected south by terrain, short of the east edge;
+  - run 188 had the heart already completed (by design no 655/656 then), and its spawn was
+    below the ground;
+  - run 189 was blocked east of the spawn at x ≈ -2336;
+  - runs 190 and 191 walked backward to x ≈ -1210 against a slope, about 55 units inside
+    the west edge at x ≈ -1266.
+
+So the polygon's west edge here runs along steep terrain. The enter/leave logic is covered
+by the focused regression (`heart_area_crossings_and_waypoint_rejoin_use_current_position`)
+and the polygon tests. A client-observed 655/656 still needs a route that terrain does not
+block, or an owner walk-in.
+
+**Run 192:** the player spawned inside at (1200, -25600, z -4300, above the ground) and
+dropped onto the ground at (1147, -25591, -3890). Walking forward (+x) toward the east
+edge at x ≈ 1575 did not move them: they were blocked at x ≈ 1150. Walking backward
+worked.
+
+Three of heart 56's edges were tried (the east-of-spawn approach, the west edge at
+x ≈ -1266, and the east edge at y -25600), and each is bounded by impassable terrain
+where tested. Scripted crossings were stopped there; a client-observed 655/656 needs a
+known walkable entrance or an owner walk-in.
+
+**Run 193: the creator lane's runner fix does not make post-load NPCs render.** The run
+repeated run 175 (a wolf spawned after BeginPlaying, no probes) with runner `63bc59a`'s
+`gw2-runner.gdb`, which completes guarded empty composite jobs and is on by default. The
+runner logged "empty-composite empty unsubmitted job completed; readback verified" once,
+and left the other invocations unchanged. The wolf still never rendered at
+(-3000, -25300).
+
+So the post-load NPC stall is not the empty-composite case. It is still open; the
+workaround remains spawning at load.
+
+### Run 194: ambient Juvenile Ravens in heart 56 (Spirit of Raven)
+
+`--mission-ambient-npc SPECIES,X,Y,Z` (repeatable, at most 16) spawns neutral,
+non-talkable NPCs: agents 40 and up, attitude 3, spawned with the population at map load.
+Run 194 placed three **Juvenile Ravens** (species 6045, a client plain name, model 27200
+fully present in the client) at (150, -26150), (250, -26350) and (100, -26450), z -3800,
+inside the heart area. They rendered as small dark birds on the hillside next to the
+player, and the tracker showed "Honor the Spirit of Raven." No asserts.
+
+The pool agent (`post-load-pool.md`) found that the creator lane's source-pool cap only
+covers composite models; the post-load wolf takes the plain model route. Run 195 tests a
+post-load wolf while a load-time wolf of the same species is alive, to tell a
+cold-file/dependency stall from a per-view one.

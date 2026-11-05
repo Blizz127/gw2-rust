@@ -140,6 +140,7 @@ struct Fixtures<'a> {
     /// Opt-in hostile test NPCs: species and position, one per flag (agent 3, 4, ...).
     hostile_npcs: Vec<(u32, [f32; 3])>,
     late_npc: Option<(u32, [f32; 3])>,
+    ambient_npcs: Vec<(u32, [f32; 3])>,
     heart: Option<(u16, u32)>,
     respawn_flag: bool,
     respawn_point: Option<[f32; 3]>,
@@ -185,6 +186,7 @@ fn observe(
         talk_npc,
         hostile_npcs,
         late_npc,
+        ambient_npcs,
         heart,
         respawn_flag,
         respawn_point,
@@ -264,6 +266,9 @@ fn observe(
         }
         if let Some(route) = rejoin_route {
             mission = Some(mission.ok_or_else(|| invalid("rejoin route requires a mission phase"))?.with_rejoin_route(route));
+        }
+        for (species, position) in ambient_npcs {
+            mission = Some(mission.ok_or_else(|| invalid("ambient NPC requires a mission phase"))?.with_ambient_npc(species, position)?);
         }
         if let Some((species, position)) = late_npc {
             mission = Some(mission.ok_or_else(|| invalid("late NPC requires a mission phase"))?.with_late_npc(species, position)?);
@@ -486,6 +491,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut talk_npc_speaker: Option<String> = None;
     let mut hostile_npcs: Vec<(u32, [f32; 3])> = Vec::new();
     let mut late_npc: Option<(u32, [f32; 3])> = None;
+    let mut ambient_npcs: Vec<(u32, [f32; 3])> = Vec::new();
     let mut heart: Option<(u16, u32)> = None;
     let mut respawn_flag = false;
     let mut respawn_point: Option<[f32; 3]> = None;
@@ -707,6 +713,19 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 let key: u16 = key.parse().map_err(|_| invalid("invalid heart key"))?;
                 let target: u32 = target.parse().map_err(|_| invalid("invalid heart target"))?;
                 heart = Some((key, target));
+            }
+            "--mission-ambient-npc" => {
+                if ambient_npcs.len() >= mission::MAX_HOSTILE_NPCS {
+                    return Err(invalid("too many --mission-ambient-npc (at most 16)"));
+                }
+                let text = args.next().ok_or_else(|| invalid("missing ambient NPC SPECIES,X,Y,Z"))?;
+                let parts: Vec<&str> = text.split(',').collect();
+                let [species, x, y, z] = parts[..] else {
+                    return Err(invalid("ambient NPC needs exactly SPECIES,X,Y,Z"));
+                };
+                let species: u32 = species.parse().map_err(|_| invalid("invalid ambient NPC species key"))?;
+                let [x, y, z] = [x, y, z].map(|v| v.parse::<f32>().map_err(|_| invalid("invalid ambient NPC position")));
+                ambient_npcs.push((species, [x?, y?, z?]));
             }
             "--mission-late-npc" => {
                 let text = args.next().ok_or_else(|| invalid("missing late NPC SPECIES,X,Y,Z"))?;
@@ -1032,6 +1051,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
         let creation = creation.clone();
         let talk_npc = talk_npc.clone();
         let hostile_npcs = hostile_npcs.clone();
+        let ambient_npcs = ambient_npcs.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
             let fixtures = Fixtures {
@@ -1046,6 +1066,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 talk_npc,
                 hostile_npcs,
                 late_npc,
+                ambient_npcs,
                 heart,
                 respawn_flag,
                 respawn_point,
