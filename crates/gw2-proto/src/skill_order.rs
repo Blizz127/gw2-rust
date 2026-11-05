@@ -85,6 +85,8 @@ pub struct AgentBehaviorOrderFrame209026 {
     pub command_flags: u8,
     pub behavior_value: u32,
     pub behavior_data: Vec<u8>,
+    /// Stored at command +0x70 = `m_durationMs`. For a non-controlled agent
+    /// it must be nonzero (AgBase.cpp:822 asserts, sandbox run 127).
     pub word: u16,
 }
 

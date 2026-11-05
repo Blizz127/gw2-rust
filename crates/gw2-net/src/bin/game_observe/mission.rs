@@ -347,6 +347,9 @@ pub struct MissionPhase {
     hostile: Option<TalkNpcPlan209026>,
     /// Research: answer SkillBegin with server 34 carrying a 0x78 order.
     skill_order_echo: bool,
+    /// Research: on each player SkillBegin, order the hostile NPC to cast this
+    /// skill (server 34 + 0x78, slot 23), with its own behavior-value counter.
+    npc_cast: Option<(u32, u32)>,
 }
 
 impl MissionPhase {
@@ -374,6 +377,7 @@ impl MissionPhase {
             talk: None,
             hostile: None,
             skill_order_echo: false,
+            npc_cast: None,
         })
     }
 
@@ -427,6 +431,13 @@ impl MissionPhase {
     /// each SkillBegin with server 34 carrying the packed 0x78 order.
     pub fn with_skill_order_echo(mut self) -> Self {
         self.skill_order_echo = true;
+        self
+    }
+
+    /// Research: make the hostile NPC cast `skill_key` whenever the player
+    /// sends SkillBegin (docs/re/209026-npc-talk-loop.md section 6).
+    pub fn with_npc_cast(mut self, skill_key: u32) -> Self {
+        self.npc_cast = Some((skill_key, 0x4000_0000));
         self
     }
 
@@ -534,6 +545,35 @@ impl MissionPhase {
                     if reply.is_some() { "talk NPC: opening conversation" } else { "not the talk NPC" }
                 );
                 Ok(reply.map(BytesMut::freeze))
+            }
+            Seen::Skill(skill) if self.began && self.npc_cast.is_some() && self.hostile.is_some() => {
+                let npc = self.hostile.as_ref().unwrap().agent_index;
+                let (skill_key, value) = self.npc_cast.unwrap();
+                self.npc_cast = Some((skill_key, value.wrapping_add(1)));
+                let order = SkillOrder209026 {
+                    order_flags: 0,
+                    skill_key,
+                    // 23 bypasses the skill-bar slot mutation (the NPC has none).
+                    slot: 23,
+                    raw_7: 0,
+                    agent: u32::from(npc), // placeholder: self-target
+                    byte_12: 0,
+                };
+                let mut out = BytesMut::new();
+                AgentBehaviorOrderFrame209026 {
+                    agent_index: npc,
+                    remote_tick: skill.remote_tick,
+                    command_flags: 0,
+                    behavior_value: value,
+                    behavior_data: order.to_behavior_data().to_vec(),
+                    // m_durationMs (command +0x70): a non-controlled agent's
+                    // command asserts it nonzero (AgBase.cpp:822, run 127).
+                    // placeholder: 1 s, not the skill's content duration.
+                    word: 1000,
+                }
+                .encode_frame(&mut out)?;
+                eprintln!("Mission phase: ordering hostile NPC {npc} to cast skill {skill_key} (server 34 0x78, value {value:#x})");
+                Ok(Some(out.freeze()))
             }
             Seen::Skill(skill) if self.began && self.skill_order_echo => {
                 let request = skill.request;

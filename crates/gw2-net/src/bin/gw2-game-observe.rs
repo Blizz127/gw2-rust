@@ -93,6 +93,8 @@ struct Fixtures<'a> {
     hostile_npc: Option<(u32, [f32; 3])>,
     /// Research: answer SkillBegin with server 34 + 0x78.
     skill_order_echo: bool,
+    /// Research: hostile NPC casts this skill on each player SkillBegin.
+    npc_cast: Option<u32>,
     /// Service mode: create no capture or preamble files. The auth stream can
     /// carry account strings typed into the client, so a server facing a
     /// person must run with this set.
@@ -118,6 +120,7 @@ fn observe(
         talk_npc,
         hostile_npc,
         skill_order_echo,
+        npc_cast,
         no_capture,
     } = fixtures;
     let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
@@ -155,6 +158,9 @@ fn observe(
     }
     if skill_order_echo {
         mission = Some(mission.ok_or_else(|| invalid("skill order echo requires a mission phase"))?.with_skill_order_echo());
+    }
+    if let Some(skill) = npc_cast {
+        mission = Some(mission.ok_or_else(|| invalid("NPC cast requires a mission phase"))?.with_npc_cast(skill));
     }
     let mut header = [0u8; 2];
     stream.read_exact(&mut header)?;
@@ -333,6 +339,7 @@ fn main() -> io::Result<()> {
     let mut talk_npc_speaker: Option<String> = None;
     let mut hostile_npc: Option<(u32, [f32; 3])> = None;
     let mut skill_order_echo = false;
+    let mut npc_cast: Option<u32> = None;
     let mut store_path: Option<PathBuf> = None;
     let mut creation_destination: Option<SocketAddr> = None;
     let mut creation_route: Option<SocketAddr> = None;
@@ -473,6 +480,10 @@ fn main() -> io::Result<()> {
                 talk_npc_spec = Some((species, [x?, y?, z?]));
             }
             "--mission-skill-order-echo" => skill_order_echo = true,
+            "--mission-npc-cast" => {
+                let text = args.next().ok_or_else(|| invalid("missing NPC cast skill key"))?;
+                npc_cast = Some(text.parse().map_err(|_| invalid("invalid NPC cast skill key"))?);
+            }
             "--mission-hostile-npc" => {
                 if hostile_npc.is_some() {
                     return Err(invalid("duplicate --mission-hostile-npc"));
@@ -541,7 +552,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z] [--mission-skill-order-echo]]]]",
+                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z] [--mission-skill-order-echo] [--mission-npc-cast SKILL]]]]",
                 ));
             }
         }
@@ -605,6 +616,9 @@ fn main() -> io::Result<()> {
     }
     if initial_health.is_some() && !has_population {
         return Err(invalid("--mission-health requires --mission-population"));
+    }
+    if npc_cast.is_some() && hostile_npc.is_none() {
+        return Err(invalid("--mission-npc-cast requires --mission-hostile-npc"));
     }
     if skill_order_echo && !has_population {
         return Err(invalid("--mission-skill-order-echo requires a population"));
@@ -757,6 +771,7 @@ fn main() -> io::Result<()> {
                 talk_npc,
                 hostile_npc,
                 skill_order_echo,
+                npc_cast,
                 no_capture,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {

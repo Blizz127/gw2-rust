@@ -377,3 +377,21 @@ start. It is most likely the order notifications Codex traced (server 84 opcodes
 order. A 0x78 start for the player only applies to 0x80000-flag skills. For NPC (not
 controlled) casters, 0x78 via a bit-12 carrier such as server 34 remains the candidate
 for making enemies cast. Untested.
+
+### NPC casts via server 34 (runs 127–128)
+
+`--mission-npc-cast SKILL` (with `--mission-hostile-npc`): on each player SkillBegin the
+server sends server 34 to the hostile NPC (agent 3). The command flags are 0, with its
+own value counter starting at 0x40000000, and the packed 0x78 order is
+`{flags 0, SKILL, slot 23, 0, agent 3, 0}`.
+
+- **Run 127 (Word 0):** the client asserts **`AgBase.cpp:822 "command->m_durationMs"`**.
+  The check (`0x141032c0a`, `cmp [command+0x70], 0`) reads command +0x70, which is
+  **server 34's trailing Word**. So that Word is the command duration in ms, and a
+  non-controlled agent's command must have one. The 0x78 order itself was accepted far
+  enough to be executed.
+- **Run 128 (Word 1000):** no assert and no disconnect; the command is accepted. A cast
+  animation isn't clearly visible, because the NPC stands behind the player from the
+  camera. That needs a better camera placement, or a hostile skill with a visible effect.
+
+The skill used (10176, the Mesmer heal) is a placeholder. NPC skill content is server data.
