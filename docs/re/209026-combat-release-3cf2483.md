@@ -236,3 +236,20 @@ Checks:
 - Sandbox run 179: defeat → 210 → revived; the inventory still showed 20 cells; no asserts.
 - Supervisor smoke passed.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+## Update: kit 018cb96 (live 2026-11-05 19:22:47Z)
+
+- Source: `018cb96`. It is the creator lane's `d175bd5` (heart configuration validated
+  before binding) cherry-picked as `2fab752`, plus a test fix: with a talk NPC, the saved
+  world's heart opening is followed by the 384 marker.
+- Kit: `/home/blizz/gw2-rust-018cb96`.
+- Rollback: `/home/blizz/gw2-rust-f751c25`.
+- Game binary SHA-256: `f539827260514d0be8a7dc241e704c36a08729968a0a0be30e6aa3f6266a04ce`.
+- SHA256SUMS SHA-256: `36097b8816ed35d48bef3ca0dd1ecf59d97efdf49c7c6c5f0d5f4b7fbd29f3fc`.
+
+Checks:
+- workspace tests ok; `shared_creation` 6/6; `check_config` 1/1; saved-mode 6/6.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+The prepared profile is unchanged.
