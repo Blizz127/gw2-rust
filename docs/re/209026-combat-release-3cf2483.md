@@ -382,3 +382,11 @@ Checks:
 - Sandbox run 194 passed.
 - Supervisor smoke: 3 ambient flags reached the game process.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+Independent creator-lane readback at **2026-11-05 22:30:53 UTC** confirmed
+the current symlink to this kit, every `SHA256SUMS` entry, both hashes above,
+and ready/running health with all four listeners owned by their recorded
+processes (zero humans). Evidence:
+`ev_3b32ef7315c1aee81d1c9915a1f366f63ad82e014fc9c3be4b315ad987de94b1`,
+retained in `~/re/gw2/notes/209026-live82d8d04-independent-readback-20261105.json`.
+This readback did not restart or change the service.
