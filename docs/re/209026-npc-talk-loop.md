@@ -60,6 +60,8 @@ next to this code. See the live test below.
    nothing active, 758 is promoted immediately.
 3. **Treat 276 as a close acknowledgement** (drop server state for that convId), not
    as a new request. It also arrives after the server's own 762.
+4. The test server ignores response IDs it did not offer on the current page,
+   including Continue on the last page. Retail handling is unknown.
 
 Minimal "talk" flow: 758 → 760 (flags 0 or 0x80) → 756/757 per option → 761 → client
 275 → next 760 with stage+1 → … → 762 (→ client 276). How the player *starts* a

@@ -815,10 +815,13 @@ impl TalkSession209026 {
                 let mut out = BytesMut::new();
                 if response == Self::CONTINUE && (stage as usize) < self.pages.len() {
                     self.page(conversation, stage + 1, &mut out)?;
-                } else {
-                    // Goodbye, or anything else: close. The client acks with 276.
+                } else if response == Self::GOODBYE {
+                    // The client acks our close with 276.
                     self.active = None;
                     ConversationFrame209026::Close { conversation }.encode_frame(&mut out)?;
+                } else {
+                    // Ignore choices that are not offered on the current page.
+                    return Ok(None);
                 }
                 Ok(Some(out))
             }
@@ -1220,6 +1223,12 @@ mod tests {
         // Last page: no Continue option.
         assert_eq!(ids(&messages, &next), [760, 757, 761]);
         assert_eq!(session.active(), Some((1, 2)));
+
+        // Neither an unknown choice nor Continue on the last page was offered.
+        for response in [99, TalkSession209026::CONTINUE] {
+            assert!(session.on_reply(reply(response)).unwrap().is_none());
+            assert_eq!(session.active(), Some((1, 2)));
+        }
 
         let bye = session.on_reply(reply(TalkSession209026::GOODBYE)).unwrap().unwrap();
         assert_eq!(ids(&messages, &bye), [762]);
