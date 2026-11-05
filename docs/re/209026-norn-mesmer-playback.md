@@ -149,3 +149,42 @@ Pre-movement screenshot SHA-256:
 `163d5f356674916f810048e78865918181cce4e566f0d74b82aeb16eb7e8c0e7`.
 The run exited0, its exact container was removed, both executable hashes
 were unchanged, and credential-safe logging/archive retention passed.
+
+## Equipment before finalization: run 115
+
+The [model-order trace](209026-initial-equipment-model-order.md) supports
+moving the unchanged117-byte equipment batch immediately before server170.
+Run115 applies that order with the same source item references, colors,
+research raw fields, quest and diagnostic position as run114. It does not
+add an inventory report or wardrobe update. The UI check waits after
+BeginPlaying and captures the character stationary instead of walking into
+the cart.
+
+**The starter armor is now visible.** The inspected ready/soak screenshots
+show purple torso, leg and foot armor; the soak also shows the equipped
+weapon. The first weapon-skill icon remains visible. This verifies initial
+model consumption of the supplied equipment for this fixture. It does not
+establish all raw item values, retail template selection, weapon execution
+or healing. Quest text remains blank, and the distant blue scenery artifacts
+remain visible; neither is accepted as correct presentation.
+
+REA orchestration evidence:
+`ev_7a33d45eb65ff775d8e1b5cf862bb4dd54f8b15f07334af22d916dde496af707`.
+The run reached MapLoaded/AgentsLoaded/BeginPlaying, exited0, and verified
+exact container cleanup, unchanged executable hashes, full archive retention
+and credential-safe logging. Post-run audit
+`ev_5744b9d7f6900c35d4f57a9288908cd113ae6b3c4aee8b56bfcebde61725d218`
+found no captured runner assertion/fatal or SIGSEGV/SIGABRT marker and bound
+the unchanged equipment digest to these screenshots:
+
+| Screenshot | SHA-256 |
+| --- | --- |
+| `norn-mesmer-gear-ready.png` | `fd0d7813a09670beff1e3a5cbe2fa535a9e9228718799fe3088f621db5a8e9bb` |
+| `norn-mesmer-gear-after-wait.png` | `21fc86947df4c8f30fe661e2256a2275f11a385770923360bb84f90674b190d9` |
+| `norn-mesmer-gear-soak.png` | `3672dc2900893f3cfe52f5e83eabbfd0de24bc1bed7f3f3ec8c6f71ab1fe143d` |
+
+Private run: `~/gw2-sandbox/runs/run115-norn-mesmer-initial-equipment/`.
+Bundle: `~/re/gw2/notes/209026-norn-mesmer-run115-20261105.json`.
+Three focused equipment tests pass, including byte preservation before170,
+quest deferral until readiness, and duplicate-readiness rejection. The musl
+observer used for playback was rebuilt with this ordering change.

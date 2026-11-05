@@ -152,6 +152,32 @@ impl PopulationFixture {
         Ok(self)
     }
 
+    fn population_stream(&self) -> io::Result<Bytes> {
+        let Some(equipment) = &self.equipment else {
+            return Ok(population::population_stream(&self.plan)?.freeze());
+        };
+        let mut out = BytesMut::new();
+        let mut inserted = false;
+        for (id, frame) in population::population_frames(&self.plan)? {
+            if id == 170 {
+                if inserted {
+                    return Err(io::Error::new(ErrorKind::InvalidData, "duplicate character finalization"));
+                }
+                // Item state must exist for the initial model build at170.
+                // All character/inventory/profession/wardrobe prerequisites
+                // already precede this point. Setters have no unconditional
+                // finalized-view/skillbar dependency; see the visibility trace.
+                out.extend_from_slice(equipment.bytes());
+                inserted = true;
+            }
+            out.extend_from_slice(&frame);
+        }
+        if !inserted {
+            return Err(io::Error::new(ErrorKind::InvalidData, "equipment requires a character finalization point"));
+        }
+        Ok(out.freeze())
+    }
+
     /// The summary's map key, which the client also sends in route 29.
     pub fn map_key(&self) -> u16 {
         self.map_key
@@ -316,7 +342,7 @@ impl MissionPhase {
         match seen {
             Seen::Map(ClientMapEvent::MapLoaded) if !self.populated => {
                 self.populated = true;
-                let stream = population::population_stream(&fixture.plan)?.freeze();
+                let stream = fixture.population_stream()?;
                 if !self.population_delay.is_zero() {
                     eprintln!(
                         "Mission phase: holding the population sequence for {} ms",
@@ -339,10 +365,6 @@ impl MissionPhase {
                 // scheduled world entry (46) has run, so the flag can't make it drop 46.
                 AgentControl209026 { agent_index: fixture.plan.character_index as u16, value: 1 }
                     .encode_frame(&mut out);
-                if let Some(equipment) = &fixture.equipment {
-                    out.extend_from_slice(equipment.bytes());
-                    eprintln!("Mission phase: sending explicit initial equipment batch once");
-                }
                 if let Some(QuestFixture { quest_id, flags, goal_id }) = fixture.quest {
                     // All character/player components now exist. 532 is not
                     // idempotent: it completes an old active goal. Send exactly
@@ -895,7 +917,7 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn explicit_equipment_is_sent_once_after_readiness_before_quest() {
+    fn explicit_equipment_is_sent_once_before_finalization_and_quest_waits_for_readiness() {
         let equipment = super::super::equipment::fixture_for_test();
         let fixture = PopulationFixture::new(&guardian_record(15, 1), [0.0; 3]).unwrap()
             .with_equipment(&equipment).unwrap().with_quest(154, 0, 1).unwrap();
@@ -904,10 +926,15 @@ pub(crate) mod tests {
         let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
         assert!(phase.respond(&agents).unwrap().is_none());
         let population = phase.respond(&loaded).unwrap().unwrap();
-        assert_eq!(population, population::population_stream(&phase.population.as_ref().unwrap().plan).unwrap());
+        let baseline_frames = population::population_frames(&phase.population.as_ref().unwrap().plan).unwrap();
+        let before_finalization: usize = baseline_frames.iter().take_while(|(id, _)| *id != 170).map(|(_, bytes)| bytes.len()).sum();
+        let baseline = population::population_stream(&phase.population.as_ref().unwrap().plan).unwrap();
+        assert_eq!(&population[..before_finalization], &baseline[..before_finalization]);
+        assert_eq!(&population[before_finalization..before_finalization + equipment.len()], equipment);
+        assert_eq!(&population[before_finalization + equipment.len()..], &baseline[before_finalization..]);
+        assert_eq!(&population[before_finalization + equipment.len()..before_finalization + equipment.len() + 3], &[0xaa, 0, 1], "170 finalizes character1 after equipment");
         let reply = phase.respond(&agents).unwrap().unwrap();
-        assert_eq!(&reply[9..9 + equipment.len()], equipment);
-        let mut quest = &reply[9 + equipment.len()..];
+        let mut quest = &reply[9..];
         assert!(matches!(QuestLifecycleFrame209026::decode_frame(&mut quest).unwrap().operation,
             QuestLifecycleOperation209026::Create { quest_data_id: 154, raw_byte: 0 }));
         assert!(phase.respond(&loaded).unwrap().is_none());

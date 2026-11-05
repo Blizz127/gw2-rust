@@ -206,9 +206,11 @@ encoding. These are serialization checks, not a retail gameplay result.
 `gw2-game-observe --mission-equipment FILE` accepts an explicit binary batch
 alongside `--mission-population`. It accepts only creation960/971 followed
 by equip288 frames and, for a weapon batch, one final set299. It sends the
-validated bytes once after client412 and the existing1036/431/83 startup,
-before any optional quest initialization. Default bootstrap equipment remains
-empty. Repeated readiness messages cannot recreate the item instances.
+validated bytes once during population, immediately before character170
+finalization. The [ordering trace](209026-initial-equipment-model-order.md)
+establishes the prerequisites, and run115 verifies visible armor with this
+order. Default bootstrap equipment remains empty. Repeated readiness messages
+cannot recreate the item instances; optional quests still wait for startup.
 
 The parser requires unique nonzero instance IDs, nonzero item data keys,
 already-created references, matching character indices, unique slots below68,

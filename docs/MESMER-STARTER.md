@@ -16,7 +16,7 @@ API/wiki names may locate content but do not replace client verification.
 | Requirement | Current state | Evidence needed for completion |
 | --- | --- | --- |
 | Norn Mesmer creation/selection and correct appearance | Partial: archived Norn Mesmer appearance renders in isolated playback; actual creation missing | Real client creation, biography/appearance/equipment validation, saved character and relog. |
-| Correct Mesmer components and startup skills/equipment | Partial: explicit Mesmer component and source-backed item delivery; run114 shows first weapon icon but armor is not visible | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
+| Correct Mesmer components and startup skills/equipment | Partial: explicit Mesmer component and source-backed item delivery; run115 renders starter armor and weapon, with one weapon icon | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Isolated map entry and local movement pass at diagnostic position; gameplay missing | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Shared terrain loaded through Great Hunt; open map 28 not played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
 | Mesmer combat and profession mechanics | Missing | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
@@ -58,9 +58,14 @@ API/wiki names may locate content but do not replace client verification.
   Explicit747/748 codecs are ready, but valid keys remain unresolved.
 - [Equipment delivery](re/209026-item-equipment-delivery.md): explicit
   armor/weapon creation, equip and set-selection frames pass source-schema
-  and fixture checks. Run114 gains a first weapon icon; visible armor remains
-  missing. Its placement is inside the [first objective sector](re/209026-norn-sector-polygons.md),
+  and fixture checks. Run115 renders the starter armor after moving the batch
+  before character finalization; the weapon and first weapon icon are visible.
+  Its placement is inside the [first objective sector](re/209026-norn-sector-polygons.md),
   not a claimed retail spawn.
+- [Health baseline](re/209026-mesmer-health-speed-baseline.md): the default
+  level1 Mesmer calculation yields388; final server values and movement speed
+  remain unverified. [NPC foundation](re/209026-npc-character-foundation.md)
+  establishes species-based character creation; actual encounter content is open.
 - Next source work: Norn start/entry coordinates, creation-template equipment,
   Mesmer palette/availability selection, then first tutorial encounter.
 
