@@ -379,6 +379,10 @@ pub struct MissionPhase {
     xp: Option<(u32, u32, u8)>,
     /// Research: item-creation message used to give the Starter Backpack.
     starter_bag: Option<u16>,
+    /// Research (post-load spawn trace): one neutral NPC spawned in the
+    /// AgentsLoaded batch, after BeginPlaying, the path whose model never
+    /// streams (docs/re/209026-npc-talk-loop.md, render root cause).
+    late_npc: Option<TalkNpcPlan209026>,
     /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
     /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
@@ -592,6 +596,7 @@ impl MissionPhase {
             autoattack_skill: None,
             xp: None,
             starter_bag: None,
+            late_npc: None,
             kill_loot: None,
             npc_attack: None,
             sourced_damage: None,
@@ -699,6 +704,14 @@ impl MissionPhase {
     pub fn with_kill_loot(mut self) -> Self {
         self.kill_loot = Some(0);
         self
+    }
+
+    /// Agent 20, attitude 3 (neutral), not talkable.
+    pub fn with_late_npc(mut self, species_key: u32, position: [f32; 3]) -> io::Result<Self> {
+        let plan = TalkNpcPlan209026 { agent_index: 20, species_key, position, facing: [1.0, 0.0, 0.0], attitude: 3, talkable: false };
+        plan.spawn_frames()?;
+        self.late_npc = Some(plan);
+        Ok(self)
     }
 
     pub fn with_starter_bag(mut self, message_id: u16) -> Self {
@@ -951,6 +964,10 @@ impl MissionPhase {
                     InventorySlotCountFrame209026 { character_index: fixture.plan.character_index, slot_count: STARTER_BAG_SLOTS }
                         .encode_frame(&mut out)?;
                     eprintln!("Mission phase: Starter Backpack via server {message_id} + 300 bag slot 0 + 305 20 slots");
+                }
+                if let Some(plan) = &self.late_npc {
+                    out.extend_from_slice(&plan.spawn_frames()?);
+                    eprintln!("Mission phase: late NPC agent {} (species {}) after BeginPlaying", plan.agent_index, plan.species_key);
                 }
                 if let Some(QuestFixture { quest_id, flags, goal_id }) = fixture.quest {
                     // All character/player components now exist. 532 is not

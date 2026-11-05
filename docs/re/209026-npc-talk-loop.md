@@ -895,3 +895,28 @@ agent 4 and auto-attack hit and killed the wolf, with the Mesmer sword animation
 
 Floating numbers were still not visible 0.12 s after each hit. The client's own fade-in
 is 0.05 s and its total lifetime 0.45 s.
+
+### Run 171: post-load NPC model streaming probe
+
+The run used `--mission-late-npc 4079,-3000,-25300,-3742`: a wolf, agent 20, spawned in the
+AgentsLoaded batch after BeginPlaying. Run-local gdb probes:
+- IsReady `0x14116a610`: logs the component and resource fields;
+- view Advance `0x141105e90`: hit counter;
+- AvManager predicates `0x14115d01f` and `0x14115d04a`: return values.
+
+**Player (load time).** Model component `0x4f08c330` starts not ready: res+0x90 bit 35 is 0
+and res+0x238 is 0. At IsReady hit 201 both become set, flags +0x20 go 0x8001 → 0x9401 →
+0x9501, and IsReady stops being called. The component is ready and bit 4 is cleared.
+
+**Late wolf.** Its component `0x64d65ed0` appeared at 17:36:30, with flags +0x20 0x8001 →
+0x9001, comp+0xe0 null, and bit 35 = 0 and +0x238 = 0 on its resource. IsReady was called
+for it only twice and never again in the remaining ~60 s. Both AvManager predicates only
+ever returned 0.
+
+So the post-load model resource never starts loading (bit 35 and +0x238 never set) and the
+view is not polled again. During loading the loader drives the resource queue with a force
+flag (`0x140951f6f`); after load, nothing ever enqueues or polls this resource.
+
+The next step is to trace how res+0x90 bit 35 / res+0x238 get set for a load-time view: its
+caller and the queue entry. Then find the equivalent request that a post-load spawn has to
+make, or the server message that triggers it.
