@@ -306,3 +306,20 @@ Checks:
 - Sandbox run 184: reward icon and level-ups, no asserts.
 - Supervisor smoke passed.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+## Update: kit d7252a8 (live 2026-11-05 20:27:13Z)
+
+- Source: `d7252a8`, the creator lane's `1e4e3e1` cherry-picked cleanly onto `bc997f0`.
+- Fix: a heart's issued reward now survives the waypoint rejoin carry-over, so 556 and the
+  +5147 XP are no longer awarded twice.
+- Kit: `/home/blizz/gw2-rust-d7252a8`.
+- Rollback: `/home/blizz/gw2-rust-bc997f0`.
+- Game binary SHA-256: `3dfc144dfd949590d9a78caf27ea093f1bbcc1df5814538d6e5fd2f807ac2667`.
+- SHA256SUMS SHA-256: `aab3cbd3bffa5ab23052bc3a85f5c91eace3499743ec877c5c85eb802554280e`.
+- Verified locally and on Banshee.
+
+Checks:
+- workspace tests had no failures.
+- saved-mode 6/6; `shared_creation` 6/6.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.4 s.
