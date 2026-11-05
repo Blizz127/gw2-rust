@@ -1,11 +1,14 @@
 # GW2 player-experience coverage record
 
 Devbox task a314b17e43a8 (owner: "it needs to include everything the human sees").
-Updated 2026-11-01 for build 209026.
+Updated 2026-11-05 for frozen build 209026. Current owner scope is the Norn
+Mesmer starting experience first, Human afterward, using the client as the
+source of truth. Working protocol fixtures are not proof of retail fidelity.
 
 Status values:
 - **PASS (client)**: the real frozen client, run offline in the sandbox, visibly reached the stated screen or behavior
 - **HEADLESS**: offline codec/unit evidence only; no client playback
+- **PARTIAL (client)**: the client exercised the stated subset; the named gap remains
 - **FAIL**
 - **NOT RUN**
 
@@ -23,28 +26,40 @@ A request/response match or a parsed frame is never counted as visible playback.
 | News panel and Play button | PASS (client) | Run 58 | — |
 | User Agreement panel | Displayed (run 59); **interaction NOT RUN** | Run 59 | **Owner hold**: no accept/decline without explicit owner direction |
 
-## In-game flows (all after the User Agreement)
+The agreement row records an actual UI-interaction hold. Later authorized
+synthetic sessions use a server-side preaccepted agreement fixture and do not
+click Accept or Decline. The historical hold is not a claim that those later
+sessions or their evidence do not exist. Current release authority and real
+holds are recorded in [AGENTS.md](../AGENTS.md).
+
+## In-game flows in the authorized private fixtures
 
 | Flow | Status | Evidence | Gap |
 | --- | --- | --- | --- |
-| Character select list | HEADLESS | Character record/summary codecs, `gw2-summary-check` | No client display yet |
-| Character creation (UI, cinematics, answers) | HEADLESS | Creation frame checker, answer/color/equipment notes | Creation cutscenes NOT RUN |
-| Play → route → game join | HEADLESS | [play route](re/209026-play-route.md); observer `--auth-play-route` unit tests (22 → 8+3, 29 → 20) | Not run against the client (hold); no game/mission server |
-| Map load / loading screen | HEADLESS | [map ready](re/209026-map-ready.md) states; [mission entry](re/209026-mission-entry.md); observer `--mission-map-key` loopback test (key reply → 1063 + 1060; 423/420 framed) | Not run against the client (hold); population (phase 4) missing, so READY/412/1036 unreachable |
-| Spawn, camera and control return | HEADLESS | Candidate population sequence (`gw2_proto::population`); observer `--mission-population` loopback (420 → population, 412 → 1036) | Not run against the client (hold); spawn position, many values placeholder |
-| Cutscenes / dialogue / choices | NOT RUN | — | Needs game server and content |
-| Movement / combat | NOT RUN | Collision and terrain readers (offline) | — |
-| Inventory / rewards | NOT RUN | Inventory create codec only | — |
-| Quests (accept, progress, complete) | NOT RUN | Quest startup static RE | — |
-| Travel / map transfer | NOT RUN | Transfer messages mapped statically | — |
-| Save / relog / interruption recovery | NOT RUN | No persistence exists | — |
+| Character select list | PARTIAL (client) | Saved-character auth/relog in runs126/127; [creator record](re/209026-saved-norn-creator.md) | Full visual list behavior, multiple-character management and retail account semantics remain unverified |
+| Character creation (UI, cinematics, answers) | FAIL for complete appearance | Runs125/126/134 exercise navigation, answers, naming, save and world transfer; runs135/136 show a severely incomplete preview; [pipeline](re/209026-creation-model-pipeline.md) | Complete preview and cutscenes remain unfinished; normal saved-norn activation is held |
+| Play → route → game join | PASS (client) for fixture | Run134 actual415/1048 save,430/1065 transfer and visible first world entry; [pipeline](re/209026-creation-model-pipeline.md) | Synthetic identity and supported Norn/Mesmer profile only |
+| Map load / loading screen | PASS (client) for map379 fixture | Run134 reaches420/412/1036 on both initial entry and waypoint rejoin | Other maps, retail loading transitions and complete authored population remain unverified |
+| Spawn, camera and control return | PARTIAL (client) | Run134 visible player on direct entry and waypoint rejoin; [release record](re/209026-combat-release-3cf2483.md) | Real tutorial entry position, camera/intro sequence and complete population remain unproven |
+| Cutscenes / dialogue / choices | PARTIAL (client) for fixture UI only | Creator choices and separate talk/interaction fixtures; [fixture release record](re/209026-combat-release-3cf2483.md) | Authored Great Hunt dialogue, cinematics and encounter choices are not implemented or verified end to end |
+| Movement / combat | PARTIAL (client) | Walking fix and combat releases; run134 kill, retaliation, downed state, defeat and waypoint recovery | Fixture actors/damage/XP do not establish retail encounters, full Mesmer skills or combat balance |
+| Inventory / rewards | PARTIAL (client) | Run134 delivers one Broken Claw and XP/level change; same-process carry after rejoin | Full inventory/equipment interactions, retail reward values and durable progression remain incomplete |
+| Quests (accept, progress, complete) | PARTIAL (client) for fixture heart | Heart56 tracker/reward fixtures and reward-once regression; [release record](re/209026-combat-release-3cf2483.md) | Heart56 comes from map28; its replay in tutorial379 is not the authored Great Hunt quest154 sequence |
+| Travel / map transfer | PARTIAL (client) | Run134 client210/1065 returns the same saved GUID to map379 waypoint | General inter-map travel and retail travel policy remain unverified |
+| Save / relog / interruption recovery | PARTIAL (client) | Durable initial character record, process-restart auth relog in127, unchanged record through134 rejoin | XP/level/loot/heart carry is process-local; durable world progression and full interruption recovery remain unfinished |
 | Audio | NOT RUN | Sandbox has no audio capture | — |
 
 ## Next coverage increment
 
-1. Once the hold is lifted: an automated sandbox run that captures screenshots at each
-   launcher state, checked against stored reference frames. Visual checks so far
-   were not automated.
-2. Character select display from a fixture character list (first in-game screen).
-3. Each later flow becomes runnable only as the game server reaches it. Rows move from
-   NOT RUN to HEADLESS to PASS (client) with run numbers.
+1. Fix the incomplete Norn appearance and verify it with the existing save,
+   direct-entry and waypoint flow. The tested runner repairs empty-job
+   bookkeeping, but its [publication record](re/209026-empty-composite-runner.md)
+   distinguishes uploaded owner objects from an actual launcher update offer.
+2. Establish authored Great Hunt NPC identities/models, placements, encounter
+   triggers and entry position. Map379/quest154 links and bounded search limits
+   are in [the Great Hunt audit](re/209026-great-hunt-species-link-audit.md).
+   A matching NPC name alone is not encounter membership or a spawn coordinate.
+3. Replace fixture gameplay values and progression with source-backed behavior;
+   verify full Mesmer skill, dialogue, inventory/reward and persistence scope.
+   Record each visible check at its actual scope. Do not call the starting
+   experience complete while these requirements remain open.
