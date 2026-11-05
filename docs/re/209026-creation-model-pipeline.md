@@ -1887,3 +1887,143 @@ Safe flow/image/record evidence: `ev_0c45b778cdddd20e0947d90143f5dded7cd6b52662e
 and `ev_745073c1fa3d9938fe3ec48776cedea039ff5fabd964c7e452bd8840f6f9397e`.
 Exact safe reward/carry lines are retained as
 `ev_66a45d1ce0f50ac327ad55cb4203aeca1bcfede4208045d759d85148d515641a`.
+
+## Run 135: native full-readiness success and consumer setup
+
+`run135-norn-creator-native-ready` added a passive observation of the native
+model-readiness return and the source-defined consumer setup continuation.
+The input manifest was
+`98acff92597a027fdab676deafefa3711923bab49e32f57361b97f843fcdc3f6`;
+helper `creator-post-finalization-probe-20261105.py` had SHA-256
+`e24a1c0378bf778580524c2069705bde0f3a4719d23aa3b4902b59ff7c62a5bd`
+and emitted prefix `GW2_CREATOR_POST_FINALIZATION`. It observed four sites:
+post-build ownership, sparse UI state, `140a5d301` after the native
+`model+0x540(0)` call, and `140a5d46a` after the consumer initialization
+store. It made no target calls or writes. See
+[the post-finalization source gates](209026-creator-post-finalization-gates.md)
+for the exact predicate and observation contract.
+
+The initial scene-0 owner was finalized by +12.579 seconds from first binding.
+At its initial handshake +25.417 it had a skeleton and type-9 graphics
+object with ten entries, but animation readiness was not cached and graphics
+flags were zero. No native-return/setup record was captured for that owner.
+Those field values do not by themselves prove that a readiness call failed,
+that graphics were rejected, or that its consumer was never serviced. The
+probe did not observe the consumer's entry/initialized fast path or every
+possible caller.
+
+The useful native sequence belongs to **owner 3**, which was bound in scene 2
+at +35.163 and remained the current owner after transition to scene 3:
+
+| Time from first binding | Observation | Result |
+| --- | --- | --- |
+| +35.187 | Actual native `+0x540(0)` return at `140a5d301` | **EAX 0**; model bit 35 clear, skeleton and graphics absent; consumer initialized 0, lifecycle 1 |
+| +66.087 | Actual native return for the current scene-3 owner | **EAX 1**; finalized model, skeleton present, animation cache set, type-9 graphics ready cache set, no graphics bypass |
+| +66.111 | Setup continuation at `140a5d46a` | Consumer initialization field is **1**, lifecycle still 1; source-defined setup path reached |
+| +84.572 | Appearance marker snapshot | Same current owner remains ready by the sampled fields |
+| +98.136 | Appearance followup snapshot | Same ready fields; observer then ends normally |
+
+At the native success and both late snapshots, the graphics object had
+**12 entries**, flags **1**, ready cache true and rejected flag false.
+The model's animation cache was true and its graphics-bypass bit was false.
+The composite had state **7**, flags **7**, and texture-invalid mask **0**.
+The earlier native zero occurs with the first readiness gate, model bit 35,
+clear; the sampled null skeleton/graphics fields are additional state, not
+proof that later tests were reached on that call.
+
+Every native return and setup record revalidated the active UI scene,
+scene manager/model pointers, manager-to-model relation, concrete model
+table/readiness slot, and the **current consumer's `+0x2a0 == model`**.
+The zero, one and setup records all carried consumer address tag 1. That is
+an opaque address label, **not allocation identity or proof of uninterrupted
+consumer lifetime**. Sampling admitted the first native zero and first
+native one **per owner**, plus the first setup **per owner**, not per consumer;
+in general those records can refer to different consumers sharing a model.
+The relation at each sampled current call, rather than tag equality, supports
+the conclusions here.
+
+The actual EAX-one return is positive evidence that the full native predicate
+succeeded, beyond the model bit observed in run 134. The setup continuation
+also proves the initialization store and its preceding setup path were
+reached. Neither site observes final draw submission or pixels. These
+records must not be converted into a visible-preview claim without separate
+image evidence. The native success and late state require no invented
+failure of animation or graphics readiness to explain a remaining blank
+image; any further investigation starts after or outside these observed
+conditions.
+
+The passive observer emitted **14 records** across **three owner bindings**:
+two native return values, one setup continuation, three state changes,
+initial/late/followup snapshots, arm and finish. No observation rejection,
+read failure or malformed JSON was recorded. It ended at **+98.137**, reason
+`late_followup_complete`. Its `coverage_partial: true` finish field is an
+explicit finite-coverage label emitted by the helper on every finish, not
+an observation error. The eight-owner, 128-record and 210-second
+first-binding limits did not end this observation. Sparse UI sampling explains
+why followup came 13.564 seconds after the marker despite an eight-second
+minimum; no continuous per-frame state history is claimed.
+
+The separate production handler's bounded constant log recorded four
+verified empty-job writes/readbacks and four unchanged unqualified calls,
+then suppressed further status lines while remaining armed. These are
+lower bounds, not complete operation totals or generation-aware evidence.
+
+Final retained `client.out`: **79,227 bytes**, SHA-256
+`062a0b21d56e9574744911c46ab141564b3c66c428b0aa8850f5b0616a9249c8`;
+UI exit **0**. The first line was the known isolation banner, not an exact
+container ID. Controller cleanup and visual evidence are separate scopes.
+The audit readers only read safe-prefix records and status files; they did
+not attach, control, inspect a container or access an archive.
+
+Evidence:
+
+- `ev_a1ae495f018cfbf290838600e3c5972bde24f6dcbecae11701b9acfd40bdf5d3`:
+  armed observer and finite sampling contract.
+- `ev_46ea300e355136f63680e7bc67f15cc94523aee184da23a0d3c2bd339cd276d5`:
+  initial-owner field changes and handshake.
+- `ev_a37c206bc2f7076dfcfd4d42b05979156a6d0de4cb5ab02afba0406c4035aa5b`:
+  exact owned native zero/one returns and setup continuation.
+- `ev_12d6226fd58eaa44ef856f99cb4752f7f0970e3ace39f26925c5abf7dfaa3af8`:
+  late/followup state, complete event counts and normal finish.
+- `ev_60aedd1bf34047ff30ef9084cdba98a7b31739dcf2064d3f127bd09e5b02583b`:
+  matching final digest and UI exit status.
+
+Listed read-only captures exited zero with nontruncated output and verified
+owned reader-process cleanup. Unrelated process-environment permission
+failures remain separate. Complete private audit export:
+`/home/blizz/re/gw2/notes/209026-creator-run135-post-finalization-audit-20261105.json`.
+
+### Run 135 controller and visual result
+
+The controller completed with exit zero and UI exit zero. It verified owned
+container removal, unchanged frozen/working executable hashes, a readable
+working archive with 1,124,232 entries, and credential-safe logs. REA capture
+`ev_6f5a4f4ecc8c547ce8f95a5da198d673688963f321de1b99e923e28358fb120f`
+retains the complete, nontruncated result. Independent shared-container
+absence was checked before returning window 15 at
+`2026-11-05T21:40:48.388930Z`. The controller bundle is
+`/home/blizz/re/gw2/notes/209026-norn-creator-run135-20261105.json`.
+
+The **late preview partially renders**, which supersedes a blanket claim
+that run 135 stayed blank. Root inspected the 1280-by-900 final image: hair,
+head fragments, hands, purple belt/cloth edges and boots appear, while most
+of the body is absent and the background shows through. This is a broken,
+incomplete appearance, not a successful creator rendering smoke. The earlier
+appearance and parent-fitted captures remain byte-identical to the previous
+blank image. The UI waited another 30 seconds, marked the quiet soak complete,
+then waited 20 seconds before the final capture.
+
+| Image | SHA-256 | Observation |
+| --- | --- | --- |
+| `creator-appearance.png` | `2a1ea51f59098e2041853603e4b672939700d771aa8972fa393607148e06c42f` | Empty preview |
+| `creator-lifecycle-appearance.png` | `1ab91b81497bde52844a8e4c0d68495e7cc3530e2898376468a088489dc54b1c` | Partial, severely incomplete Norn |
+
+Image identity is retained in
+`ev_4469e8f272eeea7039a1604ffc6609cf28b2c6bfe2a461dfa98ffca67a6a08a9`.
+These pixels establish some visible rendering independently of the native
+readiness/setup observations. They do not identify a missing mesh, material,
+alpha channel or source texture as the cause. Run 134's direct-world image
+shows the clothed avatar; the defect remains specific to the observed
+creator appearance path until further evidence narrows it. Saved-norn
+activation remains held for this incomplete preview and the outstanding
+launcher runner publication receipt.

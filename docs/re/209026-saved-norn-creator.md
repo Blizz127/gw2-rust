@@ -2,16 +2,22 @@
 
 The observer has opt-in, single-account persistence and a creation scene.
 Support first deployed in owner release `56242d1`. The integrator's latest
-receipt is `d7252a8` at `/home/blizz/gw2-rust-d7252a8`, live at
-2026-11-05 20:27:13 UTC in prepared mode, with rollback
-`/home/blizz/gw2-rust-bc997f0`; saved mode is not enabled in the host config.
+receipt is `cd4c3b6` at `/home/blizz/gw2-rust-cd4c3b6`, live at
+2026-11-05 20:58:54 UTC in prepared mode, with rollback
+`/home/blizz/gw2-rust-0846fcb`; saved mode is not enabled in the host config.
 The profile retains the Hero's Moot respawn point from `9961b56-hm`;
 the [release receipt](209026-combat-release-3cf2483.md) records hashes and checks.
 Run126 observed actual UI creation, durable save and transfer to a playable
 world connection. Run127 passed process-restart relog using the same record,
 and its final screenshot shows the visible player model. Run125
-resolved the test harness's missing navigation controls; the character model
-remains invisible in the sandbox preview and run126 world screenshot.
+resolved the test harness's missing navigation controls. Run134, using
+the tested empty-composite runner fix, now shows the newly created avatar
+on direct world entry and after saved-GUID waypoint rejoin. Run135 shows a
+partially rendered but severely incomplete preview, despite proven native
+model readiness and consumer setup. See the latest
+[pipeline evidence](209026-creation-model-pipeline.md). The runner increment
+was handed to the existing launcher publisher; publication needs its own
+version/hash receipt and is not established by a source commit.
 
 The live integrator holds activation under the owner's exclusion of known
 broken builds: the creator preview and direct-entry avatar must render.
@@ -33,8 +39,12 @@ from durable initial-creation storage and is not progress persistence across
 server restarts. Runs182/183 tested the prepared profile. Actual saved-mode
 respawn must still preserve the selected GUID in the new connection; the
 creation redirect in run126 and auth relog in run127 do not establish that
-different transition. One combined post-fix saved-character smoke can check
-preview, direct-entry rendering, one kill and one waypoint rejoin.
+different transition. Run134 subsequently verified it: actual client210 and
+1065 rejoined the same saved GUID with XP2500/level2, one loot drop and heart
+progress1/5 preserved. The original UI waypoint click missed; one separately
+recorded, ownership-checked click completed the flow. The 142-byte character
+record remained unchanged. This establishes same-process carry, not durable
+world progress. The preview remains the unresolved visual gate.
 Release `d7252a8` also preserves whether the heart reward was already issued,
 preventing its panel and bonus XP from repeating after a waypoint rejoin.
 The focused regression reproduced the duplicate on `bc997f0` and passed with
