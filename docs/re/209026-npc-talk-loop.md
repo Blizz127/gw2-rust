@@ -550,3 +550,21 @@ Placeholders and open items:
 - the player's heal standing in for an attack is only a trigger;
 - death at 0 (likely a packed dead transition through server 84, per
   `docs/re/209026-health-transitions.md`) isn't exercised yet.
+
+### Run 140: NPC death
+
+When the NPC's tracked health reaches 0, the damage path also sends **server 84** to it
+with outer command flags **0x10**, which selects the character transition dispatcher
+`0x1411dd4d0`. The payload is the packed **0x33 Dead** transition
+(`HealthTransitionPayload209026::Dead`):
+- skill key = the triggering skill (10176);
+- agent = the player's index (1);
+- the other details are 0.
+
+**Run 140** (`--mission-damage-on-skill 100`): one hit took the minotaur from 100 to 0.
+The client then **played the death: the minotaur collapsed in place**, its nameplate,
+health bar and target frame cleared, and there was no assert.
+
+The sandbox now shows one complete fight against a server-driven NPC: spawn → target →
+player skill request → server damage (257) → server death (84/0x33). The damage amount,
+the attack skill (the heal is only a trigger), loot, XP and respawn are not implemented.

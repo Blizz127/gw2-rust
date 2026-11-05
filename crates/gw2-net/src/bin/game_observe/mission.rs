@@ -23,7 +23,7 @@
 use bytes::{Bytes, BytesMut};
 use gw2_proto::{
     Guid,
-    agent_behavior::AgentBehaviorFrame209026,
+    agent_behavior::{AgentBehaviorFrame209026, HealthTransitionDetails209026, HealthTransitionPayload209026},
     agent_control::AgentControl209026,
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
@@ -573,6 +573,27 @@ impl MissionPhase {
                 }
                 .encode_frame(&mut out);
                 eprintln!("Mission phase: skill {} hit NPC {npc}: health {health} -> {remaining} (server 257)", skill.request.skill_key);
+                if remaining == 0.0 && health > 0.0 {
+                    // Packed 0x33 dead transition through server 84; flags mask 0x10
+                    // selects the character transition dispatcher
+                    // (docs/re/209026-health-transitions.md). Killer = the player.
+                    let dead = HealthTransitionPayload209026::Dead(HealthTransitionDetails209026 {
+                        detail_word: 0,
+                        detail_byte: 0,
+                        content_key: skill.request.skill_key,
+                        agent_id: fixture.plan.character_index,
+                        trailing_byte: 0,
+                    });
+                    AgentBehaviorFrame209026 {
+                        agent_index: npc,
+                        remote_tick: skill.remote_tick,
+                        command_flags: 0x10,
+                        behavior_value: 0x4000_0100,
+                        behavior_data: dead.encode_payload(),
+                    }
+                    .encode_frame(&mut out)?;
+                    eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
+                }
                 Ok(Some(out.freeze()))
             }
             Seen::Skill(skill) if self.began && self.npc_cast.is_some() && self.hostile.is_some() => {
