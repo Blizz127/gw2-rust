@@ -41,6 +41,54 @@ mod tests;
 
 const CAPTURE_LIMIT: usize = 1024 * 1024;
 
+// ServerCodec has separate u16 raw/compressed lengths. The installed LZ4
+// bound for 58 KiB is 65351 bytes, including expansion on incompressible data.
+const AUTH_TRANSPORT_CHUNK: usize = 58 * 1024;
+const _: () = assert!(lz4_flex::block::get_maximum_output_size(AUTH_TRANSPORT_CHUNK)
+    <= u16::MAX as usize);
+
+/// A coalesced read can owe several full character lists. Keep their byte
+/// order, but end each compressed frame at an auth message boundary: the
+/// frozen client's handling of an inner message split between blocks is not
+/// established. Bytes slices share the existing reply; no second plaintext
+/// aggregate or unbounded list of message offsets is allocated.
+fn encode_auth_reply(codec: &mut ServerCodec, reply: Bytes, wire: &mut BytesMut) -> io::Result<()> {
+    if reply.len() <= AUTH_TRANSPORT_CHUNK {
+        return codec.encode(reply, wire);
+    }
+    use gw2_proto::{dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding}, schema};
+    let parsed = schema::parse(include_str!("../../../../data/protocol/209026/auth.xml"))
+        .map_err(|_| invalid("invalid embedded auth schema"))?;
+    let server = parsed.protocols.into_iter().find(|p| p.name == "3")
+        .and_then(|p| p.groups.into_iter().next())
+        .ok_or_else(|| invalid("auth schema lacks protocol 3"))?.server;
+    let rules = Rules {
+        string: Some(StringEncoding::Utf16Terminated),
+        cstring: Some(CStringEncoding::Terminated),
+        array_var_small: Some(CountPrefix::U8),
+        array_var_large: Some(CountPrefix::U16),
+        buffer_var_small: Some(CountPrefix::U8),
+        buffer_var_large: Some(CountPrefix::U16),
+        buffer_fixed_is_size_bytes: true,
+    };
+    let mut cursor = &reply[..];
+    let (mut start, mut end) = (0, 0);
+    while !cursor.is_empty() {
+        let before = cursor.len();
+        dynamic::decode_frame(&server, &rules, &mut cursor)
+            .map_err(|_| invalid("cannot frame malformed auth reply"))?;
+        let size = before - cursor.len();
+        if end > start && end - start + size > AUTH_TRANSPORT_CHUNK {
+            codec.encode(reply.slice(start..end), wire)?;
+            start = end;
+        }
+        end += size;
+        // A single message exceeding the conservative grouping bound is sent
+        // alone. ServerCodec retains its existing raw/actual-compressed checks.
+    }
+    codec.encode(reply.slice(start..end), wire)
+}
+
 fn invalid(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidInput, message)
 }
@@ -142,6 +190,13 @@ fn observe(
         sourced_damage,
         no_capture,
     } = fixtures;
+    let combined = creation.is_some() && mission_map_key.is_some();
+    if combined && (preamble != Preamble::Mission || mission_map_key != Some(379)
+        || saved_population.is_none() || population.is_some() || reply.is_some()
+        || auth_body.is_some() || !no_capture)
+    {
+        return Err(invalid("combined creation/world mode requires a saved Norn profile without other fixtures or capture"));
+    }
     let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
         (Some(phase), Some(fixture)) => Some(phase.with_population(fixture)?.with_population_delay(population_delay)),
         (phase, _) => phase,
@@ -150,7 +205,8 @@ fn observe(
         (Some(probe), Some(route)) => Some(probe.with_play_route(route)?),
         (probe, _) => probe,
     };
-    let mut creation = creation.map(|(store, address)| creation_scene::CreationScene::new(store, address)).transpose()?;
+    let mut creation = creation;
+    let mut saved_population = saved_population;
     let play_enabled = auth.as_ref().is_some_and(auth::AuthProbe::play_enabled);
     let idle = read_timeout(play_enabled || mission.is_some() || creation.is_some());
     stream.set_read_timeout(Some(idle))?;
@@ -160,6 +216,21 @@ fn observe(
     let t0 = Instant::now();
     let ms = |t: Instant| t.elapsed().as_millis();
     let preamble = preamble.read(&mut stream)?;
+    if combined {
+        // The validated mission prefix carries the map key at24, not the auth
+        // game type. Offset16 is a separate scalar, and a creation connection
+        // may still carry a previously selected GUID. See
+        // docs/re/209026-shared-creation-listener.md.
+        match u32::from_le_bytes(preamble[24..28].try_into().unwrap()) {
+            0 => {
+                mission = None;
+                saved_population = None;
+            }
+            379 => creation = None,
+            _ => return Err(io::Error::new(io::ErrorKind::InvalidData,
+                "unsupported map in combined creation/world join")),
+        }
+    }
     if let Some(saved) = saved_population {
         let fixture = saved.for_join(&preamble)?;
         mission = Some(mission.ok_or_else(|| invalid("saved population requires a mission phase"))?
@@ -202,6 +273,7 @@ fn observe(
     if let Some(amount) = damage_on_skill {
         mission = Some(mission.ok_or_else(|| invalid("damage requires a mission phase"))?.with_damage_on_skill(amount));
     }
+    let mut creation = creation.map(|(store, address)| creation_scene::CreationScene::new(store, address)).transpose()?;
     let mut header = [0u8; 2];
     stream.read_exact(&mut header)?;
     let len = usize::from(header[1]);
@@ -312,7 +384,7 @@ fn observe(
             if let Some(auth) = &mut auth
                 && let Some(reply) = auth.push(&decoded)?
             {
-                codec.encode(reply, &mut wire)?;
+                encode_auth_reply(&mut codec, reply, &mut wire)?;
                 eprintln!("Explicit correlated auth fixture sent");
             }
             if let Some(mission) = &mut mission {
@@ -357,6 +429,10 @@ fn parse_csv<T: std::str::FromStr, const N: usize>(text: &str, message: &str) ->
 }
 
 fn main() -> io::Result<()> {
+    run(std::env::args().skip(1))
+}
+
+fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut listen: SocketAddr = "127.1.0.2:6112".parse().unwrap();
     let (mut params, mut private, mut logs) = (None, None, None);
     let mut reply = None;
@@ -391,7 +467,6 @@ fn main() -> io::Result<()> {
     let mut creation_destination: Option<SocketAddr> = None;
     let mut creation_route: Option<SocketAddr> = None;
     let mut population_delay = Duration::ZERO;
-    let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--character-store" => {
@@ -657,8 +732,8 @@ fn main() -> io::Result<()> {
         ));
     }
     if creation_destination.is_some() && (preamble != Preamble::Mission || store_path.is_none()
-        || mission_map_key.is_some() || reply.is_some() || auth_body.is_some()) {
-        return Err(invalid("--creation-scene requires --mission-preamble and --character-store, without map/auth/reply fixtures"));
+        || reply.is_some() || auth_body.is_some()) {
+        return Err(invalid("--creation-scene requires --mission-preamble and --character-store, without auth/reply fixtures"));
     }
     if store_path.is_some() && (!no_capture || (auth_body.is_none() && mission_map_key.is_none() && creation_destination.is_none())) {
         return Err(invalid("--character-store requires --no-capture and an auth, mission, or creation role"));

@@ -210,7 +210,7 @@ mod tests {
             assert_eq!(values, [
                 Value::Address(world()),
                 Value::U32(0),
-                Value::U32(9),
+                Value::U32(0),
                 Value::U16(379),
                 Value::U32(0),
                 Value::U32(0),
@@ -414,12 +414,14 @@ impl CreationScene {
                     }
                     // Source-supported local continuation, pending playback:
                     // 1065 carries destination, unused Dword, join scalar,
-                    // map Word, join scalar and unused Dword. Norn379/type9
-                    // are sourced; remaining join values preserve research0.
+                    // map Word, join scalar and unused Dword. The first join
+                    // scalar reaches preamble offset16, not auth game type9.
+                    // Preserve explicit research0, matching the auth route's
+                    // reserved scalar. See 209026-shared-creation-listener.md.
                     1065u16.encode(&mut output);
                     self.world_address.encode(&mut output);
                     0u32.encode(&mut output);
-                    9u32.encode(&mut output);
+                    0u32.encode(&mut output);
                     379u16.encode(&mut output);
                     0u32.encode(&mut output);
                     0u32.encode(&mut output);
