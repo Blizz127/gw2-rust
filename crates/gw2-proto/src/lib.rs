@@ -17,6 +17,7 @@ pub mod agent_control;
 pub mod agent_creation;
 pub mod agent_position;
 pub mod agent_scene;
+pub mod bags;
 pub mod character_creation;
 pub mod character_creation_result;
 pub mod character_setup;

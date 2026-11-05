@@ -662,12 +662,16 @@ There were no asserts.
   item-service `0x1413c71f0`, and calls bag setter `0x141291a10` (ChCliItemStorageBags.cpp).
   The setter asserts **`bagSlot < GetBagSlotCount()`** and dispatches on the item's kind.
 - **Server 286** `{Dword container key, Byte, ArrayVarSmall[≤10] Dword}` (handler
-  `0x141250710`): applies to the **controlled character**. It resolves the key through
-  content +0x178 (type 35, item definitions) and asserts `containerDef`, so it builds a
-  bag from a container item. The array presumably holds item instances (*inferred*).
+  `0x141250710`) is a **container dialog**, the "open a loot container" UI, **not bag
+  storage**. Sandbox run 145 sent it with the Starter Backpack (item **8932**, name text
+  22242, item type field 3, 20 slots) and the client asserted
+  `DlgContainerUi.cpp:2413 "containerDef->GetItemType() == Content::ITEM_TYPE_CONTAINER"`.
+  That broke the session. The loot wiring was reverted; the codec is kept as
+  `ContainerDialogFrame209026`.
 
 So a kill drop needs:
-1. a bag (286 with a container item key, such as a starter backpack; key not established);
+1. a storage bag. That's not 286. It's probably the Starter Backpack 8932 equipped into
+   an inventory bag slot, a route not traced yet;
 2. an item instance (generic item creation; only armor and weapon creation codecs exist
    today, `item.rs`);
 3. 300 into a bag slot.
