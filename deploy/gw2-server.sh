@@ -69,7 +69,8 @@ fi
 [[ -z "${GW2_QUEST:-}" ]] || mission_args+=(--mission-quest "$GW2_QUEST")
 # Opt-in research combat loop (docs/re/209026-npc-talk-loop.md); every value
 # is a sandbox-tested placeholder, not a retail encounter definition.
-[[ -z "${GW2_HOSTILE_NPC:-}" ]] || mission_args+=(--mission-hostile-npc "$GW2_HOSTILE_NPC")
+# GW2_HOSTILE_NPC may list several SPECIES,X,Y,Z entries separated by spaces.
+for npc in ${GW2_HOSTILE_NPC:-}; do mission_args+=(--mission-hostile-npc "$npc"); done
 [[ -z "${GW2_DAMAGE_ON_SKILL:-}" ]] || mission_args+=(--mission-damage-on-skill "$GW2_DAMAGE_ON_SKILL")
 [[ -z "${GW2_AUTOATTACK_SKILL:-}" ]] || mission_args+=(--mission-autoattack-skill "$GW2_AUTOATTACK_SKILL")
 [[ -z "${GW2_XP_PER_KILL:-}" ]] || mission_args+=(--mission-xp-per-kill "$GW2_XP_PER_KILL")

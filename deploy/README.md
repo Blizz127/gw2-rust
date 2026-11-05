@@ -86,7 +86,7 @@ It supplies a prepared character; normal creation and saved-character mode are
 not enabled by this supervisor.
 
 A profile can also enable the research combat loop with `GW2_HOSTILE_NPC`
-(SPECIES,X,Y,Z), `GW2_DAMAGE_ON_SKILL`, `GW2_AUTOATTACK_SKILL`, `GW2_XP_PER_KILL`,
+(one or more space-separated SPECIES,X,Y,Z entries, at most 16), `GW2_DAMAGE_ON_SKILL`, `GW2_AUTOATTACK_SKILL`, `GW2_XP_PER_KILL`,
 `GW2_STARTER_BAG` (959), `GW2_KILL_LOOT=1`, `GW2_NPC_ATTACK` and
 `GW2_SOURCED_DAMAGE` (1). These map one-to-one to the `--mission-*` flags in
 [the talk-loop note](../docs/re/209026-npc-talk-loop.md). The values are
