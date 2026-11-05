@@ -958,3 +958,121 @@ unchanged `f995...` / `0a47...` hashes. REA evidence:
 Private export:
 `/home/blizz/re/gw2/notes/209026-creator-scratch-source-probe-20261105.json`.
 No client run or attachment was performed during this preparation.
+
+## Run 130: complete snapshots, initial multi-source work, late component wait
+
+Run 130 installed the exact source-aware V3 helper `8e9737...` in
+`/home/blizz/gw2-sandbox/runs/run130-norn-creator-lifecycle-v3`. The initial
+snapshot handshake completed before race selection. All **16 snapshots** in
+the 18 safe-prefix records report `snapshot_status: complete` and
+`owner_identity: verified`; none contains a read error or observer error.
+The helper finished normally with `late_followup_complete` at **+130.642
+seconds**, after 20 sparse heartbeat callbacks, 19 post-build callbacks,
+three owner bindings, five composite-entry samples, and five component-call
+samples. Times are relative to the first owner binding.
+
+The initial scene-0 binding again directly matched both model alternate blit
+entries to its composite's two scratch wrappers. Both targets had CPU backing,
+dimensions **1024 by 1024**, formats **26 and 31**, **nine levels**, and flags
+**`0x3104`**. The initial global scratch-set count was **1**; model finalization
+was clear. Composite flags were `0x5007`, state `+0xb44=5`, component index
+`+0xb40=4`, and completion stage `+0xb3c=0`. Owned composite and component
+processing calls were observed at **+0.175** and **+0.194 seconds**.
+
+At the initial marker, **+54.847 seconds**, that same verified owner was still
+scene 0 and had progressed to **component index 9**. Its state remained 5 and
+completion stage remained zero. The scratch-set count was still 1.
+
+| Initial owner's scratch at the marker | Slot 0 / format 26 | Slot 1 / format 31 |
+| --- | --- | --- |
+| Ready bit | Clear | Clear |
+| Operation head | Nonempty | Low-bit-tagged empty |
+| Concrete head | Multi-source blit, table `0x141bfc7c0` | No active head |
+| Head alignment modulo 8 | **4** | Not applicable |
+| Texture-data `+0x94` | **4** | **0** |
+
+The real four-byte-aligned operation validates the revised reader's alignment
+domain. It does not retroactively identify the missing value in failed run
+129. The raw `+0x94=4` is an outstanding texture-work count; it must not be
+equated with the multi-source operation's source count or its own job count.
+No ordinary-blit table `0x141bfc780` head was sampled, so V3 correctly emitted
+**no retained-source state**. The run therefore did not resolve source
+readiness or completed-work status for the multi-source head.
+
+The initial owner received further composite/component calls at **+55.016**
+and **+55.048**. The next owner binding appeared only afterward, at
+**+55.083**, establishing the intended initial-snapshot ordering. A third
+owner appeared at **+59.399** and was observed in appearance scene 3 from
+**+64.063** onward. The scratch-set count increased to 2 and then 3 as these
+owners were bound; the helper does not retain arbitrary later reads through
+the old owners.
+
+The current appearance owner was sampled after its soak at **+123.860** and
+again at **+130.642**. Both complete snapshots agree:
+
+- State `+0xb44=2`, component index `+0xb40=0`, completion stage `+0xb3c=0`.
+- Composite flags `0x7007`, component-invalid mask `0x7fff`, geometry-wait
+  bit set, model finalization bit clear.
+- Global scratch-set count **3**, below the source-backed limit of four.
+- Both model alternate entries still match its own scratch wrappers.
+- Both targets retain `0x3104`, 1024-square dimensions, formats 26/31 and
+  nine levels; both operation heads are tagged empty and both `+0x94` counts
+  are zero.
+
+Despite that unchanged sampled state, owned composite and component calls
+were observed at **+124.115** and **+124.146**. Thus these late samples do not
+support absent composite servicing or four-set exhaustion as the current
+owner's blocker. The observed boundary remains before finishing requests:
+there are no captured `scratch*_request`, work-start/producer/poll/destructor,
+or scratch-setup-return events within the probe's identity and one-shot
+filters. That is bounded negative evidence, not a claim about all client
+objects or execution history. The exact component acquisition/result causing
+the repeated component index was not sampled; see
+[the component input source trace](209026-composite-component-source-inputs.md)
+before distinguishing a missing source, pool refusal, or completed dispatch.
+The initial multi-source operation's later progress is also unobserved after
+ownership changed. No flag, queue, or client behavior was overridden by this
+audit.
+
+Numeric geometry evidence records the owned initial X parent changing from
+**1272 by 866** to **1280 by 900**, with render child and root already
+1280 by 900. The appearance geometry already matched 1280 by 900; the second
+geometry record reports no resize attempt. This controlled run includes the
+initial geometry correction and passive breakpoint cost and is not an
+uninstrumented timing baseline. Numeric geometry and model state alone do
+not establish successful character rendering.
+
+Final retained `client.out`: **90,583 bytes**, SHA-256
+**`1a1da9d212d4d8ccf0fb0640c8374c80853a9c9ab447693f47441520877c6c21`**.
+The independent safe status read confirms UI exit **0**. The first log line
+is the exact known isolation banner, not a container ID; it contains no
+64-hex token. This audit therefore does not derive an independent
+container-ID absence check from that line. The controller separately reports
+exit/cleanup/archive/privacy checks in
+`ev_adc1d6564bee2565e7a3e854ed08aa66ab07a8d2efff7e73b7203971374ecf05`.
+
+Audit evidence:
+
+- `ev_7ed64aa65ecddf09ddc864b7b1d6bcce2dbb36da09b91f116c60eb19a3963a07`:
+  early binding and service calls.
+- `ev_386969a12abe23c43c806e766f349c0bf42618a4b838e0026cb415de7a12f223`:
+  initial marker, four-byte-aligned multi-source head, and owner transitions.
+- `ev_b515bf6358047faf49626cae6a0d7c7175f37e4ea74eca9c602de6f28ad95ed6`
+  and final unchanged read
+  `ev_7217f9ab3e02156b62f38d08fc91dbfdce339daa42dc01f982c5ccac3b5996bc`:
+  complete late snapshots and normal helper finish.
+- `ev_a643367464f58c91bff03a0fd9831008a9e7af9277fe39f085ea9b9beae4a4e2`:
+  retained numeric geometry before/after the initial resize and at appearance.
+- `ev_ae5c5dd01ab60f1a7a13e5669ebf4ee173465d5c767363f25559c0ced8292af6`:
+  final digest, UI status, and safe first-line classification.
+
+Private safe-prefix/geometry filters are
+`creator-scratch-run130-filter-20261105.py`,
+`creator-scratch-run130-ui-filter-20261105.py`, and
+`creator-scratch-run130-final-filter-20261105.py` under the private notes
+directory. Complete audit export:
+`/home/blizz/re/gw2/notes/209026-creator-run130-lifecycle-audit-20261105.json`.
+Reader processes exited zero and verified their owned-process cleanup; some
+records list unrelated `/proc/*/environ` permission failures in process
+sampling. This lane performed no client attachment, launch, control action,
+archive access, or frozen-input edit during the audit.

@@ -2,9 +2,11 @@
 
 The observer has opt-in, single-account persistence and a creation scene.
 Support first deployed in owner release `56242d1`. The integrator's latest
-receipt is `018cb96` at `/home/blizz/gw2-rust-018cb96`, live at
-2026-11-05 19:22:47 UTC in prepared mode, with rollback
-`/home/blizz/gw2-rust-f751c25`; saved mode is not enabled in the host config.
+receipt is `9961b56-hm` at `/home/blizz/gw2-rust-9961b56-hm`, live at
+2026-11-05 19:58:44 UTC in prepared mode, with rollback
+`/home/blizz/gw2-rust-9961b56`; saved mode is not enabled in the host config.
+This profile uses the tested `9961b56` binaries and Hero's Moot respawn point;
+the [release receipt](209026-combat-release-3cf2483.md) records hashes and checks.
 Run126 observed actual UI creation, durable save and transfer to a playable
 world connection. Run127 passed process-restart relog using the same record,
 and its final screenshot shows the visible player model. Run125
@@ -17,9 +19,20 @@ The concrete private activation plan uses `GW2_CHARACTER_MODE=saved-norn` and
 `GW2_CHARACTER_STORE=/home/blizz/gw2-rust-state/characters-norn-owner`, an
 initially empty private owner store, stopped-service backup and rollback that
 preserves later-created records. No synthetic character is imported. Plan:
-`/home/blizz/re/gw2/notes/saved-norn-activation-handoff-20261105.json`.
+`/home/blizz/re/gw2/notes/saved-norn-activation-handoff-v2-20261105.json`
+(SHA-256 `dc59390740f5f9f6aaa9aea0bb233679672d6ffc0351e509e3f4253f121ef6c1`),
+reviewed against the latest kit; the original handoff remains preserved.
 The separate heart preflight/combination-coverage fix `d175bd5` shipped in
 `018cb96`; it does not clear the rendering hold.
+
+The later respawn rejoin carries XP/level, configured loot drops, heart
+progress and waypoint position through one process-local slot. This is separate
+from durable initial-creation storage and is not progress persistence across
+server restarts. Runs182/183 tested the prepared profile. Actual saved-mode
+respawn must still preserve the selected GUID in the new connection; the
+creation redirect in run126 and auth relog in run127 do not establish that
+different transition. One combined post-fix saved-character smoke can check
+preview, direct-entry rendering, one kill and one waypoint rejoin.
 
 ## Implemented local behavior
 

@@ -447,3 +447,58 @@ against a live GW2 process here.
 
 Private source/probe export:
 `/home/blizz/re/gw2/notes/209026-creator-scratch-lifecycle-20261105.json`.
+
+## Normal advance caller resolved through a conditional tail branch
+
+A later exact query of the known texture globals found the missing caller of
+`0x140a6e6d0`. Leaf **`0x140a72d90`** loads `[0x14268b840]` into RCX, tests
+it, and conditionally tail-branches to that function with **JNE** at
+`0x140a72d9a`. A null context returns. The leaf has no containing `.pdata`
+record, but its complete instruction sequence and surrounding padding were
+read directly. The earlier E8/E9/LEA query did not include conditional branches;
+its bounded negative result never established an absent caller.
+
+The exact source-supported chain is:
+
+| Site | Behavior |
+| --- | --- |
+| `0x14094d905` | Calls `0x140a70a90`, under source profiler label `ViewAdvanceTexture` |
+| `0x140a70a90` | Leaf jump to `0x140ab8000` |
+| `0x140ab8004` | Calls `0x140a72d90`; other texture work follows |
+| `0x140a72d90..0x140a72da0` | Calls the normal context advance through a non-null conditional tail branch |
+| `0x140a6e723` / `0x140a6e732` | Process each texture in context list `+0x68`, whose head is `+0x78` |
+
+In the same `VdfContext.cpp` body, the profiler label `ViewAdvanceComposite`
+and call `0x1412d8310` follow at `0x14094d90f..0x14094d91f`. This establishes
+their order on this control-flow path. It does not yet prove that a creator
+frame takes the enclosing path, that either call executed in run130, or that
+an owned scratch texture was in the processed list. The enclosing view gates
+and runtime servicing remain separate questions.
+
+The normal advance walks active texture work before its resource-load and
+deferred-release lists. Its final assertion is still
+`advancedSomething || !s_textureOpTargets.Head()`. Source list membership,
+an eligible head operation, actual worker completion, and a processing visit
+must not be collapsed into one readiness observation.
+
+The global query covered executable REX.W RIP-relative MOV load/store and LEA
+references to `0x14268b760`, `0x14268b768`, `0x14268b770`, `0x14268b840`,
+plus aligned absolute Qwords in readable non-executable sections. It returned
+51 code candidates and no pointer candidates; 50 had decoded `.pdata`
+instruction boundaries, and the remaining leaf was verified by the bounded
+window above. Other encodings remain outside this query. Raw and normalized
+terminal records were complete; cumulative rendered-terminal frames alone
+were truncated in the global-query capture. All captures exited zero with
+owned-process cleanup verified. No runtime, archive access, or patch occurred.
+
+Evidence: global references
+`ev_2bf0b48b4f646d9e19759df6f3380470c505af820b1ddd1e17da081d5649a1f6`;
+leaf window `ev_746579568faceea6f4abb730b299d5b4555c4a5eabca76e8030816811b80090c`;
+exact wrapper callers `ev_5da9ec0483eb96d2d7877dcf0efdcf2dc0a97138a5774e9bee635e2cf6e7cd7f`,
+`ev_4e96174efe6d374e0f0832e648005c5a0748e05afdeb80a9c67fa315f5ee9a26`,
+and `ev_416d428becf88ad1bf5dc2700fdcdf3be03140e6de2023ca27b455ed00d74e38`;
+wrapper bodies `ev_943a2c6d7cc2c31afe8f263586f6e9fa451b732cb7337173f940899381b35896`
+and `ev_2f626fef1190f15a6b6c25fd7111f8e3aa40daba5ea37ca997e332df55a74907`;
+view labels/order `ev_dd18d4d2d631bfb36b111e6231b537301c51f8ba2f3817ab3a5056a2d23f591f`;
+complete context advance `ev_28a99e2b3de6ddcf7729552b9372c10e0612aefe8023429e06ec088b3e32423f`.
+Private export: `/home/blizz/re/gw2/notes/209026-texture-view-advance-chain-20261105.json`.
