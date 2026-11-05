@@ -188,3 +188,38 @@ Bundle: `~/re/gw2/notes/209026-norn-mesmer-run115-20261105.json`.
 Three focused equipment tests pass, including byte preservation before170,
 quest deferral until readiness, and duplicate-readiness rejection. The musl
 observer used for playback was rebuilt with this ordering change.
+
+## Explicit healing selection: run 116
+
+Run116 adds the [traced skill batch](209026-mesmer-starter-skill-requirements.md):
+605 grants skill10176, then612 selects palette366 in standard slot0/locale0
+for player1. The12-byte batch is sent once after1036/431/83. Equipment,
+quest, diagnostic spawn and other bootstrap inputs remain as in run115.
+No additional weapon skill availability is granted.
+
+The inspected ready and post-input screenshots show **an icon in the
+healing slot**, alongside the existing first weapon icon and rendered
+starter armor. This establishes selection/presentation for the explicit
+candidate. The script sends key6 after the ready screenshot; the server
+console subsequently frames three client23 messages of15/23/15 bytes.
+Their action payload semantics have not been decoded here. No server
+skill execution, health effect or cooldown is implemented, and neither
+input delivery nor an icon is counted as a successful cast.
+
+Quest text and scenery artifacts remain unresolved. REA orchestration
+`ev_2206d42345f027207c17fe22a29f1b0b06da09f9916dd0d67e544b04c2b65543`
+reached MapLoaded/AgentsLoaded/BeginPlaying and exited0. Exact container
+cleanup, frozen/working executable hashes, archive retention and
+credential-safe logging passed. Audit
+`ev_26d6352d7f3ee47cadaa9c4f2f7426dc182cf024b1503c917ccb2f91b3a6fd70`
+found no captured assertion/fatal marker, retained the input digest and
+bound these screenshots:
+
+| Screenshot | SHA-256 |
+| --- | --- |
+| `norn-mesmer-skills-ready.png` | `808f9c33fe462fd6af725119b80ddb8cc2d291ff9be8a0b46ec68a05f1ba7052` |
+| `norn-mesmer-skills-after-key6.png` | `669722d623bc15a4fb90fff1836974fdaa3d1bd7951f655b76ab81b626e55f7b` |
+| `norn-mesmer-skills-soak.png` | `e46319ad6a144f5050fa2b284f655d8360ef66181efeee0c847f87b21a5eb437` |
+
+Private run: `~/gw2-sandbox/runs/run116-norn-mesmer-skill-selection/`.
+Bundle: `~/re/gw2/notes/209026-norn-mesmer-run116-20261105.json`.

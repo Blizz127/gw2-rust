@@ -22,6 +22,8 @@ delivery before character finalization. Its diagnostic point is verified
 inside the first objective sector. Quest text-key framing is implemented;
 the actual keys and distant scenery artifacts remain unresolved. The client
 health calculation yields a388 Mesmer baseline; final stats remain unverified.
+Run116 adds the healing-slot icon through explicit605/612 selection. All49
+enabled observer tests pass; actual skill execution remains unimplemented.
 No deployment changed. NPCs, combat, tutorial objectives, progression and persistence
 remain incomplete; this is not a 100% claim.
 

@@ -1,0 +1,214 @@
+# Build 209026: Mesmer starter weapon and healing skill requirements
+
+2026-11-05, frozen executable/archive follow-up to the
+[initial palette sources](209026-mesmer-initial-palette-sources.md).
+This establishes a concrete explicit palette366 experiment and the
+ordinary level gates for template210's weapon. It does not establish the
+retail server's initial skill selection or observe a successful cast.
+
+## Explicit healing-palette experiment
+
+For an existing player index1 with an initialized, owned, living level1
+Mesmer character in locale0, the source-supported message order is:
+
+1. Server605: skill data key10176, player index1.
+2. Server612: palette data key366, slot0, locale selector0, player index1.
+
+605 sets an availability bit without rebuilding. 612 stores the palette
+and immediately rebuilds the owned character's skill bar. Consequently
+this order establishes availability before the selection is evaluated.
+605 has no flags field. Using 613 instead would introduce two notification
+flags whose downstream meanings remain unresolved; it is unnecessary
+for this two-message experiment.
+
+This is an explicit candidate assignment. Mesmer type315 +0x78 and +0x80
+both reference palette366, but the initial server selection policy
+remains unknown. The client standard-slot route reads the player's
+selected-palette arrays, initially zero, without an automatic profession
+fallback in the inspected path. Equipping item33355 therefore does not
+populate the healing slot.
+
+The [605 handler](209026-skill-availability.md) requires an existing player
+and a resolving type64 skill. The [612 setter](209026-player-skill-palettes.md)
+also dereferences the owned character and its +0x520 skill-bar component
+without null guards. The experiment belongs after the existing
+[component/finalization prerequisites](209026-character-finalization-dependencies.md),
+including the core stats, inventory, Mesmer profession component, player
+ownership and registered skill bar. 605 can be loaded earlier; 612 cannot
+be used as a substitute for those components.
+
+The wire fields are numeric data keys at record +0x28, not record UIDs.
+612's field order is Dword palette key, Byte slot, Byte locale, Dword
+player index. 605's order is Dword skill key, Dword player index. Existing
+typed codecs retain their framing; this investigation changes no codec.
+
+## Why palette366 can pass the inspected entry predicate
+
+Palette366 is type65 at file1282837 offset5371432. Its profession7,
+category2 row contains one entry at5371528, referencing type64 skill10176
+at file1282860 offset4074696. The concrete checks are:
+
+| Check | Frozen input and consequence |
+| --- | --- |
+| Slot/category | `0x1411c81e0` maps slot0 to category2. |
+| Entry minimum level | Entry +0x1c is1; the independent entry-level check requires character level at least1. |
+| Mode | Raw mode +0x14 is3, which skips the mode restriction in the inspected predicate. |
+| Optional conditions | Entry pointers +0x08, +0x30, +0x40 and +0x50 are null. No referenced prerequisite, chain state, auxiliary condition or specialization is imposed by those fields. |
+| Other selectors | +0x24/+0x28 are23, +0x48/+0x4c are24, +0x3c and +0x64 are zero; these select the unrestricted branches of their comparisons. |
+| Availability | The ordinary entry path calls adapter virtual +0x128. 605 supplies a successful availability-bit branch for skill10176. |
+| Locale | Skill flags +0x38 are `0x14000006`: locale0 uses bit26 and succeeds; locale1 uses bit28 and succeeds; locale2 uses bit29 and fails; locale3 is accepted by this locale predicate. |
+
+The complete entry predicate is `0x141212fe0..0x14121342b`, with
+specialization helper `0x141213430`. A selected palette can satisfy the
+slot predicate through stored-palette membership, but that does not
+remove the outer minimum-level, availability or locale checks.
+
+612 setter `0x1412291e0` stores locales1/3 in skill-object +0x88 and other
+locales in +0x60. Initial character agent state1 maps to locale0 in the
+[locale trace](209026-character-locale.md), so selector0 targets the array
+used by the current bootstrap. Sharing an array does not make every
+locale eligible: selector2 still corresponds to a skill locale that
+10176 rejects. Sending all locale values is not required by this source
+slice.
+
+## Availability is explicit, but 605 is not universally necessary
+
+The ordinary player adapter `0x1411f7b60` resolves the associated player's
+skill object and calls `0x1412286a0`. Its inventory checks inspect slot26,
+slot33 and gathering-related slots34/35/36/60/61/62, followed by profession
+and transformation alternatives. This is not an automatic grant from
+the equipped primary item in slot29. Mesmer primary vtable
+`0x14217c0f0` virtual +0x118 points to `0x140168aa0`, which returns false.
+
+The final player-skill predicate `0x1412284b0..0x14122869f` ORs the explicit
+availability bit with additional mode/player-state and transformation
+branches. The bit set by 605 is sufficient for that predicate, while
+the other branches prevent claiming that every client state strictly
+requires 605. The function still evaluates additional component getters;
+setting a bit does not eliminate lifetime prerequisites. 612 does not
+set the availability bit.
+
+This distinction also affects weapon testing: `0x1411d5670` can accept
+an available weapon skill before reaching its ordinary slot-level
+fallback. Sending605 for every skill in a weapon palette can therefore
+override the level behavior being investigated. Palette membership,
+availability state and a retail unlock policy must remain separate.
+
+## Starter weapon route and ordinary level gates
+
+Template210 references item33355 in equipment slot29. Its discriminator24
+item subrecord +0x58 points to palette90; skin3873 supplies a skin
+reference, not this skill-palette selection. The
+[equipment getter mapping](209026-item-equipment-delivery.md) establishes
+active weapon set4's primary slot29 and secondary slot30.
+
+The normal skill-bar route takes slots5/6/7 from the primary inventory
+palette getter `0x1411f7530` and slots8/9 from secondary getter
+`0x1411f7680`. Inventory virtual +0x18/+0x20 implementations
+`0x14128f4a0`/`0x14128f4d0` return the respective equipment entries, without
+falling back from an empty secondary entry to the primary. With only
+the template's weapon in slot29, the secondary slot30 is empty.
+
+For an ordinary, non-downed character in locale0, `0x1411c85d0` supplies:
+
+| Skill-bar slot | Palette category | Palette source | Level fallback | Setting / file1282832 offset |
+| ---: | ---: | --- | ---: | --- |
+| 5 | 3 | Primary | 0 | Literal zero; no setting lookup |
+| 6 | 4 | Primary | 2 | 0x273 / 319152 |
+| 7 | 5 | Primary | 4 | 0x275 / 205576 |
+| 8 | 6 | Secondary | 6 | 0x277 / 267552 |
+| 9 | 7 | Secondary | 8 | 0x279 / 357920 |
+
+All four retrieved settings are type150 records with declared and
+embedded variant type434; their signed values are at +0x38. The helper
+also resolves locale1's five corresponding settings to8. These values
+extend the existing [standard-slot settings](209026-skill-slot-levels.md).
+They describe the final level fallback, after earlier successful slot
+branches, and are not unconditional restrictions on every skill state.
+Palette90's inspected profession7 entries independently require level1.
+
+The source therefore supports one ordinary primary weapon slot at level1
+through this fallback, while the later primary slots need higher levels
+and the secondary slots lack an equipped item in the current fixture.
+This is consistent with the reported single weapon icon; the screenshot
+alone does not identify its skill or prove every eligibility branch.
+
+Palette90's category3 entry order is45230,10172,10171,10170. Skill45230
+has a prerequisite reference and specialization59 condition;10172 and
+10171 have chain references to10171 and10170 respectively. Skill10170
+has null optional references and is the static base candidate. Chain
+state, the active selected entry and actual cast behavior were not
+observed in this source investigation. Category4 contains10334;
+category5 retains its ordered conditional entries ending in10173.
+No automatic availability messages are inferred from this content list.
+
+## Explicit observer input
+
+`gw2-game-observe --mission-skills FILE` accepts a bounded binary batch
+of605 grants followed by612 selections. It requires an explicit population
+fixture and sends the bytes once after1036/431/83, before an optional quest.
+Thus the owned character and skill bar exist before612's immediate rebuild.
+Duplicate readiness messages do not resend the selection.
+
+The parser preserves the supplied bytes and checks matching player indices,
+unique nonzero skill keys, nonzero palette keys, standard slots0..4 and
+locales0..3. It rejects duplicate destinations even when locales alias the
+same array (0/2 or1/3), grants after selections, unsupported operations,
+truncation and empty batches. At least one palette selection is required
+to rebuild after availability loading. Zero grants are allowed when the
+caller has established availability through another path.
+
+The4096-byte,64-grant and skill-key1..1,000,000 limits are observer resource
+policies, not retail rules. The key cap bounds the client's growing bitset.
+The parser cannot verify archived record existence, profession membership,
+eligibility or initial selection policy. No skill is selected by default.
+
+All49 enabled observer tests pass, with two pre-existing capture-dependent
+tests ignored. Coverage includes aliased locales, grant ordering and bounds,
+foreign players, truncation, startup prerequisites and once-only delivery
+alongside equipment and quest initialization. Three CLI rejection checks
+cover missing population, duplicate option and missing filename. The
+optimized musl observer builds.
+
+The run116 input is12 bytes:605(10176,player1), then
+612(366,slot0,locale0,player1). SHA-256:
+`bf7e83481d73b5acb4836a742072e5118f7001c8a065766273b64c16c5b9e55e`.
+It grants no additional weapon skills. Runtime results are recorded in the
+[Norn playback note](209026-norn-mesmer-playback.md).
+
+## Evidence and limits
+
+Executable SHA-256:
+`99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`.
+The private, hash-checked container readers retain all visited identities.
+Relevant container hashes are:
+
+- 1282832: `63bd50638f1386c9d92ecdecf9c9260e02500d1d9ac616e33883577033c387de`
+- 1282837: `efabc1cd94ec8cbb72da0f2c35c5e569b29d9414c93974de9adbc710f48ae6fd`
+- 1282848: `176ae80621ebfe33adc0bd58bbce865b3d582e402890b1f624a80d0af5793576`
+- 1282860: `05a2bdefaac4937d4d6386913d5e0596af0200391e16704ae426448896f16b23`
+
+Private bundle:
+`~/re/gw2/notes/209026-mesmer-starter-skill-requirements-20261105.json`.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_c3dadf8759e4ee4acb3a4a6cb1d8abbdb82487f14d53fe297e900ce30a2c1fc0` | Complete slot/category and level-selection functions; availability precedes the slot-level fallback. |
+| `ev_5cb990e5f3c78730e3f6c5a4909adceb2bf2d8f00902c7af24903c03dbedc30a` | Weapon-slot setting descriptor GUIDs and jump-table destinations. |
+| `ev_88ad60b063a1f891e0ce6d731a2face515a283e20bde011eff9a69b8b2fbb8c5` | All16 targeted setting GUIDs resolve in file1282832; this is not a global overlay census. |
+| `ev_a06197aa4d3398ac0c2c71fa017e2c3f577b9ce615a8fc41d4d814db35fd4df6` | Exact palette366 and palette90 entries, skill flags and optional references. |
+| `ev_bba6ac6e72f39d5b4dea317d73ffa82c94e75928fa789237a298e86d1acfbb56` | Complete entry eligibility predicate and specialization helper. |
+| `ev_8ece6f4196501560d28b6b25be8bfa480afd154572a3f50dcc1b3aba29e156dc` | Stack-adapter vtable targets for chain, availability and specialization checks. |
+| `ev_f58a1246f532c007bceb91e3502d89e81ce015986d9079cf05d0c1e0f674584c` | Player availability inventory/profession route and secondary weapon getter. |
+| `ev_7a151bcb90341f59b4151328486e291a2fd81aed0c83dc4842c3c95d9c54fcd6` | Complete605/612 setters and ordinary-player availability adapter. |
+| `ev_0d6ef503147fdfd28e35be69cf04c73ddd98bc31e1a98c185a332e67f135e58c` | Full final availability predicate, including alternatives to the explicit bit. |
+| `ev_ed8de8d1f4627b8eb4da8023836e6dfd43960f87060a52a402a6919dd5ddc68f` | Mesmer availability virtual returns false; primary/secondary equipment getters do not substitute entries. |
+
+Captures were read-only helper/disassembly commands, with exit0 and
+owned-process cleanup verified and no capture truncation. Some captures
+retain process-observation unknowns where `/proc` environment reads were
+denied; these do not claim a complete host-process census. No client
+protocol messages were sent by this investigation. The initial retail
+selection policy, broader
+unlock policy, all alternative availability modes and successful combat
+remain outside this bounded result.

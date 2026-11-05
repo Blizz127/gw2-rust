@@ -79,6 +79,7 @@ pub struct PopulationFixture {
     map_key: u16,
     quest: Option<QuestFixture>,
     equipment: Option<super::equipment::EquipmentFixture>,
+    skills: Option<super::skills::SkillFixture>,
 }
 
 #[derive(Clone, Copy)]
@@ -131,6 +132,7 @@ impl PopulationFixture {
             map_key: summary.map_definition_key(),
             quest: None,
             equipment: None,
+            skills: None,
         })
     }
 
@@ -149,6 +151,13 @@ impl PopulationFixture {
     /// definition validity and retail selection remain the caller's responsibility.
     pub fn with_equipment(mut self, frames: &[u8]) -> io::Result<Self> {
         self.equipment = Some(super::equipment::EquipmentFixture::parse(frames, self.plan.character_index)?);
+        Ok(self)
+    }
+
+    /// Explicit availability grants followed by standard palette selections.
+    /// Content existence and eligibility are not checked by the wire parser.
+    pub fn with_skills(mut self, frames: &[u8]) -> io::Result<Self> {
+        self.skills = Some(super::skills::SkillFixture::parse(frames, self.plan.player_index)?);
         Ok(self)
     }
 
@@ -365,6 +374,13 @@ impl MissionPhase {
                 // scheduled world entry (46) has run, so the flag can't make it drop 46.
                 AgentControl209026 { agent_index: fixture.plan.character_index as u16, value: 1 }
                     .encode_frame(&mut out);
+                if let Some(skills) = &fixture.skills {
+                    // 612 immediately rebuilds and needs the owned character's
+                    // profession and skill bar. 605 grants precede selections.
+                    // See 209026-player-skill-palettes.md and skill-availability.md.
+                    out.extend_from_slice(skills.bytes());
+                    eprintln!("Mission phase: sending explicit initial skills once");
+                }
                 if let Some(QuestFixture { quest_id, flags, goal_id }) = fixture.quest {
                     // All character/player components now exist. 532 is not
                     // idempotent: it completes an old active goal. Send exactly
@@ -917,10 +933,11 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn explicit_equipment_is_sent_once_before_finalization_and_quest_waits_for_readiness() {
+    fn explicit_equipment_precedes_finalization_and_skills_and_quest_wait_for_readiness() {
         let equipment = super::super::equipment::fixture_for_test();
+        let skills = super::super::skills::fixture_for_test();
         let fixture = PopulationFixture::new(&guardian_record(15, 1), [0.0; 3]).unwrap()
-            .with_equipment(&equipment).unwrap().with_quest(154, 0, 1).unwrap();
+            .with_equipment(&equipment).unwrap().with_skills(&skills).unwrap().with_quest(154, 0, 1).unwrap();
         let mut phase = MissionPhase::new(15).unwrap().with_population(fixture).unwrap();
         let loaded = Seen::Map(ClientMapEvent::MapLoaded);
         let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
@@ -934,11 +951,13 @@ pub(crate) mod tests {
         assert_eq!(&population[before_finalization + equipment.len()..], &baseline[before_finalization..]);
         assert_eq!(&population[before_finalization + equipment.len()..before_finalization + equipment.len() + 3], &[0xaa, 0, 1], "170 finalizes character1 after equipment");
         let reply = phase.respond(&agents).unwrap().unwrap();
-        let mut quest = &reply[9..];
+        assert_eq!(&reply[..9], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01]);
+        assert_eq!(&reply[9..9 + skills.len()], skills, "612 requires the already populated owned skill bar");
+        let mut quest = &reply[9 + skills.len()..];
         assert!(matches!(QuestLifecycleFrame209026::decode_frame(&mut quest).unwrap().operation,
             QuestLifecycleOperation209026::Create { quest_data_id: 154, raw_byte: 0 }));
         assert!(phase.respond(&loaded).unwrap().is_none());
-        assert!(phase.respond(&agents).unwrap().is_none(), "never recreate item instances");
+        assert!(phase.respond(&agents).unwrap().is_none(), "never recreate items or repeat initial selections");
     }
 
     /// With a delay the population is held after 420 and released once due (once);
