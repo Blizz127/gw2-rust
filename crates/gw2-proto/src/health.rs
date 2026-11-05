@@ -157,9 +157,77 @@ impl HealthFrame209026 {
     }
 }
 
+/// Server 255 `{Dword character, Float delta, Float second_delta, Word
+/// raw_word, Byte kind, Dword skill key, Dword source agent}` (handler
+/// `0x14124f990`). Unlike 257 it adds deltas: `0x141275ee0` does
+/// `current = clamp(current + delta, 0, maximum)` on health +0x8 and +0x24
+/// (damage is negative; sandbox run 154 sent absolute values and the bars
+/// stayed full). It then notifies the health listeners (list +0x48)
+/// with the kind, the skill definition (content type 0x40; 0 = none) and the
+/// source agent (resolved through `0x141024060`; 0 = none, a nonzero unknown
+/// agent asserts). Kinds 0..=3 map to change kinds 0..=3; others fail.
+/// Research codec: kind and raw_word meanings are unresolved.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SourcedHealthFrame209026 {
+    pub character_index: u32,
+    pub delta: f32,
+    pub second_delta: f32,
+    pub raw_word: u16,
+    pub kind: u8,
+    pub skill_key: u32,
+    pub source_agent: u32,
+}
+
+impl SourcedHealthFrame209026 {
+    pub const MESSAGE_ID: u16 = 255;
+
+    pub fn encode_frame(&self, output: &mut BytesMut) -> Result<()> {
+        if self.kind > 3 {
+            return Err(Error::new(ErrorKind::InvalidInput, "health change kind must be 0..=3"));
+        }
+        Self::MESSAGE_ID.encode(output);
+        self.character_index.encode(output);
+        [self.delta, self.second_delta].encode(output);
+        self.raw_word.encode(output);
+        self.kind.encode(output);
+        self.skill_key.encode(output);
+        self.source_agent.encode(output);
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sourced_health_255_matches_the_client_schema() {
+        use crate::dynamic::{self, Rules};
+        let frame = SourcedHealthFrame209026 {
+            character_index: 3,
+            delta: -30.0,
+            second_delta: 0.0,
+            raw_word: 0,
+            kind: 0,
+            skill_key: 10170,
+            source_agent: 1,
+        };
+        let mut out = BytesMut::new();
+        frame.encode_frame(&mut out).unwrap();
+        let messages: Vec<_> = crate::schema::parse(include_str!("../../../data/protocol/209026/server-tables.xml"))
+            .unwrap()
+            .protocols
+            .into_iter()
+            .filter(|p| p.name == "0")
+            .flat_map(|p| p.groups)
+            .filter(|g| g.name == "table-0x14216e940")
+            .flat_map(|g| g.server)
+            .collect();
+        let mut input = &out[..];
+        assert_eq!(dynamic::decode_frame(&messages, &Rules::default(), &mut input).unwrap().0.id, 255);
+        assert!(input.is_empty());
+        assert!(SourcedHealthFrame209026 { kind: 4, ..frame }.encode_frame(&mut BytesMut::new()).is_err());
+    }
 
     fn fixtures() -> [Vec<u8>; 5] {
         [

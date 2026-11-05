@@ -104,6 +104,8 @@ struct Fixtures<'a> {
     /// Research: item-creation message for the Starter Backpack.
     starter_bag: Option<u16>,
     kill_loot: bool,
+    npc_attack: Option<(f32, f32)>,
+    sourced_damage: Option<u8>,
 
     /// Service mode: create no capture or preamble files. The auth stream can
     /// carry account strings typed into the client, so a server facing a
@@ -136,6 +138,8 @@ fn observe(
         xp_per_kill,
         starter_bag,
         kill_loot,
+        npc_attack,
+        sourced_damage,
         no_capture,
     } = fixtures;
     let mut mission = match (mission_map_key.map(mission::MissionPhase::new).transpose()?, population) {
@@ -179,6 +183,12 @@ fn observe(
     }
     if let Some(id) = starter_bag {
         mission = Some(mission.ok_or_else(|| invalid("starter bag requires a mission phase"))?.with_starter_bag(id));
+    }
+    if let Some(kind) = sourced_damage {
+        mission = Some(mission.ok_or_else(|| invalid("sourced damage requires a mission phase"))?.with_sourced_damage(kind));
+    }
+    if let Some((damage, health)) = npc_attack {
+        mission = Some(mission.ok_or_else(|| invalid("NPC attack requires a mission phase"))?.with_npc_attack(damage, health));
     }
     if kill_loot {
         mission = Some(mission.ok_or_else(|| invalid("kill loot requires a mission phase"))?.with_kill_loot());
@@ -375,6 +385,8 @@ fn main() -> io::Result<()> {
     let mut xp_per_kill: Option<u32> = None;
     let mut starter_bag: Option<u16> = None;
     let mut kill_loot = false;
+    let mut npc_attack_damage: Option<f32> = None;
+    let mut sourced_damage: Option<u8> = None;
     let mut store_path: Option<PathBuf> = None;
     let mut creation_destination: Option<SocketAddr> = None;
     let mut creation_route: Option<SocketAddr> = None;
@@ -516,6 +528,22 @@ fn main() -> io::Result<()> {
             }
             "--mission-skill-order-echo" => skill_order_echo = true,
             "--mission-kill-loot" => kill_loot = true,
+            "--mission-sourced-damage" => {
+                let text = args.next().ok_or_else(|| invalid("missing sourced damage kind"))?;
+                let kind: u8 = text.parse().map_err(|_| invalid("invalid sourced damage kind"))?;
+                if kind > 3 {
+                    return Err(invalid("sourced damage kind must be 0..=3"));
+                }
+                sourced_damage = Some(kind);
+            }
+            "--mission-npc-attack" => {
+                let text = args.next().ok_or_else(|| invalid("missing NPC attack damage"))?;
+                let value: f32 = text.parse().map_err(|_| invalid("invalid NPC attack damage"))?;
+                if !(value.is_finite() && value > 0.0) {
+                    return Err(invalid("NPC attack damage must be positive"));
+                }
+                npc_attack_damage = Some(value);
+            }
             "--mission-starter-bag" => {
                 let text = args.next().ok_or_else(|| invalid("missing bag creation message id"))?;
                 starter_bag = Some(text.parse().map_err(|_| invalid("invalid bag creation message id"))?);
@@ -608,7 +636,7 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z] [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]]]]]",
+                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z] [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
                 ));
             }
         }
@@ -672,6 +700,13 @@ fn main() -> io::Result<()> {
     }
     if initial_health.is_some() && !has_population {
         return Err(invalid("--mission-health requires --mission-population"));
+    }
+    if npc_attack_damage.is_some() && (hostile_npc.is_none() || initial_health.is_none() || damage_on_skill.is_none()) {
+        return Err(invalid("--mission-npc-attack requires --mission-hostile-npc, --mission-health and --mission-damage-on-skill"));
+    }
+    let npc_attack = npc_attack_damage.zip(initial_health);
+    if sourced_damage.is_some() && damage_on_skill.is_none() {
+        return Err(invalid("--mission-sourced-damage requires --mission-damage-on-skill"));
     }
     if kill_loot && (starter_bag.is_none() || hostile_npc.is_none()) {
         return Err(invalid("--mission-kill-loot requires --mission-starter-bag and --mission-hostile-npc"));
@@ -848,6 +883,8 @@ fn main() -> io::Result<()> {
                 xp_per_kill,
                 starter_bag,
                 kill_loot,
+                npc_attack,
+                sourced_damage,
                 no_capture,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {

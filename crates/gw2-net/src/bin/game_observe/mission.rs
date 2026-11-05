@@ -29,7 +29,7 @@ use gw2_proto::{
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     experience::{EarnedLevelFrame209026, ExperienceFrame209026, level_for_experience},
-    health::{HealthFrame209026, HealthOperation209026},
+    health::{HealthFrame209026, HealthOperation209026, SourcedHealthFrame209026},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
     npc_talk::{ConversationReply209026, InteractRequest209026, TalkNpcPlan209026, TalkSession209026},
     skill_order::{AgentBehaviorOrderFrame209026, SkillBeginRequest209026, SkillOrder209026},
@@ -371,6 +371,58 @@ pub struct MissionPhase {
     /// Research: on each kill, a copy of the equipped weapon goes into the next
     /// backpack slot (971 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
+    /// Research: the hostile NPC hits the player while both are alive.
+    npc_attack: Option<NpcAttack>,
+    /// Research: send combat health changes as 255 with this change kind
+    /// (skill and attacker attached) instead of 257.
+    sourced_damage: Option<u8>,
+}
+
+/// One combat health change from `previous` to `current`: 257 Currents, or
+/// 255 (a delta) with kind, skill and source.
+fn encode_health_change(
+    out: &mut BytesMut,
+    sourced: Option<u8>,
+    target: u32,
+    (previous, current): (f32, f32),
+    skill_key: u32,
+    source_agent: u32,
+) -> io::Result<u16> {
+    match sourced {
+        Some(kind) => {
+            let delta = current - previous;
+            SourcedHealthFrame209026 { character_index: target, delta, second_delta: 0.0, raw_word: 0, kind, skill_key, source_agent }
+                .encode_frame(out)?;
+            Ok(255)
+        }
+        None => {
+            HealthFrame209026 { character_index: target, operation: HealthOperation209026::Currents { current, second_current: 0.0 } }
+                .encode_frame(out);
+            Ok(257)
+        }
+    }
+}
+
+/// Research NPC counter-attack: after the player's first hit, server 257 lowers
+/// the player's health every NPC_ATTACK_INTERVAL until the NPC dies. Damage,
+/// timing and the stop-before-death rule are placeholders, not retail values.
+#[derive(Clone, Copy)]
+struct NpcAttack {
+    damage: f32,
+    player_health: f32,
+    next: Option<Instant>,
+}
+
+const NPC_ATTACK_INTERVAL: Duration = Duration::from_secs(2);
+const NPC_ATTACK_FIRST_DELAY: Duration = Duration::from_millis(1500);
+
+/// The player's hit aggroes the NPC: schedule its first attack once.
+fn start_npc_attack(attack: &mut Option<NpcAttack>) {
+    if let Some(attack) = attack.as_mut()
+        && attack.next.is_none()
+    {
+        attack.next = Some(Instant::now() + NPC_ATTACK_FIRST_DELAY);
+    }
 }
 
 /// Backpack slots sized by 305 (Starter Backpack item 8932, def +0x4c).
@@ -456,6 +508,8 @@ impl MissionPhase {
             respawn: None,
             starter_bag: None,
             kill_loot: None,
+            npc_attack: None,
+            sourced_damage: None,
         })
     }
 
@@ -540,6 +594,17 @@ impl MissionPhase {
 
     /// Research: create the Starter Backpack with item-creation `message_id`
     /// after BeginPlaying and equip it into bag slot 0 (server 300).
+    pub fn with_sourced_damage(mut self, kind: u8) -> Self {
+        self.sourced_damage = Some(kind);
+        self
+    }
+
+    /// Requires a hostile NPC and the player's starting health.
+    pub fn with_npc_attack(mut self, damage: f32, player_health: f32) -> Self {
+        self.npc_attack = Some(NpcAttack { damage, player_health, next: None });
+        self
+    }
+
     /// Requires with_starter_bag (276 needs 305's slots).
     pub fn with_kill_loot(mut self) -> Self {
         self.kill_loot = Some(0);
@@ -554,10 +619,8 @@ impl MissionPhase {
     /// When the held population is due, if one is held.
     pub fn due_at(&self) -> Option<Instant> {
         let held = self.held.as_ref().map(|(due, _)| *due);
-        match (held, self.respawn) {
-            (Some(a), Some(b)) => Some(a.min(b)),
-            (a, b) => a.or(b),
-        }
+        let attack = self.npc_attack.and_then(|a| a.next);
+        [held, self.respawn, attack].into_iter().flatten().min()
     }
 
     /// The held population once `now` has reached its due time (once).
@@ -565,6 +628,25 @@ impl MissionPhase {
         if self.held.as_ref().is_some_and(|(due, _)| now >= *due) {
             eprintln!("Mission phase: sending the held population sequence");
             return self.held.take().map(|(_, bytes)| bytes);
+        }
+        if let Some(attack) = self.npc_attack.as_mut()
+            && attack.next.is_some_and(|due| now >= due)
+        {
+            let character_index = self.population.as_ref()?.plan.character_index;
+            let npc = u32::from(self.hostile.as_ref()?.agent_index);
+            let remaining = attack.player_health - attack.damage;
+            if remaining < 1.0 {
+                // Downed/defeat handling is not implemented; stop first.
+                attack.next = None;
+                eprintln!("Mission phase: NPC attack stopped before player defeat");
+                return None;
+            }
+            attack.player_health = remaining;
+            attack.next = Some(now + NPC_ATTACK_INTERVAL);
+            let mut out = BytesMut::new();
+            let id = encode_health_change(&mut out, self.sourced_damage, character_index, (attack.player_health + attack.damage, remaining), 0, npc).ok()?;
+            eprintln!("Mission phase: NPC hit player for {}: health -> {remaining} (server {id})", attack.damage);
+            return Some(out.freeze());
         }
         if self.respawn.is_some_and(|due| now >= due) {
             self.respawn = None;
@@ -724,12 +806,16 @@ impl MissionPhase {
                 if let Some((amount, health)) = self.damage_on_skill {
                     let remaining = (health - amount).max(0.0);
                     self.damage_on_skill = Some((amount, remaining));
-                    HealthFrame209026 {
-                        character_index: u32::from(npc),
-                        operation: HealthOperation209026::Currents { current: remaining, second_current: 0.0 },
-                    }
-                    .encode_frame(&mut out);
-                    eprintln!("Mission phase: auto-attack hit NPC {npc}: health {health} -> {remaining} (server 257)");
+                    start_npc_attack(&mut self.npc_attack);
+                    let id = encode_health_change(
+                        &mut out,
+                        self.sourced_damage,
+                        u32::from(npc),
+                        (health, remaining),
+                        skill_key,
+                        fixture.plan.character_index,
+                    )?;
+                    eprintln!("Mission phase: auto-attack hit NPC {npc}: health {health} -> {remaining} (server {id})");
                     if remaining == 0.0 && health > 0.0 {
                         let dead = HealthTransitionPayload209026::Dead(HealthTransitionDetails209026 {
                             detail_word: 0,
@@ -750,6 +836,9 @@ impl MissionPhase {
                         award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
                         award_kill_loot(&mut self.kill_loot, fixture.equipment.as_ref(), fixture.plan.character_index, &mut out)?;
                         self.respawn = Some(Instant::now() + RESPAWN_DELAY);
+                        if let Some(attack) = self.npc_attack.as_mut() {
+                            attack.next = None;
+                        }
                     }
                 }
                 Ok(Some(out.freeze()))
@@ -763,13 +852,17 @@ impl MissionPhase {
                 let (amount, health) = self.damage_on_skill.unwrap();
                 let remaining = (health - amount).max(0.0);
                 self.damage_on_skill = Some((amount, remaining));
+                start_npc_attack(&mut self.npc_attack);
                 let mut out = BytesMut::new();
-                HealthFrame209026 {
-                    character_index: u32::from(npc),
-                    operation: HealthOperation209026::Currents { current: remaining, second_current: 0.0 },
-                }
-                .encode_frame(&mut out);
-                eprintln!("Mission phase: skill {} hit NPC {npc}: health {health} -> {remaining} (server 257)", skill.request.skill_key);
+                let id = encode_health_change(
+                    &mut out,
+                    self.sourced_damage,
+                    u32::from(npc),
+                    (health, remaining),
+                    skill.request.skill_key,
+                    fixture.plan.character_index,
+                )?;
+                eprintln!("Mission phase: skill {} hit NPC {npc}: health {health} -> {remaining} (server {id})", skill.request.skill_key);
                 if remaining == 0.0 && health > 0.0 {
                     // Packed 0x33 dead transition through server 84; flags mask 0x10
                     // selects the character transition dispatcher
@@ -793,6 +886,9 @@ impl MissionPhase {
                     award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
                     award_kill_loot(&mut self.kill_loot, fixture.equipment.as_ref(), fixture.plan.character_index, &mut out)?;
                     self.respawn = Some(Instant::now() + RESPAWN_DELAY);
+                    if let Some(attack) = self.npc_attack.as_mut() {
+                        attack.next = None;
+                    }
                 }
                 Ok(Some(out.freeze()))
             }
