@@ -636,3 +636,21 @@ or area indicator.
 Placeholders and open items: the XP per kill is not retail, the trailing 191 fields are
 sent as 0 (reason/source unnamed), and the experience bar fill and level-up effects
 aren't checked.
+
+### Run 144: respawn and a second kill with the client's "Level Up!" banner
+
+Each test-NPC death schedules a revival `RESPAWN_DELAY` (10 s, a placeholder) later.
+The observer's existing due-time wake (`MissionPhase::due_at`/`take_due`) then sends:
+- **server 84** with flags 0x10 and packed **0x49 Alive**;
+- **257** at full health.
+
+It also resets the damage tracker. The same agent revives, so its model stays loaded.
+New post-load spawns would hit the model-streaming problem.
+
+**Run 144:**
+1. The first kill (100 → 0) gave 2,500 XP and level 2.
+2. The respawn restored the minotaur, standing, with its nameplate.
+3. A second four-hit kill brought the total to **5,000 XP**, past the 4,110 threshold.
+   The server sent 188 for level 3, and the client showed its **"Level Up!" banner**.
+
+There were no asserts.

@@ -363,7 +363,12 @@ pub struct MissionPhase {
     autoattack_skill: Option<u32>,
     /// Research: experience per NPC kill, running total and earned level.
     xp: Option<(u32, u32, u8)>,
+    /// When the killed hostile NPC revives (10 s after death, research timing).
+    respawn: Option<Instant>,
 }
+
+/// Seconds between a test NPC's death and its revival (placeholder).
+const RESPAWN_DELAY: Duration = Duration::from_secs(10);
 
 /// On an NPC kill: add experience, send 191, and 188 when the client's
 /// experience table crosses a level (docs/re/209026-npc-talk-loop.md, XP).
@@ -409,6 +414,7 @@ impl MissionPhase {
             damage_on_skill: None,
             autoattack_skill: None,
             xp: None,
+            respawn: None,
         })
     }
 
@@ -493,14 +499,44 @@ impl MissionPhase {
 
     /// When the held population is due, if one is held.
     pub fn due_at(&self) -> Option<Instant> {
-        self.held.as_ref().map(|(due, _)| *due)
+        let held = self.held.as_ref().map(|(due, _)| *due);
+        match (held, self.respawn) {
+            (Some(a), Some(b)) => Some(a.min(b)),
+            (a, b) => a.or(b),
+        }
     }
 
     /// The held population once `now` has reached its due time (once).
     pub fn take_due(&mut self, now: Instant) -> Option<Bytes> {
-        if self.due_at().is_some_and(|due| now >= due) {
+        if self.held.as_ref().is_some_and(|(due, _)| now >= *due) {
             eprintln!("Mission phase: sending the held population sequence");
             return self.held.take().map(|(_, bytes)| bytes);
+        }
+        if self.respawn.is_some_and(|due| now >= due) {
+            self.respawn = None;
+            let npc = self.hostile.as_ref()?.agent_index;
+            let mut out = BytesMut::new();
+            // Packed 0x49 alive transition (docs/re/209026-health-transitions.md),
+            // then full health; the same agent revives, so its model stays loaded.
+            AgentBehaviorFrame209026 {
+                agent_index: npc,
+                remote_tick: 0,
+                command_flags: 0x10,
+                behavior_value: 0x4000_0200,
+                behavior_data: HealthTransitionPayload209026::Alive { detail_byte: 0, trailing_byte: 0 }.encode_payload(),
+            }
+            .encode_frame(&mut out)
+            .ok()?;
+            HealthFrame209026 {
+                character_index: u32::from(npc),
+                operation: HealthOperation209026::Currents { current: 100.0, second_current: 0.0 },
+            }
+            .encode_frame(&mut out);
+            if let Some((_, health)) = self.damage_on_skill.as_mut() {
+                *health = 100.0;
+            }
+            eprintln!("Mission phase: NPC {npc} respawned (server 84 packed 0x49, health 100)");
+            return Some(out.freeze());
         }
         None
     }
@@ -647,6 +683,7 @@ impl MissionPhase {
                         .encode_frame(&mut out)?;
                         eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
                         award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
+                        self.respawn = Some(Instant::now() + RESPAWN_DELAY);
                     }
                 }
                 Ok(Some(out.freeze()))
@@ -688,6 +725,7 @@ impl MissionPhase {
                     .encode_frame(&mut out)?;
                     eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
                     award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
+                    self.respawn = Some(Instant::now() + RESPAWN_DELAY);
                 }
                 Ok(Some(out.freeze()))
             }
