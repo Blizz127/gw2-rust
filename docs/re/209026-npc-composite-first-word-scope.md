@@ -99,3 +99,32 @@ owned reader-process cleanup. Missing `.pdata` entries for leaf functions
 were not treated as missing code. Incidental jump-table bytes were not
 interpreted as instructions. Unrelated unreadable process environments
 remain separate capture limitations.
+
+## Exact packet-to-record copy follow-up
+
+A later bounded pass followed only the demonstrated server-377 handler and
+setter, without a field-offset sweep or shared-getter search. At
+`141253440`, parsed optional-field-3 pointer `message+0x10` is loaded into
+RDX. If present, `141253454` loads its first Qword unchanged into RDX;
+`141253457` calls `1411e0950`. The setter preserves this value in RSI at
+`1411e0971` and stores it at record `+0` at **`1411e0a13`**. Between those
+points it checks character finalization/record absence and allocates the
+24-byte record. It does not interpret, validate, or derive the first word.
+
+The handler's complete continuation through `141253537` uses the separate
+optional-field-4 pointer at `message+0x18`, restores registers and returns
+one. It introduces no further optional-field-3 or first-word use. Thus the
+newly checked path ends at an opaque network-to-record copy; it adds no
+demonstrated semantic consumer or authored producer beyond the earlier
+typed model-selection boundary. **Qword 0 remains unresolved**, and no
+default or complete Eir packet follows. The existing profile/preset proof
+is unchanged. No fixture, runtime or archive work was performed.
+
+Fresh source evidence: handler/setter
+`ev_b10b0fec7e02cc2c2c0efd248d325ce772222a5f631e6f385b6d93429268dfbb`
+and aligned handler tail
+`ev_8df7d355196b0ac8283d06778d07b65dc3a6796d7bc8cfded25f56fbd1b254af`.
+The tail capture completes the partial last instruction of the first handler
+window. Complete private export:
+`~/re/gw2/notes/209026-npc-composite-first-word-copy-boundary-20261105.json`,
+SHA-256 `d12b0f3429c436974539ed78aeb062ffd7b3d592aaf738f73d1e447985aa62b8`.
