@@ -382,3 +382,33 @@ Checks:
 - Sandbox run 194 passed.
 - Supervisor smoke: 3 ambient flags reached the game process.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
+
+## Update: kit 82d8d04-cdn900 (live 2026-11-05 23:56:31Z)
+
+- Change (data only): the creator lane's full 26322-remap patch metadata. It adds
+  `data/cdn-files/2130706900`–`2130706904`. `data/latest.txt` becomes
+  `209026_0_0_2130706900_276`. Server binaries are byte-identical to kit 82d8d04.
+- Source and evidence: `docs/re/209026-texture-remapall-private-candidate.md` on main.
+  Receipt `/home/blizz/re/gw2/notes/remapall-cdn-20261105-receipt.json`, SHA-256
+  `3ff42843e4dc6bbb2608a7cf9c5454aa698317ba6e6685710edd498477841292`.
+- Kit: `/home/blizz/gw2-rust-82d8d04-cdn900`.
+- Rollback: `/home/blizz/gw2-rust-82d8d04` (root 2130706600).
+- SHA256SUMS SHA-256: `ca037744d43485eb298ba3385965fb35a5ac043424c704d54fe16365bfa84741`
+  (44 files; verified locally and on Banshee).
+
+Checks:
+- Creator sandbox run 142 (runner `63bc59a`): complete Norn Mesmer preview, no
+  mask-size assert.
+- Dependency smoke, sandbox run 202, used the live launcher's runner `0e6ac30` (gdb
+  `8d5b4be7…`). It ran the kit binaries and CDN files with the live profile. The client
+  fetched 2130706900–2130706904. Character select showed the fully textured Norn
+  Mesmer, and the world loaded. A kill gave XP, a level-up, loot and heart progress
+  1/5, and the NPC counter-attack worked. No asserts and no crash log.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
+- Live readback on Banshee: `/latest64/101` = `209026 0 0 2130706900 276`. Files
+  2130706900, 2130706901 and 2130706902 match the receipt hashes. The game binary is
+  `10bd95cf…`.
+
+Not changed: saved-Norn activation stays held, and the launcher feed (b126 pins runner
+`0e6ac30`) belongs to the launcher lead. On first connect, the owner's client
+downloads the new 13.9 MB Launcher64 metadata through its normal patcher.
