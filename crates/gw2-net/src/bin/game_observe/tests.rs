@@ -341,11 +341,21 @@ fn check_config_validates_saved_profile_and_identity_without_binding() {
         "--creation-scene", "127.1.0.4:6112", "--mission-map-key", "379",
         "--mission-spawn", "0,0,0", "--mission-mesmer-values", "3,0",
         "--mission-reward-tracks", "1,2,3,4", "--mission-equipment", equipment.to_str().unwrap(),
+        "--mission-heart", "56,5",
     ].into_iter().map(str::to_owned).collect();
     // This would fail with AddrInUse if the check attempted to bind.
     run(args.clone().into_iter()).unwrap();
     assert!(character_store::CharacterStore::open(store.clone()).unwrap().list().unwrap().is_empty());
     assert!(!log.exists());
+    let mut zero_target = args.clone();
+    let heart_value = zero_target.iter().position(|arg| arg == "--mission-heart").unwrap() + 1;
+    zero_target[heart_value] = "56,0".into();
+    assert_eq!(run(zero_target.into_iter()).unwrap_err().to_string(), "heart target must be nonzero");
+    assert!(character_store::CharacterStore::open(store.clone()).unwrap().list().unwrap().is_empty());
+    assert!(!log.exists());
+    let no_population = ["--check-config", "--no-capture", "--mission-heart", "56,5"];
+    assert_eq!(run(no_population.into_iter().map(str::to_owned)).unwrap_err().to_string(),
+        "--mission-heart requires a population");
     let with_mask = equipment::EquipmentFixture::parse(base, 1).unwrap().with_mesmer_biography(&[187]).unwrap();
     fs::write(&equipment, with_mask.bytes()).unwrap();
     assert!(run(args.clone().into_iter()).unwrap_err().to_string().contains("slot5"));
@@ -363,7 +373,7 @@ fn check_config_validates_saved_profile_and_identity_without_binding() {
 
 #[test]
 fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
-    use gw2_proto::{agent_behavior::AgentBehaviorFrame209026, map_load::ClientMapEvent};
+    use gw2_proto::{agent_behavior::AgentBehaviorFrame209026, map_load::ClientMapEvent, renown::RenownFrame209026};
     let scenario = saved_population::tests::SavedScenario::new();
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = listener.local_addr().unwrap();
@@ -385,6 +395,7 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
                 skill_order_echo: true, npc_cast: Some(10176), damage_on_skill: Some(200.0),
                 autoattack_skill: Some(10176), xp_per_kill: Some(50), starter_bag: Some(959),
                 kill_loot: true, npc_attack: Some((10.0, 777.0)), sourced_damage: Some(1),
+                heart: Some((56, 5)),
                 no_capture: true,
                 ..Fixtures::default()
             }, Preamble::Mission).unwrap();
@@ -411,7 +422,17 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
         .with_talk_npc(talk).with_hostile_npc(101, [4.0, 5.0, 6.0]).unwrap()
         .with_skill_order_echo().with_npc_cast(10176).with_damage_on_skill(200.0)
         .with_autoattack_skill(10176).with_xp_per_kill(50).with_starter_bag(959)
-        .with_kill_loot().with_npc_attack(10.0, 777.0).with_sourced_damage(1);
+        .with_kill_loot().with_npc_attack(10.0, 777.0).with_sourced_damage(1)
+        .with_heart(56, 5).unwrap();
+    let mut heart_opening = BytesMut::new();
+    for frame in [
+        RenownFrame209026::AddRegion { player: 1, region: 1 },
+        RenownFrame209026::CreateCounter { objective: 0x38, target: 5 },
+        RenownFrame209026::AddSubRegion { player: 1, region: 1, objective: 0x38, heart: 56 },
+        RenownFrame209026::EnterSubRegion { player: 1, heart: 56 },
+    ] {
+        frame.encode_frame(&mut heart_opening).unwrap();
+    }
     let mut prefix = scenario.preamble(0);
     prefix[24..28].copy_from_slice(&379u32.to_le_bytes());
     let (mut client, mut codec, mut pending) = shared_listener_peer(address, prefix, 55);
@@ -422,7 +443,11 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
     send_shared_frame(&mut client, &mut codec, loaded.freeze());
     for event in [ClientMapEvent::MapLoaded, ClientMapEvent::AgentsLoaded] {
         let reply = expected.respond(&mission::Seen::Map(event)).unwrap().unwrap();
-        assert_eq!(next_shared_frame(&mut client, &mut codec, &mut pending), reply);
+        let received = next_shared_frame(&mut client, &mut codec, &mut pending);
+        assert_eq!(received, reply);
+        if event == ClientMapEvent::AgentsLoaded {
+            assert!(received.ends_with(&heart_opening), "saved world must show heart56 with target5");
+        }
     }
     let mut skill = BytesMut::new();
     AgentBehaviorFrame209026 {
@@ -433,7 +458,12 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
     assert!(matches!(seen.as_slice(), [mission::Seen::Skill(_)]));
     let reply = expected.respond(&seen[0]).unwrap().unwrap();
     send_shared_frame(&mut client, &mut codec, skill.freeze());
-    assert_eq!(next_shared_frame(&mut client, &mut codec, &mut pending), reply);
+    let received = next_shared_frame(&mut client, &mut codec, &mut pending);
+    assert_eq!(received, reply);
+    let mut first_kill = BytesMut::new();
+    RenownFrame209026::SetCounter { objective: 0x38, value: 1 }.encode_frame(&mut first_kill).unwrap();
+    assert!(received.windows(first_kill.len()).any(|bytes| bytes == first_kill.as_ref()),
+        "combat kill on the saved world must advance its heart");
     assert!(pending.is_empty());
     client.shutdown(Shutdown::Both).unwrap();
     server.join().unwrap();
