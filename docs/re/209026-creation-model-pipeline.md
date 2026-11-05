@@ -1165,3 +1165,147 @@ process cleanup; unrelated `/proc/*/environ` sampling failures remain
 separate. The next runtime must still establish input readiness, actual
 submission/completion, normal servicing and the precise component result.
 No queue policy or readiness flag change is proposed from this preparation.
+
+## Run 131: ready retained inputs, normal processing, null component acquisitions
+
+Run 131 used the exact `953c8d...` helper in
+`/home/blizz/gw2-sandbox/runs/run131-norn-creator-component-work`, manifest
+SHA-256 `6de454341c24e6475e9a337492a7b630f2b3631657b97ab4951f09b7bd23a989`.
+The probe finished normally at **+139.786 seconds** with
+`late_followup_complete`: 25 safe-prefix records, 23 sparse heartbeat
+callbacks, 19 post-build callbacks, three owner bindings and one watched
+multi-source operation. There were no malformed probe records, observation
+errors or local read errors. Marked snapshots were complete and current
+owner identities verified. Times remain relative to first binding, and the
+initial composite processing before that binding was not observed.
+
+The first scene-0 owner was bound at component index 8, state 5, completion
+stage zero, flags `0x5007`. At the initial marker **+56.243**, it had advanced
+to index/slot **13**, with scratch-set count **1** and model finalization
+clear. Both model scratch alternate bindings were exact. The format-26
+scratch had a concrete `0x141bfc7c0` head, operation tag **5**, destination
+data tag **4** and outstanding count four. The other scratch's head was
+empty with outstanding count zero; both destination ready bits were clear.
+
+The head's bounded retained-input sample resolved the earlier source unknown:
+
+| Initial multi-source input | Observed state |
+| --- | --- |
+| Pass count | 2 |
+| Primary, data tag 6 | Format 26, 128 × 256, one level, flags `0x13036` |
+| Mask 0 | Null, permitted by this operation layout |
+| Mask 1, data tag 7 | Format 27, 128 × 256, one level, flags `0x13036` |
+| Both non-null inputs | Ready bit set, tagged-empty operation head, zero outstanding groups |
+
+Both retained inputs satisfied the source-backed readiness conjunction at
+this snapshot. This does not identify every operation in the destination's
+list. The head had a non-null work group and job tag **8**, but the job's
+first Qword did **not** match the expected callback `0x140b3d4e0`. The probe
+therefore correctly omitted the completion word. Its actual callback value,
+submission history and completion state remain unknown. A guard mismatch
+must not be translated into an unfinished job, a completed job or a specific
+scheduler mutation.
+
+Normal processing was positively observed immediately afterward:
+
+- **+56.264:** `ViewAdvanceTexture` at `0x14094d905`.
+- **+56.282:** normal texture processor `0x140a6ff50` for destination tag 4.
+- **+56.309:** concrete multi-source process entry `0x140a6fdc0` for the
+  exact watched operation. Its retained inputs were still ready; group/job
+  presence and callback mismatch were unchanged.
+- **+56.346:** the initial owner's composite processing entry.
+
+Thus this sampled pending operation was reached by the normal texture path;
+absence of that path is not supported here. The probe's subsequent process
+filter required the guarded callback and nonzero completion. Its lack of a
+second process sample cannot establish a lack of later process calls or
+settle the unread completion value.
+
+The exact component invocation at **+56.372** matched the live owner and
+slot **13**. Its definition and resolved descriptor were non-null; no
+optional variant filename was selected. Channel **0** acquisition returned
+a non-null wrapper/source at **+56.406**: 1024-square, format 26, one level,
+flags `0x3036`, ready bit clear, empty head, zero outstanding groups. Channel
+**2** then returned **null** at **+56.423**, followed by helper return **0**
+at **+56.441**. The source-supported incomplete path is therefore a null
+channel acquisition before composition dispatch. A returned, unready
+channel-0 object is distinct from that null result. The acquisition pool's
+count/limit branch and allocation result were not sampled, so pool
+exhaustion is still unproven.
+
+Owner 2 was first bound at **+61.443**, after the initial result and the
+five-second post-handshake observation window. Owner 3 was bound at
+**+65.721** and became the current appearance owner. At its final marker
+**+127.335** and followup **+139.785**, both complete snapshots agreed:
+state **2**, component index **0**, completion stage **0**, flags `0x7007`,
+invalid mask `0x7fff`, scratch-set count **3**, model finalization clear.
+Its two scratch data tags **19/21** had flags `0x3104`, 1024-square
+sizes, formats 26/31, nine levels, empty heads and zero outstanding groups.
+Both were bound to its own model alternate entries.
+
+The appearance phase supplied another positive normal frame advance at
+**+127.531** and destination-processing observation at **+127.559**. The
+latter was still **initial destination tag 4**, whose retained live watch
+survived the owner change; it was not either current appearance scratch.
+That old target still had a nonempty head and outstanding count four.
+This observation does not reread the old UI owner or establish the job's
+completion state.
+
+The current owner's composite processing was reached at **+127.617**,
+followed by its exact slot-**0** invocation at **+127.643**. Its definition
+and resolved descriptor were non-null, with no optional variant filename.
+Channel **0** again returned a non-null, unready 1024-square format-26
+source, now data tag **24**, at **+127.697**. Channel **1** returned **null**
+at **+127.721**; the helper returned **0** at **+127.744**. This directly
+localizes the current appearance sample before dispatch at source
+acquisition. The new channel-0 source was not either retained input of the
+initial pending operation; those identities and readiness states must not
+be conflated. Both failing channel requests use format 27 in the static
+channel table, but no actual object exists for either null return and no
+pool-cap cause was observed.
+
+The meaningful next boundary is the exact failed acquisition's pool
+count/limit or allocation branch, plus a source-supported interpretation of
+the retained job identity. It is not a readiness-bit override or a queue
+policy change. One invocation per marker and phase-capped servicing samples
+cannot establish continuous frequencies, every source request, or all
+queued work. No scratch finishing-request, dispatch, job callback/writer or
+watched destructor event was captured under this probe's finite filters;
+those bounded negatives do not replace the positive acquisition results.
+
+Retained `client.out` at the final audit: **84,436 bytes**, SHA-256
+**`92ee62d1047fecab8ab8cfba8f7d4997345b141c84a2e90424c2c6446ab8c594`**;
+UI exit **0**. Its first line was the known isolation banner and contained
+no 64-hex container ID, so this reader did not derive a container absence
+check from that line. Controller cleanup remains a separate evidence scope.
+The controller completed with exit0/UI0, verified removal of its owned
+container, unchanged frozen/working executable hashes, 1,124,232 archive
+entries and console privacy checks. Root then verified the shared container
+name absent and returned window11. Controller evidence:
+`ev_a54a0038ff0333ca508c4561e0199c20fd41863bf73bff5e1e3c12969850910d`;
+private export `/home/blizz/re/gw2/notes/209026-norn-creator-run131-20261105.json`.
+
+Evidence:
+
+- `ev_a34639f8661460517a9829c9723b0ccc3b0c3d1131942194ce82e72b36b86219`:
+  armed probe and marker-only internal-hook policy.
+- `ev_457df6c522aa29cfc6d108bf427482c52c9bd783d70b253a348dc77a0dc87a9a`:
+  first owner identity/state.
+- `ev_a1c27ba21a42ee6958e079d1d2dc01041942e4d27b7167fa8e6ee15c6201fad9`:
+  complete initial snapshot, ready retained inputs, actual normal processing,
+  slot-13 null channel-2 acquisition/return and owner changes.
+- `ev_915a362a69b6e945a453f32068160330b4d96fbe4ab6c6d45bc21b89254adcb3`:
+  complete appearance snapshot, normal processing, slot-0 null channel-1
+  acquisition and return.
+- `ev_f237f1c27ebee47a76c6487ffeef2c33447b02705556c82fc22db5c4a8662351`:
+  unchanged final snapshot and normal probe finish.
+- `ev_1fc47c88665371a9e24f1574157490850cf710fa3c044902c2d359bd6b6c3001`:
+  final digest, UI status and safe first-line classification.
+
+Private readers are `creator-work-run131-filter-20261105.py` and
+`creator-work-run131-final-filter-20261105.py`; complete export:
+`/home/blizz/re/gw2/notes/209026-creator-run131-work-component-audit-20261105.json`.
+All listed reader captures exited zero with complete output and verified
+owned-process cleanup. Any unrelated process-environment sampling failures
+remain separate. This audit performed no client attachment, control,
+launch, archive access or frozen-input edit.
