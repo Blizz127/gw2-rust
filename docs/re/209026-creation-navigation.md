@@ -140,6 +140,53 @@ rectangles are not established as the final renderer clipping rectangles.
 Consequently a zero cached measured size, local hidden state, and an off-screen
 allocation are distinct diagnostics in the runtime log.
 
+### Run121: creation and layout succeed
+
+Read-only REA audit `ev_28de53b0460d0717165f5ba4ca4054ed77e87681b42bd33577aa8cd1e00f12b5`
+captured 41 valid navigation log records at 2026-11-05 17:42:10 UTC from
+`/home/blizz/gw2-sandbox/runs/run121-norn-creator-ui-probe/client.out`.
+The observed file was 185535 bytes, SHA-256
+`201d934035df0a92baa4dce69813c858c8d2e66c4918de24ea4add5309d3e54b`.
+This is a timestamped file observation, not a claim about later appends.
+
+Across captured scenes 0–3, including appearance, navigation IDs 13/14/15
+exist as handles 231/233/235. After measurement their sizes are respectively
+78×32, 79×32, and 125×32. Their state settles to `0xa104`: both local hidden
+and disabled bits are clear. The root and two captured ancestors likewise
+have those bits clear. All six captured layout passes receive 1280×900.
+Their allocation rectangles remain:
+
+| Control | Allocation rectangle |
+| --- | --- |
+| Next | `[674, 0, 1280, 900]` |
+| Back | `[0, 0, 606, 900]` |
+| Skip | `[0, 0, 1280, 900]` |
+
+The measured controls therefore are neither missing, locally hidden/disabled,
+nor zero-size in those observations. The probe does not observe their final
+screen rectangles, clipping, alpha, or paint submissions. Root cached measured
+size remains zero, but that cache is not its actual layout size: the observed
+layout event explicitly supplies 1280×900. It must not be interpreted as a
+zero-size root.
+
+The next bounded check is navigation paint and applied geometry. Widget jump
+tables at `0x140419f3c/0x140419f74` bind **event 8** to `0x14041998d`, which
+resolves the widget and calls paint `0x140419fc0`. At paint entry, RCX is the
+widget and widget `+0x18` is its handle; RDX is the paint argument block.
+The painter reads its horizontal extent from RDX `+0x10`. A handle-filtered
+paint observation can distinguish missing paint dispatch from later texture,
+clipping, or draw-submission failure. The separate layout application call is
+`0x14107514c → 0x141088d20`, with computed position and size pointers in
+RDX/R8. Screen coordinate orientation and final clipping are still unproven.
+There is no evidence here for an additional startup response.
+
+Complete REA captures are in
+`/home/blizz/re/gw2/notes/209026-run121-creator-navigation-20261105.json`;
+exact filtered raw lines and parsed snapshots are in
+`/home/blizz/re/gw2/notes/run121-creator-nav-snapshot2-20261105.json`.
+The paint-event mapping is evidence
+`ev_dc84721e79e75279cb43858da8b71bad62579a1ebf9b4129b1ef5448280ab5fc`.
+
 ## Evidence and retained scope
 
 Thirteen complete REA Evidence records are retained privately in
