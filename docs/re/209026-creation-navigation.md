@@ -3,14 +3,23 @@
 Static REA inspection, 2026-11-05, of frozen `Gw2-64.new.exe`, SHA-256
 `99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`.
 The original static pass launched, attached to, or modified no client. The
-later run121/run122/run123 sections report read-only audits of logs from separately
-coordinated, isolated client runs with passive debugger probes.
+later run121–run125 sections audit retained logs from separately coordinated,
+isolated client runs. Run125 also includes the runtime owner's recorded X-window
+resize intervention; the observer itself did not change target memory.
 
-**The inspected creation and layout paths do not require a server reply or a
-ready character model to create and position Next.** Next is created
-unconditionally. Its label, and the Back and Skip To End labels, are plain
-localized strings. These findings do not explain the runtime absence of the
-controls; they establish a concrete UI-state/layout diagnostic for the next run.
+**Run125 resolved the missing navigation as X-parent window clipping.** The
+game child and internal UI were 1280×900, but the parent was only 1272×866.
+Next occupied screen rows 868–900, entirely below that parent. Resizing only
+the parent to 1280×900 immediately exposed Back, Next, and Skip. The following
+measured click reached Next's owner handler. This result is attributable to
+the recorded parent resize, not the passive probes or a server change.
+
+The inspected creation and layout paths do not require a server reply or a
+ready character model to create and position Next. Next is created
+unconditionally, and all three labels are plain localized strings. The static
+and earlier runtime investigations below are retained as the evidence sequence;
+their unresolved hypotheses preceded the run125 intervention. This result does
+not establish that the separate missing character preview is resolved.
 
 ## Creation, layout, and state
 
@@ -81,7 +90,7 @@ requests a fallback material through the UI resource factory; it has no model
 or network gate. Widget `+0x88 == 0` alone does not prove a resource failure,
 because that fallback path is normal.
 
-## Exact passive diagnostic on resume
+## Original passive diagnostic
 
 Inspect a quiescent creator screen without calling target functions:
 
@@ -411,6 +420,237 @@ Exact filtered lines and parsed records are preserved privately in
 All three REA audits, including the two earlier incomplete snapshots, are in
 `/home/blizz/re/gw2/notes/209026-run123-creator-nav-output-audit-20261105.json`.
 
+### Input conversion and actual hit selection for the next diagnostic
+
+The bounded source continuation identifies a concrete chain to observe before
+changing any UI or protocol state. Windows-message translator `0x140c2aa60`
+extracts signed x/y from the message's packed fields at `+0x18/+0x1a`.
+Its table maps messages `0x201/0x202` to internal events `0x14/0x17`, with
+button field 0. At translator return `0x140c2aae0`, R14 still points to the
+input message, RBX to the translated record, and EAX reports success.
+
+Dispatcher `0x14106b1a0` converts ordinary down/up coordinates to
+`(x/inputWidth, 1-(y+1)/inputHeight)` using integer globals
+`0x14289c860/0x14289c864`, then queues events 29/32 through `0x14106dbf0`.
+Mouse movement normally queues event 31. Capture-mode branches and button
+state checks exist, so the probe preserves the actual raw and normalized
+values rather than assuming the ordinary branch ran.
+
+Frame mouse selector `0x141084790` multiplies the normalized coordinates by
+the float UI viewport at `0x14289dea8/0x14289deac`. It obtains an ordered
+frame array through `0x141079170` and visits that array from the end toward
+the beginning. A candidate must supply the requested `frame+0x1dc` mask,
+pass state predicate `0x14108b9e0`, avoid the excluded frame/descendant relation,
+and match geometry through `0x141088990`. With a request mask other than
+`0x100`, it also requires the ancestor-enabled predicate `0x14108b990`.
+If a candidate fails the match, its creation flag `0x2` can still terminate
+the search. This is an actual route for an intervening frame to block target
+selection. It was a hypothesis before run125, whose successful post-resize
+selection did not encounter such a blocking frame.
+
+The geometry helper checks parent clipping or the viewport, then the frame
+rectangle, and invokes a widget-specific geometry event. Consequently the
+probe observes the client's selected result rather than treating a Python
+rectangle test as the client's final hit decision. The result is RAX at
+`0x1410848fd`; the sentinel early return is `0x1410847c4`. Candidate entry
+`0x14108488b` exposes RBX as the visited frame and ESI as its excluded-relation
+result, with the scaled UI point at RSP `+0x78`.
+
+Frame event dispatcher `0x1410870b0` receives frame+`0x220` in RCX and event
+ID in EDX. The nav widget's own table binds events 30 and 34 to its owner
+calls at `0x140419c9a/0x140419ccb`. These boundaries distinguish raw input
+arrival, normalization, selected frame, frame delivery, and creator-owner
+delivery. The expected ordinary `(710,884)` input at input size1280×900
+becomes UI point `(710,15)` at viewport1280×900, inside the observed Next
+rectangle. Run125 below subsequently measured those dimensions and coordinates.
+
+Prepared helper:
+`/home/blizz/re/gw2/notes/creator-input-hit-probe-20261105.py`, entry
+`arm_creator_input_hit(inf, slide)`, SHA-256
+`b1e69e06e4a42b392c5be32862917352628e52aac9a7630616f1104bf8e23567`.
+Before `/sandbox/logs/creator-input-probe-active` exists and appearance scene3
+is selected, only a sparse heartbeat with ignore count10 runs; input/hit sites
+are disabled. After enabling those sites, it creates the empty observer-side
+marker `/sandbox/logs/creator-input-probe-ready`; the UI harness waits for this
+marker before its action. This is filesystem coordination, not an inferior
+memory write.
+The active capture is limited to 35 seconds/4096 callbacks. Candidate/result
+sites are enabled only for a sampled query and matched to its stack pointer.
+The helper captures numeric coordinates and frame ancestry without text or
+keyboard contents. Syntax/mock checks covered the marker gate, raw/normalized
+input, candidate/result ownership, frame delivery, and callback limit.
+
+The separate read-only X metadata recipe is
+`/home/blizz/re/gw2/notes/creator-input-xgeometry-recipe-20261105.md`.
+It records display/window geometry, focus, pointer-under-window, and frame
+extents before/after the existing mouse move and click, without window titles.
+X window IDs and Windows HWNDs remain separate identities.
+
+Fourteen complete REA captures are retained in
+`/home/blizz/re/gw2/notes/209026-creation-input-hit-source-20261105.json`.
+Key evidence:
+`ev_065be328f70de2bc88c1bcd4c5be91639f00d1426f70b9527d74824b94fb5fb4`
+(input normalization),
+`ev_03d283dfd4427799825cf601fa558dc04cb032cac3ae88d7146a409c634eb053`
+(actual candidate selection),
+`ev_8df562f794a6e92b271438fb8bc3cf2ec414a39ac6a55e93398da850fcb5b12e`
+(geometry/state predicates and frame dispatch), and
+`ev_0a7106b38044b1d9c35defce3b60add019b14a1bdaba6f3ce21a0c498e138b92`
+(exact guarded probe bytes).
+
+### Run124: matching dimensions, but input capture has no usable routing coverage
+
+Final read-only REA audit
+`ev_47024f63100b113451ddad3f9cc1c37ff7315bcd3a4156e711463a36735e3080`
+captured `run124-norn-creator-quiet-input/client.out` at
+2026-11-05 18:28:14 UTC: 75076 bytes, SHA-256
+`63669a567f98f3fe0bb7fd1e4dc56fe81180b1cc908a52a88822944252b56295`.
+The input helper armed, observed its marker in appearance scene3, enabled
+its sites, and created its ready marker. At activation it read input dimensions
+1280×900, UI viewport1280×900, and pixel scale1.0. The creator root was handle89,
+with full viewport geometry/clip and state `0xa104`.
+
+**The probe then exhausted its 4096-callback budget without capturing any
+translated input, normalized input, hit query, or owner event.** Its summary
+reports 4097 actual callbacks, zero sampled queries, and no pending query.
+The broad translator/queue/frame-dispatch sites still invoked Python for
+unrelated work despite their textual GDB conditions. This run therefore
+provides no usable evidence for an absent input event, selected hit frame,
+or occluder. The next probe must place its raw/normalized breakpoints on the
+dedicated mouse branches and avoid a continuously enabled generic frame
+dispatcher. Increasing the callback budget alone would preserve this problem.
+
+The UI script exited0 and logged its measured Next-click action and normal
+completion. The ready marker followed the active marker by about67ms. The
+numeric metadata file before movement contains only pointer `(710,490)`,
+screen0, window0; it contains no focused-window geometry. The at-click file
+records pointer `(710,884)`, screen0, window543. These are X observations,
+not client input observations. The identity and geometry of window543 and
+the game X window are not established by these files. In particular, a
+possible desktop/root-window hit must be verified before being asserted.
+
+Filtered input records, exact metadata, file hashes, and marker mtimes are
+preserved in
+`/home/blizz/re/gw2/notes/run124-creator-input-final-20261105.json`.
+Full REA captures are in
+`/home/blizz/re/gw2/notes/209026-run124-creator-input-audit-20261105.json`.
+
+### Replacement observer: dedicated mouse sites and native GDB filtering
+
+The separate helper
+`/home/blizz/re/gw2/notes/creator-input-hit-probe-mouse-sites-20261105.py`
+uses entry point `arm_creator_input_hit_narrow(inf, slide)` and SHA-256
+`1b24645e7e8e64e8025defeb1262d0f2a038d03ea21f5e0c862a8a33847dd5f3`.
+The run124 helper is preserved unchanged. The replacement uses raw-button
+branch `0x140c2ae93`, absolute-movement branch `0x140c2acaa`, and the dedicated
+normalized down/up/move calls at `0x14106b847/0x14106b9ba/0x14106bac3`.
+It removes the shared translator-return, all-event queue, and generic frame
+dispatcher breakpoints. Raw records at these earlier branch sites do not
+claim translated output has already been initialized.
+
+Each site is a public base `gdb.Breakpoint` with a native command list:
+`silent`, `python cni_dispatch(name)`, `continue`. It has no Python `stop()`
+override. An independent owned native fixture under GDB16.3 demonstrated
+why that distinction matters: a subclass callback ran1000 times despite a
+false condition or ignore count100. The command-list form produced zero
+callbacks for a false condition, 900 for ignore count100, and ten samples
+when its callback reset the ignore count99. Disable/rearm and installation
+from another `Arm.stop()` also passed. This verifies observer behavior in
+that fixture; it does not establish input delivery in the game.
+
+The real-GDB result is REA evidence
+`ev_9f168c2562ac00b661da4151c5d903e303bf748c03deabd07a3b04b220517b32`.
+The complete fixture, driver, results and Evidence are retained under
+`/home/blizz/re/gw2/notes/gdb-breakpoint-semantics-oiuknhd1/` (see `README.md`).
+Native breakpoint traps still have overhead; this result concerns filtering
+before the Python command callback. Separate helpers must also avoid sharing
+an address when each command list ends with `continue`, which can prevent
+another list at that address from running.
+The helper's separate syntax/mock checks cover public command-list wiring,
+the active/ready marker gate, raw input without reading unfinished output,
+all three normalized mouse branches, stack-scoped candidate/result capture,
+owner delivery, and the callback limit. Mouse-site byte guards are retained
+in `/home/blizz/re/gw2/notes/209026-creation-input-mouse-sites-source-20261105.json`,
+evidence `ev_086b81042c0c68336c913506559d8b5108a0849f30734a734ad34f0992352fc5`.
+
+### Run125: X-parent clipping resolved, then Next delivery observed
+
+The runtime owner's initial numeric X-window capture, REA
+`ev_bf0c81da9d0163089434e232125c958e84b6841022121cd13a0b5576586a265d`,
+identified this hierarchy at appearance:
+
+| X window | Role in captured hierarchy | Size | Position |
+| --- | --- | --- | --- |
+| 543 | Root | 1280×900 | 0,0 |
+| 12582920 | Parent of game child | 1272×866 | 0,0 |
+| 8393941 | Game child | 1280×900 | 0,0 |
+
+All three were viewable, with border width 0. The child/UI's navigation row
+was at screen Y 868–900, below the parent's bottom at 866. The runtime owner
+then executed only `xdotool windowsize 12582920 1280 900` inside the verified
+owned container. REA
+`ev_3afdd740d1c0453b757f6db23dc5018978e325fb444523f9ae63209e4ab2aec4`
+records that intervention and exit 0. The owner observed Back, Next, and Skip
+immediately in `shots/creator-parent-resized.png`. The retained numeric
+before-click capture then shows root, parent, and child all 1280×900 at 0,0.
+Internal input dimensions and UI viewport remained 1280×900, pixel scale 1.
+This binds the visibility correction to the parent resize; neither a different
+UI-resolution constant nor another server response was required.
+The runtime owner's complete evidence bundle is retained at
+`/home/blizz/re/gw2/notes/209026-norn-creator-run125-20261105.json`
+(including the initial geometry and resize captures above and
+final runtime capture
+`ev_bf4614290cee173087c24c54f7b06007f19d5bfbbd4891cf04e0c97df4b3921d`).
+
+The final read-only input audit, REA
+`ev_2e2fc3c520f7966f867b70fb53c018606a9158e7266f451963efa290eab4f8fc`,
+captured the completed run at 2026-11-05 18:45:13 UTC. The client log was 92010
+bytes, SHA-256
+`b21a40d9a7830b07bd0fb6b48f8bc6e0db4a795ad757a7b74fa8dc1c79ebc338`.
+The UI script exited 0 and the inferior exited normally. The narrow helper
+recorded only 34 callbacks: four raw mouse events, three normalized events,
+three complete hit queries with nine total candidates, and one Next-owner
+event. No callback-limit termination, helper error, or pending query occurred.
+
+The post-resize click followed this actual path:
+
+1. Raw move/down/up reached Windows HWND `0x3007a` at client coordinates
+   `(710,884)`; this HWND is not an X window ID.
+2. Queued move/down/up events 31/29/32 carried normalized coordinates
+   `(0.5546875, 0.016666650772094727)`. The selected UI point was
+   `(710, 14.999985694885254)` in the client's bottom-up coordinates.
+3. Each hit query visited handle 239 (an unrelated zero-size child 13), Skip
+   handle 231, then Next handle 229. Next was immediate creator child 14, order 4,
+   mask `0x11f`, flags `0x210`, rectangle `[674,0,753,32]`, and handler
+   `0x1404198a0`. Its state was `0xa104` initially and `0xa144` after mouse
+   focus. Every query returned hit value 1 and selected handle 229. Its ancestry
+   was creator root 89, UI root 2, then frame 1. None of the visited candidates
+   had the blocking creation flag `0x2` or an excluded relation.
+4. At capture elapsed 0.8303s, creator owner `0x14029c370` received child 14
+   while the scene index was 3. This directly establishes Next delivery. The
+   narrow helper did not sample the subsequent scene-index transition.
+
+The ready marker preceded the click. At-click X metadata reported `WINDOW=0`,
+which must not be interpreted as lack of game delivery: the actual Windows
+message, hit result, and owner callback above establish delivery independently.
+No renderer or UI-handler modification was needed for this observation.
+
+Filtered raw lines, parsed records, numeric X metadata, hashes, and marker
+times are retained in
+`/home/blizz/re/gw2/notes/run125-creator-input-final-20261105.json`
+(SHA-256 `d47878178cac842b2376d88a952723fd2f2909046523bee42482643667ffb52a`).
+The appearance X metadata SHA-256 is
+`b9ed765fb06b18a290ebc7b1f603df1501f7e2c1930c5adaa55b060b6246e404`;
+the post-resize before-click metadata SHA-256 is
+`40f262436dc744bfca2ac527bd33baaca3b4ceab682b19bf2289b76dec283c2b`.
+Three complete REA audit objects are retained in
+`/home/blizz/re/gw2/notes/209026-run125-creator-input-audit-20261105.json`
+(SHA-256 `b85f72c9e157ba09debaf46b283a7b994bc848569846d396af285af536dc1a08`).
+The final capture retained all 23973 raw/normalized output bytes and all seven
+raw frames; its aggregate truncation flag refers to two omitted duplicate
+rendered terminal frames. These read-only audits did not attach to or control
+the running client.
+
 ## Evidence and retained scope
 
 Thirteen complete REA Evidence records are retained privately in
@@ -447,5 +687,6 @@ binds its assertion/position/size strings. The original setter captures above
 establish the desired-Boolean comparison and event dispatch.
 
 Compiler exception ranges split several functions into fragments; the
-continuations cited above were followed explicitly. This is bounded static
-evidence, not observation of the failed run's UI memory or renderer.
+continuations cited above were followed explicitly. Those source captures are
+bounded static evidence; the separately labeled run sections supply the later
+runtime observations and their limits.

@@ -209,3 +209,335 @@ Private REA bundle:
 
 Both extractions exited zero without truncation. This audit read only the
 existing log; it did not launch or attach to the client or change its state.
+
+## Queue contract and sparse follow-up
+
+Additional static inspection makes the defer contract explicit. The Qword at
+`0x1427f9010` holds the file-manager pointer. Let `L = manager + 0x170`:
+
+| Location | Meaning in the inspected intrusive-list implementation |
+| --- | --- |
+| Dword `L` | Signed offset of the link embedded in each model |
+| Qword `L+0x10` | First model pointer, or a terminal value with low bit set |
+| Qword `model+linkOffset+8` | Next model pointer, or low-bit terminal value |
+| Detached link | First link Qword points to itself; second equals link address OR 1 |
+
+`0x14023b630` relinks a node after first unlinking it from its old position.
+The model enqueue wrapper `0x140d00c90` supplies type 2 and a null reference
+node, inserting before the sentinel (at the tail). Wrapper `0x140d00cb0`
+supplies type 1, inserting after the sentinel (at the head). The helper's
+assertion names `LIST_LINK_AFTER` and `LIST_LINK_BEFORE` and validates the link
+offset. These operations do not imply a separate queue class for a new model.
+
+Unlink wrapper **`0x140d06750`** selects the same manager `+0x170` list and
+jumps to generic unlink `0x140a08570`. Finalizer `0x140cf1a80` invokes this
+wrapper at **`0x140cf1b82`**, after its preparation and texture/resource gates.
+The deferred combined-file path returns from the preparation helper with zero
+and exits before that unlink. The inspected defer path therefore expects the
+model to remain on the list for a later pump; it does not require a new model
+enqueue or the composite-completion callback to resume. This is not an
+exhaustive exclusion of unrelated destructor/cancellation paths.
+
+Every pump pass restarts from `manager+0x180`, the list head. It caches the next
+node before processing the current one. Already-finalized nodes are removed;
+non-ready nodes are skipped; ready nodes enter the finalizer. A deferred ready
+node is not rotated to the tail by this loop. After finalizer calls, flags bit 1
+or bit 0 bypass the budget check; otherwise the cached elapsed counter is
+compared with the Qword budget at **`0x1425928e0`** and the branch at
+**`0x140d0200d`** can end the pass. Observed run-123 flags 8 have both bypass
+bits clear. The time counter is sampled between iterations; the check is not a
+precise duration measurement of the just-completed finalizer.
+
+This creates a concrete possible failure mode: earlier ready models repeatedly
+defer, retain their places, and consume enough budget to prevent later models
+from being visited. Static code establishes that possibility and the expected
+retained membership after a defer. Run 123 does not establish that this mechanism
+occurred, which node blocked progress, or whether the owner was instead unlinked
+by another path.
+
+**Timing remains confounded by instrumentation.** Run 123 used frequent owned
+UI/pump callbacks and the runner still had generic diagnostics enabled,
+including its default movement trace. Breakpoint stops and host-side inspection
+can amplify budget effects. The earlier missing preview in run 120 is not a
+controlled long-soak comparison. These results do not justify changing the
+client's queue policy.
+
+The next helper is
+`/home/blizz/re/gw2/notes/creator-model-queue-probe-20261105.py`, entry
+`arm_creator_model_queue_probe(inf, slide)`, SHA-256
+`0286dfd9025b9614fe885544d8954810cee496446db00fd982c8cc8998963442`.
+It is intended to replace the previous pipeline probe while generic continuous
+traces are disabled. It has no pump-entry breakpoint. The UI heartbeat uses
+GDB `ignore_count=30` and checks only for the exact marker
+`/sandbox/logs/creator-quiet-soak-complete`. The planned controller writes this
+after a 45-second quiet appearance soak.
+
+The first late snapshot walks the list and records owner membership/index,
+self-detachment, four head models, and direct file/finalization state **before**
+enabling internal finalizer/budget probes. The walk stops at 128 nodes, and
+truncation or a cycle cannot be reported as proven owner absence. Later probes
+allow at most three taken budget exits, four observations at each preparation,
+texture-result, and finalizer gate, and two owner-unlink calls. The next sparse
+UI followup uses `ignore_count=10` and disables all probe sites. Independent
+limits are 15 seconds for that internal window, 120 seconds overall, 96 records,
+and 64 post-build observations. Ignored software-breakpoint traps still have
+some overhead; the late snapshot is a stronger timing control, not a claim of
+zero instrumentation cost.
+
+New source evidence:
+`ev_314ec01dcd7d1f4423162bf36c87cf6efa62400e85e0f3ed4afab3ba38b292f6`
+(list insert/unlink and combined builder) and
+`ev_9a9744fbf702fdca5a1b9addbea188d4c525c4006ddd1816e4c194346cccc2f9`
+(exact queue wrapper, unlink location, pump budget path). The private bundle is
+`/home/blizz/re/gw2/notes/209026-creator-model-queue-20261105.json`.
+The final helper passed syntax checking and twelve host-only synthetic tests,
+including marker ordering, membership versus truncated/cyclic walks, head gate
+samples, and observation limits. No client was launched for this preparation.
+Final-helper mock evidence:
+`ev_1b0dcb093782e9b559946a2bbd330c6f2e74938dfd3732b71e5991feda39249b`
+(exit zero, nontruncated; owned-process cleanup verified).
+
+## Run 124: early membership retained; late probe stopped before marker
+
+Run 124 disabled the runner's generic movement, stage, send, command, and texture
+diagnostic traces and used the marker-gated queue helper above. Its queue probe
+**stopped before the quiet-soak marker**, so this run supplies no late queue
+snapshot, internal finalizer-gate result, or budget-exit observation.
+
+The early observations remain useful:
+
+- At first ownership, the list has four models and the owner is index 3.
+- The actual link offset is **`0x40`**; the sampled budget is 20000 ticks.
+- At appearance entry, elapsed 16.545 seconds, the complete list has six models
+  and the new owner is **index 5**, with its link attached.
+- The first three models are earlier preview owners (identified by the retained
+  object tags and scene transitions). Each has base and combined file state 4,
+  no pending inputs, finalized bit clear, null skeleton, and two blit resources.
+- The new owner has base file state 4 and eleven pending inputs at that instant.
+
+At elapsed **25.983 seconds**, the helper emits `finished` with reason
+`120_heartbeat_limit`, 121 UI callbacks, and 22 post-build callbacks. Its
+internal-probe counts are empty. The final log later shows that the quiet-soak
+marker exists, but there is no `late_snapshot_before_internal_sites` event.
+The early ready-but-unfinalized queue heads are not evidence that they remain
+in that state after the full soak or that a budget exit blocks the owner.
+
+The helper's synthetic tests validated assignment of `ignore_count`, not its
+interaction with an actual GDB Python `Breakpoint.stop()` callback. The observed
+callback rate did not provide the intended sparse observation. Before another
+client test, a host-only GDB test should establish native ignore/condition versus
+Python-callback ordering and validate the replacement mechanism. Simply raising
+the callback cap would not establish a quiet timing control. The exact retained
+`0286...` helper is unchanged for reproducibility.
+
+Final private log:
+`/home/blizz/gw2-sandbox/runs/run124-norn-creator-quiet-input/client.out`,
+75076 bytes, SHA-256
+`63669a567f98f3fe0bb7fd1e4dc56fe81180b1cc908a52a88822944252b56295`.
+Safe-prefix filter:
+`/home/blizz/re/gw2/notes/creator-model-run124-filter-20261105.py`.
+Final read-only extraction:
+`ev_f6c795a62eda576189e728f53a92b8898b48cb1521d0126d94222610d1852fce`
+(exit zero, nontruncated; owned-process cleanup verified).
+Private bundle:
+`/home/blizz/re/gw2/notes/209026-creator-run124-queue-20261105.json`.
+
+
+## Replacement probe: verified native GDB filtering
+
+A separate owned C fixture under the installed **GDB 16.3** settles the
+run-124 sampling defect. A Python subclass's overridden `Breakpoint.stop()`
+ran on all 1000 calls despite condition zero and an ignore count of 100.
+A plain public `gdb.Breakpoint(..., internal=False)` with a native command list
+behaved as required: condition zero produced no Python callbacks; ignore 100
+produced 900; resetting ignore to 99 inside the callback produced ten callbacks
+at calls 0, 100, through 900. Installing the plain breakpoint and its command
+list inside an existing `Arm.stop()` also passed. This validates the debugger
+mechanism on the owned fixture; it does not yet observe the replacement in GW2.
+
+The command list is installed with `gdb.execute` while the breakpoint is
+disabled, using `silent`, `python cmn_dispatch(...)`, `continue`, and `end`.
+The new helper contains no overridden `stop()` method. All seven sites remain
+disabled until installation succeeds; an installation failure deletes every
+breakpoint created by that attempt.
+
+Private replacement helper:
+`/home/blizz/re/gw2/notes/creator-model-queue-native-probe-20261105.py`,
+entry **`arm_creator_model_queue_native(inf, slide)`**, 11725 bytes, SHA-256
+`f6f4f2f8e8cb4b0563ae81056c6e2539ef4a5efbb2b8ed229f3ca18f1de43cee`.
+The original `0286...` helper remains unchanged; the first native-command
+revision `6274...` is retained privately as
+`creator-model-queue-native-probe-20261105-62741234.py`.
+
+The queue heartbeat is at **`0x14029ccd3`**, distinct from the navigation
+helper's plain-command breakpoint at UI function entry `0x14029ccd0`.
+The only preceding instruction is the three-byte `mov rax,rsp`; at `ccd3`,
+`mov [rax+0x18],rbx` begins, and RCX still holds the scene. RCX is first
+modified at `0x14029ccef`. As for every site, installation verifies twelve
+live bytes against the hash-checked frozen image. This avoids competing
+`continue` command lists at the same address. Targeted instruction evidence:
+`ev_b680eb877cf430c699e8373592d0c24ade0f4388cc206257a7fbf1bd4379be12`.
+
+Before the exact `/sandbox/logs/creator-quiet-soak-complete` marker, the new
+helper reads only post-build ownership and the sparse marker heartbeat.
+**There is no early queue walk.** Native `ignore_count=30` controls the
+heartbeat, and the erroneous 120-heartbeat cap is removed. The first marker
+snapshot still precedes all internal probe activation. The bounded list walk,
+head/owner gates, three budget exits, two owner-unlink observations, one late
+followup after ignore 10, and the 15-second/120-second/output limits remain as
+specified above. Native ignored software-breakpoint hits still incur debugger
+trap overhead; this change does not establish completely uninstrumented timing.
+
+The final helper passed syntax parsing and seventeen host-only synthetic checks,
+including no pre-marker queue walk, marker-before-internal-site ordering,
+partial-installation cleanup, distinct UI heartbeat placement, capped or cyclic
+list uncertainty, and observation limits. Real GDB filtering evidence is
+`ev_9f168c2562ac00b661da4151c5d903e303bf748c03deabd07a3b04b220517b32`;
+the owned C fixture, driver, results, and complete evidence are retained beside
+`/home/blizz/re/gw2/notes/gdb-breakpoint-semantics-oiuknhd1/README.md`.
+Final-helper mock evidence is
+`ev_206de85a5663b0d443fd17fb6f866b3c40ec190263d2ac0784f5436f64e47d24`
+(exit zero, nontruncated, owned process group verified). No GW2 process was
+launched for this preparation. The private export is
+`/home/blizz/re/gw2/notes/209026-creator-queue-native-probe-20261105.json`.
+
+
+## Blit-resource gate: interpreting the bounded probe
+
+The finalizer's blit gate is separate from its model-file completion predicate.
+A bounded inspection of its direct wrappers establishes this ordered path:
+
+1. `0x140cf1a80` calls preparation helper `0x140cf6150`. A zero result at
+   `0x140cf1a91` exits immediately, before any blit test, even on the forced
+   path. This includes the previously observed combined-file defer.
+2. With preparation successful, model flags `+0x90` bit 41 must be clear for
+   the normal blit loop to run. If set, the aggregate gate becomes zero.
+3. The loop reads the array at `model+0x1c0`, count `+0x1cc`, stride 24 bytes.
+   For each entry it selects Qword `entry+0x10` when non-null, otherwise
+   Qword `entry+8`, and calls **`0x140ab7e30`**. The first zero return, observed
+   at `0x140cf1b04`, ends the loop with a zero aggregate gate.
+4. After every entry passes (or an empty loop), flags bit 58 must be clear.
+   The aggregate result at `0x140cf1b2a` is otherwise zero.
+5. Unlink/finalization proceeds when that aggregate result is nonzero or
+   `R14D` is nonzero. The latter is set only when the finalizer argument is
+   nonzero **and** model flags bit 10 is clear. It bypasses this aggregate
+   gate, not the earlier preparation helper.
+
+`0x140ab7e30` asserts `texturePtr` against the embedded source path
+`Engine/Gr/GrTex.cpp`, then loads `texturePtr+0x10` and tail-dispatches through
+that object's **virtual slot `+0x48`**. Thus a failing `texture_result` is
+specifically a Gr texture readiness predicate, not the model file-state
+predicate. The inspected wrapper does not identify its concrete implementation
+or prove whether failure means an undecoded texture, deferred upload, GPU
+completion, another dependency, or an explicit resource error. File state 4/5
+on the model's base/combined/animation files does not settle this texture gate.
+
+The earlier **`0x140a805d0` is not the direct blit predicate**. It belongs to the
+later model `IsReady` path, reached through the model's `+0x200` object. It
+checks Gr object type 9; flags `+0x38` bit 0 return ready, bit 1 return not ready;
+otherwise it walks `+0x58` / count `+0x64` with stride `0xe8`, calling
+`0x140aa82d0` on each record's `+0xd0` object and caching success. That callee
+has its own nonzero `+0x50` prerequisite, tests a list of texture objects via
+the same nested-object virtual slot `+0x48`, and has additional resource
+initialization conditions. This is a later aggregate readiness path, not proof
+that it caused the queued model to fail finalization. No numeric type name or
+GPU-specific interpretation is assigned from this slice.
+
+For the planned probe, `prepare_gate=0` localizes failure before textures;
+`texture_result=0` localizes it to one selected Gr texture; and
+`finalizer_gate=0` with bypass zero localizes the aggregate block. A missing
+texture event is not itself a texture failure: bit 41 may skip the loop, the
+array may be empty, or the bounded sample cap may have been reached. Several
+sampled successful textures do not establish that every array entry passed.
+The frozen `f6f4...` helper already captures these gates and model bits 41/58,
+and remains unchanged.
+
+If a zero texture result is actually observed, the next minimal passive datum
+would be the preferred-image address of the concrete function: read the nested
+object pointer at `selectedTexture+0x10`, read its vtable pointer, then read the
+function pointer at `vtable+0x48`, alongside the resource identity already tagged
+by this helper. That identifies a concrete
+implementation for a bounded followup. It is a proposed followup, not a new
+probe, runtime observation, or reason to change queue policy.
+
+New source evidence:
+`ev_b10ba88cf797781d82a726432806dc7a2e8255d85ffc8e54ab41658fd61b16f8`
+(texture wrapper, source strings, separate Gr aggregate entry),
+`ev_820e442b9f2f81110e7bc4b604f0a7cb30aaa0a7f6e9881f06f931dcd3cd2d87`
+(full ordered finalizer gates and aggregate loop),
+`ev_953dad259ccf114d7521f51f34dfd0ed93a52e5360709003e4c879f8e6bc5619`
+and `ev_c8d5edd7aae573fc35beb5df2608717a30062d88f6ceb338e2a8b9759d65c335`
+(the aggregate's immediate readiness callee). All are hash-bound static slices;
+no client was launched. Private export:
+`/home/blizz/re/gw2/notes/209026-creator-blit-readiness-20261105.json`.
+
+
+## Run 125: late retained queue and failing Gr texture predicates
+
+Run 125 used the native-command helper `f6f4...` with the navigation heartbeat
+at a different instruction and generic continuous traces disabled. Its first
+late snapshot occurs at **75.465 seconds**, 59.474 seconds after the first
+appearance ownership record, **before any internal queue/finalizer site was
+enabled**. This time the marker-gated observation completed as intended.
+
+The complete seven-node list has link offset `0x40`. The current appearance
+owner (tag 4) is attached at **index 6**. Each of the first four heads and the
+owner has base/combined file state 4, pending count zero, finalized bit clear,
+null skeleton, two blit resources, and flags bits 41/58 clear. The snapshot
+therefore establishes retained late membership and ready sampled model files;
+it does not establish that every texture or other dependency is ready.
+
+After the snapshot, the first two heads (tags 1 and 2, retained from earlier
+creation scenes) each produce this sequence twice:
+
+| Probe result | Observation |
+| --- | --- |
+| Preparation | `1` |
+| Selected Gr texture predicate | `0`, resource tags 14 and 15 respectively |
+| Aggregate finalizer gate | `0` |
+| Bypass (`R14D`) | `0` |
+
+This is the first direct observation of a blocking dependency: the earlier
+heads pass preparation but fail the Gr texture readiness predicate. Bits 41
+and 58 do not explain those sampled failures. The concrete texture virtual
+implementation and its underlying reason are still unknown. The four-sample
+caps were consumed by these two heads; the owner's own texture predicate was
+not observed.
+
+Three taken budget exits occur before the owner: twice after the second head
+with elapsed counters 770006 and 790006 against budget 20000, then after the
+fourth head with elapsed counter 20000. The first two include several internal
+breakpoint stops and their large counters must not be treated as normal frame
+cost. The third occurs after the four gate-sample caps have disabled those
+sites, but still within the instrumented window. These exits demonstrate the
+observed traversal cutoff, not an uninstrumented duration or a complete cause
+of the original failure.
+
+At **77.954 seconds**, the followup still has seven nodes and the same attached
+owner at index 6, with the sampled readiness fields unchanged. No owner unlink
+was recorded. The helper stops normally with `one_late_followup_complete`,
+12 sparse heartbeat callbacks, 23 post-build callbacks, and 24 total records.
+It ends while still observing scene 3, so it supplies **no coverage of later
+Next-driven scene/owner changes**.
+
+This run was not an untouched soak. At approximately 18:43:40 UTC, the parent
+controller resized the X parent from 1272×866 to 1280×900 to match its render
+child; evidence
+`ev_3afdd740d1c0453b757f6db23dc5018978e325fb444523f9ae63209e4ab2aec4`
+records that display/window-state intervention. Footer visibility and later
+navigation are tracked separately. The distinction retained here is the first
+late list snapshot before internal queue probes, not absence of all interaction
+or debugger trap overhead.
+
+Private log read twice with identical contents:
+`/home/blizz/gw2-sandbox/runs/run125-norn-creator-filtered-input/client.out`,
+92010 bytes, SHA-256
+`b21a40d9a7830b07bd0fb6b48f8bc6e0db4a795ad757a7b74fa8dc1c79ebc338`.
+Safe-prefix filter:
+`/home/blizz/re/gw2/notes/creator-model-run125-filter-20261105.py`.
+Read-only extractions:
+`ev_4bfb7e5025b81dae77c36612f63552ce99802de184a148072df8c129a3e1e570`
+and `ev_e854081ad87ec71ec5df105fe7a4e22c75ac8bf4d898b8bb0683aeedab3ed79e`
+(exit zero and nontruncated; owned process group verified, with one unrelated
+unreadable process environment listed on the second capture). Private export:
+`/home/blizz/re/gw2/notes/209026-creator-run125-texture-gate-20261105.json`.

@@ -1,8 +1,12 @@
 # Build 209026 saved Norn Mesmer creator experiment
 
-The observer has opt-in, single-account sandbox persistence and a creation
-scene. It is not deployed in owner release b7fbd8c. Actual UI creation,
-save-to-world entry and relog have not passed runtime validation.
+The observer has opt-in, single-account persistence and a creation scene.
+Support is deployed in owner release `56242d1` at
+`/home/blizz/gw2-rust-56242d1`; saved mode is not enabled in the host config.
+Actual UI creation, save-to-world entry and relog have not passed runtime
+validation. Run125 resolved the test harness's missing navigation controls
+and reached the Mesmer mask biography page; the character preview remains
+unresolved.
 
 ## Implemented local behavior
 
@@ -61,13 +65,32 @@ unknowns; the container's explicit cleanup check is the runtime boundary.
   observed, with no415 or saved character. The unchanged appearance screenshot
   hash was `f35ac13b7fc2031e71e86a38f09dd407727c9111934ed44cf4c4d6ad568eec34`.
 
-The taller window did not resolve the issue. Source checks identify416 as a
+At that stage, the taller display did not resolve the issue. Source checks identify416 as a
 scene report, not a proven response wait. Navigation creation/layout has no
 identified server-readiness or preview gate; model construction is local.
 Do not add an invented acknowledgment. The next bounded diagnostic is a
 passive inspection of the existing scene/model/UI state, using the anchors in
 [client416](209026-creation-client416.md) and
 [navigation](209026-creation-navigation.md).
+
+Run125 subsequently identified the cause: the 1280×900 game child was inside
+an undersized 1272×866 X parent. The footer at Y868–900 was clipped. Resizing
+that parent restored Back, Next and Skip To End. The recorded click reached
+Next's owner handler, and `creator-after-next.png` shows the Mesmer mask
+biography page, 5/10. No server packet or client UI-handler change was needed.
+The distinct missing model preview now has an observed Gr texture readiness
+failure on earlier queued models; see the [model pipeline](209026-creation-model-pipeline.md).
+
+Run125 exited zero, UI status was zero, the owned container was removed, and
+both executable hashes were unchanged. Runtime evidence is
+`ev_bf4614290cee173087c24c54f7b06007f19d5bfbbd4891cf04e0c97df4b3921d`;
+the explicit resize is
+`ev_3afdd740d1c0453b757f6db23dc5018978e325fb444523f9ae63209e4ab2aec4`.
+Screenshot/intervention audit
+`ev_9f217a62edb22db3399a61add9e987a7665bc8f21eddfcfc7675b67659769053`
+binds the resulting 1280×900 mask-page image to SHA-256
+`520fb9134b9ff10834314d2dedeb8557e00003eb85bafd590892f835bff6a01e`.
+Complete private evidence: `/home/blizz/re/gw2/notes/209026-norn-creator-run125-20261105.json`.
 
 ## Retained REA evidence
 
