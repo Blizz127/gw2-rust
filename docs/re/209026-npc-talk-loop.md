@@ -568,3 +568,24 @@ health bar and target frame cleared, and there was no assert.
 The sandbox now shows one complete fight against a server-driven NPC: spawn → target →
 player skill request → server damage (257) → server death (84/0x33). The damage amount,
 the attack skill (the heal is only a trigger), loot, XP and respawn are not implemented.
+
+### Runs 141–142: weapon key 1 is a repeat-start signal; an auto-attack fight to the kill
+
+- **Run 141:** with the minotaur 100 units ahead and targeted, each press of key 1 sends
+  client 23 **`[0x29][0x05]`**, never SkillBegin 0x23. Slot 5 is the skill-bar slot of
+  the primary weapon's first skill (`docs/re/209026-mesmer-starter-skill-requirements.md`).
+  In the client's signal schema, the 2-byte `{signal, skillbarSlot}` signals are
+  SkillRelease and SkillRepeatStart. So **0x29 is very likely SkillRepeatStart**
+  (*inferred*), the auto-attack start. `2a 00`, seen earlier, is probably its release.
+- **Run 142** (`--mission-autoattack-skill 10170 --mission-damage-on-skill 30`): each
+  `[29 05]` is answered with server 34 to the player (same agent, tick, flags and value;
+  Word 1000), carrying packed 0x78 `{skill 10170, slot 5, agent 3}`, plus 257 on the NPC.
+  - Four presses gave **100 → 70 → 40 → 10 → 0**, then server 84/0x33 death.
+  - The target frame showed 70% after hit 1. The minotaur died with its nameplate
+    fading. There was no assert.
+  - The player appears in an attack pose with a weapon glow. Whether the 0x78 order
+    played the attack animation isn't confirmed from stills.
+
+Base weapon skill 10170 is the palette's base candidate (chain 10170 → 10171 → 10172).
+The damage values are placeholders, and chain advance and range checks aren't
+implemented.

@@ -78,6 +78,9 @@ pub enum Seen {
     Conversation(ConversationReply209026),
     /// Client 23 carrying SkillBegin 0x23, with its outer behavior header.
     Skill(SkillSeen),
+    /// Client 23 2-byte `[0x29][skill-bar slot]` (inferred SkillRepeatStart; key 1
+    /// sends slot 5, the weapon's first skill), with the header to echo.
+    RepeatStart(SkillSeen),
     Other(u16),
 }
 
@@ -354,6 +357,9 @@ pub struct MissionPhase {
     /// Research: on each player SkillBegin aimed at the hostile NPC, lower its
     /// health by this amount through server 257 (amount, remaining health).
     damage_on_skill: Option<(f32, f32)>,
+    /// Research: answer `[0x29][slot]` with server 34 + 0x78 for this skill key,
+    /// aimed at the hostile NPC (auto-attack hypothesis).
+    autoattack_skill: Option<u32>,
 }
 
 impl MissionPhase {
@@ -383,6 +389,7 @@ impl MissionPhase {
             skill_order_echo: false,
             npc_cast: None,
             damage_on_skill: None,
+            autoattack_skill: None,
         })
     }
 
@@ -450,6 +457,12 @@ impl MissionPhase {
     /// `amount` via server 257 (the NPC spawns with 100). Clamped at 0.
     pub fn with_damage_on_skill(mut self, amount: f32) -> Self {
         self.damage_on_skill = Some((amount, 100.0));
+        self
+    }
+
+    /// Research: answer the weapon repeat-start signal with a 0x78 order.
+    pub fn with_autoattack_skill(mut self, skill_key: u32) -> Self {
+        self.autoattack_skill = Some(skill_key);
         self
     }
 
@@ -556,6 +569,61 @@ impl MissionPhase {
                     if reply.is_some() { "talk NPC: opening conversation" } else { "not the talk NPC" }
                 );
                 Ok(reply.map(BytesMut::freeze))
+            }
+            Seen::RepeatStart(start) if self.began && self.autoattack_skill.is_some() && self.hostile.is_some() => {
+                let npc = self.hostile.as_ref().unwrap().agent_index;
+                let skill_key = self.autoattack_skill.unwrap();
+                let order = SkillOrder209026 {
+                    order_flags: 0,
+                    skill_key,
+                    slot: start.request.slot,
+                    raw_7: 0,
+                    agent: u32::from(npc),
+                    byte_12: 0,
+                };
+                let mut out = BytesMut::new();
+                AgentBehaviorOrderFrame209026 {
+                    agent_index: start.agent_index,
+                    remote_tick: start.remote_tick,
+                    command_flags: start.command_flags,
+                    behavior_value: start.behavior_value,
+                    behavior_data: order.to_behavior_data().to_vec(),
+                    word: 1000, // placeholder duration (m_durationMs)
+                }
+                .encode_frame(&mut out)?;
+                eprintln!(
+                    "Mission phase: repeat-start slot {} answered with server 34 0x78 skill {skill_key} on NPC {npc}",
+                    start.request.slot
+                );
+                if let Some((amount, health)) = self.damage_on_skill {
+                    let remaining = (health - amount).max(0.0);
+                    self.damage_on_skill = Some((amount, remaining));
+                    HealthFrame209026 {
+                        character_index: u32::from(npc),
+                        operation: HealthOperation209026::Currents { current: remaining, second_current: 0.0 },
+                    }
+                    .encode_frame(&mut out);
+                    eprintln!("Mission phase: auto-attack hit NPC {npc}: health {health} -> {remaining} (server 257)");
+                    if remaining == 0.0 && health > 0.0 {
+                        let dead = HealthTransitionPayload209026::Dead(HealthTransitionDetails209026 {
+                            detail_word: 0,
+                            detail_byte: 0,
+                            content_key: skill_key,
+                            agent_id: fixture.plan.character_index,
+                            trailing_byte: 0,
+                        });
+                        AgentBehaviorFrame209026 {
+                            agent_index: npc,
+                            remote_tick: start.remote_tick,
+                            command_flags: 0x10,
+                            behavior_value: 0x4000_0100,
+                            behavior_data: dead.encode_payload(),
+                        }
+                        .encode_frame(&mut out)?;
+                        eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
+                    }
+                }
+                Ok(Some(out.freeze()))
             }
             Seen::Skill(skill)
                 if self.began
@@ -740,6 +808,10 @@ impl MissionPhase {
                 Seen::Interact(request) => eprintln!("Mission phase: client 23 interact {request:?}"),
                 Seen::Conversation(reply) => eprintln!("Mission phase: client conversation {reply:?}"),
                 Seen::Skill(skill) => eprintln!("Mission phase: client 23 {skill:?}"),
+                Seen::RepeatStart(start) => eprintln!(
+                    "Mission phase: client 23 repeat-start [29 {:02x}] value {:#x}",
+                    start.request.slot, start.behavior_value
+                ),
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
@@ -755,6 +827,15 @@ impl MissionPhase {
         match id {
             AgentBehaviorFrame209026::CLIENT_MESSAGE_ID => {
                 let behavior = AgentBehaviorFrame209026::decode_client_frame(&mut input).ok()?;
+                if let [0x29, slot] = behavior.behavior_data[..] {
+                    return Some(Seen::RepeatStart(SkillSeen {
+                        agent_index: behavior.agent_index,
+                        remote_tick: behavior.remote_tick,
+                        command_flags: behavior.command_flags,
+                        behavior_value: behavior.behavior_value,
+                        request: SkillBeginRequest209026 { target: 0, skill_key: 0, slot },
+                    }));
+                }
                 if let Ok(request) = SkillBeginRequest209026::from_behavior_data(&behavior.behavior_data) {
                     return Some(Seen::Skill(SkillSeen {
                         agent_index: behavior.agent_index,
@@ -922,7 +1003,7 @@ pub(crate) mod tests {
                         Seen::Map(ClientMapEvent::MapLoaded) => 420,
                         Seen::Map(ClientMapEvent::FailedToLoad) => 418,
                         Seen::Map(ClientMapEvent::AgentsLoaded) => 412,
-                        Seen::Interact(_) | Seen::Skill(_) => 23,
+                        Seen::Interact(_) | Seen::Skill(_) | Seen::RepeatStart(_) => 23,
                         Seen::Conversation(ConversationReply209026::Choose { .. }) => 275,
                         Seen::Conversation(ConversationReply209026::Closed { .. }) => 276,
                     })
@@ -1420,8 +1501,9 @@ pub(crate) mod tests {
     #[test]
     fn other_client_23_payloads_stay_raw_and_keep_the_phase() {
         let mut phase = talk_phase();
-        // A 2-byte signal (run125's 0x29) is neither interact nor skill.
-        assert_eq!(phase.push(&client_23(&[0x29, 5])), [Seen::Other(23)]);
+        // A 2-byte 0x2a signal is neither interact, skill nor repeat start.
+        assert_eq!(phase.push(&client_23(&[0x2a, 0])), [Seen::Other(23)]);
+        assert!(matches!(phase.push(&client_23(&[0x29, 5]))[..], [Seen::RepeatStart(_)]));
         // SkillBegin is recognised but unanswered without the research flag.
         let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
         assert!(matches!(seen[..], [Seen::Skill(SkillSeen { request: SkillBeginRequest209026 { skill_key: 10176, .. }, .. })]));
