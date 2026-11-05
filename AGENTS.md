@@ -61,6 +61,10 @@ assignments. Continue the current authorized work or await a fresh scoped task.
   code, data, protocol or runtime. Keep raw evidence private.
 - Preserve uncommitted work and unrelated files; never reset or clean them
   merely to prepare a release. Use an isolated release worktree when needed.
+- Use a distinct `CARGO_TARGET_DIR` for each worktree. Switching source trees
+  through one target directory can leave a stale top-level executable even
+  when Cargo reports a successful cached build. Verify the staged binary's
+  expected interface and hashes before running or publishing it.
 - Use [deploy/README.md](deploy/README.md) for kit layout, health, player checks
   and rollback, subject to the current standing order above.
 - The [Norn owner release record](docs/re/209026-owner-norn-release.md) and
