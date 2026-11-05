@@ -42,6 +42,7 @@ pub mod progress;
 pub mod npc_talk;
 pub mod pvp;
 pub mod quest;
+pub mod renown;
 pub mod reward_track;
 pub mod schema;
 pub mod skill_availability;

@@ -895,3 +895,90 @@ agent 4 and auto-attack hit and killed the wolf, with the Mesmer sword animation
 
 Floating numbers were still not visible 0.12 s after each hit. The client's own fade-in
 is 0.05 s and its total lifetime 0.45 s.
+
+### Run 171: post-load NPC model streaming probe
+
+The run used `--mission-late-npc 4079,-3000,-25300,-3742`: a wolf, agent 20, spawned in the
+AgentsLoaded batch after BeginPlaying. Run-local gdb probes:
+- IsReady `0x14116a610`: logs the component and resource fields;
+- view Advance `0x141105e90`: hit counter;
+- AvManager predicates `0x14115d01f` and `0x14115d04a`: return values.
+
+**Player (load time).** Model component `0x4f08c330` starts not ready: res+0x90 bit 35 is 0
+and res+0x238 is 0. At IsReady hit 201 both become set, flags +0x20 go 0x8001 → 0x9401 →
+0x9501, and IsReady stops being called. The component is ready and bit 4 is cleared.
+
+**Late wolf.** Its component `0x64d65ed0` appeared at 17:36:30, with flags +0x20 0x8001 →
+0x9001, comp+0xe0 null, and bit 35 = 0 and +0x238 = 0 on its resource. IsReady was called
+for it only twice and never again in the remaining ~60 s. Both AvManager predicates only
+ever returned 0.
+
+So the post-load model resource never starts loading (bit 35 and +0x238 never set) and the
+view is not polled again. During loading the loader drives the resource queue with a force
+flag (`0x140951f6f`); after load, nothing ever enqueues or polls this resource.
+
+The next step is to trace how res+0x90 bit 35 / res+0x238 get set for a load-time view: its
+caller and the queue entry. Then find the equivalent request that a post-load spawn has to
+make, or the server message that triggers it.
+
+### Run 172: the post-load model resource is requested but never finalized
+
+The run added distinct-value probes at the AvManager loop (`0x14115cfe0`), view Advance
+(`0x141105e90`), the resource finalizer's bit-35 store (`0x140cf1be1`) and view init
+(`0x141159290`).
+
+| Object | Address | What happened |
+|---|---|---|
+| Player view | `0x4ef66160` | Its resource `0x4ea32e60` reached the finalizer at hit 83 during loading; IsReady became true. |
+| Late wolf view (17:46:08) | `0x6928fa40` | AvManager **does** call Advance on it. |
+| Wolf model resource | `0x69291000` | **Never** reached the finalizer in the following ~60 s. |
+
+Other resources kept finalizing after load (17:46:31–17:47:09, presumably texture
+streaming), so the play-mode pump is running. The wolf's resource is enqueued at view init
+(`0x140cf5130`, per the static pass) but is never completed. During loading the loader
+force-drains the queue (`0x140951f6f`); our working hypothesis is that a model request
+made after load sits in a class or priority that only that drain services. Not proven.
+
+**Workaround in use:** spawn every NPC with the population at MapLoaded, then reuse those
+agents. Respawn already revives the same agent with packed 0x49, so it works. A dynamic
+event can likewise pre-spawn its NPCs at load and show them later. Open item: find the
+request's priority/queue field (`0x140cf5130` / `0x140d00c90`) and whether a play-time
+request is serviced at all.
+
+**Caveat and cross-lane evidence for run 172.** The creator lane traced the same
+resource pipeline for the character-creation preview model (runs 121–123, notes in
+`docs/re/209026-creation-model-pipeline.md` on main). They found:
+- the pump `0x140d01c30` runs, restarts at the head of the +0x170 list on every pass,
+  and checks its budget only after finalizer calls;
+- a deferred combined-file build stays queued, and the finalizer unlinks it only at
+  `0x140cf1b82`;
+- so starvation at the head of the queue is a concrete mechanism, though not yet proven
+  to be the cause.
+
+Our run-172 breakpoints sat on hot paths (AvManager loop, Advance, finalizer). They
+consume real frame time and may have amplified that starvation. Re-test the post-load
+NPC with sparse probes, or none, before concluding the request is never serviced.
+
+### Run 174: renown heart 56 shows, advances and completes; floating damage numbers visible
+
+The run used `--mission-heart 56,3`, on top of the run-169 four-NPC combat profile. In
+the AgentsLoaded batch, after the quest, the observer sends:
+`651 {player, region 1, 0}`, `1090 {uid 0x38, "", 0, target 3, 0, 0, 0, Guid 0, 0}`,
+`657 {player, 1, 0x38, [], "", "", Word 56}` and `655 {player, Word 56}`.
+
+| Event | Wire | What the client showed |
+|---|---|---|
+| Heart shown | the four frames above | Tracker: heart icon, **"Honor the Spirit of Raven." (Level 2)**, `: 0/3`. The title and level come from the client's type-72 content. |
+| Each kill | `1089 {0x38, n}` | Tracker updated to 1/3, then 2/3. |
+| Third kill | `1089 3`, then `654 {player, 0, 1, Word 56}` | Retail completion toast: a gold heart with "Honor the Spirit of Raven." |
+
+No asserts.
+
+The same run's screenshot caught a **floating damage number, "30"**, next to the
+minotaur. Hit floaters render once 255 carries |delta| in its Word; earlier screenshots
+simply missed their ~0.45 s lifetime.
+
+Not done yet:
+- 384, which places the heart marker on a heart NPC;
+- 556, the completion reward;
+- the "inside heart" region test (the observer sends 655 unconditionally).
