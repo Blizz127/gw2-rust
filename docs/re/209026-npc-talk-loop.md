@@ -982,3 +982,89 @@ Not done yet:
 - 384, which places the heart marker on a heart NPC;
 - 556, the completion reward;
 - the "inside heart" region test (the observer sends 655 unconditionally).
+
+**Run 175 (no probes).** This repeated the run-171 post-load wolf (agent 20, spawned after
+BeginPlaying at -3000, -25300) with the runner's default per-frame move-trace breakpoints
+disabled (`GW2_RUNNER_MOVE_TRACE` defaults to 0 in the run copy) and no other probes, so
+0 trace lines were logged. The wolf **still never rendered**; the screenshot shows that
+spot empty. Starvation caused by debugger breakpoints is therefore not the cause. The
+post-load request really stalls in the client's resource pipeline, consistent with the
+creator lane's head-of-queue / deferred-build finding.
+
+The workaround stays: spawn everything during map load.
+
+### Run 176: heart NPC marker (384)
+
+With a talk NPC configured, the observer sends `384 {talk NPC character 2, heart 56}` right
+after 651/1090/657/655. The client then:
+- draws the heart icon over that NPC, next to its "Greet [F]" interaction prompt;
+- keeps the tracker showing "Honor the Spirit of Raven." (Level 2) 0/3.
+
+The heart advanced to 3/3 and completed (654) with no asserts.
+
+Run 176 used species 8013, Juvenile Boar, only as a test stand-in for the heart NPC. The
+real heart NPC, Shaman Sigrytha, has a plain name but no species key in the client, and
+its dialogue is still the research placeholder.
+
+**Run 177: heart NPC dialogue from client text.** When heart 56 is shown, the talk NPC's
+conversation is rebuilt with strings quoted from the client's own English text table:
+
+| Text id | String | Used as |
+|---|---|---|
+| 30730 | "Shaman Sigrytha" | speaker |
+| 45566 | "Honor the Spirit of Raven." | page 1 |
+| 27970 | "Raven, clever and wise, guides us with truths that others fear. …" | page 2 |
+| 84427 | "Shaman Sigrytha thanks you." | page 1 after completion |
+| 84429 | "You have honored the spirit of Raven." | page 2 after completion |
+
+They are sent through the `%str1%` coded-literal template. In run 177, F opened the
+"Shaman Sigrytha" dialogue: page 1 showed with Continue/Goodbye, Continue showed page 2,
+and Goodbye closed it. The heart marker stayed over the NPC, with no asserts. The species
+is still a stand-in (8013).
+
+### Run 178: respawn request (169 / 210) and an inventory assert
+
+**Client flow (static, `rewards-waypoint.md`).** The defeat screen's "Return to a
+Waypoint" handler (`0x1404f3030`) behaves in one of two ways:
+- If a waypoint is known (server 1141/1142), it opens the map. Picking a waypoint sends
+  client **208 `{poi key}`** (or 209 with a Guid). Wire bytes: 371 = `d0 00 f3 02`,
+  372 = `f4 02`, 970 = `ca 07`, 971 = `cb 07`.
+- Otherwise it calls character vtable +0x5d0, which sends client **210 `{}`**. It does
+  that only when three conditions hold: the character is owned, its agent is not alive,
+  and character flag bit 1 is set. Bit 1 is set by server **169 `{Dword character, Byte}`**
+  (`0x14124be30` → `0x1411da200`). The 0x33 dead transition does not set it.
+
+That is why the clicks in runs 161 and 164 sent nothing.
+
+**What run 178 tried.** On defeat the observer also sent `169 {char, 1}`. It would have
+answered 210/208 with packed 0x49, a 259/260 full-health meter and `169 {char, 0}`.
+
+**What happened.** About 30 s after the defeat (the server log shows no 210 respawn
+request), the client crashed:
+`ChCliInventory.cpp:3079 "inventorySlot < m_inventorySlots.Count()"`, inside the
+vtable-called slot getter `0x1411eee60`. Something read an inventory slot at index 20
+or higher while only the 20 backpack slots exist. The 20 is correct for item 8932
+(subtype +0x28).
+
+**State then.** 169 was made opt-in (`--mission-respawn-flag`) until the reader of slots
+≥ 20 was identified; run 179 below identifies and fixes it. Without it, the defeat button stays inert, which is today's live
+behaviour.
+
+**Client facts on rewards:** kill XP and heart rewards are server-defined; the client has
+no table. Level-up cost at levels 1–5 is 2000 / 2110 / 2379 / 2674 / 2999 XP.
+
+**Run 179: respawn works.** The cause of the run-178 assert: on defeat, with flag bit 1
+set, GpDownedManager (`0x1402c25a0` → `0x1411f24e0` / `0x1411ee520` → `0x1411ee490`)
+scans `bag-slot count (5) << 5` = **160** inventory slots through the asserting getter
+(vtable +0x190 = `0x1411eee60`). See `inventory-slot-assert.md`. The fix is to send
+`305 {char, 160}`. Capacity still follows each bag's own size, so the backpack still
+shows 20 cells (1/20).
+
+With `--mission-respawn-flag`, run 179 went: downed → rally → downed → defeated.
+"Return to a Waypoint" then sent **client 210** (`d2 00`), and the observer answered with:
+- packed 0x49 alive;
+- 259/260 full health (388);
+- `169 {char, 0}`.
+
+The player stood up with the normal skill bar and no asserts. They revive in place; the
+waypoint teleport is still missing.

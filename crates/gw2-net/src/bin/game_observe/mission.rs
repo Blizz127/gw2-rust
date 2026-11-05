@@ -112,7 +112,30 @@ pub struct TalkNpc {
     session: TalkSession209026,
 }
 
+/// Heart 56's NPC and lines, quoted from the client's own English text table
+/// (language-0 plain strings; ids in comments). Retail dialogue is server
+/// data; these are the client strings that belong to this heart.
+const HEART_56_SPEAKER: &str = "Shaman Sigrytha"; // text 30730
+const HEART_56_ACTIVE: [&str; 2] = [
+    "Honor the Spirit of Raven.", // text 45566 (the heart's title)
+    "Raven, clever and wise, guides us with truths that others fear. He bestows a far-seeing clarity of mind. In my vision, he spoke of riddles and opened my eyes to secrets that few others can see.", // text 27970
+];
+const HEART_56_DONE: [&str; 2] = [
+    "Shaman Sigrytha thanks you.",           // text 84427
+    "You have honored the spirit of Raven.", // text 84429
+];
+
 impl TalkNpc {
+    /// Replace the conversation (speaker and pages) unless one is open.
+    fn set_dialogue(&mut self, speaker: &str, pages: &[&str]) -> io::Result<()> {
+        if self.session.active().is_some() {
+            return Ok(());
+        }
+        let pages = pages.iter().map(|p| (*p).to_owned()).collect();
+        self.session = TalkSession209026::new(u32::from(self.plan.agent_index), speaker.to_owned(), pages)?;
+        Ok(())
+    }
+
     /// Agent index of the test NPC. The player's placeholder character index
     /// is 1; `respond` refuses to spawn on a collision.
     pub const AGENT_INDEX: u16 = 2;
@@ -387,6 +410,10 @@ pub struct MissionPhase {
     /// Research: one renown heart shown at spawn whose counter advances on
     /// each NPC kill (docs/re/209026-npc-talk-loop.md, renown heart).
     heart: Option<Heart>,
+    /// Research (run 178): send 169 {char, 1} on defeat so "Return to a
+    /// Waypoint" sends client 210. Opt-in: with it, run 178 later asserted
+    /// ChCliInventory.cpp:3079 `inventorySlot < m_inventorySlots.Count()`.
+    respawn_flag: bool,
     /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
     /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
@@ -490,6 +517,37 @@ fn rally_on_kill(attack: &mut Option<NpcAttack>, character_index: u32, out: &mut
     Ok(true)
 }
 
+/// Server 169 `{Dword character, Byte}` (handler `0x14124be30` ->
+/// `0x1411da200`): nonzero sets character flag bit 1 (defeated, may respawn),
+/// zero clears it.
+fn encode_respawn_flag(out: &mut BytesMut, character_index: u32, on: bool) {
+    use gw2_proto::Encode;
+    169u16.encode(out);
+    character_index.encode(out);
+    u8::from(on).encode(out);
+}
+
+/// Respawn the defeated player in place: packed 0x49 alive, the normal health
+/// meter at full, the respawn flag cleared. Retail moves the player to the
+/// chosen waypoint; that teleport is not implemented.
+fn respawn_player(attack: &mut NpcAttack, character_index: u32, out: &mut BytesMut) -> io::Result<()> {
+    AgentBehaviorFrame209026 {
+        agent_index: character_index as u16,
+        remote_tick: 0,
+        command_flags: 0x10,
+        behavior_value: 0x4000_0600,
+        behavior_data: HealthTransitionPayload209026::Alive { detail_byte: 0, trailing_byte: 0 }.encode_payload(),
+    }
+    .encode_frame(out)?;
+    encode_health_pool(out, character_index, attack.max_health, attack.max_health, 0.0);
+    encode_respawn_flag(out, character_index, false);
+    attack.player_health = attack.max_health;
+    attack.defeated = false;
+    attack.defeat_at = None;
+    attack.next = None;
+    Ok(())
+}
+
 /// A packed health transition (0x34 downed / 0x33 dead) on `agent` through
 /// server 84 (docs/re/209026-health-transitions.md), `killer` as the agent.
 fn encode_transition(out: &mut BytesMut, agent: u16, downed: bool, killer: u32, behavior_value: u32) -> io::Result<()> {
@@ -561,8 +619,13 @@ fn advance_heart(heart: &mut Option<Heart>, out: &mut BytesMut) -> io::Result<()
     Ok(())
 }
 
-/// Backpack slots sized by 305 (Starter Backpack item 8932, def +0x4c).
+/// Starter Backpack 8932 capacity (subtype +0x28 = 20); loot fills these.
 const STARTER_BAG_SLOTS: u32 = 20;
+/// m_inventorySlots size sent with 305: the client scans `bag-slot count (5)
+/// << 5` = 160 inventory slots with an asserting getter (GpDownedManager on
+/// defeat, `0x1411ee490`), so the array must cover 5 x 32 even though only
+/// the backpack's 20 are usable (run 178, swarm note inventory-slot-assert.md).
+const INVENTORY_SLOT_ARRAY: u32 = 5 * 32;
 /// Research instance IDs for the backpack and drops (registry is sparse).
 const STARTER_BAG_INSTANCE: u32 = 0x6f00;
 const LOOT_INSTANCE_BASE: u32 = 0x6f10;
@@ -650,6 +713,7 @@ impl MissionPhase {
             starter_bag: None,
             late_npc: None,
             heart: None,
+            respawn_flag: false,
             kill_loot: None,
             npc_attack: None,
             sourced_damage: None,
@@ -759,6 +823,11 @@ impl MissionPhase {
         self
     }
 
+    pub fn with_respawn_flag(mut self) -> Self {
+        self.respawn_flag = true;
+        self
+    }
+
     /// `target` kills complete renown heart `key` (a type-72 content key).
     pub fn with_heart(mut self, key: u16, target: u32) -> io::Result<Self> {
         if target == 0 {
@@ -838,6 +907,11 @@ impl MissionPhase {
             eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
             award_kill_xp(&mut self.xp, player, out);
             advance_heart(&mut self.heart, out)?;
+            if self.heart.is_some_and(|h| h.done && h.key == 56)
+                && let Some(talk) = self.talk.as_mut()
+            {
+                talk.set_dialogue(HEART_56_SPEAKER, &HEART_56_DONE)?;
+            }
             award_kill_loot(&mut self.kill_loot, player, out)?;
             self.hostiles[slot].respawn = Some(Instant::now() + RESPAWN_DELAY);
             // The dead NPC stops attacking; another hit NPC that is still alive
@@ -880,6 +954,12 @@ impl MissionPhase {
             let npc = u32::from(self.aggro.last().copied().or_else(|| self.hostiles.first().map(|h| h.plan.agent_index))?);
             let mut out = BytesMut::new();
             encode_transition(&mut out, character_index as u16, false, npc, 0x4000_0400).ok()?;
+            // 169 {char, 1} sets character flag bit 1, the guard that lets the
+            // defeat screen's "Return to a Waypoint" send client 210 (swarm note
+            // rewards-waypoint.md; the 0x33 transition does not set it).
+            if self.respawn_flag {
+                encode_respawn_flag(&mut out, character_index, true);
+            }
             eprintln!("Mission phase: player defeated by NPC {npc} (server 84 packed 0x33)");
             return Some(out.freeze());
         }
@@ -1024,9 +1104,9 @@ impl MissionPhase {
                         .encode_frame(&mut out);
                     // 300 does not size m_inventorySlots; 305 grows it to the
                     // backpack's 20 slots (item 8932 def +0x4c).
-                    InventorySlotCountFrame209026 { character_index: fixture.plan.character_index, slot_count: STARTER_BAG_SLOTS }
+                    InventorySlotCountFrame209026 { character_index: fixture.plan.character_index, slot_count: INVENTORY_SLOT_ARRAY }
                         .encode_frame(&mut out)?;
-                    eprintln!("Mission phase: Starter Backpack via server {message_id} + 300 bag slot 0 + 305 20 slots");
+                    eprintln!("Mission phase: Starter Backpack via server {message_id} + 300 bag slot 0 + 305 {INVENTORY_SLOT_ARRAY} slots");
                 }
                 if let Some(plan) = &self.late_npc {
                     out.extend_from_slice(&plan.spawn_frames()?);
@@ -1049,7 +1129,30 @@ impl MissionPhase {
                 }
                 if let Some(heart) = self.heart.as_mut() {
                     show_heart(heart, fixture.plan.player_index, &mut out)?;
+                    // 384 ties the talk NPC to the heart: the client puts the
+                    // heart marker (map, compass, "!" bang) on it. The sub-region
+                    // already exists (657 above), so the marker is created now.
+                    // Sent once: a second 384 asserts while the heart is active.
+                    if let Some(talk) = self.talk.as_mut() {
+                        if heart.key == 56 {
+                            talk.set_dialogue(HEART_56_SPEAKER, &HEART_56_ACTIVE)?;
+                        }
+                        let character = u32::from(talk.plan.agent_index);
+                        RenownFrame209026::HeartNpc { character, heart: u32::from(heart.key) }.encode_frame(&mut out)?;
+                        eprintln!("Mission phase: renown heart {} on NPC {character} (server 384)", heart.key);
+                    }
                 }
+                Ok(Some(out.freeze()))
+            }
+            Seen::Other(id @ (208 | 210)) if self.npc_attack.is_some_and(|a| a.defeated) => {
+                // 210 {}: "Return to a Waypoint" with no known waypoint; 208
+                // {poi}: a waypoint picked on the map. Both mean respawn here.
+                let mut out = BytesMut::new();
+                let character_index = fixture.plan.character_index;
+                if let Some(attack) = self.npc_attack.as_mut() {
+                    respawn_player(attack, character_index, &mut out)?;
+                }
+                eprintln!("Mission phase: client {id} respawn request -> player alive at full health (84 packed 0x49, 259/260, 169 0)");
                 Ok(Some(out.freeze()))
             }
             Seen::Target(agent) if self.living_hostile(*agent).is_some() => {

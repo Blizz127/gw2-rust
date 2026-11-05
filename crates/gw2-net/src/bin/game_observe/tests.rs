@@ -446,7 +446,10 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
         let received = next_shared_frame(&mut client, &mut codec, &mut pending);
         assert_eq!(received, reply);
         if event == ClientMapEvent::AgentsLoaded {
-            assert!(received.ends_with(&heart_opening), "saved world must show heart56 with target5");
+            // With a talk NPC the batch also ends with 384 (heart marker on
+            // that NPC) after the four opening frames, so check containment.
+            assert!(received.windows(heart_opening.len()).any(|w| w == &heart_opening[..]),
+                "saved world must show heart56 with target5");
         }
     }
     let mut skill = BytesMut::new();
