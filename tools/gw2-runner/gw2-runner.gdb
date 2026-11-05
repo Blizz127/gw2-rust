@@ -401,7 +401,7 @@ class TextureDiag(gdb.Breakpoint):
             ref = int.from_bytes(inf.read_memory(task + 8, 8).tobytes(), 'little')
             w0, w1 = struct.unpack('<HH', inf.read_memory(ref, 4).tobytes())
             fid = (w1 * 0xff00 + w0 + 0xff00ff01) & 0xffffffff
-            fmt, dims = struct.unpack('<I', inf.read_memory(task + 0x58, 4).tobytes())[0], struct.unpack('<HH', inf.read_memory(task + 0x68, 4).tobytes())
+            fmt, dims = struct.unpack('<I', inf.read_memory(task + 0x58, 4).tobytes())[0], struct.unpack('<II', inf.read_memory(task + 0x68, 8).tobytes())
             print('GW2_RUNNER: texture-diag file %d levels %d -> %d format %#x dims %dx%d' % (
                 fid, int(gdb.parse_and_eval('$esi')), int(gdb.parse_and_eval('$ecx')), fmt, dims[0], dims[1]))
         except (gdb.MemoryError, gdb.error, struct.error):
