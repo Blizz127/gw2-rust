@@ -67,13 +67,32 @@ make-identity.py), so the host never needs a copy of the client.
   - Run it only after launcher b106 (PLAY wake-and-wait) is live and the owner's first
     b107 device run is done.
 
+## Pinned mission profile
+
+A kit can include `data/mission-profile.conf` to override the fixed mission
+settings after the host configuration is loaded. It can set `GW2_MAP_KEY`,
+`GW2_SPAWN`, `GW2_MESMER_VALUES`, `GW2_REWARD_TRACKS`, `GW2_HEALTH`,
+`GW2_QUEST`, and the data-relative filenames `GW2_EQUIPMENT` and `GW2_SKILLS`.
+The corresponding `character-record.bin` must name the same map and profession.
+Without that file, the existing Human Guardian/Queensdale profile is retained.
+Rollback restores the entire kit, including its fixture and mission settings.
+
+The Norn Mesmer owner profile uses the exact inputs exercised by sandbox run118:
+map379, spawn `-3200,-25600,-3742`, Mesmer values `1,0`, tracks `56,88,47,112`,
+health388, quest `154,0,1`, and its equipment/skill batches. See
+[health playback](../docs/re/209026-mesmer-health-speed-baseline.md) and
+[initial equipment](../docs/re/209026-initial-equipment-model-order.md).
+It supplies a prepared character; normal creation and saved-character mode are
+not enabled by this supervisor.
+
 ## What is synthetic
 
 All fixtures are synthetic:
 - Login accepts any made-up credentials. There is no account or Banshee ticket check.
-- There is one fixed Human Guardian character.
-- Queensdale (map key 15).
-- Population values are placeholders, and the spawn (0,0,7.4) is an offline terrain
-  probe hit, not a validated spawn.
+- There is one fixed character, selected by the kit's record/profile.
+- The default map is Queensdale (key15); the Norn profile uses tutorial379.
+- Population still contains explicit research values. Both the default spawn
+  `(0,0,7.4)` and the Norn profile's spawn are diagnostic positions, not proven
+  retail starting coordinates. Combat and the complete tutorial are unfinished.
 
 End-to-end status is in [COVERAGE](../docs/COVERAGE.md).

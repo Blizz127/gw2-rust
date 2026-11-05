@@ -22,6 +22,11 @@ config=${1:?usage: gw2-server.sh CONFIG_FILE}
 # shellcheck source=/dev/null
 source "$config"
 : "${GW2_BIN:?}" "${GW2_DATA:?}" "${GW2_ID:?}" "${GW2_RUN:?}" "${GW2_BIND:?}" "${GW2_SPAWN:?}"
+# A pinned kit may supply an explicit mission profile. Keeping it with the
+# fixture makes switching the current kit also restore the previous profile.
+if [[ -f "$GW2_DATA/mission-profile.conf" ]]; then
+  source "$GW2_DATA/mission-profile.conf"
+fi
 [[ $GW2_BIND != 0.0.0.0 && $GW2_BIND != :: ]] || { echo "refusing unspecified bind address" >&2; exit 2; }
 umask 077
 mkdir -p "$GW2_RUN"
@@ -54,10 +59,18 @@ pids+=($!); login=$!
   --auth-agreement-state "$GW2_RUN/agreement-version" \
   --auth-character-record "$GW2_DATA/character-record.bin" --auth-play-route 127.1.0.4:6112 &
 pids+=($!); auth=$!
+mission_args=()
+if [[ -n "${GW2_MESMER_VALUES:-}" ]]; then
+  mission_args+=(--mission-mesmer-values "$GW2_MESMER_VALUES" --mission-reward-tracks "${GW2_REWARD_TRACKS:?}")
+fi
+[[ -z "${GW2_EQUIPMENT:-}" ]] || mission_args+=(--mission-equipment "$GW2_DATA/$GW2_EQUIPMENT")
+[[ -z "${GW2_SKILLS:-}" ]] || mission_args+=(--mission-skills "$GW2_DATA/$GW2_SKILLS")
+[[ -z "${GW2_HEALTH:-}" ]] || mission_args+=(--mission-health "$GW2_HEALTH")
+[[ -z "${GW2_QUEST:-}" ]] || mission_args+=(--mission-quest "$GW2_QUEST")
 "$GW2_BIN/gw2-game-observe" --no-capture --listen "$GW2_BIND:6112" --mission-preamble \
   --params "$GW2_ID/dh-params.bin" --private "$GW2_ID/dh-private.bin" --log "$GW2_RUN/unused" \
-  --mission-map-key 15 --mission-population "$GW2_DATA/character-record.bin" \
-  --mission-spawn "$GW2_SPAWN" --mission-population-delay-ms "${GW2_POPULATION_DELAY_MS:-0}" &
+  --mission-map-key "${GW2_MAP_KEY:-15}" --mission-population "$GW2_DATA/character-record.bin" \
+  --mission-spawn "$GW2_SPAWN" --mission-population-delay-ms "${GW2_POPULATION_DELAY_MS:-0}" "${mission_args[@]}" &
 pids+=($!); game=$!
 
 printf '{"bind":"%s","processes":[{"role":"cdn","pid":%d,"port":6115,"exe":"%s"},{"role":"login","pid":%d,"port":6114,"exe":"%s"},{"role":"auth","pid":%d,"port":6113,"exe":"%s"},{"role":"game","pid":%d,"port":6112,"exe":"%s"}]}\n' \
