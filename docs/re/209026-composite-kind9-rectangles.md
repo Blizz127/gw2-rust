@@ -130,3 +130,56 @@ verified owned-process cleanup.
 - Retained `ev_aaf09bcb0714c46d395f7a6ae271384bbe218ef6bf30799bcdfb8f690094dce7`:
   component arguments, dispatcher, and complete category-list selection;
   available in the earlier authored-rectangles evidence bundle.
+
+## Paired passive observer prepared for run 137
+
+The complete parent/child stack proof is retained separately in
+`/home/blizz/re/gw2/notes/209026-kind9-parent-frame-pairing-20261105.json`,
+SHA-256 `cb823eb55d5b3a6d915a3fab2977c88f2b34f79e25279d162a983bfde67d4baa`.
+Let `A` be RSP at parent `1412d8c9e`. At `1412dcaba`, current
+RSP is `A-0x250` and RBP is `A-0x150`. The two required returns are
+`Qword[A-8] == 1412d8ca3+slide` and
+`Qword[A-0x68] == 1412dd701+slide`. At `1412d8ca3`, RSP is again A
+and R14 is the component; this continuation precedes the first wrapper
+release. A return reached without a matching observed parent call supplies
+no authority. Evidence:
+`ev_147c45d0f3a8474ae793743478fcabbe751a26a806b79f5ad8919babe9cb2b2e`
+and `ev_096a972be307e6d98a643952cce45f0ba50437ac5d2a622808b7bd48db5dfa01`.
+
+Private helper `creator-kind9-rectangles-probe-20261105.py`, SHA-256
+`70729da1925b2ae6e7761822fe5768d96a13d97b57938496430b7995657a76a1`,
+uses five sites: post-build ownership, sparse UI state, parent dispatch,
+advanced submission and the matched parent return. It admits the first
+kind-nine slot-9 dispatch per current owner in scenes 2/3. It records at
+most sixteen advanced submissions from that invocation, then retains the
+return observation to retire the pair. Reentry before a matched return
+abandons the pair instead of treating a reused stack address as the same
+invocation. Owner rebinds likewise retire the pair.
+
+Every advanced observation revalidates the current creator relation,
+thread, parent/child frame, both return addresses, descriptor/rectangle-set/
+source-array arguments and current component. The color destination must
+match current manager `+0xb58`, RCX and R12; saved normal destination must
+match current manager `+0xb60`. R8 must equal the current primary wrapper.
+The selected rectangle must be a sixteen-byte entry in the current list C,
+with count bounded to 64. The observed destination and source rectangles
+must exactly match the source-defined 32-bit subtraction formula. Overflow
+is preserved as unsigned source arithmetic, not silently corrected.
+
+The record includes compact file IDs, current dimensions/readiness of all
+source wrappers, destination fields, selected rectangle, common origin and
+relative source rectangle. Pending dimensions remain explicitly pending;
+the probe does not read pixels, call getters, alter target state or claim a
+completed composition. UI snapshots retain the bounded material fields.
+Eight owners, 128 output records and 210 seconds from first binding bound
+the observer; late snapshots end after their existing bounded followup.
+
+Fifteen host checks cover pairing, owner/thread/frame rejection, each return
+address, current destinations/source relation, selected-list membership,
+rectangle formula, unsigned arithmetic, pending inputs, reentry, record
+limits and cleanup before release. Two configuration preflights, both GDB
+Python blocks and five shell-script syntax checks passed. No runtime result
+is claimed by this preparation note. The run's input manifest is
+`5a174c6f14f743f6703486984bb96dee856e45f280120f646c60e3289a6f4e31`.
+Before launch, the reserved exclusive window also permits read-only
+comparison of the six known working-archive assets to their frozen hashes.
