@@ -86,6 +86,10 @@ pub enum Seen {
     /// Client 23 2-byte `[0x29][skill-bar slot]` (inferred SkillRepeatStart; key 1
     /// sends slot 5, the weapon's first skill), with the header to echo.
     RepeatStart(SkillSeen),
+    /// Client 227 `{Dword agent}` (sender `0x1412646b0`, CharForce.cpp): the
+    /// selected target's agent id (object +0xc, the same field SkillBegin's
+    /// target uses), 0 when none. Run 168: sent after Tab.
+    Target(u32),
     Other(u16),
 }
 
@@ -965,6 +969,11 @@ impl MissionPhase {
                 }
                 Ok(Some(out.freeze()))
             }
+            Seen::Target(agent) if self.living_hostile(*agent).is_some() => {
+                // The player's selection drives auto-attack (it carries no target).
+                self.last_target = u16::try_from(*agent).ok();
+                Ok(None)
+            }
             Seen::Interact(request) if self.began => {
                 let Some(npc) = self.talk.as_mut() else { return Ok(None) };
                 let InteractRequest209026::Interact { target } = *request else { return Ok(None) };
@@ -1178,6 +1187,7 @@ impl MissionPhase {
                     let hex: Vec<String> = frame.iter().map(|b| format!("{b:02x}")).collect();
                     eprintln!("Mission phase: client message {id} ({used} bytes) [{}]", hex.join(" "))
                 }
+                Seen::Target(agent) => eprintln!("Mission phase: client 227 target agent {agent}"),
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
@@ -1191,6 +1201,12 @@ impl MissionPhase {
     fn talk_event(id: u16, frame: &[u8]) -> Option<Seen> {
         let mut input = frame;
         match id {
+            227 => {
+                use gw2_proto::Decode;
+                let _ = u16::decode(&mut input).ok()?;
+                let agent = u32::decode(&mut input).ok()?;
+                input.is_empty().then_some(Seen::Target(agent))
+            }
             AgentBehaviorFrame209026::CLIENT_MESSAGE_ID => {
                 let behavior = AgentBehaviorFrame209026::decode_client_frame(&mut input).ok()?;
                 if let [0x29, slot] = behavior.behavior_data[..] {
@@ -1370,6 +1386,7 @@ pub(crate) mod tests {
                         Seen::Map(ClientMapEvent::FailedToLoad) => 418,
                         Seen::Map(ClientMapEvent::AgentsLoaded) => 412,
                         Seen::Interact(_) | Seen::Skill(_) | Seen::RepeatStart(_) => 23,
+                        Seen::Target(_) => 227,
                         Seen::Conversation(ConversationReply209026::Choose { .. }) => 275,
                         Seen::Conversation(ConversationReply209026::Closed { .. }) => 276,
                     })
