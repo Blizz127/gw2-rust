@@ -589,6 +589,12 @@ impl InteractRequest209026 {
     }
 }
 
+/// Level-1 NPC health from the client's level tables (`ConstTable.cpp`:
+/// monsterHealth 18 + 10 x vitality 10 = 118 at level 1), assuming species and
+/// rank multipliers of 1.0 (see the swarm damage/loot note). Used for every
+/// spawned test NPC.
+pub const LEVEL1_NPC_HEALTH: f32 = 118.0;
+
 /// An explicitly chosen test NPC: an ordinary nonplayer character
 /// (`docs/re/209026-npc-character-foundation.md`) made talkable by 378.
 ///
@@ -688,8 +694,8 @@ impl TalkNpcPlan209026 {
             operation: HealthOperation209026::CreateOrUpdate {
                 state: 0,
                 values: HealthValues209026 {
-                    current: 100.0,
-                    maximum: 100.0,
+                    current: LEVEL1_NPC_HEALTH,
+                    maximum: LEVEL1_NPC_HEALTH,
                     second_current: 0.0,
                     second_maximum: 0.0,
                     extra: 0.0,

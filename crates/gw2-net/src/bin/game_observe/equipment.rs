@@ -170,19 +170,6 @@ impl EquipmentFixture {
         &self.0
     }
 
-    /// The first weapon creation (971) in the validated batch, if any.
-    pub fn first_weapon(&self) -> Option<WeaponItemCreationFrame209026> {
-        let mut cursor = &self.0[..];
-        loop {
-            match u16::from_le_bytes([*cursor.first()?, *cursor.get(1)?]) {
-                960 => {
-                    ArmorItemCreationFrame209026::decode_frame(&mut cursor).ok()?;
-                }
-                971 => return WeaponItemCreationFrame209026::decode_frame(&mut cursor).ok(),
-                _ => return None,
-            }
-        }
-    }
 
     /// Add the selected Norn level-1 Mesmer biography item in equipment slot5.
     /// Instance allocation, flags0, absent Guid/upgrades and initial zero colors

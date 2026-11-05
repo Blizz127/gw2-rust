@@ -25,13 +25,16 @@ use gw2_proto::{
     Guid,
     agent_behavior::{AgentBehaviorFrame209026, HealthTransitionDetails209026, HealthTransitionPayload209026},
     agent_control::AgentControl209026,
-    bags::{BagSlotFrame209026, InventoryItemFrame209026, InventorySlotCountFrame209026, STARTER_BACKPACK_ITEM, encode_minimal_item_creation},
+    bags::{
+        BagSlotFrame209026, InventoryItemFrame209026, InventorySlotCountFrame209026, STARTER_BACKPACK_ITEM,
+        encode_minimal_item_creation, encode_stack_item_creation,
+    },
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     experience::{EarnedLevelFrame209026, ExperienceFrame209026, level_for_experience},
-    health::{HealthFrame209026, HealthOperation209026, SourcedHealthFrame209026},
+    health::{HealthFrame209026, HealthOperation209026, HealthValues209026, SourcedHealthFrame209026},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
-    npc_talk::{ConversationReply209026, InteractRequest209026, TalkNpcPlan209026, TalkSession209026},
+    npc_talk::{ConversationReply209026, InteractRequest209026, LEVEL1_NPC_HEALTH, TalkNpcPlan209026, TalkSession209026},
     skill_order::{AgentBehaviorOrderFrame209026, SkillBeginRequest209026, SkillOrder209026},
     player_startup::PlayerStartupFrame209026,
     population::{self, PopulationPlan, PopulationProfession209026},
@@ -368,8 +371,8 @@ pub struct MissionPhase {
     respawn: Option<Instant>,
     /// Research: item-creation message used to give the Starter Backpack.
     starter_bag: Option<u16>,
-    /// Research: on each kill, a copy of the equipped weapon goes into the next
-    /// backpack slot (971 + 276). Holds the number of drops so far.
+    /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
+    /// backpack slot (968 + 276). Holds the number of drops so far.
     kill_loot: Option<u32>,
     /// Research: the hostile NPC hits the player while both are alive.
     npc_attack: Option<NpcAttack>,
@@ -391,7 +394,10 @@ fn encode_health_change(
     match sourced {
         Some(kind) => {
             let delta = current - previous;
-            SourcedHealthFrame209026 { character_index: target, delta, second_delta: 0.0, raw_word: 0, kind, skill_key, source_agent }
+            // Research (run 165): the Word carries the magnitude, hypothesised
+            // to be the floater's displayed amount (with 0 no hit floater painted).
+            let raw_word = delta.abs().round().min(f32::from(u16::MAX)) as u16;
+            SourcedHealthFrame209026 { character_index: target, delta, second_delta: 0.0, raw_word, kind, skill_key, source_agent }
                 .encode_frame(out)?;
             Ok(255)
         }
@@ -421,15 +427,19 @@ struct NpcAttack {
 /// Placeholder time between the player going down and being defeated.
 const DOWNED_TO_DEFEAT: Duration = Duration::from_secs(10);
 
+/// Replace the player's first health meter (the downed bar reads only meter 1,
+/// `DwnHealth.cpp` 0x1404f4130): 259 values, then 260 rate (units/s; the
+/// client applies a negative rate locally). Second meter and extra stay 0, as
+/// in the player's 256 creation.
+fn encode_health_pool(out: &mut BytesMut, character_index: u32, current: f32, maximum: f32, rate: f32) {
+    let values = HealthValues209026 { current, maximum, second_current: 0.0, second_maximum: 0.0, extra: 0.0 };
+    HealthFrame209026 { character_index, operation: HealthOperation209026::Values(values) }.encode_frame(out);
+    HealthFrame209026 { character_index, operation: HealthOperation209026::Rate(rate) }.encode_frame(out);
+}
+
 /// Rally: the downed player killed the foe. Cancel defeat, send the packed
-/// 0x49 alive transition and restore half health (placeholder amount).
-fn rally_on_kill(
-    attack: &mut Option<NpcAttack>,
-    sourced: Option<u8>,
-    character_index: u32,
-    npc: u32,
-    out: &mut BytesMut,
-) -> io::Result<()> {
+/// 0x49 alive transition and restore half health (placeholder amount) on the normal meter.
+fn rally_on_kill(attack: &mut Option<NpcAttack>, character_index: u32, out: &mut BytesMut) -> io::Result<()> {
     let Some(attack) = attack.as_mut() else { return Ok(()) };
     attack.next = None;
     if attack.defeat_at.take().is_none() {
@@ -444,7 +454,8 @@ fn rally_on_kill(
     }
     .encode_frame(out)?;
     let restored = attack.max_health / 2.0;
-    encode_health_change(out, sourced, character_index, (0.0, restored), 0, npc)?;
+    // Swap the downed pool back to the normal meter at half health.
+    encode_health_pool(out, character_index, restored, attack.max_health, 0.0);
     attack.player_health = restored;
     eprintln!("Mission phase: player rallied (server 84 packed 0x49), health -> {restored}");
     Ok(())
@@ -479,30 +490,34 @@ const STARTER_BAG_SLOTS: u32 = 20;
 const STARTER_BAG_INSTANCE: u32 = 0x6f00;
 const LOOT_INSTANCE_BASE: u32 = 0x6f10;
 
-/// On an NPC kill: copy the fixture's weapon creation with a fresh instance
-/// and place it with 276 in the next backpack slot (docs/re/209026-npc-talk-loop.md, loot).
-fn award_kill_loot(
-    loot: &mut Option<u32>,
-    equipment: Option<&super::equipment::EquipmentFixture>,
-    character_index: u32,
-    out: &mut BytesMut,
-) -> io::Result<()> {
+/// Kill drops, in rotation: level-1 trophies and crafting materials from the
+/// client's item definitions (swarm note loot-items.md). The client holds no
+/// drop tables, so the choice and the order are ours; each is a stack of 1
+/// created by 968 and placed by 276 into the next backpack slot.
+const KILL_LOOT_TABLE: [(u32, &str); 6] = [
+    (19526, "Broken Claw"),
+    (24346, "Tiny Claw"),
+    (19538, "Broken Fang"),
+    (87275, "Branded Shard"),
+    (19561, "Patch of Fur"),
+    (24352, "Tiny Fang"),
+];
+
+/// On an NPC kill: create the next table item and place it with 276 in the
+/// next backpack slot (docs/re/209026-npc-talk-loop.md, loot).
+fn award_kill_loot(loot: &mut Option<u32>, character_index: u32, out: &mut BytesMut) -> io::Result<()> {
     let Some(drops) = loot.as_mut() else { return Ok(()) };
     if *drops >= STARTER_BAG_SLOTS {
         eprintln!("Mission phase: backpack full, no loot");
         return Ok(());
     }
-    let Some(mut weapon) = equipment.and_then(|e| e.first_weapon()) else {
-        eprintln!("Mission phase: no weapon in the equipment fixture, no loot");
-        return Ok(());
-    };
     let slot = *drops;
-    weapon.common.instance_id = LOOT_INSTANCE_BASE + slot;
-    weapon.common.guid = None;
-    weapon.encode_frame(out)?;
-    InventoryItemFrame209026 { character_index, item_instance: weapon.common.instance_id, reason: 0, slot }.encode_frame(out)?;
+    let (item_key, name) = KILL_LOOT_TABLE[slot as usize % KILL_LOOT_TABLE.len()];
+    let instance = LOOT_INSTANCE_BASE + slot;
+    encode_stack_item_creation(instance, item_key, 1, out)?;
+    InventoryItemFrame209026 { character_index, item_instance: instance, reason: 0, slot }.encode_frame(out)?;
     *drops += 1;
-    eprintln!("Mission phase: loot item {} -> backpack slot {slot} (server 971 + 276)", weapon.common.item_data_key);
+    eprintln!("Mission phase: loot {name} (item {item_key}) -> backpack slot {slot} (server 968 + 276)");
     Ok(())
 }
 
@@ -624,7 +639,7 @@ impl MissionPhase {
     /// Research: player skills aimed at the hostile NPC lower its health by
     /// `amount` via server 257 (the NPC spawns with 100). Clamped at 0.
     pub fn with_damage_on_skill(mut self, amount: f32) -> Self {
-        self.damage_on_skill = Some((amount, 100.0));
+        self.damage_on_skill = Some((amount, LEVEL1_NPC_HEALTH));
         self
     }
 
@@ -707,6 +722,10 @@ impl MissionPhase {
                 let mut out = BytesMut::new();
                 let id = encode_health_change(&mut out, self.sourced_damage, character_index, (previous, 0.0), 0, npc).ok()?;
                 encode_transition(&mut out, character_index as u16, true, npc, 0x4000_0300).ok()?;
+                // Downed pool on meter 1, draining to 0 over DOWNED_TO_DEFEAT
+                // (placeholder size = the normal maximum).
+                let pool = attack.max_health;
+                encode_health_pool(&mut out, character_index, pool, pool, -pool / DOWNED_TO_DEFEAT.as_secs_f32());
                 eprintln!("Mission phase: NPC hit player for {previous}: health -> 0 (server {id}), player downed (server 84 packed 0x34)");
                 return Some(out.freeze());
             }
@@ -734,13 +753,13 @@ impl MissionPhase {
             .ok()?;
             HealthFrame209026 {
                 character_index: u32::from(npc),
-                operation: HealthOperation209026::Currents { current: 100.0, second_current: 0.0 },
+                operation: HealthOperation209026::Currents { current: LEVEL1_NPC_HEALTH, second_current: 0.0 },
             }
             .encode_frame(&mut out);
             if let Some((_, health)) = self.damage_on_skill.as_mut() {
-                *health = 100.0;
+                *health = LEVEL1_NPC_HEALTH;
             }
-            eprintln!("Mission phase: NPC {npc} respawned (server 84 packed 0x49, health 100)");
+            eprintln!("Mission phase: NPC {npc} respawned (server 84 packed 0x49, health {LEVEL1_NPC_HEALTH})");
             return Some(out.freeze());
         }
         None
@@ -905,9 +924,9 @@ impl MissionPhase {
                         .encode_frame(&mut out)?;
                         eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
                         award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
-                        award_kill_loot(&mut self.kill_loot, fixture.equipment.as_ref(), fixture.plan.character_index, &mut out)?;
+                        award_kill_loot(&mut self.kill_loot, fixture.plan.character_index, &mut out)?;
                         self.respawn = Some(Instant::now() + RESPAWN_DELAY);
-                        rally_on_kill(&mut self.npc_attack, self.sourced_damage, fixture.plan.character_index, u32::from(npc), &mut out)?;
+                        rally_on_kill(&mut self.npc_attack, fixture.plan.character_index, &mut out)?;
                     }
                 }
                 Ok(Some(out.freeze()))
@@ -954,9 +973,9 @@ impl MissionPhase {
                     .encode_frame(&mut out)?;
                     eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
                     award_kill_xp(&mut self.xp, fixture.plan.character_index, &mut out);
-                    award_kill_loot(&mut self.kill_loot, fixture.equipment.as_ref(), fixture.plan.character_index, &mut out)?;
+                    award_kill_loot(&mut self.kill_loot, fixture.plan.character_index, &mut out)?;
                     self.respawn = Some(Instant::now() + RESPAWN_DELAY);
-                    rally_on_kill(&mut self.npc_attack, self.sourced_damage, fixture.plan.character_index, u32::from(npc), &mut out)?;
+                    rally_on_kill(&mut self.npc_attack, fixture.plan.character_index, &mut out)?;
                 }
                 Ok(Some(out.freeze()))
             }
@@ -1108,6 +1127,13 @@ impl MissionPhase {
                     "Mission phase: client 23 repeat-start [29 {:02x}] value {:#x}",
                     start.request.slot, start.behavior_value
                 ),
+                // Short fixed-layout messages without text (17 Word, 47 Byte,
+                // 248): log their bytes for research. Never dump others; they
+                // may carry typed text.
+                Seen::Other(id @ (17 | 47 | 248)) if used <= 8 => {
+                    let hex: Vec<String> = frame.iter().map(|b| format!("{b:02x}")).collect();
+                    eprintln!("Mission phase: client message {id} ({used} bytes) [{}]", hex.join(" "))
+                }
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
