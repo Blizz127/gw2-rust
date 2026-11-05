@@ -288,3 +288,21 @@ Checks:
 - Rollback: `/home/blizz/gw2-rust-9961b56`.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s. The live game process
   was read back with `--mission-respawn-point 597.3,-30352.1,-1563.2`.
+
+## Update: kit bc997f0 (live 2026-11-05 20:16:47Z)
+
+- Source: `bc997f0`. The profile is unchanged from 9961b56-hm (Hero's Moot respawn).
+- Kit: `/home/blizz/gw2-rust-bc997f0`.
+- Rollback: `/home/blizz/gw2-rust-9961b56-hm`.
+- Game binary SHA-256: `9c56bfc9b7a3d5859b0a62f28bbdd641bf1f9b37dd3051938644b66a89b515fe`.
+- SHA256SUMS SHA-256: `80d32acbd8fd42f7a1b71bff502b5fd7674182c46a2e9e9aa56b145fb2c1b662`.
+- Verified locally and on Banshee.
+
+Change: heart completion now sends the 556 type-14 reward panel (coin 30 and karma 50
+are placeholders) and +5147 XP.
+
+Checks:
+- workspace tests ok; saved-mode 6/6; `shared_creation` 6/6.
+- Sandbox run 184: reward icon and level-ups, no asserts.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
