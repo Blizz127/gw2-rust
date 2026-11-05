@@ -135,6 +135,26 @@ struct Fixtures<'a> {
     creation: Option<(character_store::CharacterStore, SocketAddr)>,
     /// Diagnostic hold between client 420 and the population (zero: none).
     population_delay: Duration,
+    /// Opt-in talkable test NPC (docs/re/209026-npc-talk-loop.md).
+    talk_npc: Option<mission::TalkNpc>,
+    /// Opt-in hostile test NPCs: species and position, one per flag (agent 3, 4, ...).
+    hostile_npcs: Vec<(u32, [f32; 3])>,
+    /// Research: answer SkillBegin with server 34 + 0x78.
+    skill_order_echo: bool,
+    /// Research: hostile NPC casts this skill on each player SkillBegin.
+    npc_cast: Option<u32>,
+    /// Research: player skills aimed at the hostile NPC lower its health.
+    damage_on_skill: Option<f32>,
+    /// Research: weapon repeat-start answered with a 0x78 order for this skill.
+    autoattack_skill: Option<u32>,
+    /// Research: experience awarded per NPC kill.
+    xp_per_kill: Option<u32>,
+    /// Research: item-creation message for the Starter Backpack.
+    starter_bag: Option<u16>,
+    kill_loot: bool,
+    npc_attack: Option<(f32, f32)>,
+    sourced_damage: Option<u8>,
+
     /// Service mode: create no capture or preamble files. The auth stream can
     /// carry account strings typed into the client, so a server facing a
     /// person must run with this set.
@@ -157,6 +177,17 @@ fn observe(
         saved_population,
         creation,
         population_delay,
+        talk_npc,
+        hostile_npcs,
+        skill_order_echo,
+        npc_cast,
+        damage_on_skill,
+        autoattack_skill,
+        xp_per_kill,
+        starter_bag,
+        kill_loot,
+        npc_attack,
+        sourced_damage,
         no_capture,
     } = fixtures;
     let combined = creation.is_some() && mission_map_key.is_some();
@@ -204,6 +235,48 @@ fn observe(
         let fixture = saved.for_join(&preamble)?;
         mission = Some(mission.ok_or_else(|| invalid("saved population requires a mission phase"))?
             .with_population(fixture)?.with_population_delay(population_delay));
+    }
+    // In combined mode the map0 connection has selected the creator. These
+    // options configure its later world join, not the creation scene itself.
+    // Noncombined configurations retain their existing missing-phase errors.
+    if !combined || mission.is_some() {
+        if let Some(npc) = talk_npc {
+            mission = Some(mission.ok_or_else(|| invalid("talk NPC requires a mission phase"))?.with_talk_npc(npc));
+        }
+        for (species, position) in hostile_npcs {
+            mission = Some(
+                mission
+                    .ok_or_else(|| invalid("hostile NPC requires a mission phase"))?
+                    .with_hostile_npc(species, position)?,
+            );
+        }
+        if skill_order_echo {
+            mission = Some(mission.ok_or_else(|| invalid("skill order echo requires a mission phase"))?.with_skill_order_echo());
+        }
+        if let Some(skill) = npc_cast {
+            mission = Some(mission.ok_or_else(|| invalid("NPC cast requires a mission phase"))?.with_npc_cast(skill));
+        }
+        if let Some(id) = starter_bag {
+            mission = Some(mission.ok_or_else(|| invalid("starter bag requires a mission phase"))?.with_starter_bag(id));
+        }
+        if let Some(kind) = sourced_damage {
+            mission = Some(mission.ok_or_else(|| invalid("sourced damage requires a mission phase"))?.with_sourced_damage(kind));
+        }
+        if let Some((damage, health)) = npc_attack {
+            mission = Some(mission.ok_or_else(|| invalid("NPC attack requires a mission phase"))?.with_npc_attack(damage, health));
+        }
+        if kill_loot {
+            mission = Some(mission.ok_or_else(|| invalid("kill loot requires a mission phase"))?.with_kill_loot());
+        }
+        if let Some(per_kill) = xp_per_kill {
+            mission = Some(mission.ok_or_else(|| invalid("experience requires a mission phase"))?.with_xp_per_kill(per_kill));
+        }
+        if let Some(skill) = autoattack_skill {
+            mission = Some(mission.ok_or_else(|| invalid("auto-attack requires a mission phase"))?.with_autoattack_skill(skill));
+        }
+        if let Some(amount) = damage_on_skill {
+            mission = Some(mission.ok_or_else(|| invalid("damage requires a mission phase"))?.with_damage_on_skill(amount));
+        }
     }
     let mut creation = creation.map(|(store, address)| creation_scene::CreationScene::new(store, address)).transpose()?;
     let mut header = [0u8; 2];
@@ -375,6 +448,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut mission_map_key: Option<u32> = None;
     let mut population_record: Option<Vec<u8>> = None;
     let mut no_capture = false;
+    let mut check_config = false;
     let mut agreement_state: Option<std::path::PathBuf> = None;
     let mut spawn: Option<[f32; 3]> = None;
     let mut mesmer_values: Option<[u8; 2]> = None;
@@ -383,6 +457,18 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut equipment_frames: Option<Vec<u8>> = None;
     let mut skill_frames: Option<Vec<u8>> = None;
     let mut initial_health: Option<f32> = None;
+    let mut talk_npc_spec: Option<(u32, [f32; 3])> = None;
+    let mut talk_npc_speaker: Option<String> = None;
+    let mut hostile_npcs: Vec<(u32, [f32; 3])> = Vec::new();
+    let mut skill_order_echo = false;
+    let mut npc_cast: Option<u32> = None;
+    let mut damage_on_skill: Option<f32> = None;
+    let mut autoattack_skill: Option<u32> = None;
+    let mut xp_per_kill: Option<u32> = None;
+    let mut starter_bag: Option<u16> = None;
+    let mut kill_loot = false;
+    let mut npc_attack_damage: Option<f32> = None;
+    let mut sourced_damage: Option<u8> = None;
     let mut store_path: Option<PathBuf> = None;
     let mut creation_destination: Option<SocketAddr> = None;
     let mut creation_route: Option<SocketAddr> = None;
@@ -424,6 +510,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 )
             }
             "--no-capture" => no_capture = true,
+            "--check-config" => check_config = true,
             "--auth-agreement-state" => {
                 agreement_state = Some(args.next().ok_or_else(|| invalid("missing agreement state file"))?.into());
             }
@@ -506,6 +593,86 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 }
                 initial_health = Some(value);
             }
+            "--mission-talk-npc" => {
+                if talk_npc_spec.is_some() {
+                    return Err(invalid("duplicate --mission-talk-npc"));
+                }
+                let text = args.next().ok_or_else(|| invalid("missing talk NPC SPECIES,X,Y,Z"))?;
+                let parts: Vec<&str> = text.split(',').collect();
+                let [species, x, y, z] = parts[..] else {
+                    return Err(invalid("talk NPC needs exactly SPECIES,X,Y,Z"));
+                };
+                let species: u32 = species.parse().map_err(|_| invalid("invalid talk NPC species key"))?;
+                let position = [x, y, z]
+                    .map(|v| v.parse::<f32>().map_err(|_| invalid("invalid talk NPC position")));
+                let [x, y, z] = position;
+                talk_npc_spec = Some((species, [x?, y?, z?]));
+            }
+            "--mission-skill-order-echo" => skill_order_echo = true,
+            "--mission-kill-loot" => kill_loot = true,
+            "--mission-sourced-damage" => {
+                let text = args.next().ok_or_else(|| invalid("missing sourced damage kind"))?;
+                let kind: u8 = text.parse().map_err(|_| invalid("invalid sourced damage kind"))?;
+                if kind > 3 {
+                    return Err(invalid("sourced damage kind must be 0..=3"));
+                }
+                sourced_damage = Some(kind);
+            }
+            "--mission-npc-attack" => {
+                let text = args.next().ok_or_else(|| invalid("missing NPC attack damage"))?;
+                let value: f32 = text.parse().map_err(|_| invalid("invalid NPC attack damage"))?;
+                if !(value.is_finite() && value > 0.0) {
+                    return Err(invalid("NPC attack damage must be positive"));
+                }
+                npc_attack_damage = Some(value);
+            }
+            "--mission-starter-bag" => {
+                let text = args.next().ok_or_else(|| invalid("missing bag creation message id"))?;
+                let id = text.parse().map_err(|_| invalid("invalid bag creation message id"))?;
+                if !matches!(id, 959 | 962 | 968 | 970) {
+                    return Err(invalid("bag creation message id must be 959, 962, 968 or 970"));
+                }
+                starter_bag = Some(id);
+            }
+            "--mission-xp-per-kill" => {
+                let text = args.next().ok_or_else(|| invalid("missing experience per kill"))?;
+                xp_per_kill = Some(text.parse().map_err(|_| invalid("invalid experience per kill"))?);
+            }
+            "--mission-autoattack-skill" => {
+                let text = args.next().ok_or_else(|| invalid("missing auto-attack skill key"))?;
+                autoattack_skill = Some(text.parse().map_err(|_| invalid("invalid auto-attack skill key"))?);
+            }
+            "--mission-damage-on-skill" => {
+                let text = args.next().ok_or_else(|| invalid("missing damage amount"))?;
+                let value: f32 = text.parse().map_err(|_| invalid("invalid damage amount"))?;
+                if !value.is_finite() || value <= 0.0 {
+                    return Err(invalid("damage amount must be finite and positive"));
+                }
+                damage_on_skill = Some(value);
+            }
+            "--mission-npc-cast" => {
+                let text = args.next().ok_or_else(|| invalid("missing NPC cast skill key"))?;
+                npc_cast = Some(text.parse().map_err(|_| invalid("invalid NPC cast skill key"))?);
+            }
+            "--mission-hostile-npc" => {
+                if hostile_npcs.len() >= mission::MAX_HOSTILE_NPCS {
+                    return Err(invalid("too many --mission-hostile-npc (at most 16)"));
+                }
+                let text = args.next().ok_or_else(|| invalid("missing hostile NPC SPECIES,X,Y,Z"))?;
+                let parts: Vec<&str> = text.split(',').collect();
+                let [species, x, y, z] = parts[..] else {
+                    return Err(invalid("hostile NPC needs exactly SPECIES,X,Y,Z"));
+                };
+                let species: u32 = species.parse().map_err(|_| invalid("invalid hostile NPC species key"))?;
+                let [x, y, z] = [x, y, z].map(|v| v.parse::<f32>().map_err(|_| invalid("invalid hostile NPC position")));
+                hostile_npcs.push((species, [x?, y?, z?]));
+            }
+            "--mission-talk-npc-speaker" => {
+                if talk_npc_speaker.is_some() {
+                    return Err(invalid("duplicate --mission-talk-npc-speaker"));
+                }
+                talk_npc_speaker = Some(args.next().ok_or_else(|| invalid("missing talk NPC speaker"))?);
+            }
             "--mission-spawn" => {
                 let text = args.next().ok_or_else(|| invalid("missing spawn X,Y,Z"))?;
                 let parts: Vec<f32> = text
@@ -555,10 +722,13 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL]]]]",
+                    "usage: gw2-game-observe [--check-config] [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
                 ));
             }
         }
+    }
+    if check_config && !no_capture {
+        return Err(invalid("--check-config requires --no-capture"));
     }
     if !bind_allowed(&listen, no_capture) {
         return Err(invalid(
@@ -620,6 +790,45 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     if initial_health.is_some() && !has_population {
         return Err(invalid("--mission-health requires --mission-population"));
     }
+    if npc_attack_damage.is_some() && (hostile_npcs.is_empty() || initial_health.is_none() || damage_on_skill.is_none()) {
+        return Err(invalid("--mission-npc-attack requires --mission-hostile-npc, --mission-health and --mission-damage-on-skill"));
+    }
+    let npc_attack = npc_attack_damage.zip(initial_health);
+    if sourced_damage.is_some() && damage_on_skill.is_none() {
+        return Err(invalid("--mission-sourced-damage requires --mission-damage-on-skill"));
+    }
+    if kill_loot && (starter_bag.is_none() || hostile_npcs.is_empty()) {
+        return Err(invalid("--mission-kill-loot requires --mission-starter-bag and --mission-hostile-npc"));
+    }
+    if starter_bag.is_some() && !has_population {
+        return Err(invalid("--mission-starter-bag requires a population"));
+    }
+    if xp_per_kill.is_some() && hostile_npcs.is_empty() {
+        return Err(invalid("--mission-xp-per-kill requires --mission-hostile-npc"));
+    }
+    if autoattack_skill.is_some() && hostile_npcs.is_empty() {
+        return Err(invalid("--mission-autoattack-skill requires --mission-hostile-npc"));
+    }
+    if damage_on_skill.is_some() && hostile_npcs.is_empty() {
+        return Err(invalid("--mission-damage-on-skill requires --mission-hostile-npc"));
+    }
+    if npc_cast.is_some() && hostile_npcs.is_empty() {
+        return Err(invalid("--mission-npc-cast requires --mission-hostile-npc"));
+    }
+    if skill_order_echo && !has_population {
+        return Err(invalid("--mission-skill-order-echo requires a population"));
+    }
+    if !hostile_npcs.is_empty() && !has_population {
+        return Err(invalid("--mission-hostile-npc requires a population"));
+    }
+    if (talk_npc_spec.is_some() && !has_population) || (talk_npc_speaker.is_some() && talk_npc_spec.is_none()) {
+        return Err(invalid("--mission-talk-npc requires a population; --mission-talk-npc-speaker requires --mission-talk-npc"));
+    }
+    let talk_npc = talk_npc_spec
+        .map(|(species, position)| {
+            mission::TalkNpc::new(species, position, talk_npc_speaker.unwrap_or_else(|| "Talk test".to_owned()))
+        })
+        .transpose()?;
     if saved_population_mode && (mission_map_key != Some(379) || mesmer_values.is_none()) {
         return Err(invalid("saved population currently requires Norn map379 and explicit Mesmer state/tracks"));
     }
@@ -663,9 +872,14 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     };
     if let Some(key) = mission_map_key {
         // Validate before binding; each connection builds its own phase.
-        let phase = mission::MissionPhase::new(key)?;
+        let mut phase = mission::MissionPhase::new(key)?;
         if let Some(fixture) = &population {
-            phase.with_population(fixture.clone())?;
+            phase = phase.with_population(fixture.clone())?;
+        }
+        // Validate world-only NPC values even when the first connection will
+        // select the creator. Dispatch must not conceal an invalid profile.
+        for &(species, position) in &hostile_npcs {
+            phase = phase.with_hostile_npc(species, position)?;
         }
     }
     if character.is_some() && auth_body.is_none() {
@@ -725,6 +939,10 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     }
     let key = Arc::new(key);
     let logs = logs.ok_or_else(|| invalid("missing --log"))?;
+    if check_config {
+        eprintln!("Game observer configuration valid; no listener started");
+        return Ok(());
+    }
     if !no_capture {
         fs::create_dir_all(&logs)?;
     }
@@ -742,6 +960,8 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
         let population = population.clone();
         let saved_population = saved_population.clone();
         let creation = creation.clone();
+        let talk_npc = talk_npc.clone();
+        let hostile_npcs = hostile_npcs.clone();
         let log = logs.join(format!("{epoch}-{index}.decrypted.bin"));
         std::thread::spawn(move || {
             let fixtures = Fixtures {
@@ -753,6 +973,17 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 saved_population,
                 creation,
                 population_delay,
+                talk_npc,
+                hostile_npcs,
+                skill_order_echo,
+                npc_cast,
+                damage_on_skill,
+                autoattack_skill,
+                xp_per_kill,
+                starter_bag,
+                kill_loot,
+                npc_attack,
+                sourced_damage,
                 no_capture,
             };
             if let Err(e) = observe(stream, &key, &log, fixtures, preamble) {

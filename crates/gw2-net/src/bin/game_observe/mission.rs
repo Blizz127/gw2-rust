@@ -23,10 +23,19 @@
 use bytes::{Bytes, BytesMut};
 use gw2_proto::{
     Guid,
+    agent_behavior::{AgentBehaviorFrame209026, HealthTransitionDetails209026, HealthTransitionPayload209026},
     agent_control::AgentControl209026,
+    bags::{
+        BagSlotFrame209026, InventoryItemFrame209026, InventorySlotCountFrame209026, STARTER_BACKPACK_ITEM,
+        encode_minimal_item_creation, encode_stack_item_creation,
+    },
     character_summary::SummaryV11,
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
+    experience::{EarnedLevelFrame209026, ExperienceFrame209026, level_for_experience},
+    health::{HealthFrame209026, HealthOperation209026, HealthValues209026, SourcedHealthFrame209026},
     map_load::{self, ClientMapEvent, LoadMap1060, MapData1063},
+    npc_talk::{ConversationReply209026, InteractRequest209026, LEVEL1_NPC_HEALTH, TalkNpcPlan209026, TalkSession209026},
+    skill_order::{AgentBehaviorOrderFrame209026, SkillBeginRequest209026, SkillOrder209026},
     player_startup::PlayerStartupFrame209026,
     population::{self, PopulationPlan, PopulationProfession209026},
     quest::{QuestLifecycleFrame209026, QuestLifecycleOperation209026},
@@ -68,7 +77,63 @@ pub(super) fn rules() -> Rules {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Seen {
     Map(ClientMapEvent),
+    /// Client 23 carrying the packed interact request (opcode 0x14/0x15).
+    Interact(InteractRequest209026),
+    /// Client 275/276 conversation replies.
+    Conversation(ConversationReply209026),
+    /// Client 23 carrying SkillBegin 0x23, with its outer behavior header.
+    Skill(SkillSeen),
+    /// Client 23 2-byte `[0x29][skill-bar slot]` (inferred SkillRepeatStart; key 1
+    /// sends slot 5, the weapon's first skill), with the header to echo.
+    RepeatStart(SkillSeen),
+    /// Client 227 `{Dword agent}` (sender `0x1412646b0`, CharForce.cpp): the
+    /// selected target's agent id (object +0xc, the same field SkillBegin's
+    /// target uses), 0 when none. Run 168: sent after Tab.
+    Target(u32),
     Other(u16),
+}
+
+/// A SkillBegin request and the client-23 header fields an answer echoes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SkillSeen {
+    pub agent_index: u16,
+    pub remote_tick: u32,
+    pub command_flags: u8,
+    pub behavior_value: u32,
+    pub request: SkillBeginRequest209026,
+}
+
+/// Opt-in talkable test NPC (docs/re/209026-npc-talk-loop.md). Spawned once
+/// with the player's BeginPlaying batch; answers interact with test dialogue.
+#[derive(Clone)]
+pub struct TalkNpc {
+    plan: TalkNpcPlan209026,
+    session: TalkSession209026,
+}
+
+impl TalkNpc {
+    /// Agent index of the test NPC. The player's placeholder character index
+    /// is 1; `respond` refuses to spawn on a collision.
+    pub const AGENT_INDEX: u16 = 2;
+
+    /// Placeholder pages, marked as test text: retail dialogue is server data.
+    pub fn new(species_key: u32, position: [f32; 3], speaker: String) -> io::Result<Self> {
+        let plan = TalkNpcPlan209026 {
+            agent_index: Self::AGENT_INDEX,
+            species_key,
+            position,
+            facing: [1.0, 0.0, 0.0], // placeholder: unit vector, direction unestablished
+            attitude: 0,
+            talkable: true,
+        };
+        plan.spawn_frames()?;
+        let pages = vec![
+            "[test] Well met, traveler.".to_owned(),
+            "[test] This is placeholder dialogue from the private test server.".to_owned(),
+        ];
+        let session = TalkSession209026::new(u32::from(Self::AGENT_INDEX), speaker, pages)?;
+        Ok(Self { plan, session })
+    }
 }
 
 /// Explicit synthetic population input, built from the same server-17
@@ -290,6 +355,209 @@ pub struct MissionPhase {
     population_delay: Duration,
     /// The population sequence and when it is due, while held.
     held: Option<(Instant, Bytes)>,
+    talk: Option<TalkNpc>,
+    /// Opt-in hostile test NPCs (attitude 1, no talk flag) for combat research.
+    /// Agent indices 3, 4, ... in the order added (at most MAX_HOSTILE_NPCS).
+    hostiles: Vec<HostileNpc>,
+    /// The hostile NPC (agent index) the player last hit with a SkillBegin.
+    last_target: Option<u16>,
+    /// Hostile NPCs the player hit that are still alive, oldest hit first; the
+    /// last one is the aggro target that counter-attacks the player.
+    aggro: Vec<u16>,
+    /// Research: answer SkillBegin with server 34 carrying a 0x78 order.
+    skill_order_echo: bool,
+    /// Research: on each player SkillBegin, order the hostile NPC to cast this
+    /// skill (server 34 + 0x78, slot 23), with its own behavior-value counter.
+    npc_cast: Option<(u32, u32)>,
+    /// Research: on each player SkillBegin aimed at a hostile NPC, lower its
+    /// health by this amount through server 257.
+    damage_on_skill: Option<f32>,
+    /// Research: answer `[0x29][slot]` with server 34 + 0x78 for this skill key,
+    /// aimed at the hostile NPC (auto-attack hypothesis).
+    autoattack_skill: Option<u32>,
+    /// Research: experience per NPC kill, running total and earned level.
+    xp: Option<(u32, u32, u8)>,
+    /// Research: item-creation message used to give the Starter Backpack.
+    starter_bag: Option<u16>,
+    /// Research: on each kill, the next KILL_LOOT_TABLE item goes into the next
+    /// backpack slot (968 + 276). Holds the number of drops so far.
+    kill_loot: Option<u32>,
+    /// Research: the hostile NPC hits the player while both are alive.
+    npc_attack: Option<NpcAttack>,
+    /// Research: send combat health changes as 255 with this change kind
+    /// (skill and attacker attached) instead of 257.
+    sourced_damage: Option<u8>,
+}
+
+/// Most hostile NPCs one mission phase spawns (agent indices 3..=18).
+pub const MAX_HOSTILE_NPCS: usize = 16;
+
+/// One hostile test NPC with its own health and revival timer.
+struct HostileNpc {
+    plan: TalkNpcPlan209026,
+    health: f32,
+    /// When the killed NPC revives (RESPAWN_DELAY after death).
+    respawn: Option<Instant>,
+}
+
+/// One combat health change from `previous` to `current`: 257 Currents, or
+/// 255 (a delta) with kind, skill and source.
+fn encode_health_change(
+    out: &mut BytesMut,
+    sourced: Option<u8>,
+    target: u32,
+    (previous, current): (f32, f32),
+    skill_key: u32,
+    source_agent: u32,
+) -> io::Result<u16> {
+    match sourced {
+        Some(kind) => {
+            let delta = current - previous;
+            // Research (run 165): the Word carries the magnitude, hypothesised
+            // to be the floater's displayed amount (with 0 no hit floater painted).
+            let raw_word = delta.abs().round().min(f32::from(u16::MAX)) as u16;
+            SourcedHealthFrame209026 { character_index: target, delta, second_delta: 0.0, raw_word, kind, skill_key, source_agent }
+                .encode_frame(out)?;
+            Ok(255)
+        }
+        None => {
+            HealthFrame209026 { character_index: target, operation: HealthOperation209026::Currents { current, second_current: 0.0 } }
+                .encode_frame(out);
+            Ok(257)
+        }
+    }
+}
+
+/// Research NPC counter-attack: after the player's first hit, server 257 lowers
+/// the player's health every NPC_ATTACK_INTERVAL until the NPC dies. Damage,
+/// timing and the stop-before-death rule are placeholders, not retail values.
+#[derive(Clone, Copy)]
+struct NpcAttack {
+    damage: f32,
+    player_health: f32,
+    max_health: f32,
+    next: Option<Instant>,
+    /// Set when the player goes down: when the defeat transition is due.
+    defeat_at: Option<Instant>,
+    /// The player was defeated; their attacks no longer land.
+    defeated: bool,
+}
+
+/// Placeholder time between the player going down and being defeated.
+const DOWNED_TO_DEFEAT: Duration = Duration::from_secs(10);
+
+/// Replace the player's first health meter (the downed bar reads only meter 1,
+/// `DwnHealth.cpp` 0x1404f4130): 259 values, then 260 rate (units/s; the
+/// client applies a negative rate locally). Second meter and extra stay 0, as
+/// in the player's 256 creation.
+fn encode_health_pool(out: &mut BytesMut, character_index: u32, current: f32, maximum: f32, rate: f32) {
+    let values = HealthValues209026 { current, maximum, second_current: 0.0, second_maximum: 0.0, extra: 0.0 };
+    HealthFrame209026 { character_index, operation: HealthOperation209026::Values(values) }.encode_frame(out);
+    HealthFrame209026 { character_index, operation: HealthOperation209026::Rate(rate) }.encode_frame(out);
+}
+
+/// Rally: the downed player killed the foe. Cancel defeat, send the packed
+/// 0x49 alive transition and restore half health (placeholder amount) on the normal meter.
+/// Returns whether the player was downed and rallied (the attack timer is then
+/// stopped; the caller stops it otherwise when no hit NPC is left alive).
+fn rally_on_kill(attack: &mut Option<NpcAttack>, character_index: u32, out: &mut BytesMut) -> io::Result<bool> {
+    let Some(attack) = attack.as_mut() else { return Ok(false) };
+    if attack.defeat_at.take().is_none() {
+        return Ok(false);
+    }
+    attack.next = None;
+    AgentBehaviorFrame209026 {
+        agent_index: character_index as u16,
+        remote_tick: 0,
+        command_flags: 0x10,
+        behavior_value: 0x4000_0500,
+        behavior_data: HealthTransitionPayload209026::Alive { detail_byte: 0, trailing_byte: 0 }.encode_payload(),
+    }
+    .encode_frame(out)?;
+    let restored = attack.max_health / 2.0;
+    // Swap the downed pool back to the normal meter at half health.
+    encode_health_pool(out, character_index, restored, attack.max_health, 0.0);
+    attack.player_health = restored;
+    eprintln!("Mission phase: player rallied (server 84 packed 0x49), health -> {restored}");
+    Ok(true)
+}
+
+/// A packed health transition (0x34 downed / 0x33 dead) on `agent` through
+/// server 84 (docs/re/209026-health-transitions.md), `killer` as the agent.
+fn encode_transition(out: &mut BytesMut, agent: u16, downed: bool, killer: u32, behavior_value: u32) -> io::Result<()> {
+    let details = HealthTransitionDetails209026 { detail_word: 0, detail_byte: 0, content_key: 0, agent_id: killer, trailing_byte: 0 };
+    let payload = if downed { HealthTransitionPayload209026::Downed(details) } else { HealthTransitionPayload209026::Dead(details) };
+    AgentBehaviorFrame209026 { agent_index: agent, remote_tick: 0, command_flags: 0x10, behavior_value, behavior_data: payload.encode_payload() }
+        .encode_frame(out)
+}
+
+const NPC_ATTACK_INTERVAL: Duration = Duration::from_secs(2);
+const NPC_ATTACK_FIRST_DELAY: Duration = Duration::from_millis(1500);
+
+/// The player's hit aggroes the NPC: schedule its first attack once. A
+/// downed or defeated player (health 0) is not attacked again.
+fn start_npc_attack(attack: &mut Option<NpcAttack>) {
+    if let Some(attack) = attack.as_mut()
+        && attack.next.is_none()
+        && attack.player_health > 0.0
+    {
+        attack.next = Some(Instant::now() + NPC_ATTACK_FIRST_DELAY);
+    }
+}
+
+/// Backpack slots sized by 305 (Starter Backpack item 8932, def +0x4c).
+const STARTER_BAG_SLOTS: u32 = 20;
+/// Research instance IDs for the backpack and drops (registry is sparse).
+const STARTER_BAG_INSTANCE: u32 = 0x6f00;
+const LOOT_INSTANCE_BASE: u32 = 0x6f10;
+
+/// Kill drops, in rotation: level-1 trophies and crafting materials from the
+/// client's item definitions (swarm note loot-items.md). The client holds no
+/// drop tables, so the choice and the order are ours; each is a stack of 1
+/// created by 968 and placed by 276 into the next backpack slot.
+const KILL_LOOT_TABLE: [(u32, &str); 6] = [
+    (19526, "Broken Claw"),
+    (24346, "Tiny Claw"),
+    (19538, "Broken Fang"),
+    (87275, "Branded Shard"),
+    (19561, "Patch of Fur"),
+    (24352, "Tiny Fang"),
+];
+
+/// On an NPC kill: create the next table item and place it with 276 in the
+/// next backpack slot (docs/re/209026-npc-talk-loop.md, loot).
+fn award_kill_loot(loot: &mut Option<u32>, character_index: u32, out: &mut BytesMut) -> io::Result<()> {
+    let Some(drops) = loot.as_mut() else { return Ok(()) };
+    if *drops >= STARTER_BAG_SLOTS {
+        eprintln!("Mission phase: backpack full, no loot");
+        return Ok(());
+    }
+    let slot = *drops;
+    let (item_key, name) = KILL_LOOT_TABLE[slot as usize % KILL_LOOT_TABLE.len()];
+    let instance = LOOT_INSTANCE_BASE + slot;
+    encode_stack_item_creation(instance, item_key, 1, out)?;
+    InventoryItemFrame209026 { character_index, item_instance: instance, reason: 0, slot }.encode_frame(out)?;
+    *drops += 1;
+    eprintln!("Mission phase: loot {name} (item {item_key}) -> backpack slot {slot} (server 968 + 276)");
+    Ok(())
+}
+
+/// Seconds between a test NPC's death and its revival (placeholder).
+const RESPAWN_DELAY: Duration = Duration::from_secs(10);
+
+/// On an NPC kill: add experience, send 191, and 188 when the client's
+/// experience table crosses a level (docs/re/209026-npc-talk-loop.md, XP).
+fn award_kill_xp(xp: &mut Option<(u32, u32, u8)>, character_index: u32, out: &mut BytesMut) {
+    let Some((per_kill, total, level)) = xp.as_mut() else { return };
+    *total = total.saturating_add(*per_kill);
+    ExperienceFrame209026 { character_index, experience: *total, dword_2: 0, byte_3: 0 }.encode_frame(out);
+    let reached = level_for_experience(*total);
+    eprintln!("Mission phase: kill experience +{per_kill} -> {total} (server 191)");
+    if reached > *level {
+        *level = reached;
+        EarnedLevelFrame209026 { character_index, level: reached }.encode_frame(out);
+        eprintln!("Mission phase: level up to {reached} (server 188)");
+    }
 }
 
 impl MissionPhase {
@@ -314,6 +582,19 @@ impl MissionPhase {
             began: false,
             population_delay: Duration::ZERO,
             held: None,
+            talk: None,
+            hostiles: Vec::new(),
+            last_target: None,
+            aggro: Vec::new(),
+            skill_order_echo: false,
+            npc_cast: None,
+            damage_on_skill: None,
+            autoattack_skill: None,
+            xp: None,
+            starter_bag: None,
+            kill_loot: None,
+            npc_attack: None,
+            sourced_damage: None,
         })
     }
 
@@ -341,16 +622,250 @@ impl MissionPhase {
         self
     }
 
+    /// Spawn a talkable test NPC after BeginPlaying (needs a population).
+    pub fn with_talk_npc(mut self, npc: TalkNpc) -> Self {
+        self.talk = Some(npc);
+        self
+    }
+
+    /// Add a hostile test NPC with the population. The first gets agent index 3
+    /// (the talk NPC keeps 2, the player is 1), each further call the next index,
+    /// up to MAX_HOSTILE_NPCS. Research input: it only fights back when
+    /// `with_npc_attack` is set; it lets the client's attack requests be observed.
+    pub fn with_hostile_npc(mut self, species_key: u32, position: [f32; 3]) -> io::Result<Self> {
+        if self.hostiles.len() >= MAX_HOSTILE_NPCS {
+            return Err(io::Error::new(ErrorKind::InvalidInput, "too many hostile NPCs"));
+        }
+        let plan = TalkNpcPlan209026 {
+            agent_index: 3 + self.hostiles.len() as u16,
+            species_key,
+            position,
+            facing: [1.0, 0.0, 0.0], // placeholder
+            attitude: 1,             // attackable (inferred: hostile)
+            talkable: false,
+        };
+        plan.spawn_frames()?;
+        self.hostiles.push(HostileNpc { plan, health: LEVEL1_NPC_HEALTH, respawn: None });
+        Ok(self)
+    }
+
+    /// Research hypothesis (docs/re/209026-npc-talk-loop.md section 6): answer
+    /// each SkillBegin with server 34 carrying the packed 0x78 order.
+    pub fn with_skill_order_echo(mut self) -> Self {
+        self.skill_order_echo = true;
+        self
+    }
+
+    /// Research: make the hostile NPC cast `skill_key` whenever the player
+    /// sends SkillBegin (docs/re/209026-npc-talk-loop.md section 6).
+    pub fn with_npc_cast(mut self, skill_key: u32) -> Self {
+        self.npc_cast = Some((skill_key, 0x4000_0000));
+        self
+    }
+
+    /// Research: player skills aimed at the hostile NPC lower its health by
+    /// `amount` via server 257 (the NPC spawns with 100). Clamped at 0.
+    pub fn with_damage_on_skill(mut self, amount: f32) -> Self {
+        self.damage_on_skill = Some(amount);
+        self
+    }
+
+    /// Research: answer the weapon repeat-start signal with a 0x78 order.
+    pub fn with_autoattack_skill(mut self, skill_key: u32) -> Self {
+        self.autoattack_skill = Some(skill_key);
+        self
+    }
+
+    /// Research: award `per_kill` experience on every NPC kill (level 1 start).
+    pub fn with_xp_per_kill(mut self, per_kill: u32) -> Self {
+        self.xp = Some((per_kill, 0, 1));
+        self
+    }
+
+    /// Research: create the Starter Backpack with item-creation `message_id`
+    /// after BeginPlaying and equip it into bag slot 0 (server 300).
+    pub fn with_sourced_damage(mut self, kind: u8) -> Self {
+        self.sourced_damage = Some(kind);
+        self
+    }
+
+    /// Requires a hostile NPC and the player's starting health.
+    pub fn with_npc_attack(mut self, damage: f32, player_health: f32) -> Self {
+        self.npc_attack = Some(NpcAttack { damage, player_health, max_health: player_health, next: None, defeat_at: None, defeated: false });
+        self
+    }
+
+    /// Requires with_starter_bag (276 needs 305's slots).
+    pub fn with_kill_loot(mut self) -> Self {
+        self.kill_loot = Some(0);
+        self
+    }
+
+    pub fn with_starter_bag(mut self, message_id: u16) -> Self {
+        self.starter_bag = Some(message_id);
+        self
+    }
+
+    /// Slot of the living hostile NPC with this agent index.
+    fn living_hostile(&self, agent: u32) -> Option<usize> {
+        self.hostiles.iter().position(|h| u32::from(h.plan.agent_index) == agent && h.health > 0.0)
+    }
+
+    /// Auto-attack target (the client names none): the NPC the player last hit
+    /// with a SkillBegin if alive, else the living hostile NPC nearest `origin`
+    /// (the player spawn; the first added wins a tie), else nothing.
+    fn autoattack_target(&self, origin: [f32; 3]) -> Option<usize> {
+        if let Some(slot) = self.last_target.and_then(|agent| self.living_hostile(u32::from(agent))) {
+            return Some(slot);
+        }
+        let distance = |p: [f32; 3]| (0..3).map(|i| (p[i] - origin[i]).powi(2)).sum::<f32>();
+        self.hostiles
+            .iter()
+            .enumerate()
+            .filter(|(_, h)| h.health > 0.0)
+            .min_by(|(_, a), (_, b)| distance(a.plan.position).total_cmp(&distance(b.plan.position)))
+            .map(|(slot, _)| slot)
+    }
+
+    /// One player hit on hostile NPC `slot`: lower its health, send the change,
+    /// make it the aggro target, and on death send the kill, XP, loot and
+    /// rally frames and start its respawn timer. Needs `damage_on_skill`.
+    fn hit_hostile(&mut self, slot: usize, player: u32, skill_key: u32, remote_tick: u32, what: &str, out: &mut BytesMut) -> io::Result<()> {
+        let Some(amount) = self.damage_on_skill else { return Ok(()) };
+        let npc = self.hostiles[slot].plan.agent_index;
+        let health = self.hostiles[slot].health;
+        let remaining = (health - amount).max(0.0);
+        self.hostiles[slot].health = remaining;
+        self.aggro.retain(|&a| a != npc);
+        self.aggro.push(npc);
+        start_npc_attack(&mut self.npc_attack);
+        let id = encode_health_change(out, self.sourced_damage, u32::from(npc), (health, remaining), skill_key, player)?;
+        eprintln!("Mission phase: {what} hit NPC {npc}: health {health} -> {remaining} (server {id})");
+        if remaining == 0.0 && health > 0.0 {
+            // Packed 0x33 dead transition through server 84; flags mask 0x10
+            // selects the character transition dispatcher
+            // (docs/re/209026-health-transitions.md). Killer = the player.
+            let dead = HealthTransitionPayload209026::Dead(HealthTransitionDetails209026 {
+                detail_word: 0,
+                detail_byte: 0,
+                content_key: skill_key,
+                agent_id: player,
+                trailing_byte: 0,
+            });
+            AgentBehaviorFrame209026 {
+                agent_index: npc,
+                remote_tick,
+                command_flags: 0x10,
+                behavior_value: 0x4000_0100,
+                behavior_data: dead.encode_payload(),
+            }
+            .encode_frame(out)?;
+            eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
+            award_kill_xp(&mut self.xp, player, out);
+            award_kill_loot(&mut self.kill_loot, player, out)?;
+            self.hostiles[slot].respawn = Some(Instant::now() + RESPAWN_DELAY);
+            // The dead NPC stops attacking; another hit NPC that is still alive
+            // takes over as the attacker (the aggro list's new last entry).
+            self.aggro.retain(|&a| a != npc);
+            if self.last_target == Some(npc) {
+                self.last_target = None;
+            }
+            let rallied = rally_on_kill(&mut self.npc_attack, player, out)?;
+            if let Some(attack) = self.npc_attack.as_mut()
+                && (rallied || self.aggro.is_empty())
+            {
+                attack.next = None;
+            }
+        }
+        Ok(())
+    }
+
     /// When the held population is due, if one is held.
     pub fn due_at(&self) -> Option<Instant> {
-        self.held.as_ref().map(|(due, _)| *due)
+        let held = self.held.as_ref().map(|(due, _)| *due);
+        let attack = self.npc_attack.and_then(|a| a.next);
+        let defeat = self.npc_attack.and_then(|a| a.defeat_at);
+        let respawns = self.hostiles.iter().filter_map(|h| h.respawn);
+        [held, attack, defeat].into_iter().flatten().chain(respawns).min()
     }
 
     /// The held population once `now` has reached its due time (once).
     pub fn take_due(&mut self, now: Instant) -> Option<Bytes> {
-        if self.due_at().is_some_and(|due| now >= due) {
+        if self.held.as_ref().is_some_and(|(due, _)| now >= *due) {
             eprintln!("Mission phase: sending the held population sequence");
             return self.held.take().map(|(_, bytes)| bytes);
+        }
+        if let Some(attack) = self.npc_attack.as_mut()
+            && attack.defeat_at.is_some_and(|due| now >= due)
+        {
+            attack.defeat_at = None;
+            attack.defeated = true;
+            let character_index = self.population.as_ref()?.plan.character_index;
+            let npc = u32::from(self.aggro.last().copied().or_else(|| self.hostiles.first().map(|h| h.plan.agent_index))?);
+            let mut out = BytesMut::new();
+            encode_transition(&mut out, character_index as u16, false, npc, 0x4000_0400).ok()?;
+            eprintln!("Mission phase: player defeated by NPC {npc} (server 84 packed 0x33)");
+            return Some(out.freeze());
+        }
+        if let Some(attack) = self.npc_attack.as_mut()
+            && attack.next.is_some_and(|due| now >= due)
+        {
+            let character_index = self.population.as_ref()?.plan.character_index;
+            // The attacker is the NPC the player hit most recently and that is still alive.
+            let Some(&npc) = self.aggro.last() else {
+                attack.next = None;
+                return None;
+            };
+            let npc = u32::from(npc);
+            let remaining = attack.player_health - attack.damage;
+            if remaining < 1.0 {
+                // The hit takes the player to 0, then the packed 0x34 downed
+                // transition; defeat (0x33) follows after DOWNED_TO_DEFEAT.
+                // Retail downed health and downed skills are not modelled.
+                let previous = attack.player_health;
+                attack.player_health = 0.0;
+                attack.next = None;
+                attack.defeat_at = Some(now + DOWNED_TO_DEFEAT);
+                let mut out = BytesMut::new();
+                let id = encode_health_change(&mut out, self.sourced_damage, character_index, (previous, 0.0), 0, npc).ok()?;
+                encode_transition(&mut out, character_index as u16, true, npc, 0x4000_0300).ok()?;
+                // Downed pool on meter 1, draining to 0 over DOWNED_TO_DEFEAT
+                // (placeholder size = the normal maximum).
+                let pool = attack.max_health;
+                encode_health_pool(&mut out, character_index, pool, pool, -pool / DOWNED_TO_DEFEAT.as_secs_f32());
+                eprintln!("Mission phase: NPC {npc} hit player for {previous}: health -> 0 (server {id}), player downed (server 84 packed 0x34)");
+                return Some(out.freeze());
+            }
+            attack.player_health = remaining;
+            attack.next = Some(now + NPC_ATTACK_INTERVAL);
+            let mut out = BytesMut::new();
+            let id = encode_health_change(&mut out, self.sourced_damage, character_index, (attack.player_health + attack.damage, remaining), 0, npc).ok()?;
+            eprintln!("Mission phase: NPC {npc} hit player for {}: health -> {remaining} (server {id})", attack.damage);
+            return Some(out.freeze());
+        }
+        if let Some(hostile) = self.hostiles.iter_mut().find(|h| h.respawn.is_some_and(|due| now >= due)) {
+            hostile.respawn = None;
+            hostile.health = LEVEL1_NPC_HEALTH;
+            let npc = hostile.plan.agent_index;
+            let mut out = BytesMut::new();
+            // Packed 0x49 alive transition (docs/re/209026-health-transitions.md),
+            // then full health; the same agent revives, so its model stays loaded.
+            AgentBehaviorFrame209026 {
+                agent_index: npc,
+                remote_tick: 0,
+                command_flags: 0x10,
+                behavior_value: 0x4000_0200,
+                behavior_data: HealthTransitionPayload209026::Alive { detail_byte: 0, trailing_byte: 0 }.encode_payload(),
+            }
+            .encode_frame(&mut out)
+            .ok()?;
+            HealthFrame209026 {
+                character_index: u32::from(npc),
+                operation: HealthOperation209026::Currents { current: LEVEL1_NPC_HEALTH, second_current: 0.0 },
+            }
+            .encode_frame(&mut out);
+            eprintln!("Mission phase: NPC {npc} respawned (server 84 packed 0x49, health {LEVEL1_NPC_HEALTH})");
+            return Some(out.freeze());
         }
         None
     }
@@ -362,10 +877,41 @@ impl MissionPhase {
         let Some(fixture) = &self.population else {
             return Ok(None);
         };
+        // Auto-attack follows the NPC last attacked with a SkillBegin, whatever
+        // the damage setting (or a defeat) does with the skill itself.
+        if self.began
+            && let Seen::Skill(skill) = seen
+            && let Some(slot) = self.living_hostile(skill.request.target)
+        {
+            self.last_target = Some(self.hostiles[slot].plan.agent_index);
+        }
         match seen {
             Seen::Map(ClientMapEvent::MapLoaded) if !self.populated => {
                 self.populated = true;
-                let stream = fixture.population_stream()?;
+                let mut stream = fixture.population_stream()?;
+                // Test NPCs go out with the population, inside the loader's agent and
+                // model streaming: spawned after BeginPlaying their models never
+                // streamed in and they stayed invisible (sandbox runs 122-135; run 136/
+                // 137 render). docs/re/209026-npc-talk-loop.md section 6.
+                let mut npcs = BytesMut::new();
+                let talk = self.talk.as_ref().map(|npc| (&npc.plan, "talk"));
+                let hostile = self.hostiles.iter().map(|h| (&h.plan, "hostile"));
+                for (plan, kind) in talk.into_iter().chain(hostile) {
+                    if u32::from(plan.agent_index) == fixture.plan.character_index {
+                        eprintln!("Mission phase: {kind} NPC agent index collides with the player; not spawned");
+                        continue;
+                    }
+                    npcs.extend_from_slice(&plan.spawn_frames()?);
+                    eprintln!(
+                        "Mission phase: spawning {kind} NPC agent {} (species {}) with the population",
+                        plan.agent_index, plan.species_key
+                    );
+                }
+                if !npcs.is_empty() {
+                    let mut joined = BytesMut::from(&stream[..]);
+                    joined.extend_from_slice(&npcs);
+                    stream = joined.freeze();
+                }
                 if !self.population_delay.is_zero() {
                     eprintln!(
                         "Mission phase: holding the population sequence for {} ms",
@@ -395,6 +941,17 @@ impl MissionPhase {
                     out.extend_from_slice(skills.bytes());
                     eprintln!("Mission phase: sending explicit initial skills once");
                 }
+                if let Some(message_id) = self.starter_bag {
+                    let instance = STARTER_BAG_INSTANCE;
+                    encode_minimal_item_creation(message_id, instance, STARTER_BACKPACK_ITEM, &mut out)?;
+                    BagSlotFrame209026 { character_index: fixture.plan.character_index, bag_slot: 0, item_instance: instance }
+                        .encode_frame(&mut out);
+                    // 300 does not size m_inventorySlots; 305 grows it to the
+                    // backpack's 20 slots (item 8932 def +0x4c).
+                    InventorySlotCountFrame209026 { character_index: fixture.plan.character_index, slot_count: STARTER_BAG_SLOTS }
+                        .encode_frame(&mut out)?;
+                    eprintln!("Mission phase: Starter Backpack via server {message_id} + 300 bag slot 0 + 305 20 slots");
+                }
                 if let Some(QuestFixture { quest_id, flags, goal_id }) = fixture.quest {
                     // All character/player components now exist. 532 is not
                     // idempotent: it completes an old active goal. Send exactly
@@ -411,6 +968,131 @@ impl MissionPhase {
                     eprintln!("Mission phase: sending explicit quest Create, SelectGoal and Notify once");
                 }
                 Ok(Some(out.freeze()))
+            }
+            Seen::Target(agent) if self.living_hostile(*agent).is_some() => {
+                // The player's selection drives auto-attack (it carries no target).
+                self.last_target = u16::try_from(*agent).ok();
+                Ok(None)
+            }
+            Seen::Interact(request) if self.began => {
+                let Some(npc) = self.talk.as_mut() else { return Ok(None) };
+                let InteractRequest209026::Interact { target } = *request else { return Ok(None) };
+                let reply = npc.session.on_interact(target)?;
+                eprintln!(
+                    "Mission phase: client interact target {target} ({})",
+                    if reply.is_some() { "talk NPC: opening conversation" } else { "not the talk NPC" }
+                );
+                Ok(reply.map(BytesMut::freeze))
+            }
+            Seen::RepeatStart(start) if self.began && self.autoattack_skill.is_some() && !self.hostiles.is_empty() => {
+                let player = fixture.plan.character_index;
+                // The client sends no target with auto-attack (repeat start).
+                let Some(slot) = self.autoattack_target(fixture.plan.position) else { return Ok(None) };
+                let npc = self.hostiles[slot].plan.agent_index;
+                let skill_key = self.autoattack_skill.unwrap();
+                let order = SkillOrder209026 {
+                    order_flags: 0,
+                    skill_key,
+                    slot: start.request.slot,
+                    raw_7: 0,
+                    agent: u32::from(npc),
+                    byte_12: 0,
+                };
+                let mut out = BytesMut::new();
+                AgentBehaviorOrderFrame209026 {
+                    agent_index: start.agent_index,
+                    remote_tick: start.remote_tick,
+                    command_flags: start.command_flags,
+                    behavior_value: start.behavior_value,
+                    behavior_data: order.to_behavior_data().to_vec(),
+                    word: 1000, // placeholder duration (m_durationMs)
+                }
+                .encode_frame(&mut out)?;
+                eprintln!(
+                    "Mission phase: repeat-start slot {} answered with server 34 0x78 skill {skill_key} on NPC {npc}",
+                    start.request.slot
+                );
+                if self.damage_on_skill.is_some() && !self.npc_attack.is_some_and(|a| a.defeated) {
+                    self.hit_hostile(slot, player, skill_key, start.remote_tick, "auto-attack", &mut out)?;
+                }
+                Ok(Some(out.freeze()))
+            }
+            Seen::Skill(skill)
+                if self.began
+                    && self.damage_on_skill.is_some()
+                    && !self.npc_attack.is_some_and(|a| a.defeated)
+                    && self.living_hostile(skill.request.target).is_some() =>
+            {
+                let player = fixture.plan.character_index;
+                let slot = self.living_hostile(skill.request.target).unwrap();
+                let mut out = BytesMut::new();
+                let what = format!("skill {}", skill.request.skill_key);
+                self.hit_hostile(slot, player, skill.request.skill_key, skill.remote_tick, &what, &mut out)?;
+                Ok(Some(out.freeze()))
+            }
+            Seen::Skill(skill) if self.began && self.npc_cast.is_some() && !self.hostiles.is_empty() => {
+                // The targeted hostile NPC casts, else the first one.
+                let slot = self.living_hostile(skill.request.target).unwrap_or(0);
+                let npc = self.hostiles[slot].plan.agent_index;
+                let (skill_key, value) = self.npc_cast.unwrap();
+                self.npc_cast = Some((skill_key, value.wrapping_add(1)));
+                let order = SkillOrder209026 {
+                    order_flags: 0,
+                    skill_key,
+                    // 23 bypasses the skill-bar slot mutation (the NPC has none).
+                    slot: 23,
+                    raw_7: 0,
+                    agent: u32::from(npc), // placeholder: self-target
+                    byte_12: 0,
+                };
+                let mut out = BytesMut::new();
+                AgentBehaviorOrderFrame209026 {
+                    agent_index: npc,
+                    remote_tick: skill.remote_tick,
+                    command_flags: 0,
+                    behavior_value: value,
+                    behavior_data: order.to_behavior_data().to_vec(),
+                    // m_durationMs (command +0x70): a non-controlled agent's
+                    // command asserts it nonzero (AgBase.cpp:822, run 127).
+                    // placeholder: 1 s, not the skill's content duration.
+                    word: 1000,
+                }
+                .encode_frame(&mut out)?;
+                eprintln!("Mission phase: ordering hostile NPC {npc} to cast skill {skill_key} (server 34 0x78, value {value:#x})");
+                Ok(Some(out.freeze()))
+            }
+            Seen::Skill(skill) if self.began && self.skill_order_echo => {
+                let request = skill.request;
+                let order = SkillOrder209026 {
+                    order_flags: 0,
+                    skill_key: request.skill_key,
+                    slot: request.slot,
+                    raw_7: 0,
+                    // Target 0 (none): the caster itself (placeholder choice).
+                    agent: if request.target == 0 { fixture.plan.character_index } else { request.target },
+                    byte_12: 0,
+                };
+                let mut out = BytesMut::new();
+                AgentBehaviorOrderFrame209026 {
+                    agent_index: skill.agent_index,
+                    remote_tick: skill.remote_tick,
+                    command_flags: skill.command_flags,
+                    behavior_value: skill.behavior_value,
+                    behavior_data: order.to_behavior_data().to_vec(),
+                    word: 0,
+                }
+                .encode_frame(&mut out)?;
+                eprintln!(
+                    "Mission phase: answering SkillBegin (skill {}, slot {}, value {:#x}) with server 34 0x78 order",
+                    request.skill_key, request.slot, skill.behavior_value
+                );
+                Ok(Some(out.freeze()))
+            }
+            Seen::Conversation(reply) if self.began => {
+                let Some(npc) = self.talk.as_mut() else { return Ok(None) };
+                let answer = npc.session.on_reply(*reply)?;
+                eprintln!("Mission phase: conversation reply {reply:?}; active now {:?}", npc.session.active());
+                Ok(answer.map(BytesMut::freeze))
             }
             _ => Ok(None),
         }
@@ -477,7 +1159,7 @@ impl MissionPhase {
             let mut input = &frame[..];
             let event = match ClientMapEvent::decode_frame(&mut input) {
                 Ok(event) if input.is_empty() => Seen::Map(event),
-                _ => Seen::Other(id),
+                _ => Self::talk_event(id, &frame).unwrap_or(Seen::Other(id)),
             };
             match event {
                 Seen::Map(ClientMapEvent::LanguagePrefs(prefs)) => eprintln!(
@@ -491,11 +1173,78 @@ impl MissionPhase {
                 Seen::Map(ClientMapEvent::AgentsLoaded) => {
                     eprintln!("Mission phase: client 412 AgentsLoaded")
                 }
+                Seen::Interact(request) => eprintln!("Mission phase: client 23 interact {request:?}"),
+                Seen::Conversation(reply) => eprintln!("Mission phase: client conversation {reply:?}"),
+                Seen::Skill(skill) => eprintln!("Mission phase: client 23 {skill:?}"),
+                Seen::RepeatStart(start) => eprintln!(
+                    "Mission phase: client 23 repeat-start [29 {:02x}] value {:#x}",
+                    start.request.slot, start.behavior_value
+                ),
+                // Short fixed-layout messages without text (17 Word, 47 Byte,
+                // 248): log their bytes for research. Never dump others; they
+                // may carry typed text.
+                Seen::Other(id @ (17 | 47 | 248)) if used <= 8 => {
+                    let hex: Vec<String> = frame.iter().map(|b| format!("{b:02x}")).collect();
+                    eprintln!("Mission phase: client message {id} ({used} bytes) [{}]", hex.join(" "))
+                }
+                Seen::Target(agent) => eprintln!("Mission phase: client 227 target agent {agent}"),
                 Seen::Other(id) => eprintln!("Mission phase: client message {id} ({used} bytes)"),
             }
             seen.push(event);
         }
         seen
+    }
+
+    /// Client 23 with an interact payload, or 275/276. Other client-23
+    /// payloads (skills, movement signals) stay `Other` and are logged with
+    /// their leading opcode so new request kinds can be identified.
+    fn talk_event(id: u16, frame: &[u8]) -> Option<Seen> {
+        let mut input = frame;
+        match id {
+            227 => {
+                use gw2_proto::Decode;
+                let _ = u16::decode(&mut input).ok()?;
+                let agent = u32::decode(&mut input).ok()?;
+                input.is_empty().then_some(Seen::Target(agent))
+            }
+            AgentBehaviorFrame209026::CLIENT_MESSAGE_ID => {
+                let behavior = AgentBehaviorFrame209026::decode_client_frame(&mut input).ok()?;
+                if let [0x29, slot] = behavior.behavior_data[..] {
+                    return Some(Seen::RepeatStart(SkillSeen {
+                        agent_index: behavior.agent_index,
+                        remote_tick: behavior.remote_tick,
+                        command_flags: behavior.command_flags,
+                        behavior_value: behavior.behavior_value,
+                        request: SkillBeginRequest209026 { target: 0, skill_key: 0, slot },
+                    }));
+                }
+                if let Ok(request) = SkillBeginRequest209026::from_behavior_data(&behavior.behavior_data) {
+                    return Some(Seen::Skill(SkillSeen {
+                        agent_index: behavior.agent_index,
+                        remote_tick: behavior.remote_tick,
+                        command_flags: behavior.command_flags,
+                        behavior_value: behavior.behavior_value,
+                        request,
+                    }));
+                }
+                match InteractRequest209026::from_behavior_data(&behavior.behavior_data) {
+                    Ok(request) => Some(Seen::Interact(request)),
+                    Err(_) => {
+                        // Skill/target bytes only (no account data); at most 250.
+                        let hex: Vec<String> = behavior.behavior_data.iter().map(|b| format!("{b:02x}")).collect();
+                        eprintln!(
+                            "Mission phase: client 23 flags {:#04x} value {} data [{}]",
+                            behavior.command_flags,
+                            behavior.behavior_value,
+                            hex.join(" ")
+                        );
+                        None
+                    }
+                }
+            }
+            275 | 276 => ConversationReply209026::decode_frame(&mut input).ok().map(Seen::Conversation),
+            _ => None,
+        }
     }
 
     fn disable(&mut self) {
@@ -636,6 +1385,10 @@ pub(crate) mod tests {
                         Seen::Map(ClientMapEvent::MapLoaded) => 420,
                         Seen::Map(ClientMapEvent::FailedToLoad) => 418,
                         Seen::Map(ClientMapEvent::AgentsLoaded) => 412,
+                        Seen::Interact(_) | Seen::Skill(_) | Seen::RepeatStart(_) => 23,
+                        Seen::Target(_) => 227,
+                        Seen::Conversation(ConversationReply209026::Choose { .. }) => 275,
+                        Seen::Conversation(ConversationReply209026::Closed { .. }) => 276,
                     })
                     .collect();
                 assert_eq!(got, vec![id], "client {id} (optionals present: {present})");
@@ -1049,5 +1802,336 @@ pub(crate) mod tests {
         assert!(phase.push(&[0xff, 0xff, 0]).is_empty());
         assert!(!phase.enabled());
         assert!(phase.push(&client_input()).is_empty());
+    }
+
+    fn talk_phase() -> MissionPhase {
+        let npc = TalkNpc::new(3172, [5.0, 0.0, 0.0], "Eir".to_owned()).unwrap();
+        populated_phase().with_talk_npc(npc)
+    }
+
+    fn client_23(data: &[u8]) -> BytesMut {
+        let mut out = BytesMut::new();
+        AgentBehaviorFrame209026 {
+            agent_index: 1,
+            remote_tick: 77,
+            command_flags: 3,
+            behavior_value: 0,
+            behavior_data: data.to_vec(),
+        }
+        .encode_client_frame(&mut out)
+        .unwrap();
+        out
+    }
+
+    #[test]
+    fn talk_npc_spawns_with_the_population_and_answers_interact_and_replies() {
+        use gw2_proto::npc_talk::{ConversationFrame209026, NpcInteractFlag209026};
+        let mut phase = talk_phase();
+        let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
+        let interact = Seen::Interact(InteractRequest209026::Interact { target: 2 });
+        // Before BeginPlaying an interact is not answered.
+        assert!(phase.respond(&interact).unwrap().is_none());
+        let population = phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+        // The NPC spawn (ending in 378) follows the player's population, inside map loading.
+        let plan = phase.population.as_ref().unwrap().plan.clone();
+        let player = population::population_stream(&plan).unwrap();
+        let spawn = phase.talk.as_ref().unwrap().plan.spawn_frames().unwrap();
+        assert_eq!(&population[..player.len()], &player[..]);
+        assert_eq!(&population[player.len()..], &spawn[..]);
+        assert_eq!(
+            NpcInteractFlag209026::decode_frame(&mut &population[population.len() - 5..]).unwrap(),
+            NpcInteractFlag209026::Talk { character_index: 2, talk: 1, byte_2: 0 }
+        );
+        // BeginPlaying is unchanged: 1036, 431 and 83 only.
+        let begin = phase.respond(&agents).unwrap().unwrap();
+        assert_eq!(&begin[..], &[0x0c, 0x04, 0xaf, 0x01, 0x53, 0x00, 0x01, 0x00, 0x01]);
+
+        // Client 23 [0x14][2] reaches the phase as an interact and opens a conversation.
+        let seen = phase.push(&client_23(&[0x14, 2, 0, 0, 0]));
+        assert_eq!(seen, [interact]);
+        let open = phase.respond(&interact).unwrap().unwrap();
+        let mut input = &open[..];
+        assert!(matches!(
+            ConversationFrame209026::decode_frame(&mut input).unwrap(),
+            ConversationFrame209026::Open { agent: 2, conversation: 1, stage: 1, .. }
+        ));
+        // Another target is ignored.
+        let other = Seen::Interact(InteractRequest209026::Interact { target: 1 });
+        assert!(phase.respond(&other).unwrap().is_none());
+
+        // 275 Goodbye on the last page closes with 762; the 276 ack needs no answer.
+        let mut reply = BytesMut::new();
+        ConversationReply209026::Choose { conversation: 1, response: TalkSession209026::CONTINUE }
+            .encode_frame(&mut reply);
+        let seen = phase.push(&reply);
+        assert!(matches!(seen[..], [Seen::Conversation(_)]));
+        let next = phase.respond(&seen[0]).unwrap().unwrap();
+        assert!(matches!(
+            ConversationFrame209026::decode_frame(&mut &next[..]).unwrap(),
+            ConversationFrame209026::Page { stage: 2, .. }
+        ));
+        let bye = Seen::Conversation(ConversationReply209026::Choose {
+            conversation: 1,
+            response: TalkSession209026::GOODBYE,
+        });
+        let close = phase.respond(&bye).unwrap().unwrap();
+        assert_eq!(&close[..], &[0xfa, 0x02, 0x01]);
+        let ack = Seen::Conversation(ConversationReply209026::Closed { conversation: 1 });
+        assert!(phase.respond(&ack).unwrap().is_none());
+        assert!(phase.enabled());
+    }
+
+    #[test]
+    fn other_client_23_payloads_stay_raw_and_keep_the_phase() {
+        let mut phase = talk_phase();
+        // A 2-byte 0x2a signal is neither interact, skill nor repeat start.
+        assert_eq!(phase.push(&client_23(&[0x2a, 0])), [Seen::Other(23)]);
+        assert!(matches!(phase.push(&client_23(&[0x29, 5]))[..], [Seen::RepeatStart(_)]));
+        // SkillBegin is recognised but unanswered without the research flag.
+        let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
+        assert!(matches!(seen[..], [Seen::Skill(SkillSeen { request: SkillBeginRequest209026 { skill_key: 10176, .. }, .. })]));
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        assert!(phase.respond(&seen[0]).unwrap().is_none());
+        assert!(phase.enabled());
+    }
+
+    #[test]
+    fn skill_order_echo_answers_with_server_34_and_the_request_value() {
+        let mut phase = populated_phase().with_skill_order_echo();
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
+        let reply = phase.respond(&seen[0]).unwrap().unwrap();
+        let frame = AgentBehaviorOrderFrame209026::decode_frame(&mut &reply[..]).unwrap();
+        assert_eq!((frame.agent_index, frame.remote_tick, frame.command_flags, frame.behavior_value), (1, 77, 3, 0));
+        assert_eq!(frame.behavior_data, [0x78, 0, 0xc0, 0x27, 0, 0, 0, 0, 1, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn talk_npc_colliding_with_the_player_is_not_spawned() {
+        let mut npc = TalkNpc::new(3172, [5.0, 0.0, 0.0], "Eir".to_owned()).unwrap();
+        npc.plan.agent_index = 1;
+        let mut phase = populated_phase().with_talk_npc(npc);
+        let population = phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+        let plan = phase.population.as_ref().unwrap().plan.clone();
+        assert_eq!(population, population::population_stream(&plan).unwrap(), "no NPC frames appended");
+    }
+
+    fn hostile_phase(damage: f32) -> MissionPhase {
+        let mut phase = populated_phase()
+            .with_hostile_npc(100, [50.0, 0.0, 0.0])
+            .unwrap()
+            .with_hostile_npc(101, [5.0, 0.0, 0.0])
+            .unwrap()
+            .with_damage_on_skill(damage)
+            .with_autoattack_skill(77);
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        phase
+    }
+
+    fn skill_at(target: u32) -> Seen {
+        Seen::Skill(SkillSeen {
+            agent_index: 1,
+            remote_tick: 5,
+            command_flags: 0,
+            behavior_value: 0,
+            request: SkillBeginRequest209026 { target, skill_key: 10176, slot: 1 },
+        })
+    }
+
+    fn repeat_start() -> Seen {
+        Seen::RepeatStart(SkillSeen {
+            agent_index: 1,
+            remote_tick: 6,
+            command_flags: 0,
+            behavior_value: 0,
+            request: SkillBeginRequest209026 { target: 0, skill_key: 0, slot: 1 },
+        })
+    }
+
+    fn health_of(phase: &MissionPhase, agent: u16) -> f32 {
+        phase.hostiles.iter().find(|h| h.plan.agent_index == agent).unwrap().health
+    }
+
+    fn contains(haystack: &[u8], needle: &[u8]) -> bool {
+        haystack.windows(needle.len()).any(|w| w == needle)
+    }
+
+    fn dead_frame(agent: u16, skill_key: u32, tick: u32) -> Vec<u8> {
+        let dead = HealthTransitionPayload209026::Dead(HealthTransitionDetails209026 {
+            detail_word: 0,
+            detail_byte: 0,
+            content_key: skill_key,
+            agent_id: 1,
+            trailing_byte: 0,
+        });
+        let mut out = BytesMut::new();
+        AgentBehaviorFrame209026 { agent_index: agent, remote_tick: tick, command_flags: 0x10, behavior_value: 0x4000_0100, behavior_data: dead.encode_payload() }
+            .encode_frame(&mut out)
+            .unwrap();
+        out.to_vec()
+    }
+
+    #[test]
+    fn two_hostile_npcs_spawn_with_agent_indices_3_and_4() {
+        let mut phase = populated_phase().with_hostile_npc(100, [50.0, 0.0, 0.0]).unwrap().with_hostile_npc(101, [5.0, 0.0, 0.0]).unwrap();
+        let indices: Vec<u16> = phase.hostiles.iter().map(|h| h.plan.agent_index).collect();
+        assert_eq!(indices, [3, 4]);
+        let population = phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+        let player = population::population_stream(&phase.population.as_ref().unwrap().plan).unwrap();
+        let first = phase.hostiles[0].plan.spawn_frames().unwrap();
+        let second = phase.hostiles[1].plan.spawn_frames().unwrap();
+        assert_eq!(&population[..player.len()], &player[..]);
+        assert_eq!(&population[player.len()..player.len() + first.len()], &first[..]);
+        assert_eq!(&population[player.len() + first.len()..], &second[..]);
+        assert!(phase.hostiles.iter().all(|h| h.plan.attitude == 1 && h.health == LEVEL1_NPC_HEALTH));
+    }
+
+    #[test]
+    fn at_most_sixteen_hostile_npcs() {
+        let mut phase = populated_phase();
+        for i in 0..MAX_HOSTILE_NPCS {
+            phase = phase.with_hostile_npc(100, [i as f32, 0.0, 0.0]).unwrap();
+        }
+        assert_eq!(phase.hostiles.last().unwrap().plan.agent_index, 18);
+        assert!(phase.with_hostile_npc(100, [0.0; 3]).is_err());
+    }
+
+    #[test]
+    fn killing_one_hostile_npc_leaves_the_other_and_respawns_independently() {
+        let mut phase = hostile_phase(59.0);
+        // Skill hits on NPC 3: 118 -> 59 -> 0.
+        let hit = phase.respond(&skill_at(3)).unwrap().unwrap();
+        assert!(!contains(&hit, &dead_frame(3, 10176, 5)));
+        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (59.0, LEVEL1_NPC_HEALTH));
+        let kill = phase.respond(&skill_at(3)).unwrap().unwrap();
+        assert!(contains(&kill, &dead_frame(3, 10176, 5)), "kill frame for agent 3");
+        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (0.0, LEVEL1_NPC_HEALTH));
+        assert!(phase.hostiles[0].respawn.is_some() && phase.hostiles[1].respawn.is_none());
+        // A dead NPC takes no more hits and the live one is still hittable.
+        assert!(phase.respond(&skill_at(3)).unwrap().is_none());
+        phase.respond(&skill_at(4)).unwrap().unwrap();
+        assert_eq!(health_of(&phase, 4), 59.0);
+        // Kill NPC 4 too, then make only NPC 3's timer due.
+        let kill = phase.respond(&skill_at(4)).unwrap().unwrap();
+        assert!(contains(&kill, &dead_frame(4, 10176, 5)));
+        let now = Instant::now();
+        let first_due = phase.hostiles[0].respawn.unwrap();
+        assert!(phase.hostiles[1].respawn.unwrap() >= first_due);
+        assert_eq!(phase.due_at(), Some(first_due));
+        assert!(phase.take_due(now).is_none(), "nothing is due before the delay");
+        phase.hostiles[1].respawn = Some(first_due + Duration::from_secs(5));
+        let late = first_due + Duration::from_secs(1);
+        let revive = phase.take_due(late).unwrap();
+        assert_eq!(health_of(&phase, 3), LEVEL1_NPC_HEALTH);
+        assert_eq!(health_of(&phase, 4), 0.0, "NPC 4 stays dead");
+        assert!(phase.hostiles[0].respawn.is_none() && phase.hostiles[1].respawn.is_some());
+        let mut alive = BytesMut::new();
+        AgentBehaviorFrame209026 {
+            agent_index: 3,
+            remote_tick: 0,
+            command_flags: 0x10,
+            behavior_value: 0x4000_0200,
+            behavior_data: HealthTransitionPayload209026::Alive { detail_byte: 0, trailing_byte: 0 }.encode_payload(),
+        }
+        .encode_frame(&mut alive)
+        .unwrap();
+        assert!(contains(&revive, &alive));
+        assert_eq!(phase.due_at(), phase.hostiles[1].respawn);
+        assert!(phase.take_due(late).is_none());
+        phase.take_due(first_due + Duration::from_secs(6)).unwrap();
+        assert_eq!(health_of(&phase, 4), LEVEL1_NPC_HEALTH);
+        assert!(phase.due_at().is_none());
+    }
+
+    #[test]
+    fn auto_attack_hits_the_last_skill_target_else_the_nearest_living_hostile() {
+        let mut phase = hostile_phase(10.0);
+        // No SkillBegin yet: the nearest NPC to the spawn (agent 4 at x=5) is hit.
+        phase.respond(&repeat_start()).unwrap().unwrap();
+        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (LEVEL1_NPC_HEALTH, 108.0));
+        // A SkillBegin on the far NPC makes it the auto-attack target.
+        phase.respond(&skill_at(3)).unwrap().unwrap();
+        phase.respond(&repeat_start()).unwrap().unwrap();
+        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (98.0, 108.0));
+        // Once it is dead the nearest living one is hit again.
+        phase.hostiles[0].health = 5.0;
+        phase.respond(&repeat_start()).unwrap().unwrap();
+        assert_eq!(health_of(&phase, 3), 0.0);
+        phase.respond(&repeat_start()).unwrap().unwrap();
+        assert_eq!(health_of(&phase, 4), 98.0);
+        // Nothing alive: nothing to attack.
+        phase.hostiles[1].health = 0.0;
+        assert!(phase.respond(&repeat_start()).unwrap().is_none());
+    }
+
+    #[test]
+    fn auto_attack_follows_a_skill_target_without_the_damage_setting() {
+        let mut phase = populated_phase()
+            .with_hostile_npc(100, [50.0, 0.0, 0.0])
+            .unwrap()
+            .with_hostile_npc(101, [5.0, 0.0, 0.0])
+            .unwrap()
+            .with_autoattack_skill(77);
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        let order_for = |agent: u32| {
+            let order = SkillOrder209026 { order_flags: 0, skill_key: 77, slot: 1, raw_7: 0, agent, byte_12: 0 };
+            order.to_behavior_data().to_vec()
+        };
+        let reply = phase.respond(&repeat_start()).unwrap().unwrap();
+        assert!(contains(&reply, &order_for(4)), "nearest NPC first");
+        assert!(phase.respond(&skill_at(3)).unwrap().is_none());
+        let reply = phase.respond(&repeat_start()).unwrap().unwrap();
+        assert!(contains(&reply, &order_for(3)), "then the last SkillBegin target");
+    }
+
+    #[test]
+    fn counter_attacker_is_the_last_hit_living_npc() {
+        let mut phase = hostile_phase(59.0).with_npc_attack(10.0, 100.0);
+        phase.respond(&skill_at(3)).unwrap().unwrap();
+        phase.respond(&skill_at(4)).unwrap().unwrap();
+        assert_eq!(phase.aggro, [3, 4]);
+        let due = phase.npc_attack.unwrap().next.expect("attack scheduled");
+        phase.take_due(due).unwrap();
+        assert_eq!(phase.npc_attack.unwrap().player_health, 90.0);
+        // Killing the attacker hands the attack to the other hit NPC.
+        phase.respond(&skill_at(4)).unwrap().unwrap();
+        assert_eq!(phase.aggro, [3]);
+        assert!(phase.npc_attack.unwrap().next.is_some(), "NPC 3 keeps attacking");
+        // Killing the last hit NPC stops the attacks.
+        phase.respond(&skill_at(3)).unwrap().unwrap();
+        assert!(phase.aggro.is_empty());
+        assert!(phase.npc_attack.unwrap().next.is_none());
+        assert!(phase.due_at().is_some_and(|d| phase.hostiles.iter().any(|h| h.respawn == Some(d))));
+    }
+
+    #[test]
+    fn a_downed_player_rallies_on_a_kill_and_a_defeated_player_is_ignored() {
+        let mut phase = hostile_phase(59.0).with_npc_attack(100.0, 100.0);
+        phase.respond(&skill_at(3)).unwrap().unwrap();
+        phase.respond(&skill_at(4)).unwrap().unwrap();
+        // NPC 4 (the attacker) downs the player.
+        let due = phase.npc_attack.unwrap().next.unwrap();
+        phase.take_due(due).unwrap();
+        let attack = phase.npc_attack.unwrap();
+        assert_eq!(attack.player_health, 0.0);
+        assert!(attack.next.is_none() && attack.defeat_at.is_some());
+        // The downed player kills NPC 4 and rallies; NPC 3 is still hit and alive.
+        phase.respond(&skill_at(4)).unwrap().unwrap();
+        let attack = phase.npc_attack.unwrap();
+        assert!(attack.defeat_at.is_none() && !attack.defeated && attack.next.is_none());
+        assert_eq!(attack.player_health, 50.0);
+        // The next (non-lethal) hit on NPC 3 restarts its attack.
+        phase.hostiles[0].health = LEVEL1_NPC_HEALTH;
+        phase.respond(&skill_at(3)).unwrap().unwrap();
+        assert!(phase.npc_attack.unwrap().next.is_some());
+        // Defeat: the player's hits are ignored.
+        phase.npc_attack.as_mut().unwrap().defeated = true;
+        phase.hostiles[1].health = LEVEL1_NPC_HEALTH;
+        assert!(phase.respond(&skill_at(4)).unwrap().is_none());
+        assert_eq!(health_of(&phase, 4), LEVEL1_NPC_HEALTH);
     }
 }

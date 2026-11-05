@@ -4,9 +4,9 @@
 #   gw2-sleep.sh PROBE RUN_DIR
 #
 # Stops gw2-server.service (systemd --user) only if `gw2-probe.py humans` reads
-# exactly 0; an unreadable count or any human refuses (exit 1). The server keeps
-# no player state (no accounts or characters are stored), so there is nothing to
-# save first. Prints one JSON line.
+# exactly 0; an unreadable count or any human refuses (exit 1). Optional saved
+# creation records are synced before acknowledgment and remain outside the kit.
+# Deployment snapshots belong after this stop; see deploy/README.md. Prints JSON.
 # Not atomic: a player who connects between the count and the stop is dropped.
 # Acceptable while only the owner plays; stackd should only call it after idle.
 set -uo pipefail

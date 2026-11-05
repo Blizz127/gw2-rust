@@ -170,6 +170,7 @@ impl EquipmentFixture {
         &self.0
     }
 
+
     /// Add the selected Norn level-1 Mesmer biography item in equipment slot5.
     /// Instance allocation, flags0, absent Guid/upgrades and initial zero colors
     /// are observer research choices. Apply with_creation_colors afterwards to
