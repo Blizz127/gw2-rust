@@ -2769,3 +2769,24 @@ mod heart_area_tests {
         assert!(!inside_polygon(&HEART_56_POLYGON, -9057.7, -24303.5), "Horncall Waypoint");
     }
 }
+
+#[cfg(test)]
+mod movement_scale_tests {
+    use super::*;
+    use gw2_proto::Encode;
+
+    #[test]
+    fn client_18_collision_position_converts_to_map_units() {
+        // Run 186: the spawn 0,-26300,-3800 arrived as about 0,-822,118.75
+        // (collision space X/32, Y/32, -Z/32).
+        let mut frame = BytesMut::new();
+        18u16.encode(&mut frame);
+        0u32.encode(&mut frame);
+        0u32.encode(&mut frame);
+        [0.0f32, -822.0, 118.75].encode(&mut frame);
+        0u32.encode(&mut frame);
+        [0u8, 0, 0].encode(&mut frame);
+        let seen = MissionPhase::talk_event(18, &frame);
+        assert_eq!(seen, Some(Seen::Moved { id: 18, position: [0, -26304, -3800] }));
+    }
+}
