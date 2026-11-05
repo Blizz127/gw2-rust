@@ -14,6 +14,7 @@ use bytes::BytesMut;
 use crate::agent_creation::{AgentCreation209026, facing_words_209026};
 use crate::agent_scene::AgentWorldEntry209026;
 use crate::character_setup::CharacterSetupFrame209026;
+use crate::core_stats::CoreStatsCreation209026;
 use crate::health::{HealthFrame209026, HealthOperation209026, HealthValues209026};
 use crate::{Decode, Encode, Point3};
 
@@ -580,8 +581,9 @@ impl TalkNpcPlan209026 {
         Ok(0x2000_0000 + self.species_key)
     }
 
-    /// 37 create, 151 attitude, 256 health, 170 finalize, 46 world entry, then
-    /// 378 talk flag. Send after the player is populated and in the world.
+    /// 37 create, 183 coreStats, 282 inventory, 151 attitude, 256 health,
+    /// 170 finalize, 46 world entry, then 378 talk flag. Send after the player
+    /// is populated and in the world.
     pub fn spawn_frames(&self) -> Result<BytesMut> {
         let identity = self.identity()?;
         if !self.position.iter().all(|v| v.is_finite()) {
@@ -612,6 +614,23 @@ impl TalkNpcPlan209026 {
             radius: 1.0,
         }
         .encode_frame(&mut out)?;
+        // coreStats: without it a character consumer asserts `m_coreStats`
+        // (ChCliCharacter.h:565) as the NPC enters the world (sandbox run 121).
+        // Levels 1..=100 are the nonplayer bounds
+        // (docs/re/209026-character-core-stats.md). placeholder: level,
+        // appearance and profession scalar are not established for NPCs.
+        CoreStatsCreation209026 {
+            character_index,
+            appearance: [0; 45],
+            earned_level: 1,
+            level_2: 1,
+            profession: 0,
+            extended: None,
+        }
+        .encode_frame(&mut out);
+        // With coreStats present, 170 requires inventory
+        // (docs/re/209026-character-finalization-dependencies.md).
+        CharacterSetupFrame209026::CreateInventory { character_index }.encode_frame(&mut out);
         // Attitude 0 (friendly, inferred) passes both 170's bound and the
         // interaction gate's friendly-or-neutral test.
         CharacterSetupFrame209026::Attitude {
@@ -764,9 +783,10 @@ impl TalkSession209026 {
             timer_ms: 0,
             float_3: 0.0,
             byte_4: 0,
-            // 0x80: also echo the line to chat, so a screenshot shows whether
-            // the text rendered even if the dialogue window did not.
-            flags: 0x80,
+            // No 0x80 chat echo: the chat path requires coded text and asserts
+            // `TextValidateCoded(codedName)` (CtApi.cpp:141) on a plain speaker
+            // name (sandbox run 122). Coded dialogue text is open.
+            flags: 0,
             dword_6: 0,
             dword_7: 0,
             dword_8: 0,
@@ -1105,10 +1125,10 @@ mod tests {
     }
 
     #[test]
-    fn npc_spawn_is_create_attitude_health_finalize_enter_then_talk_flag() {
+    fn npc_spawn_is_create_core_stats_inventory_attitude_health_finalize_enter_then_talk_flag() {
         let messages = server_messages();
         let bytes = npc().spawn_frames().unwrap();
-        assert_eq!(ids(&messages, &bytes), [37, 151, 256, 170, 46, 378]);
+        assert_eq!(ids(&messages, &bytes), [37, 183, 282, 151, 256, 170, 46, 378]);
         let mut input = &bytes[..];
         let created = AgentCreation209026::decode_frame(&mut input).unwrap();
         assert_eq!((created.agent_index, created.agent_type, created.identity), (2, 0, 0x2000_0000 + 3172));

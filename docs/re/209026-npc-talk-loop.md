@@ -192,14 +192,15 @@ gw2-game-observe ... --mission-preamble --mission-map-key KEY <population flags>
 
 - **Spawn.** `MissionPhase::respond` appends `TalkNpcPlan209026::spawn_frames` to the
   AgentsLoaded batch, after 1036/431/83 and any skills/quest. The frames are 37 (type 0,
-  identity `0x20000000 + SPECIES`), 151 (0), 256 (alive), 170, 46 (flags 0) and 378
-  `{2, 1, 0}`. The NPC is agent and character index **2**; it refuses to spawn if
+  identity `0x20000000 + SPECIES`), 183 coreStats (level 1/1, profession 0, zero
+  appearance; placeholders), 282 inventory, 151 (0), 256 (alive), 170, 46 (flags 0) and
+  378 `{2, 1, 0}`. The NPC is agent and character index **2**; it refuses to spawn if
   that collides with the player's character index. It works with both
   `--mission-population` and the saved-population (`--character-store`) path, because
   it attaches to `MissionPhase` itself.
 - **Interact.** `MissionPhase::push` decodes client 23 behavior data with
   `InteractRequest209026`. `[0x14][2]` becomes `Seen::Interact`, and the reply
-  is `TalkSession209026::on_interact`: 758, a 760 page (flags 0x80, chat echo),
+  is `TalkSession209026::on_interact`: 758, a 760 page (flags 0, no chat echo),
   757 Continue/Goodbye, then 761. Every other client-23 payload stays
   `Seen::Other(23)`; the log prints its leading opcode and length.
 - **Replies.** Client 275 Continue sends the next page, and Goodbye (or the last
@@ -247,3 +248,25 @@ smoke in a sandbox run anyway.
   are pre-existing, in untouched files: `gw2-map-probe.rs:386`, `creation_scene.rs:26`
   and `saved_population.rs:364`.
 - Not run in game. Nothing deployed.
+
+## 4. Sandbox smoke results (local, Docker network=none, synthetic account)
+
+The runs are copies of Codex's run118 Norn Mesmer flow on map 379, with
+`--mission-talk-npc 8013,-3120,-25600,-3742`.
+
+| Run | Change | Result |
+| --- | --- | --- |
+| 121 | First version (no coreStats) | Client stuck on the loading screen. Assert `ChCliCharacter.h:565 "m_coreStats"` when the NPC entered the world. **The NPC needs coreStats** (Codex's foundation note flagged that consumers might need it). |
+| 122 | + 183 coreStats, 282 inventory | **In world.** The NPC renders as a friendly green-named Juvenile Boar, and the client shows **"Greet [F]"**, so the interaction gate passes with 378. Pressing F sends **client 23 `[0x14][2]`**: target 2 = the server agent/character index. The server opens the conversation, then the client asserts `CtApi.cpp:141 "TextValidateCoded(codedName)"`: the 0x80 chat echo needs a **coded** speaker name. |
+| 123 | Page flags 0 (no chat echo) | **The dialogue window opens without an assert**, with two response rows (heart icons, i.e. Continue/Goodbye). The text areas are blank: **the dialogue strings must be coded text**, not plain UTF-16. |
+
+**Coded text format** (`TextValidateCoded` `0x1410dcca0`, grammar `0x1410e7350`):
+- The first unit, with bit 15 clear, must be at least 0x100: a text-ID token (bit 15 =
+  continuation).
+- Then parameters: 0x107–0x10c take literal units directly, 0x10d–0x112 take nested
+  coded text, and 3 (`CONCAT_LITERAL`) starts literal units of at least 0xa, ended by 1.
+- Showing arbitrary text therefore needs a text ID whose template is just a parameter.
+- Retail dialogue would use the NPC's real text IDs. Most English strings are encrypted
+  (marker ≠ 0) and need server-supplied keys. About 4% are plain.
+
+Not yet exercised: choosing a response (275), paging and closing.
