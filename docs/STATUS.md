@@ -527,6 +527,13 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
           - Movement, continued. The owner confirmed it on his device ("nothing works when i press w"). The send trace (runs 96/97) shows the client never attempts a movement send; client 191 is a `char` packfile upload. The gate is inside the client, before any send (static trace in progress).
           - **Movement gate 1 fixed (4024aaf):** server 83 grants client control. Run 98: the client answered with client 5. Run 99 command trace: the agent's +0xe8 is 0x41 (control bit 0x40 set) and the one submitted command (type 0x1) was accepted.
             - **Gate 2 (open):** with W, autorun or the mouse held, no agent command reaches submission `0x14102fbd0` at all, so the input-to-command path never runs. Static trace in progress.
+          - **WALKING WORKS (f36bb98, sandbox run 110; live on Banshee 2026-11-05 00:18:26Z, rollback 2090f47).**
+            - Three server-side requirements, all read from the client:
+              1. Server 83 grants client control (agent +0xe8 bit 0x40).
+              2. Base speed nonzero (294).
+              3. World entry 46 with command flags 0x12. Its completion (0x1410261c0) sets agent +0xe8/+0xec bit 0x80 (action slot 0), which MvCliContext's can-move check 0x14141da80 → agent +0x738(0) requires.
+            - Run 110: agent +0xe8 = 0x400c1, can-move = 1. The character ran through the stream, and the client sent 431 client 18 position reports plus agent commands 4/11.
+            - Movement is client-predicted; the server does not yet validate or echo positions.
           - Runner crash report (runs 80/81): read-only breakpoints on the ExeError sink `0x1409dc570` (all 8 error paths, including the assertion handler `0x1409db7a0`) and the unhandled-exception filter `0x1409dc720`. They print "GW2_RUNNER: assert … file:line "expr"" and "GW2_RUNNER: crash code … at <offset>" with stack offsets. Armed with no false hits on login; untested on a real crash.
       - The a8fdb4e trace hooked the profiler's per-frame marker (about 1,600 hits/s). It is being moved to the loader's 22 call sites.
       - "Banshee Realm": the world-name patch applied on his device.
