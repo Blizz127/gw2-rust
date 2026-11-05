@@ -109,3 +109,43 @@ Soak screenshot SHA-256:
 `af2d84133eb565d6a44e72ca479d959479b5e321120e6a693d0a877dcb40acf8`.
 The run exited 0 with exact container cleanup, unchanged executable hashes,
 full archive entry count and credential-safe logging verified as above.
+
+## Equipment and first-objective sector: run 114
+
+Run 114 adds the explicit [equipment batch](209026-item-equipment-delivery.md)
+and moves the diagnostic placement to **[-3200,-25600,-3742]**. The
+[sector trace](209026-norn-sector-polygons.md) verifies XY inside authored
+sector201, referenced by quest154's first step, and measures a nearby flat
+terrain surface. This remains an analyst-selected location, not a recovered
+retail spawn or a complete collision check.
+
+The117-byte batch uses the archived three armor items, weapon, skins,
+constructor prefix112 and Norn Mesmer color rows. It creates synthetic
+instances1001..1004, equips slots2/6/3/29 and selects set4. All unresolved
+raw item fields are explicit research zeros, with no upgrade items and an
+absent optional Guid. Batch SHA-256:
+`75c98bd961c2b03731e62af98ceb78d2d8015f12a7afd7b07399433affc6a808`.
+
+The client reaches MapLoaded/AgentsLoaded and accepts this batch followed
+by the quest sequence without a captured assertion or fatal signal. The
+first weapon-skill slot gains an icon; this does not establish its identity,
+correct availability or execution. **The character still renders in
+underwear**, so inventory delivery is not accepted as complete visible
+equipment initialization. The inventory report/model/wardrobe notification
+path is under investigation. Quest text remains blank.
+
+The new position renders a camp area and supports local movement. After the
+four-second forward input, the camera is obstructed by a cart. Distant visual
+artifacts also remain in the pre-movement screenshot. This run supplies no
+full scene-quality or collision acceptance. These observations are retained
+instead of counting a successful process exit as successful equipment or
+tutorial gameplay.
+
+REA evidence:
+`ev_c75e359629441b5fbabbf00ba6a86ea53589aaa0872ebd994738febdd67b78cd`.
+Private run: `~/gw2-sandbox/runs/run114-norn-mesmer-equipment/`.
+Bundle: `~/re/gw2/notes/209026-norn-mesmer-run114-20261105.json`.
+Pre-movement screenshot SHA-256:
+`163d5f356674916f810048e78865918181cce4e566f0d74b82aeb16eb7e8c0e7`.
+The run exited0, its exact container was removed, both executable hashes
+were unchanged, and credential-safe logging/archive retention passed.

@@ -17,6 +17,10 @@ The character has empty equipment/skills and an explicit diagnostic spawn;
 Norn terrain v14 support and source-backed fixture CLIs are implemented.
 An explicit quest154/goal1 experiment (run113) shows a story marker, but the
 title and objective text are blank and remain under investigation.
+Run114 accepts the explicit archived equipment references and shows a first
+weapon icon, but visible armor is missing. Its diagnostic point is verified
+inside the first objective sector. Quest text-key framing is implemented;
+the actual keys remain unresolved. Both issues are tracked in the ledger.
 No deployment changed. NPCs, combat, tutorial objectives, progression and persistence
 remain incomplete; this is not a 100% claim.
 

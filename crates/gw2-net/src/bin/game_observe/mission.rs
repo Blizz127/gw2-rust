@@ -78,6 +78,7 @@ pub struct PopulationFixture {
     plan: PopulationPlan,
     map_key: u16,
     quest: Option<QuestFixture>,
+    equipment: Option<super::equipment::EquipmentFixture>,
 }
 
 #[derive(Clone, Copy)]
@@ -129,6 +130,7 @@ impl PopulationFixture {
             plan,
             map_key: summary.map_definition_key(),
             quest: None,
+            equipment: None,
         })
     }
 
@@ -140,6 +142,13 @@ impl PopulationFixture {
             return Err(io::Error::new(ErrorKind::InvalidInput, "initial quest goal requires completion flag bit 0 clear"));
         }
         self.quest = Some(QuestFixture { quest_id, flags, goal_id });
+        Ok(self)
+    }
+
+    /// Explicit item frames with checked creation/reference ordering. Content
+    /// definition validity and retail selection remain the caller's responsibility.
+    pub fn with_equipment(mut self, frames: &[u8]) -> io::Result<Self> {
+        self.equipment = Some(super::equipment::EquipmentFixture::parse(frames, self.plan.character_index)?);
         Ok(self)
     }
 
@@ -330,6 +339,10 @@ impl MissionPhase {
                 // scheduled world entry (46) has run, so the flag can't make it drop 46.
                 AgentControl209026 { agent_index: fixture.plan.character_index as u16, value: 1 }
                     .encode_frame(&mut out);
+                if let Some(equipment) = &fixture.equipment {
+                    out.extend_from_slice(equipment.bytes());
+                    eprintln!("Mission phase: sending explicit initial equipment batch once");
+                }
                 if let Some(QuestFixture { quest_id, flags, goal_id }) = fixture.quest {
                     // All character/player components now exist. 532 is not
                     // idempotent: it completes an old active goal. Send exactly
@@ -879,6 +892,26 @@ pub(crate) mod tests {
         for seen in [loaded, agents, agents] {
             assert!(phase.respond(&seen).unwrap().is_none(), "never reselect an active goal");
         }
+    }
+
+    #[test]
+    fn explicit_equipment_is_sent_once_after_readiness_before_quest() {
+        let equipment = super::super::equipment::fixture_for_test();
+        let fixture = PopulationFixture::new(&guardian_record(15, 1), [0.0; 3]).unwrap()
+            .with_equipment(&equipment).unwrap().with_quest(154, 0, 1).unwrap();
+        let mut phase = MissionPhase::new(15).unwrap().with_population(fixture).unwrap();
+        let loaded = Seen::Map(ClientMapEvent::MapLoaded);
+        let agents = Seen::Map(ClientMapEvent::AgentsLoaded);
+        assert!(phase.respond(&agents).unwrap().is_none());
+        let population = phase.respond(&loaded).unwrap().unwrap();
+        assert_eq!(population, population::population_stream(&phase.population.as_ref().unwrap().plan).unwrap());
+        let reply = phase.respond(&agents).unwrap().unwrap();
+        assert_eq!(&reply[9..9 + equipment.len()], equipment);
+        let mut quest = &reply[9 + equipment.len()..];
+        assert!(matches!(QuestLifecycleFrame209026::decode_frame(&mut quest).unwrap().operation,
+            QuestLifecycleOperation209026::Create { quest_data_id: 154, raw_byte: 0 }));
+        assert!(phase.respond(&loaded).unwrap().is_none());
+        assert!(phase.respond(&agents).unwrap().is_none(), "never recreate item instances");
     }
 
     /// With a delay the population is held after 420 and released once due (once);
