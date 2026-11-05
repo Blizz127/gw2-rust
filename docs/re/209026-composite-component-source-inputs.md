@@ -249,3 +249,64 @@ All readers exited zero with complete raw terminal records. A partial
 instruction in an initial caller window was replaced by the complete caller
 disassembly. No probe implementation, runtime, archive access, or target
 mutation occurred in this source pass.
+
+## Optional variant wrapper: exact producer and Norn male records
+
+A bounded follow-up identifies the writer of `C+8`, independently of the
+seven descriptor channels. Caller `0x1412d7f20` passes the Dword at
+`composite+0x6e4` at `0x1412d81b1`; the helper reads its low Word at
+`0x1412d8a18` and calls `0x1412daca0` at `0x1412d8a24`. The profile token
+comes from `Qword[composite+0xa40]`. This pass does not assign a UI or
+biography meaning to that selector.
+
+For a nonzero selector, `0x1412daca0` calls `0x1412db990`, which searches
+the 0xe0-byte profile array by the token at profile `+8`. On a valid profile,
+the optional table count is `Dword[profile+0x94]` and its pointer is
+`Qword[profile+0x98]`. A zero selector or zero count returns null. Otherwise
+the selected 48-byte row is `table + 48*((selector-1) % count)`. This lookup
+does not perform the composite descriptor's race-fallback traversal.
+
+The slot-to-field switch above then selects the optional compact filename
+pointer into RBP. A non-null filename with an empty `C+8` reaches
+`0x1412d8b23`, which calls `0x140a72530` with that filename in RCX, format
+27 in R9D, and the same requested dimensions and half-size flag calculation
+as the descriptor sources. **`0x1412d8b28` stores RAX directly into `C+8`.**
+A null acquisition makes the helper incomplete. An existing non-null `C+8`
+bypasses acquisition; merely observing a later selector does not prove that
+an already held wrapper came from that selection.
+
+Retained frozen asset **154681**, `cmpc/comp` version 19, SHA-256
+`94796c36a36c506ed4d616d798d8c90ae44dfed49372b21ff66a37f3299ab7f5`,
+has 29 profiles. The exact `nornmale` profile is index 17, token
+`0x2b02d749ee`, at comp-payload offset 11048. Its optional table has
+**26 rows**, beginning at payload offset 4926960. All 156 filename fields
+were decoded through bounded, relocation-validated compact references;
+none was inferred from adjacent IDs.
+
+For first-cycle selector 1, the six fields `+0,+8,+0x10,+0x18,+0x20,+0x28`
+contain original file IDs `40010,40000,40004,40006,40008,40002`. For
+first-cycle selector 26, they contain
+`1492360,1492362,1492364,1492366,1492368,1492370`. The complete 26-row
+mapping, including each encoded-reference offset, is retained privately at
+`~/re/gw2/notes/209026-nornmale-optional-variant-inputs-20261105.json`
+(SHA-256 `a3c810f23c3b1c0735ddef4609ad0cd20f09be08afc6e450d5f0406cabc11d70`).
+These are original authored IDs, not observed selected high-resolution IDs.
+
+For a future same-call observation, `0x1412d8a29` exposes the chosen row in
+RAX; `0x1412d8a6b` exposes its slot-selected filename in RBP and component
+in R14; the acquisition return at `0x1412d8b28` binds that filename to the
+new wrapper before storage. A failure-site observation must still establish
+which current pass actually references that wrapper. Kind 0 can use it in
+the second of four advanced passes, but none of this source evidence proves
+that optional input caused run 139 or 140's mask-size assertion.
+
+Complete source/data evidence is retained at
+`~/re/gw2/notes/209026-nornmale-optional-variant-evidence-20261105.json`
+(SHA-256 `718ca6f18b90efb4057e7046c8472b38c52ced254bee55261643ef714d90adec`).
+Key captures are writer/selector `ev_32774eb4b8808b42c6a53d01ee6871f398e37284363adfab39f51a987011c038`,
+caller/profile lookup `ev_d9e9369939577147612698df10da24c349d81030da53ad28266a3e6614b04a0b`,
+exact switch/guards `ev_677050eec7143e68517ce404f58e18528681e64b5c559843b5206309a275d08e`,
+and bounded data `ev_e615da79c1e5e580cc17d185ff37daa61c9ea630ad6512a7f8f7bd2c6b9117ab`.
+The caller capture begins with a partial instruction window; only the
+aligned sequence from `0x1412d80e0`, including the complete argument setup
+at `0x1412d8175`, is used. No runtime or archive was accessed in this pass.

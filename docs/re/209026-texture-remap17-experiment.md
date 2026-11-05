@@ -106,3 +106,75 @@ run 139 marked feature-failed. No production or saved-mode setting changed.
 - Controller bundle: `~/re/gw2/notes/209026-norn-creator-run139-remap17-20261105.json`.
 - Complete safe audit: `~/re/gw2/notes/209026-run139-texture-load-safe-audit-20261105.json`,
   SHA-256 `858d28fe068d5e0ef623d2d2c03f2c734a982266137acbccfd5387f862c41b62`.
+
+## Run 140: twenty-remap follow-up also failed
+
+`run140-norn-creator-remap20` added the three explicitly sourced companion
+properties `142101→142102`, `142105→142106`, and `142125→142126`, using
+synthetic root **2130706800**. This completed the retained authored
+seven-channel cohorts for the seventeen original inputs; it did not establish
+coverage of every optional variant or every runtime operation. The same
+cached-build-208784 provenance boundary applies. See the
+[primary-142103 cohort note](209026-composite-primary-142103-cohort.md).
+
+The server remained cd4c3b6. The twenty-ID load observer was pinned to
+SHA-256 `13f9e2a4751649eb04f1cd259fff9575a81cbd04652e24fdf0bea1933ddc7f5c`,
+with forty generations, two per original ID and 192 output records. The
+kind-9 observer remained
+`70729da1925b2ae6e7761822fe5768d96a13d97b57938496430b7995657a76a1`.
+Root launched once with 480-second total and 360-second idle bounds.
+
+The final safe audit contains exactly these three native task generations:
+
+| Generation | Original → selected ID | Observed lifecycle |
+| --- | --- | --- |
+| 1 | 142103 → 142104 | Selected; incoming and post-transfer 512×256, format 26, one level; transfer returned; destructor retirement observed |
+| 2 | 142101 → 142102 | Selected; incoming and post-transfer 512×256, format 27, one level; transfer returned; no destructor retirement observed |
+| 3 | 142105 → 142106 | Selected only; no decoded-transfer entry, return or destructor retirement observed |
+
+All three selected tasks had key flags `0x19`, task flags `0x440` and task
+state 2. Both sampled transfer calls returned one with rejection output
+zero; their post-call fields had backing present, ready bit set and flags
+`0x13036`. These are current native task observations, **not a binding to
+the failing operation or a particular scene owner**. Original 142125 and
+the other sixteen watched IDs were unobserved. Generations 2 and 3 remained
+unretired in the captured observer lifecycle. No generation/output cap,
+guard failure, parser rejection or pairing error was reported; no `finished`
+record was observed.
+
+The kind-9 observer bound owners 1 and 2, both in scene 0. Owner 1's initial
+soak snapshot sampled fourteen materials, all with fields `+0x30/+0x50`
+equal to 1, while its manager remained state 6, flags `0x1007`, texture
+invalid mask `0x7fff` and cached graphics readiness false. There was no
+scene-2/3 dispatch, paired advanced submission, appearance snapshot or
+observer completion. Thus this run did not reach the intended appearance
+comparison.
+
+**The feature smoke failed again.** Root's final image shows the native
+crash dialog over race selection. The exact append-only crash-log delta
+contains a new `Composite mask smaller than source RGB texture` assertion,
+`GrTex2d.cpp(2169)`, build 209026. The final safe client-log audit contains
+one occurrence of that literal. Both primary and sampled mask transferred
+at 512×256, so the previous explanation that this sampled mask remained at
+its original smaller dimensions does not account for these records. The
+actual failing pass and operands were still unobserved; equality of these
+two task snapshots does not establish equality of the failing operands.
+
+Wrapper and UI exited zero. Cleanup, executable-hash, archive-index and
+privacy checks passed, and root independently verified shared-container
+absence and returned window 19. **Wrapper/UI zero is not a feature pass.**
+No overlay was deployed. No further runtime or archive reads were used to
+write this outcome.
+
+- Controller: `ev_914957ab9f4b07fb326b96dc6b7f96e74fff0c8c174bd1078d8728635c7d2f7b`.
+- New crash delta/image: `ev_31a56cd7056ec2bcbbef740a08d31e0b23e3f343e2f01f30a7625c920cfb009d`.
+- Final PNG SHA-256: `1b9a47a6592e0f2e2aec27ac3dc76e98d89601efce5f8f1a5fa533a6fe4aa417`.
+- Final safe audit: `ev_e3f40ade01872c7a9df3afd8ee6319c80903eb983c6ca4f0e9d34ef6f0b62bf9`, complete and untruncated.
+- Audited client log: 66,838 bytes, SHA-256 `075fe1cdc86038d3b373df4a825256cc510b3077c27e30efe0379d4038e55003`.
+- Controller bundle: `~/re/gw2/notes/209026-norn-creator-run140-remap20-20261105.json`, SHA-256 `72b1642e728ec7c0dda5d1db07f0a5b61e56e61f9e7493bfdb53453785472e80`.
+- Safe evidence bundle: `~/re/gw2/notes/209026-run140-texture-load-safe-audit-20261105.json`, SHA-256 `a3407804bc99e29918bbaaea24f4ec41d39bb9c262251d5894d64347e99469c4`.
+
+The next bounded observation is the native failure branch's current compacted
+pass, primary/mask dimensions and same-call source relations. Its
+[source contract](209026-composite-mask-size-contract.md) does not require
+guessing a missing remap or bypassing the assertion.
