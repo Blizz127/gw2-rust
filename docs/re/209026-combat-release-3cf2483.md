@@ -345,3 +345,23 @@ Checks:
 - Sandbox run 185 passed.
 - Supervisor smoke passed.
 - The watched cycle ran at 0 humans and reported ready after 3.4 s.
+
+## Update: kit cd4c3b6 (live 2026-11-05 20:58:54Z), fixing a 0846fcb regression
+
+- **Bug in 0846fcb:** client 18/19 movement positions are in collision space
+  `[X/32, Y/32, -Z/32]`. Run 186 showed the spawn `0,-26300,-3800` reported as
+  `0,-822,118`. 0846fcb read them as map units, so the player always tested "outside"
+  heart 56 and the tracker never opened on live. The fix converts them back to map units.
+  The kit also includes the creator lane's heart-area regression (`d21d9c6`).
+- The Banshee server log had only 5 new lines while 0846fcb was live, so no session
+  appears to have used it.
+- Kit: `/home/blizz/gw2-rust-cd4c3b6`.
+- Rollback: `/home/blizz/gw2-rust-0846fcb`.
+- Game binary SHA-256: `3fc2b6306c0162ed6989555b68a8ad58fb1c5a46e3ff34565b6d1411a877be13`.
+- SHA256SUMS SHA-256: `eb96eaa642addc8f35a09574742dfd824ab788c5ab02121bcd0851c91ad02a73`.
+
+Checks:
+- workspace tests had no failures; `heart_area` 2/2; saved-mode 6/6.
+- Supervisor smoke passed.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
+- A live crossing check (run 187) follows.
