@@ -136,9 +136,44 @@ network isolation and console privacy checks passed. See the
 [controller record](209026-creation-model-pipeline.md) for exact evidence,
 image/record hashes and fixture limits.
 
-The creation preview remains blank even though its textures became ready and
-its model finalized. This increment fixes empty-job bookkeeping and the
+Run 134's creation preview remained blank; run 135 subsequently rendered a
+severely incomplete appearance despite native readiness and consumer setup.
+This increment fixes empty-job bookkeeping and the
 observed invisible direct-entry avatar; it is not a complete preview fix or a
 retail-accuracy claim. Normal saved-character activation remains held. Owner
 feed publication is routed to the existing launcher publisher; a source
 commit or this successful private check does not establish publication.
+
+## Owner objects published; launcher selection still pending
+
+The established launcher publisher's receipt records all five runner objects
+published at **2026-11-05 21:27:25 UTC** under
+`games/gw2/owner/runner/63bc59a/`. Independent readback confirmed the 40,221-byte
+`gw2-runner.gdb` matches SHA-256
+`8117af3065d4dbf86b23ab6cf2f42d53a2859d42e9d9f5eaea0c09cbdf263603`.
+All five new objects and all five retained `0e6ac30` rollback objects matched
+their local pins. This is owner-tier object publication, not yet a usable
+launcher update offer.
+
+At **21:44:16 UTC**, the existing launcher feed
+`banshee-r2:banshee-realm-private/channels/client.json` still advertised
+**1.0.0-b126**, package SHA-256
+`3db9c03909acff7ded7bc6c6d5508ff9366fbfa1b5c2625076d46064209c62f4`.
+The publisher receipt identifies that release as still pinned to `0e6ac30`.
+Its tested Linux `b127` candidate contains the new pin but is not channel
+published. The reported blocker is that a compatible owner-only launcher
+update feed was not verified for that scoped publication. This was sent to
+the coordinator and existing launcher publisher; the creator/server lanes
+did not take the publisher baton or change another channel.
+
+Publisher receipt:
+`/home/blizz/scratch/gw2-runner-63bc59a-publisher/RECEIPT.txt`.
+Independent readback evidence:
+`ev_265cf1bc456d37f5e6d9e837e62e7cb11fe050f879090759e3a36e28609aa5f5`
+and `ev_21ba95b2ca34255adf296f5abbeea8fca7d04604b63867c3c2a2cc9a214bdab3`.
+Private receipt:
+`/home/blizz/re/gw2/notes/209026-runner63-launcher-selection-readback-20261105.json`,
+SHA-256 `8b46b1ee69ea94ff16598656dedaa2b534c306d97d2f11f621d7c8c77e469143`.
+The compiled-pin statement relies on the retained publisher receipt plus the
+current feed version; no remote assembly inspection or actual owner update
+offer was performed. Saved-norn activation remains held.
