@@ -621,3 +621,71 @@ boundary. All readers exited zero; no runtime or working archive was used.
 Full private export:
 `/home/blizz/re/gw2/notes/209026-creator-alternate-composite-binding-20261105.json`
 (SHA256 `1cfca6e75390cae5ffdc270db904ea31099de39499e3c352ffe96ee655dd98c1`).
+
+## Full-texture patch: dimension effects and the `0x1032` path
+
+A later exact-branch trace confirms that `apply_full_textures` is broader
+than removing one crashing mip-generation call. Its guarded replacement is
+`0f84fa000000` → `90e9fa000000` at `0x140a6f57a`; both branches target
+`0x140a6f67a`. The original `JE` follows `task+0x7c & 0x380`, while the
+replacement takes that no-reduction path unconditionally.
+
+Before this decision, `0x140a6f4be..0x140a6f4c2` copies the loaded image's
+two-Dword dimensions from image `+0x38` into task `+0x68/+0x6c`. For a
+nonzero reduction mask, the skipped block computes shift
+`10 - bsr(mask)`, shifts both dimensions, and clamps them using the format
+helper's values. If both candidate dimensions are at least 4 and the computed
+level count differs from the current count, it writes the reduced dimensions
+at `0x140a6f663`, level count at `0x140a6f666`, and adjusted image backing
+at `0x140a6f66e`. Thus the patch **can preserve larger dimensions and a
+different mip/backing selection** than the original reduction path. It does
+not substitute the pool's requested dimensions or upscale a loaded image.
+The separate earlier generation call at `0x140a6f569` remains subject to its
+own flags and is not bypassed by this patch.
+
+There is a narrower source result for a **fresh acquisition with input flags
+`0x1032` through `0x140a72530`**:
+
+1. The cache helper converts the flags to `0x41036` before `0x140a70670`.
+2. That function's input bit `0x10` forces its texture-quality variable to
+   zero at `0x140a70703..0x140a70717`.
+3. Its relevant branches leave base value `0x400`; either file-predicate
+   outcome produces derived flags `0x420` or `0x440`, both with
+   `& 0x380 == 0`.
+4. Those output flags pass as R9D to `0x140a6c120`, which stores them in
+   task `+0x7c` at `0x140a6c182`.
+
+Therefore this exact fresh-input path already chooses the original
+no-reduction branch, absent a later field change. A ready cached source's
+actual loading history is not established by its later acquisition flags.
+Neither this static result nor the pool's requested size attributes a
+particular observed 512×128 source to the runner patch. No patch removal or
+new runtime gate follows from the result.
+
+For a future bounded observation, task `+0x28` supplies the texture-data
+identity: match it to the owned source before reading task dimensions,
+levels and `+0x7c` at `0x140a6f571`, then compare at `0x140a6f67a`.
+An already-loaded cached source may have no observable load invocation.
+The runner's separate opt-in `TextureDiag` previously parsed task `+0x68`
+as two 16-bit halves. Its read is now corrected to two 32-bit dimensions
+(`'<II'`, eight bytes), matching task `+0x68/+0x6c`. This fixes diagnostic
+output only; the full-texture branch patch is unchanged. Run132's reported
+ready-source 512×128 dimensions came from its separate source-data observer,
+not this diagnostic's former printed height. The private source bundle below
+pins the runner before this diagnostic correction.
+
+Evidence: complete relevant bodies
+`ev_6fb9d5d20bde5c6b449070587975b6713be5113db40e410fab575b6aefc55639`;
+load-task flag store
+`ev_006001e3e8047047dbd4d06df346e617284c1f9df7168402a2bd2d4a76c6308a`;
+BSR helper and reduction block
+`ev_ef92a37a487adca01975050c1089420b4999adbb79b4431927444c0d69f75918`;
+exact branch target and guards
+`ev_e4aa947e216990c1cef9748e939945a7d770875b613fe55ffb8a14ca111b2899`.
+Seven complete returned Evidence records, including the cache argument flow,
+are retained in
+`~/re/gw2/notes/209026-runner-full-texture-patch-semantics-20261105.json`
+(SHA256 `77197566b630d0635ea7404b064a6e6fbc1c3e3fb4dbcdc51ed1844a02bda370`).
+All reader processes exited zero; raw terminal records are complete. This was
+source-only frozen-executable inspection with no archive, runtime or patch
+action.
