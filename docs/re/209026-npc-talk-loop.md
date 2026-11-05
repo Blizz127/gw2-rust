@@ -403,11 +403,16 @@ With the minotaur placed off-axis (`-3000,-25300,-3742`):
   a 100% health bar, description `Throws Foes` (from content), and a red target marker.
   Even so, the heal's SkillBegin still carried target 0.
 - **No model renders**, for either the minotaur or the boar in runs 122–124: only the
-  nameplate and marker. The likely cause (*inferred*) is that the sandbox's root asset
-  manifest lists only Launcher64, English, MapAlpineSnowline and RegionAlpine
-  (`docs/re/209026-norn-mesmer-playback.md`), so creature model files such as 19830 for
-  species 1544 may not be in the trimmed working Gw2.dat.
-- The next check for NPC visibility is model-asset delivery (CDN manifest) for the
-  species' model file.
+  nameplate and marker. **Missing model files are ruled out:** model 19830 (species
+  1544, 173,976 bytes) and 26012 (species 8013, 403,476 bytes) are present in both the
+  frozen and the working Gw2.dat. Remaining candidates (*untested*):
+  - dependent assets (textures, skeleton);
+  - the NPC's **zeroed 183 coreStats appearance** acting as an appearance override (the
+    model loader `0x141166a80` considers description/appearance overrides before the
+    direct species model; `docs/re/209026-npc-character-foundation.md`);
+  - a view or reveal prerequisite.
+
+  The coreStats appearance is the first to test, for example by sending 182/183 only
+  where required, or by tracing the override test.
 - With no model, an NPC cast can't be judged visually. Run 129 again showed no assert
   for the server-34 cast with Word 1000.
