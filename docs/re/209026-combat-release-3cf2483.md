@@ -365,3 +365,20 @@ Checks:
 - Supervisor smoke passed.
 - The watched cycle ran at 0 humans and reported ready after 3.3 s.
 - A live crossing check (run 187) follows.
+
+## Update: kit 82d8d04 (live 2026-11-05 22:27:03Z)
+
+- Source: `82d8d04`, which merges `claude/npc-talk-loop` at `27e58c7` and adds the
+  `GW2_AMBIENT_NPC` deploy variable.
+- Change: three Juvenile Ravens (species 6045) stand in the Spirit of Raven heart area, at
+  `150,-26150 250,-26350 100,-26450` (z -3800). They are spawned at load and are neutral.
+- Kit: `/home/blizz/gw2-rust-82d8d04`.
+- Rollback: `/home/blizz/gw2-rust-cd4c3b6`.
+- Game binary SHA-256: `10bd95cf90858ace19de8040311d7ac74bce403dfee92bf93b10f997035eee29`.
+- SHA256SUMS SHA-256: `650b7d58f1a1e933a18d4b1940cff73da638a650012a6bd3e26e2f5cbec7bf03`.
+
+Checks:
+- workspace tests had no failures; saved-mode 6/6.
+- Sandbox run 194 passed.
+- Supervisor smoke: 3 ambient flags reached the game process.
+- The watched cycle ran at 0 humans and reported ready after 3.3 s.
