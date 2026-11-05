@@ -112,7 +112,30 @@ pub struct TalkNpc {
     session: TalkSession209026,
 }
 
+/// Heart 56's NPC and lines, quoted from the client's own English text table
+/// (language-0 plain strings; ids in comments). Retail dialogue is server
+/// data; these are the client strings that belong to this heart.
+const HEART_56_SPEAKER: &str = "Shaman Sigrytha"; // text 30730
+const HEART_56_ACTIVE: [&str; 2] = [
+    "Honor the Spirit of Raven.", // text 45566 (the heart's title)
+    "Raven, clever and wise, guides us with truths that others fear. He bestows a far-seeing clarity of mind. In my vision, he spoke of riddles and opened my eyes to secrets that few others can see.", // text 27970
+];
+const HEART_56_DONE: [&str; 2] = [
+    "Shaman Sigrytha thanks you.",           // text 84427
+    "You have honored the spirit of Raven.", // text 84429
+];
+
 impl TalkNpc {
+    /// Replace the conversation (speaker and pages) unless one is open.
+    fn set_dialogue(&mut self, speaker: &str, pages: &[&str]) -> io::Result<()> {
+        if self.session.active().is_some() {
+            return Ok(());
+        }
+        let pages = pages.iter().map(|p| (*p).to_owned()).collect();
+        self.session = TalkSession209026::new(u32::from(self.plan.agent_index), speaker.to_owned(), pages)?;
+        Ok(())
+    }
+
     /// Agent index of the test NPC. The player's placeholder character index
     /// is 1; `respond` refuses to spawn on a collision.
     pub const AGENT_INDEX: u16 = 2;
@@ -838,6 +861,11 @@ impl MissionPhase {
             eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
             award_kill_xp(&mut self.xp, player, out);
             advance_heart(&mut self.heart, out)?;
+            if self.heart.is_some_and(|h| h.done && h.key == 56)
+                && let Some(talk) = self.talk.as_mut()
+            {
+                talk.set_dialogue(HEART_56_SPEAKER, &HEART_56_DONE)?;
+            }
             award_kill_loot(&mut self.kill_loot, player, out)?;
             self.hostiles[slot].respawn = Some(Instant::now() + RESPAWN_DELAY);
             // The dead NPC stops attacking; another hit NPC that is still alive
@@ -1053,7 +1081,10 @@ impl MissionPhase {
                     // heart marker (map, compass, "!" bang) on it. The sub-region
                     // already exists (657 above), so the marker is created now.
                     // Sent once: a second 384 asserts while the heart is active.
-                    if let Some(talk) = &self.talk {
+                    if let Some(talk) = self.talk.as_mut() {
+                        if heart.key == 56 {
+                            talk.set_dialogue(HEART_56_SPEAKER, &HEART_56_ACTIVE)?;
+                        }
                         let character = u32::from(talk.plan.agent_index);
                         RenownFrame209026::HeartNpc { character, heart: u32::from(heart.key) }.encode_frame(&mut out)?;
                         eprintln!("Mission phase: renown heart {} on NPC {character} (server 384)", heart.key);

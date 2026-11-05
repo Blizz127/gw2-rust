@@ -1005,3 +1005,19 @@ The heart advanced to 3/3 and completed (654) with no asserts.
 Run 176 used species 8013, Juvenile Boar, only as a test stand-in for the heart NPC. The
 real heart NPC, Shaman Sigrytha, has a plain name but no species key in the client, and
 its dialogue is still the research placeholder.
+
+**Run 177: heart NPC dialogue from client text.** When heart 56 is shown, the talk NPC's
+conversation is rebuilt with strings quoted from the client's own English text table:
+
+| Text id | String | Used as |
+|---|---|---|
+| 30730 | "Shaman Sigrytha" | speaker |
+| 45566 | "Honor the Spirit of Raven." | page 1 |
+| 27970 | "Raven, clever and wise, guides us with truths that others fear. …" | page 2 |
+| 84427 | "Shaman Sigrytha thanks you." | page 1 after completion |
+| 84429 | "You have honored the spirit of Raven." | page 2 after completion |
+
+They are sent through the `%str1%` coded-literal template. In run 177, F opened the
+"Shaman Sigrytha" dialogue: page 1 showed with Continue/Goodbye, Continue showed page 2,
+and Goodbye closed it. The heart marker stayed over the NPC, with no asserts. The species
+is still a stand-in (8013).
