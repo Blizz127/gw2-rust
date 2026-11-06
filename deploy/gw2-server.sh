@@ -60,6 +60,7 @@ fi
 [[ -z "${GW2_EQUIPMENT:-}" ]] || mission_args+=(--mission-equipment "$GW2_DATA/$GW2_EQUIPMENT")
 [[ -z "${GW2_SKILLS:-}" ]] || mission_args+=(--mission-skills "$GW2_DATA/$GW2_SKILLS")
 [[ -z "${GW2_HEALTH:-}" ]] || mission_args+=(--mission-health "$GW2_HEALTH")
+[[ -z "${GW2_BASE_ATTRIBUTES:-}" ]] || mission_args+=(--mission-base-attributes "$GW2_BASE_ATTRIBUTES")
 [[ -z "${GW2_QUEST:-}" ]] || mission_args+=(--mission-quest "$GW2_QUEST")
 # Opt-in research combat loop (docs/re/209026-npc-talk-loop.md); every value
 # is a sandbox-tested placeholder, not a retail encounter definition.

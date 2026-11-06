@@ -1,4 +1,4 @@
-//! Build-209026 core-stat creation frames, IDs 182 and 183.
+//! Build-209026 core-stat creation (182/183) and attribute updates (187/189).
 //! Evidence and semantic limits: `docs/re/209026-character-core-stats.md`.
 
 use std::io::{Error, ErrorKind, Result};
@@ -112,6 +112,77 @@ impl CoreStatsCreation209026 {
     }
 }
 
+/// Raw attribute updates for an existing character and core-stat component.
+/// These operations select no default value or attribute-validation policy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CoreStatsAttributeOperation209026 {
+    /// Server 187: unsigned Word stored at coreStats +0x7c + 4*attribute.
+    Earned { value: u16 },
+    /// Server 189: unsigned Word stored at +0xb0, signed Word at +0x48,
+    /// each indexed by 4*attribute. The signed field's meaning stays unnamed.
+    Effective { value: u16, raw_signed: i16 },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CoreStatsAttributeFrame209026 {
+    pub character_index: u32,
+    /// Preserve the full raw selector byte, including unsupported client values.
+    pub attribute: u8,
+    pub operation: CoreStatsAttributeOperation209026,
+}
+
+impl CoreStatsAttributeFrame209026 {
+    pub const EARNED_MESSAGE_ID: u16 = 187;
+    pub const EFFECTIVE_MESSAGE_ID: u16 = 189;
+
+    /// Append one complete frame without validating runtime prerequisites.
+    pub fn encode_frame(&self, output: &mut BytesMut) {
+        let id = match self.operation {
+            CoreStatsAttributeOperation209026::Earned { .. } => Self::EARNED_MESSAGE_ID,
+            CoreStatsAttributeOperation209026::Effective { .. } => Self::EFFECTIVE_MESSAGE_ID,
+        };
+        id.encode(output);
+        self.character_index.encode(output);
+        self.attribute.encode(output);
+        match self.operation {
+            CoreStatsAttributeOperation209026::Earned { value } => value.encode(output),
+            CoreStatsAttributeOperation209026::Effective { value, raw_signed } => {
+                value.encode(output);
+                (raw_signed as u16).encode(output);
+            }
+        }
+    }
+
+    /// Consume one frame, leaving the input slice unchanged on any error.
+    pub fn decode_frame(input: &mut &[u8]) -> Result<Self> {
+        let mut cursor = *input;
+        let id = u16::decode(&mut cursor)?;
+        if ![Self::EARNED_MESSAGE_ID, Self::EFFECTIVE_MESSAGE_ID].contains(&id) {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "expected core-stat attribute message 187 or 189",
+            ));
+        }
+        let character_index = u32::decode(&mut cursor)?;
+        let attribute = u8::decode(&mut cursor)?;
+        let value = u16::decode(&mut cursor)?;
+        let operation = if id == Self::EARNED_MESSAGE_ID {
+            CoreStatsAttributeOperation209026::Earned { value }
+        } else {
+            CoreStatsAttributeOperation209026::Effective {
+                value,
+                raw_signed: u16::decode(&mut cursor)? as i16,
+            }
+        };
+        *input = cursor;
+        Ok(Self {
+            character_index,
+            attribute,
+            operation,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -216,6 +287,202 @@ mod tests {
                 ErrorKind::InvalidData
             );
             assert_eq!(input, malformed);
+        }
+    }
+
+    fn attribute_fixtures() -> [(CoreStatsAttributeFrame209026, &'static [u8]); 4] {
+        use CoreStatsAttributeOperation209026::{Earned, Effective};
+        [
+            (
+                CoreStatsAttributeFrame209026 {
+                    character_index: 300,
+                    attribute: 1,
+                    operation: Earned { value: 0x1234 },
+                },
+                &[0xbb, 0, 0xac, 2, 1, 0x34, 0x12],
+            ),
+            (
+                CoreStatsAttributeFrame209026 {
+                    character_index: u32::MAX,
+                    attribute: u8::MAX,
+                    operation: Effective {
+                        value: u16::MAX,
+                        raw_signed: i16::MIN,
+                    },
+                },
+                &[
+                    0xbd, 0, 0xff, 0xff, 0xff, 0xff, 0x0f, 0xff, 0xff, 0xff, 0, 0x80,
+                ],
+            ),
+            (
+                CoreStatsAttributeFrame209026 {
+                    character_index: 0,
+                    attribute: 0,
+                    operation: Earned { value: u16::MAX },
+                },
+                &[0xbb, 0, 0, 0, 0xff, 0xff],
+            ),
+            (
+                CoreStatsAttributeFrame209026 {
+                    character_index: 128,
+                    attribute: 12,
+                    operation: Effective {
+                        value: 0x8000,
+                        raw_signed: i16::MAX,
+                    },
+                },
+                &[0xbd, 0, 0x80, 1, 12, 0, 0x80, 0xff, 0x7f],
+            ),
+        ]
+    }
+
+    #[test]
+    fn attribute_literal_frames_match_schema_and_preserve_stream_boundaries() {
+        use crate::{
+            dynamic::{self, Rules, Value},
+            schema,
+        };
+        let tables = schema::parse(include_str!(
+            "../../../data/protocol/209026/server-tables.xml"
+        ))
+        .unwrap();
+        let messages: Vec<_> = tables
+            .protocols
+            .into_iter()
+            .filter(|p| p.name == "0")
+            .flat_map(|p| p.groups)
+            .filter(|g| g.name == "table-0x14216e940")
+            .flat_map(|g| g.server)
+            .collect();
+        for id in [187, 189] {
+            assert_eq!(messages.iter().filter(|m| m.id == id).count(), 1);
+        }
+        let stream: Vec<_> = attribute_fixtures()
+            .iter()
+            .flat_map(|(_, wire)| wire.iter().copied())
+            .collect();
+        let mut input = stream.as_slice();
+        let mut consumed = 0;
+        for (expected, golden) in attribute_fixtures() {
+            let mut encoded = BytesMut::from(&b"prefix"[..]);
+            expected.encode_frame(&mut encoded);
+            assert_eq!(&encoded[..6], b"prefix");
+            assert_eq!(&encoded[6..], golden);
+            assert_eq!(
+                CoreStatsAttributeFrame209026::decode_frame(&mut input).unwrap(),
+                expected
+            );
+            consumed += golden.len();
+            assert_eq!(input, &stream[consumed..]);
+
+            let mut schema_input = golden;
+            let (message, actual) =
+                dynamic::decode_frame(&messages, &Rules::default(), &mut schema_input).unwrap();
+            let (id, value, raw_signed) = match expected.operation {
+                CoreStatsAttributeOperation209026::Earned { value } => (187, value, None),
+                CoreStatsAttributeOperation209026::Effective { value, raw_signed } => {
+                    (189, value, Some(raw_signed))
+                }
+            };
+            let mut fields = vec![
+                ("0".into(), Value::U32(expected.character_index)),
+                ("1".into(), Value::U8(expected.attribute)),
+                ("2".into(), Value::U16(value)),
+            ];
+            if let Some(raw_signed) = raw_signed {
+                fields.push(("3".into(), Value::U16(raw_signed as u16)));
+            }
+            assert_eq!(message.id, id);
+            assert_eq!(actual, Value::Struct(fields));
+            assert!(schema_input.is_empty());
+        }
+        assert!(input.is_empty());
+    }
+
+    #[test]
+    fn attribute_truncations_and_malformed_dwords_leave_input_unchanged() {
+        for (_, golden) in attribute_fixtures() {
+            for cut in 0..golden.len() {
+                let mut input = &golden[..cut];
+                assert!(CoreStatsAttributeFrame209026::decode_frame(&mut input).is_err());
+                assert_eq!(input, &golden[..cut]);
+            }
+        }
+        for id in [187u8, 189] {
+            for bad_index in [
+                &[0xff, 0xff, 0xff, 0xff, 0x10][..],    // u32 overflow.
+                &[0x80, 0x80, 0x80, 0x80, 0x80, 0][..], // More than five bytes.
+            ] {
+                let mut wire = vec![id, 0];
+                wire.extend_from_slice(bad_index);
+                wire.extend_from_slice(&[1, 37, 0, 0, 0]);
+                let mut input = wire.as_slice();
+                assert_eq!(
+                    CoreStatsAttributeFrame209026::decode_frame(&mut input)
+                        .unwrap_err()
+                        .kind(),
+                    ErrorKind::InvalidData
+                );
+                assert_eq!(input, wire);
+            }
+        }
+        let wrong_id = &[188, 0, 1, 1, 37, 0, 0, 0][..];
+        let mut input = wrong_id;
+        assert_eq!(
+            CoreStatsAttributeFrame209026::decode_frame(&mut input)
+                .unwrap_err()
+                .kind(),
+            ErrorKind::InvalidData
+        );
+        assert_eq!(input, wrong_id);
+    }
+
+    #[test]
+    fn attribute_raw_selectors_and_full_width_words_have_no_semantic_defaults() {
+        for attribute in 0..=u8::MAX {
+            for value in [0, 0x7fff, 0x8000, u16::MAX] {
+                for operation in [
+                    CoreStatsAttributeOperation209026::Earned { value },
+                    CoreStatsAttributeOperation209026::Effective {
+                        value,
+                        raw_signed: i16::MIN,
+                    },
+                    CoreStatsAttributeOperation209026::Effective {
+                        value,
+                        raw_signed: -1,
+                    },
+                    CoreStatsAttributeOperation209026::Effective {
+                        value,
+                        raw_signed: 0,
+                    },
+                    CoreStatsAttributeOperation209026::Effective {
+                        value,
+                        raw_signed: i16::MAX,
+                    },
+                ] {
+                    let frame = CoreStatsAttributeFrame209026 {
+                        character_index: u32::MAX,
+                        attribute,
+                        operation,
+                    };
+                    let mut wire = BytesMut::new();
+                    frame.encode_frame(&mut wire);
+                    assert_eq!(&wire[2..7], &[0xff, 0xff, 0xff, 0xff, 0x0f]);
+                    assert_eq!(wire[7], attribute);
+                    assert_eq!(&wire[8..10], &value.to_le_bytes());
+                    if let CoreStatsAttributeOperation209026::Effective { raw_signed, .. } =
+                        operation
+                    {
+                        assert_eq!(&wire[10..12], &raw_signed.to_le_bytes());
+                    }
+                    let mut input = &wire[..];
+                    assert_eq!(
+                        CoreStatsAttributeFrame209026::decode_frame(&mut input).unwrap(),
+                        frame
+                    );
+                    assert!(input.is_empty());
+                }
+            }
         }
     }
 }

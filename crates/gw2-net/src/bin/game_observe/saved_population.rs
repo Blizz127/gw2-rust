@@ -16,6 +16,7 @@ pub struct SavedPopulation {
     pub equipment: Option<Bytes>,
     pub skills: Option<Bytes>,
     pub initial_health: Option<f32>,
+    pub base_attributes: Option<u16>,
 }
 
 fn invalid(message: &str) -> io::Error {
@@ -74,6 +75,7 @@ impl SavedPopulation {
         }
         if let Some(bytes) = &self.skills { fixture = fixture.with_skills(bytes)?; }
         if let Some(health) = self.initial_health { fixture = fixture.with_initial_health(health)?; }
+        if let Some(value) = self.base_attributes { fixture = fixture.with_base_attributes(value); }
         Ok(fixture)
     }
 }
@@ -139,6 +141,7 @@ pub(super) mod tests {
                 equipment: Some(armor_batch([[9; 4]; 6], None)),
                 skills: Some(Bytes::from(crate::skills::fixture_for_test())),
                 initial_health: Some(777.0),
+                base_attributes: None,
             };
             Self {
                 profile,
@@ -184,6 +187,9 @@ pub(super) mod tests {
             }
             if let Some(health) = self.profile.initial_health {
                 fixture = fixture.with_initial_health(health).unwrap();
+            }
+            if let Some(value) = self.profile.base_attributes {
+                fixture = fixture.with_base_attributes(value);
             }
             fixture
         }
@@ -330,6 +336,27 @@ pub(super) mod tests {
         assert_eq!(remaining, 0);
         creations.extend_from_slice(&equips);
         creations.freeze()
+    }
+
+    #[test]
+    fn saved_base_attributes_follow_each_selected_character() {
+        let mut scenario = SavedScenario::new();
+        let original = [frames(scenario.expected(0)), frames(scenario.expected(1))];
+        scenario.profile.base_attributes = Some(37);
+        for selected in [0, 1, 0] {
+            let actual = frames(scenario.profile.for_join(&scenario.preamble(selected)).unwrap());
+            assert_eq!(actual, frames(scenario.expected(selected)));
+            assert_eq!(actual[0], original[selected][0]);
+            assert_eq!(actual[2], original[selected][2]);
+            assert_eq!(actual[1].len(), original[selected][1].len() + 56, "eight attribute updates only");
+            let inserted: Vec<u8> = (1u8..=4).flat_map(|selector| [
+                187, 0, 1, selector, 37, 0, 189, 0, 1, selector, 37, 0, 0, 0,
+            ]).collect();
+            let offset = actual[1].windows(inserted.len()).position(|w| w == inserted).unwrap();
+            assert_eq!(&actual[1][..offset], &original[selected][1][..offset]);
+            assert_eq!(&actual[1][offset + inserted.len()..], &original[selected][1][offset..]);
+            assert_eq!(&actual[1][offset + inserted.len()..offset + inserted.len() + 3], &[170, 0, 1]);
+        }
     }
 
     pub(crate) fn frames(fixture: PopulationFixture) -> [Bytes; 3] {

@@ -30,6 +30,7 @@ use gw2_proto::{
         encode_minimal_item_creation, encode_stack_item_creation,
     },
     character_summary::SummaryV11,
+    core_stats::{CoreStatsAttributeFrame209026, CoreStatsAttributeOperation209026},
     dynamic::{self, CStringEncoding, CountPrefix, Rules, StringEncoding},
     experience::{EarnedLevelFrame209026, ExperienceFrame209026, level_for_experience},
     renown::RenownFrame209026,
@@ -178,6 +179,7 @@ pub struct PopulationFixture {
     quest: Option<QuestFixture>,
     equipment: Option<super::equipment::EquipmentFixture>,
     skills: Option<super::skills::SkillFixture>,
+    base_attributes: Option<u16>,
 }
 
 #[derive(Clone, Copy)]
@@ -232,6 +234,7 @@ impl PopulationFixture {
             quest: None,
             equipment: None,
             skills: None,
+            base_attributes: None,
         })
     }
 
@@ -268,10 +271,19 @@ impl PopulationFixture {
         Ok(self)
     }
 
+    /// Explicit unmodified level-one profile: selectors 1..=4 have this
+    /// earned/effective value, with raw signed column zero. The frozen default
+    /// curve supplies37, but arbitrary equipment/modifiers are not inferred.
+    /// See docs/re/209026-starter-base-attributes.md.
+    pub fn with_base_attributes(mut self, value: u16) -> Self {
+        self.base_attributes = Some(value);
+        self
+    }
+
     fn population_stream(&self) -> io::Result<Bytes> {
-        let Some(equipment) = &self.equipment else {
+        if self.equipment.is_none() && self.base_attributes.is_none() {
             return Ok(population::population_stream(&self.plan)?.freeze());
-        };
+        }
         let mut out = BytesMut::new();
         let mut inserted = false;
         for (id, frame) in population::population_frames(&self.plan)? {
@@ -283,13 +295,33 @@ impl PopulationFixture {
                 // All character/inventory/profession/wardrobe prerequisites
                 // already precede this point. Setters have no unconditional
                 // finalized-view/skillbar dependency; see the visibility trace.
-                out.extend_from_slice(equipment.bytes());
+                if let Some(equipment) = &self.equipment {
+                    out.extend_from_slice(equipment.bytes());
+                }
+                if let Some(value) = self.base_attributes {
+                    // Existing character/coreStats and all population
+                    // components precede this point. Update only the known
+                    // attribute columns, without a second creation or guessed
+                    // values for the remaining server182 fields.
+                    for attribute in 1..=4 {
+                        for operation in [
+                            CoreStatsAttributeOperation209026::Earned { value },
+                            CoreStatsAttributeOperation209026::Effective { value, raw_signed: 0 },
+                        ] {
+                            CoreStatsAttributeFrame209026 {
+                                character_index: self.plan.character_index,
+                                attribute,
+                                operation,
+                            }.encode_frame(&mut out);
+                        }
+                    }
+                }
                 inserted = true;
             }
             out.extend_from_slice(&frame);
         }
         if !inserted {
-            return Err(io::Error::new(ErrorKind::InvalidData, "equipment requires a character finalization point"));
+            return Err(io::Error::new(ErrorKind::InvalidData, "population additions require a character finalization point"));
         }
         Ok(out.freeze())
     }
@@ -2120,6 +2152,39 @@ pub(crate) mod tests {
         assert!(tail.is_empty());
         for seen in [loaded, agents, agents] {
             assert!(phase.respond(&seen).unwrap().is_none(), "never reselect an active goal");
+        }
+    }
+
+    #[test]
+    fn explicit_base_attributes_precede_finalization_without_changing_other_frames() {
+        let equipment = super::super::equipment::fixture_for_test();
+        for with_equipment in [false, true] {
+            let mut fixture = PopulationFixture::new(&guardian_record(15, 1), [0.0; 3]).unwrap();
+            if with_equipment { fixture = fixture.with_equipment(&equipment).unwrap(); }
+            let original = fixture.population_stream().unwrap();
+            let frames = population::population_frames(&fixture.plan).unwrap();
+            let insertion = frames.iter().take_while(|(id, _)| *id != 170)
+                .map(|(_, bytes)| bytes.len()).sum::<usize>()
+                + if with_equipment { equipment.len() } else { 0 };
+            assert_eq!(&original[insertion..insertion + 3], &[170, 0, 1]);
+            for value in [0u16, 37, u16::MAX] {
+                let configured = fixture.clone().with_base_attributes(value);
+                let stream = configured.population_stream().unwrap();
+                // Independent literal187/189 wire frames, character1.
+                let [lo, hi] = value.to_le_bytes();
+                let expected: Vec<u8> = (1u8..=4).flat_map(|selector| [
+                    187, 0, 1, selector, lo, hi,
+                    189, 0, 1, selector, lo, hi, 0, 0,
+                ]).collect();
+                assert_eq!(&stream[..insertion], &original[..insertion]);
+                assert_eq!(&stream[insertion..insertion + expected.len()], expected);
+                assert_eq!(&stream[insertion + expected.len()..], &original[insertion..]);
+                let mut phase = MissionPhase::new(15).unwrap().with_population(configured).unwrap();
+                assert_eq!(phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap(), stream);
+                assert!(phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().is_none());
+                assert_eq!(phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().unwrap().as_ref(),
+                    &[0x0c, 4, 0xaf, 1, 0x53, 0, 1, 0, 1]);
+            }
         }
     }
 

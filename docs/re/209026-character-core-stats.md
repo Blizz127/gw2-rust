@@ -248,6 +248,10 @@ launched for this follow-up.
 
 ## Offline validation
 
+The later [starter attribute follow-up](209026-starter-base-attributes.md)
+binds existing updates187/189 and adds their raw codecs plus an explicit
+unmodified level-one profile. It avoids assigning the other unknown182 fields.
+
 ### Typed creation-frame scope
 
 The typed core-stat creation codec supports the two established alternatives:

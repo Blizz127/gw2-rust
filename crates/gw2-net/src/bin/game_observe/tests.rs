@@ -350,6 +350,11 @@ fn check_config_validates_saved_profile_and_identity_without_binding() {
         echo.extend(["--mission-skill-order-echo".into(), duration.into()]);
         run(echo.into_iter()).unwrap();
     }
+    for value in ["0", "37", "65535"] {
+        let mut attributes = args.clone();
+        attributes.extend(["--mission-base-attributes".into(), value.into()]);
+        run(attributes.into_iter()).unwrap();
+    }
     assert!(character_store::CharacterStore::open(store.clone()).unwrap().list().unwrap().is_empty());
     assert!(!log.exists());
     let mut zero_target = args.clone();
@@ -374,6 +379,22 @@ fn check_config_validates_saved_profile_and_identity_without_binding() {
     assert!(run(args.into_iter()).is_err());
     assert_eq!(fs::read(store.join("unrecognized")).unwrap(), b"preserve me");
     assert!(!log.exists());
+}
+
+#[test]
+fn base_attributes_config_requires_explicit_u16_and_population() {
+    let parse = |tail: &[&str]| {
+        run(["--check-config", "--no-capture"].into_iter().chain(tail.iter().copied())
+            .map(str::to_owned)).unwrap_err().to_string()
+    };
+    assert_eq!(parse(&["--mission-base-attributes"]), "missing initial base attributes");
+    for value in ["65536", "-1", "1.5", "NaN", "--mission-preamble"] {
+        assert_eq!(parse(&["--mission-base-attributes", value]), "initial base attributes must be a u16");
+    }
+    assert_eq!(parse(&["--mission-base-attributes", "0", "--mission-base-attributes", "37"]),
+        "duplicate --mission-base-attributes");
+    assert_eq!(parse(&["--mission-base-attributes", "37"]),
+        "--mission-base-attributes requires a population");
 }
 
 #[test]
