@@ -95,9 +95,15 @@ click selected45/Juvenile Raven. Root released without F; UI13 and no step1
 remain failure evidence. Windows59/60 returned19:18:42Z/19:25:23Z with cleanup
 verified. The retained audit confirms pointer443,630→645,378 and one combined
 move/click command, without a client observation between them. Cause remains
-unproved. Draft271 separates pointer placement and a reviewed hover image
-from selection; it has no runtime or resource grant yet.
+unproved. Run271 then separated pointer placement and a reviewed hover image
+from selection: new227 selected Thora21, and one F produced Interact21,
+Thora opening and step1 logs. The immediate image lacked a dialogue panel,
+so root released incomplete/UI13. A later retained image visibly shows
+Thora's opening panel and Continue/Goodbye choices; this separate observation
+does not rewrite the frozen test outcome. Window61 returned19:46:08Z with
+cleanup verified. No repeat is needed merely to change the test status.
 [Evidence](re/209026-saved-norn-creator.md#runs269270-stationary-thora-check-remains-incomplete).
+[Run271 evidence](re/209026-saved-norn-creator.md#run271-thora-selected-and-late-dialogue-observed).
 The [Thora source audit](re/209026-quest154-objective-ui-boundary.md#retained-thora-opening-audit)
 also distinguishes objective text34078 from an unproven spoken opener and
 the reconstructed opening-to-step1 rule. No authentic dialogue replacement

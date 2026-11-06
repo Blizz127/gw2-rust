@@ -1538,3 +1538,52 @@ Return receipts pin the corresponding launch and strict readback Evidence.
 All four captures above are untruncated with owned cleanup verified. The
 launches retain39/34 unverified process-environment observations respectively;
 these do not establish ownership of those unrelated processes.
+
+## Run271: Thora selected and late dialogue observed
+
+Run271 preserved exact464cce3/CDN950, all31 normal profile arguments,
+production runner GDB and the original154-byte synthetic record at stage0.
+The controller separated one pointer move from one click. It required a
+fresh root-reviewed Thora hover image and unchanged numeric pointer/owned
+identity before clicking without another move. Full ownership verification
+preceded the final pointer observation; filesystem revocation and45-second
+image checks remained immediately before input. Nineteen focused controller
+and15 actual writer-reader fixtures passed. Unchanged parser/execution tests
+were reused, not rerun; both actual staged no-listener checks passed.
+
+Root reviewed the first scene, moved the pointer from `[443,630]` to the
+visible candidate at `[645,378]`, and saw the Thora hover label. The separate
+click preserved that pointer and produced NEW client227 target21; the next
+image showed selected Veteran Thora Griffonbane and Greet[F]. One F then
+produced ordered client23 Interact21, Thora(agent21) opening and server542
+step1 logs. No movement, combat, page choice, second F or correction occurred.
+This demonstrates the split input sequence in this run; it does not establish
+which internal mechanism caused run270's target mismatch.
+
+The immediate post-F image had no visible dialogue panel. Root therefore
+released incomplete without the required dialogue attestation, and UI/launcher
+exited13. Strict readback is valid and confirms the complete typed log sequence,
+but the saved controller acceptance remains false. After cleanup, root viewed
+the separately pinned `route-observation-final.png`: it visibly contains a
+Thora Griffonbane panel, the reconstructed opening text, and Continue/Goodbye
+choices. This is a **late retained visual observation**, not a replacement
+for the earlier controller result. Exact native latency and server542 client
+acknowledgement remain unproved; no authentic retail dialogue rule is inferred.
+
+Window61 returned **2026-11-06 19:46:08Z**. Container absence,79 immutable
+non-prefix inputs, both PE hashes, synthetic record and console privacy passed.
+Root holds no runtime/resource. No live, owner-store or schema change occurred.
+
+Private strict readback `209026-run271-norn-thora-hover-step1-readback-20261106.json`,
+SHA256 `f7e90dcdaccbbfce092bc4a942e50b4a069f4dc2def5fd4fd1833f3f7551da78`,
+Evidence`ev_0eb76c356de7bc93273ba8a10606f0a7c5a6ae62372ca07ff8ffc8c2247985c5`.
+Return `209026-run271-resource-return-20261106.json`, SHA256
+`4dcedbdf61135a33395b6be5be00c387a2f739b2c466e3af40b963213c4640ed`,
+Evidence`ev_e085a565fb220d81d47b4b67e90cd12490e66fb72018161c371b9554ec9b4a7f`.
+Both exited0, untruncated with owned cleanup; the return pins the launch
+Evidence and its nonzero13 result. The launch retained29 unverified process
+environment observations, without attributing ownership.
+Root visual record `run271-root-late-dialogue-observation-20261106.json`,
+SHA256 `dc8ebf22c1b9b0aea97b486a256e59292869f4b57e7591b9b91b60118556c22f`,
+pins both immediate and late images. The final image is1,331,806 bytes,
+SHA256 `81dcb2f4b4991f68a982912bc4e6f524e9fe786426454c5f4a8214f5ce2fb649`.
