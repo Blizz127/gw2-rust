@@ -26,8 +26,9 @@ inspected by that query. The earlier native roster prompt is resolved.
 Independent release candidate **9451cf0** applies the seven-line caster
 guard directly to current live c2cb6fd, preserving its combat settings and
 Ether Feast exclusion. Eight focused tests, offline musl build and four
-no-listener checks passed at04:03:38Z. The artifact and hashes are handed to
-the sole publisher, **not claimed deployed**. See the
+no-listener checks passed at04:03:38Z. The corrected artifact handoff was
+submitted to the existing sole publisher's native inbox at04:33:23Z under
+taskf45083e2793a. Acknowledgement and deployment are unverified. See the
 [independent candidate receipt](re/209026-skill-caster-ownership.md#independent-release-candidate-on-the-current-live-source).
 
 The separate cumulative server candidate **45c0731**,
@@ -35,7 +36,10 @@ The separate cumulative server candidate **45c0731**,
 **03:45:50Z**. Foreign SkillBegin agent indices cannot mutate target/combat
 or reward state or trigger order responses. Nine focused tests, an isolated
 static build and four no-listener startup configurations pass. The artifact
-includes5516cb4 and is handed to the sole publisher, **not deployed**.
+includes5516cb4 and remains **withheld, not deployed**. Its coordinator
+handoff task237f1f15ce02 was refused because taskf45083e2793a was already
+active; it was not delivered. The native submission above corrects the
+release candidate to9451cf0 without creating another publisher or task.
 Ether Feast healing/recharge remain unimplemented; the earlier guard only
 prevents generic attack damage and retaliation.
 
@@ -84,10 +88,10 @@ does not establish a changed audience or resolve that historical constraint.
 Independent server fixes remain handed off to the sole publisher.
 
 Tested commit5169b98 prevents Ether Feast from causing generic attack damage,
-target changes or retaliation; the sole publisher has the ready handoff,
-but no newer live receipt is available. Passive cast/recharge observers are
-staged with44 focused host mock tests passed. Run145 has not launched while
-the fresh shared test-resource reservation is pending. Commitcac0e9a corrects
+target changes or retaliation; its guard is live in c2cb6fd as recorded above.
+Passive cast/recharge observers are staged with44 focused host mock tests
+passed. Run145 remains unlaunched; window24 was returned after the separate
+run148 observation. Commitcac0e9a corrects
 the research option to require explicit nonzero duration and the demonstrated
 controlled-order admission flag; eight focused tests and both builds pass.
 Its static binary is staged privately and handed to the publisher, with no

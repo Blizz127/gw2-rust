@@ -33,8 +33,9 @@ API/wiki names may locate content but do not replace client verification.
 Independent release candidate: **9451cf0**, the seven-line caster guard
 directly on live c2cb6fd. Eight focused tests, offline musl build and four
 no-listener checks passed at04:03:38Z; current combat settings and Ether Feast
-exclusion are preserved. The sole publisher has the checked artifact and
-hashes; it is **not claimed deployed**. See the
+exclusion are preserved. The corrected artifact handoff was submitted to
+the existing sole publisher's native inbox at04:33:23Z under taskf45083e2793a.
+Acknowledgement and deployment remain unverified. See the
 [receipt](re/209026-skill-caster-ownership.md#independent-release-candidate-on-the-current-live-source).
 
 The separate cumulative candidate **45c0731** contains the
@@ -43,7 +44,10 @@ tests passed, including two regressions that failed before the fix. Its
 isolated static release binary passed four no-listener configurations at
 **2026-11-06T03:45:50Z**. It includes5516cb4's waypoint identity correction,
 earned-attribute curve and earlier skill-input corrections. It adds no
-profile setting or schema and is handed to the sole publisher, **not deployed**.
+profile setting or schema and remains **withheld, not deployed**. Its
+coordinator handoff task237f1f15ce02 was refused because taskf45083e2793a was
+already active and was not delivered. The native submission above corrects
+the release candidate to9451cf0 through the existing publisher.
 The publisher's run203 on the earlier5516cb4 candidate reached the world and
 cleaned up, but its03:52 readback contains no sword SkillBegin or combat
 response. A combat pass is not established for either cumulative candidate;

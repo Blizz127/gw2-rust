@@ -34,9 +34,15 @@ supervisor match. No shared client, container or archive was accessed.
   `~/re/gw2/notes/caster-ownership-live-base-startup-20261106.json`,
   SHA-256 `f15605cdbadcb6ea2a19b14aa17f1f40cf788b50183e0ad903668ec96400e464`.
 
-This independently checked candidate is handed to the sole publisher via
-`creator-lane-peer-handoff.json#/root_caster_live_base_ready_20261106`;
-the coordinator notification is queued. It is **not claimed deployed**.
+The corrected candidate handoff was submitted through the existing native
+peer helper at **2026-11-06T04:33:23Z** to sole publisher session
+`6f90f24c-c2e0-4d00-803a-853401bd55ce`, under its existing task
+`f45083e2793a`. Native submission succeeded; publisher acknowledgement and
+deployment remain unverified. No new task, runtime or publisher was started.
+The receipt is
+`~/re/gw2/notes/caster-ownership-existing-publisher-handoff-20261106.json`;
+`creator-lane-peer-handoff.json#/root_caster_live_base_ready_20261106`
+records that distinction. The coordinator status reply is queued.
 Keep the existing saved store/mode, metadata900, player checks and rollback.
 The guard covers `Seen::Skill` only; the legacy `RepeatStart` and other
 action classes remain outside its scope. This preserves the current fixture
@@ -86,7 +92,7 @@ curve, prepared fixed37 and saved mode with a private empty store. The
 retired CLI rejection, paired supervisor syntax/compatibility checks and
 eight pinned fixture inputs also passed. No shared client or archive ran.
 
-## Checked artifact for the sole publisher
+## Checked cumulative artifact (withheld)
 
 - Binary:
   `/home/blizz/scratch/gw2-caster-ownership-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`
@@ -105,16 +111,21 @@ eight pinned fixture inputs also passed. No shared client or archive ran.
 This cumulative candidate includes5516cb4 and adds no profile setting or
 schema. Preserve the now-live saved mode/store, publisher baton, active test
 inputs and normal player/backup/rollback/hash checks. The earlier5516cb4
-artifact remains intact. Handoff:
+artifact remains intact. Historical preparation record:
 `creator-lane-peer-handoff.json#/root_caster_ownership_ready_20261106`.
-The coordinator notification was queued; that is not a deployment receipt.
+Its release-ready flag is false. The coordinator's attempted handoff was
+refused because task `f45083e2793a` was already active; task
+`task237f1f15ce02` is blocked and was **not delivered**. Earlier wording
+that this cumulative candidate had been handed to the publisher overstated
+the evidence. The successful native submission above instead identifies
+9451cf0 as the independent candidate and explicitly withholds45c0731.
 
 **Ether Feast healing remains unimplemented.** Both5516cb4 and this build
 exclude that skill from generic attack damage/retaliation; neither restores
 health or implements recharge. A publisher summary saying it “heals instead”
 was corrected in the handoff. Latest independently verified live is
 c2cb6fd, with [saved mode enabled](209026-saved-norn-live-activation.md).
-This new artifact is checked and handed off, **not claimed deployed**.
+This cumulative artifact remains **withheld and not deployed**.
 
 The publisher's subsequent run203 smoke used5516cb4. Its retained logs
 show world startup and cleanup, but no sword SkillBegin or combat response;
