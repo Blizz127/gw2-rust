@@ -128,6 +128,61 @@ The capture exited0, was untruncated and verified owned-process cleanup.
 Normal quest placements and saved-character story traversal remain unproved;
 this release does not complete the full retail-fidelity goal.
 
+### Quest 170 integration: independently verified `633fff8`
+
+The sole publisher deployed `633fff8d1c321b6d5f60b64e2e95be31373e5dea`
+as `/home/blizz/gw2-rust-633fff8-q170` at 2026-11-06 **21:06:38Z**, retaining
+`/home/blizz/gw2-rust-c2ae0e8-backpack` as rollback. Independent readback at
+**21:18:48.203942Z** passed all current and rollback manifest sums. Exactly
+`BUILD`, `bin/gw2-game-observe`, `data/mission-profile.conf` and
+`deploy/gw2-server.sh` changed; no manifest rows were added or removed.
+
+| Current artifact | SHA256 |
+| --- | --- |
+| Game binary, 1,995,432 bytes | `13f1e64e39d7087a449f1a26efaaa790fa1c38034f87988d3c532a7e87d42bb3` |
+| `SHA256SUMS` | `bb3ae562d97a466dcbd74f8aef5b1c0ad392fd4ed17409335371f8b8825da7ad` |
+| `BUILD` | `a3032dac77ef7be424fcc1feaa65620fd8e830d353e01fff7c0c12d508074ef7` |
+| Mission profile | `bc6eb6eb0c384808b55c507239800adfd671d8c3d5e2143f5f2094c519969bf1` |
+| Supervisor | `97b0c470cd5898c86d6f2409f53cf5c996615c168394d0d0073d7b0fdba219d4` |
+| Unchanged 27-byte sword-chain skills | `7a8f8c7be4e52f646aec90b0edfaf66feceb6a800d52354cf78fad8f9809d7b1` |
+
+The 102 effective story arguments match exactly: the prior 85 are preserved,
+with map 400, five NPC entries and eleven hostile entries added. All prior
+asset bytes and the eight root-manifest rows are unchanged; served
+`209026 0 0 2130706950 508` and the checked leaves match. Four owned listeners
+were healthy, with zero humans and zero bots at the readback instant. Saved
+mode, the 0700 store, two 0600 record metadata entries and the existing backup
+hash passed. Record contents were not read, and names were not emitted. Ether Feast and
+sword-chain mode remain enabled; legacy autoattack, echo, sword2 diagnostics,
+movement-log override and story seeds remain absent.
+
+Exact source comparison against `c2ae0e8` finds byte-identical `mission.rs`,
+`auth.rs`, `saved_population.rs`, `npc_talk.rs` and `population.rs`. The normal
+quest 154 Thora/trophy/Ido handlers and saved/auth record handling therefore
+have no source delta in those files; this does not establish native execution
+equivalence. The separate current-kit auth/world no-listener checks both pass
+with 102 story arguments and a removed empty temporary store.
+
+The publisher reports quest 170 steps 1–5 in `laneb20-q170` and step 6 in
+`laneb21-q170-ally`, using prepared characters, fixture placements and seeds,
+with a binary byte-identical to this release. Those reports do not prove
+normal placements, the invented/unprobed Svena starter or handoff from 168/169,
+the saved-character route, species 5900 or the Grechen variant. Dialogue is
+reconstructed; Armund, Styrr, Eir, Garm and portals are omitted from this
+quest 170 reconstruction. Carry remains process-local, items are unimplemented,
+and 171 is recorded as next but is not playable.
+
+Private verification: `633fff8-q170-release-verification-20261106.json`,
+SHA256 `bb4a311cbe448a4bd4cf714c1132d27e5e831d544a7fb3e4951c3b76e2aedae8`.
+Complete REA capture: `209026-633fff8-q170-release-readback-20261106.json`,
+SHA256 `93499a12e995d8d6ba429c9590403a1539ec75ba2b78072ee1241be498d51126`,
+Evidence `ev_404bccb46ea738dfd2735309790a302f0d0d8697a13c65aa5c7117ece091349a`.
+It exited 0 without truncation and verified cleanup of its owned process group.
+One unverified process-environment observation returned EACCES; it was not
+attributed or touched. The existing undeployed standalone 8192 leaf dependency remains an
+asset-completeness limitation. No deployment, client run or store mutation was
+performed by this verification.
+
 ## Private evidence
 
 Executable SHA256:
