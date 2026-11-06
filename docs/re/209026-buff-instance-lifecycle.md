@@ -121,11 +121,11 @@ is0x1c bytes: status key+0x14 is78 and class+0x18 is2. Status78 is not the
 excluded94, so this record belongs to the named condition-count subset above.
 No complete buff-structure size or localized buff name is established.
 
-The existing Rust `SkillDefinition209026` reader exposes key/flags but no
-buff body. `ContentIndex::reference` and `resolve_reference` preserve local
-and external ownership and bounds, so a dedicated pure reader can validate
-the0x68 SkillDef, require kind1, resolve its body and expose these raw fields.
-This is a concrete next implementation, not an effect change already present.
+`gw2_dat::buff_content::BuffContent209026` now validates the0x68 SkillDef,
+requires kind1 and resolves the classified body reference with a0x1c minimum.
+It returns raw status/class values, the definition and both source/body
+locations, preserving local/external reference ownership. It does not classify
+unknown values or turn the status94 counter exception into an effect rule.
 Description facts do not supply authoritative application, duration, stacking,
 targeting, damage modifiers, timing or cleanse policy.
 
@@ -142,6 +142,33 @@ unverified unrelated processes remain untouched. No archive or runtime access
 occurs in this follow-up.
 
 ## Implementation and checks
+
+The typed reader is commit `11d2c560025922c3729cd89585fdf53b8508fd12`, based
+on integrated release `d0288e1`; main carries the same change as `2c491ed`.
+Eight focused tests cover reference ownership, classified zero offsets,
+unknown/excluded scalar values, every truncated header/body prefix, incorrect
+types and invalid references/ranges. A private Rust checker follows both actual
+retained sword-fact paths through their original container indices, reads
+buff738 with the new API and rejects the two ability records as buffs.
+Unused container slots are empty synthetic sentinels, not substituted assets.
+
+The musl game build and two saved auth/world no-listener checks pass using
+the current powder profile, all15 story arguments and27-byte skills. The first
+build lacked the isolated worktree's four private protocol XML inputs; copying
+their verified existing bytes resolved that setup failure. No schema changed.
+The tested artifact is1893528 bytes, SHA256
+`0e66f19c08677df860ef52b9704f854b8a5801e7f8e72f506c1f85a3bdea2dfa`.
+It was handed to the existing sole publisher; this implementation receipt
+does not claim deployment or a new gameplay effect.
+
+Private check receipt `buff-content-d0288e1-20261106-checks/receipt.json`,
+SHA256 `f6cd95ce11146c1bdb17f10d582eecda71aa7dd9804a51a3a4943ef38e66aaa2`.
+Actual-cache REA `ev_6d2afef38c84edf4c9838c733a904fd888062236ddd3d796d3f1f4c6b193e80f`,
+file `209026-buff-content-rust-cache-smoke-20261106.json`, SHA256
+`7bad3dd87401fb7cbadfd5ce20dce079d4aa022404eb3b97b4f39b3bf1649743`.
+The capture exits0 without truncation and verifies owned cleanup; one unrelated
+EACCES process remains unverified and untouched. Only retained caches are read;
+no archive, client runtime or owner character store is accessed.
 
 `gw2_proto::buff::{BuffFrame209026, BuffOperation209026}` implements explicit
 734–739 encoding and transactional decoding. The six operations preserve the

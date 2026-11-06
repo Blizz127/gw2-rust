@@ -30,6 +30,14 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+The next tested source increment is **11d2c56**, a pure bounded buff-body
+reader on integratedd0288e1. Eight focused tests, the actual retained10170/10171
+fact paths, musl build and two saved-profile startup checks pass. It preserves
+the current15 story arguments, saved mode, profile and CDN950 assets. The
+existing sole publisher received the exact commit/artifact through its native
+peer path; no newer deployment is claimed here. It adds no condition application
+or other gameplay policy. [Reader and evidence](re/209026-buff-instance-lifecycle.md#implementation-and-checks).
+
 **d0288e1-powder is verified live as of 2026-11-06 16:41:52Z**, publisher
 deployment16:37:15Z to `/home/blizz/gw2-rust-d0288e1-powder`, rollback
 `d0288e1-pups`. This asset-only update preserves the game, profile and supervisor
@@ -84,8 +92,8 @@ No gameplay effect follows from this classification alone.
 
 The next retained-record slice finds a concrete authored link:10170 and10171
 both reference buff SkillDef738/UID9153, status78/class2, through their type2
-description facts. The existing generic classified-reference APIs can support
-a dedicated bounded buff-body reader; no new archive extraction is needed.
+description facts. The new bounded buff-body reader now reproduces these
+records through the classified-reference APIs without archive extraction.
 These facts do not establish application timing, duration or effect policy.
 [Retained record and next reader](re/209026-buff-instance-lifecycle.md#retained-mesmer-sword-buff-record).
 
