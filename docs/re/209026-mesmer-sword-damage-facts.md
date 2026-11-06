@@ -225,6 +225,103 @@ Both captures exited zero without truncation. Private bundle:
 SHA-256 `1e169033afc0ff32faa52d1e15b76ac49d6bc51a36206b9054bf5ba7023c08a5`.
 The helper is `~/re/gw2/notes/check-damage-facts-20261106.py`.
 
+## Mind Slash follow-up: map 28, tooltip 30 and chain boundary
+
+A bounded follow-up confirms the same **base coefficient 1.0** when frozen
+Wayfarer Foothills map 28 is installed. Its exact type-45 record is
+**1282830:3731704**, with Dword +0x9c = 0, map type +0x2c = 5 and a null,
+unrelocated +0x100 reference. The container SHA-256 is
+`e5d11e4fae8627d3efced749e7ab599b26abac59e502716aaf7d63ef509bb81f`.
+
+`0x1414100a0` tail-calls the established map gate `0x141411600`; its
+bit-13 check is false for this record. The named-value fallback predicates
+are also false: `0x14140f5d0` receives null +0x100, `0x14140f9a0` accepts
+types 9–15 except 13, and `0x14140f9e0` tests type 18. Thus both effective
+mode booleans are false for this exact installed map, as for map 379.
+This proves the named-value selection, not a sampled runtime map or the
+result of an unrelated context consumer.
+
+The repeated cached read of skill 10170 confirms **base 1, coefficient 1.0,
+integer multiplier 1**, and raw weapon selector 0. Applying the existing
+tooltip calculation to the explicit conditional inputs below gives:
+
+| Tooltip input | Value |
+| --- | --- |
+| Equipped-item static-branch strength | 105–117, mean 111 |
+| Effective attribute 1 | 37 |
+| Second coreStats level | 1 |
+| Monster defense / attribute table entries | 128 / 10 |
+| Global multiplier / resolved coefficient | 1.0 / 1.0 |
+| f32 result before add-0.5 conversion | 30.02898406982422 |
+| Formatted integer | **30** |
+
+This is a derived tooltip sample, not an observed hit or a justification
+for fixed 30 damage against every target. The formatter uses the mean
+weapon pair and a level-table denominator, without reading actual target
+armor. Its attribute and level inputs are **effective attribute 1 and the
+second level**, not earned attribute 187 and earned level 188. The earned
+attribute curve does not establish effective scaling or authorize swapping
+those columns. Target defense, authoritative strike arithmetic, weapon-roll
+policy, modifiers, hit outcome and server effect timing remain unresolved.
+
+The same follow-up closes two previously unexpanded events from the
+[exact sword action record](209026-mesmer-sword-animation-data.md):
+
+| Event / raw quantity | Character notification / listener slot | Installed ordinary-view path |
+| --- | --- | --- |
+| 7 / 120 | `0x1411dbc50`, +0x3e8 | `0x14110c050` → `0x141131370` |
+| 9 / 400 | `0x1411dbca0`, +0x3f0 | `0x14110c0d0` → `0x141131530` |
+
+Both callbacks belong to the established AvCharBase listener table
+`0x142141558`, assert the passed character matches the view's character,
+and operate on whole-view +0x2b8, **AvCharEffect**. The helpers assert
+`streakIndex < arrsize(m_streaks[0])`. Event 7 uses index 0, clears/replaces
+two retained streak-handle slots, and calls `0x14112b7c0` for two effect
+classes. That complete helper selects item/skill visual-effect rows, calls
+the effect manager and retains returned handles. Event 9 uses index 0 and
+calls the manager's virtual +0x30 on those handles with a zero third
+argument; it does not itself clear their slot fields. The deeper effect
+implementations are not exhausted here.
+
+These concrete paths supply no damage transaction or chain-state write.
+The skillbar's constructor-installed +0x20 interface, table `0x142165158`,
+has no-op `0x140163990` in both matching slots; its subscription caveat
+remains as recorded in the [finish-listener note](209026-typed78-finish-listeners.md).
+This is bounded coverage, not a census of every dynamic listener. The
+shared event loop scales local event time and can force dispatch, so 120,
+400, the type-3 quantity 240 and the type-0 quantity 900 must not become
+server hit times merely because they are authored quantities.
+
+The [628 predecessor contract](209026-mesmer-sword-chain.md) remains exact:
+10170 with count ≥1 can select 10171; 10171 with count ≥1 can select
+10172; count 0 or predecessor 10172 returns these entries to the base
+candidate, assuming earlier entry 45230 is ineligible and the remaining
+palette predicates pass. The newly traced
+events do not establish **when to advance, reset or expire that state**.
+628 alone also does not prove follow-up availability. No chain trigger,
+additional grant, damage formula or gameplay default was implemented.
+
+Private findings: `209026-mind-slash-damage-chain-boundary-20261106.json`,
+SHA-256 `7c1746c9d42f1b98e25116b378820ab656b1a0ccde8a30475d99b564c21c421b`.
+Full evidence under `~/re/gw2/notes/`:
+`209026-mind-slash-damage-chain-boundary-evidence-20261106.json`,
+342439 bytes, SHA-256
+`0e8ea7eb119f8d66872a00794a5a7ad48c827bdb03e1e368b7def6d1f6658377`.
+
+| REA evidence | Follow-up scope |
+| --- | --- |
+| `ev_a276ec5e5a9e5ace5d0fe3e8f9e046e22b97afbb2a9a4e48bb48554186748709` | Hash-checked retained map-28 fields, with archive fallback forbidden. |
+| `ev_caa0c6b75cc6272291c68d4bcee28cae8ec77fce8120fa4988c4673308472749`, `ev_bcd5f564818e99ada761c7ad514b2d13c445a9b1b13ac9764d86c9fc5931262a` | Exact fallback predicates and map-gate alias. |
+| `ev_863b686d92b2650e482351a31690af1c67207e947b086e5228d5695c6c4fbf60` | Cached 10170 fact and explicit f32 tooltip-30 sample. |
+| `ev_c4fa901a0d3550de5218eece3f80dc9be95ef164ac076e6eb46f7a8b9e894e5a`, `ev_cf086bf0fa382537b38719f7119b54ec002c7b905cf492b42a82c595a43b1061`, `ev_26b0050d4e0349158575264bec1438f76fdfec20955690dabca6dbfcdfe67685`, `ev_5b5f15345ba90dec2e282c47a39d3e5533dafd5c7211bc92d59c8809a4d61038` | Event table, notification wrappers, listener slots and argument dispatch. |
+| `ev_ad3653ecd13793c797ad39721ab8a0b624e43aa1fb9832442653cbb3c5c49cd0`, `ev_ee96b03dc7052c05f17de75da2e190c9e7bb6f72714a15da9fa822852ada10f7`, `ev_310524348e192289846bfec7146e0584275fab4c7082c843ba313bace6963700`, `ev_befabf2b94d3bdfd426c77a0bda93c08b6f4d146c5a38f82dff54f5b75c039aa` | Installed view callbacks and concrete streak-handle paths. |
+| `ev_584b47dd49dc282b16d3e35f0fb56b1eb239b68c321539ecb68bdfec86fb7185` | Exact skillbar slots and named streak assertion. |
+
+All 13 captures exited zero with complete raw/normalized output and
+verified owned-process cleanup. One duplicate rendered frame was omitted;
+some unrelated process environments were unreadable. No host-wide cleanup,
+runtime observation, archive access or release change is claimed.
+
 ## Evidence
 
 Complete private source/check export:

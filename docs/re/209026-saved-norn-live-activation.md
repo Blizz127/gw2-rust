@@ -1,9 +1,9 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, currently on **4b3c4c2** at
-`/home/blizz/gw2-rust-4b3c4c2`, independently verified04:53:03Z.
-The [latest increment](#caster-guard-and-eir-appearance-4b3c4c2) ships the
-caster guard and Eir's composite appearance. Saved mode was first
+Saved character creation is live, currently on **9326c08-vendor** at
+`/home/blizz/gw2-rust-9326c08-vendor`, independently verified08:05:25Z.
+The [latest increment](#verified-merchant-profile-release-9326c08-vendor)
+enables the merchant profile on the existing reward/wildlife binary. Saved mode was first
 activated on82d8d04-cdn900.
 The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
@@ -661,3 +661,41 @@ Receipt: `publisher-run226-payout-scope-20261106.json`, SHA-256
 Full REA: `209026-publisher-run226-payout-audit-20261106.json`, SHA-256
 `3ea560aa1924fdaf81b60cc17617822eb0f314d32e83c611a834d96386ab6c17`,
 evidence `ev_ade464c54f1eb60e6edc36974a8804b2528142b2e937d14d39d2a5e6d7d2dba5`.
+
+## Verified merchant profile release: 9326c08-vendor
+
+The sole publisher deployed `/home/blizz/gw2-rust-9326c08-vendor` at
+**2026-11-06T07:55:30Z**. This enables the tutorial merchant in the profile
+without changing the preceding9326c08 binary. Rollback is
+`/home/blizz/gw2-rust-9326c08`.
+
+Root independently verified at **08:05:25Z**:
+
+- Current and rollback manifests and every listed file match their pins.
+- All four listeners belong to the selected kit's processes; health is
+  ready/running, with zero human and bot connections at readback.
+- Saved-norn mode, one private record and mode0700 remain intact; the
+  activation backup hash is unchanged. No character record contents were read.
+- The exact merchant argument and profile match the staged kit. Wallet,
+  default-curve attributes, damage30,17-byte skills, map28 POIs and
+  14 heart NPCs/20 hostiles/12 ambient actors remain configured. Legacy
+  autoattack and skill-order echo remain absent.
+
+The merchant uses the Eir composite as a stand-in. Its appearance and
+placement are implementation choices, not recovered retail merchant data.
+The publisher reports its retained drag-sale smoke passed; this deployment
+readback does not itself replay or prove that interaction. No client feed,
+audience, access rule, schema or server configuration was changed by root.
+
+Game SHA-256:
+`48eb3ab86335a042f1efe196435f99d32c78527e4f87d552c0b5f43663a1bbbd`.
+Manifest SHA-256:
+`236443586b07020349ae2e0489acaddf6d5a43d2008f5729173cee0193352a75`.
+Profile SHA-256:
+`d564afee8cacaf1a35aa2c92b91670ed4d173f69aed99d11738533e4ab018f0f`.
+Private receipt: `vendor-9326c08-release-verification-20261106.json`, SHA-256
+`90b4cea819768ac93622babd399ebdf667420e9564c9828a6241e091c41c6f41`.
+Full REA: `209026-vendor-release-readback-corrected-20261106.json`, evidence
+`ev_d6a85c250e5f0d6c17ea6b07fee66f1ed5f43f046c408066472456620f27c218`.
+The helper exited0 with verified cleanup. An earlier invocation rejected a
+mistyped rollback digest locally, before SSH; its failed evidence is retained.

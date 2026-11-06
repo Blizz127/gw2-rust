@@ -30,20 +30,22 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**9326c08 is now live**, deployed07:45:14Z at
-`/home/blizz/gw2-rust-9326c08`. Independent readback verified all current and
+**9326c08-vendor is now live**, deployed07:55:30Z at
+`/home/blizz/gw2-rust-9326c08-vendor`. Independent readback verified all current and
 rollback hashes, effective settings, saved mode/one record, unchanged backup
-and four owned listeners at07:46:42Z; zero humans/bots. It adds the checked
+and four owned listeners at08:05:25Z; zero humans/bots. The profile enables
+the tutorial merchant; its appearance and placement remain fixture choices.
+It retains the checked
 quest154 item32138/72-copper claim, exact payout carry and transition timer
 fixes, plus a configured20 hostiles/12 ambient actors in Wayfarer. It retains
 the interleaved-character transfer fix, wallet and map28 POI discovery;
 run224 observes waypoint371 discovery.
 Waypoint travel is offline-tested but not exercised by a client click.
-Vendor remains disabled. The earlier earned attribute increment remains active.
-Rollback is b2d6d24-poi. Prepared publisher226 shows a reward claim, weapon icon
+The earlier earned attribute increment remains active.
+Rollback is9326c08. Prepared publisher226 shows a reward claim, weapon icon
 and72 copper, followed by logged map28 restoration. The full saved-character
 flow, retail item binding/XP policy, effective-level/health scaling, healing and durable progression remain
-incomplete. [Release evidence](re/209026-saved-norn-live-activation.md#verified-live-release-9326c08).
+incomplete. [Release evidence](re/209026-saved-norn-live-activation.md#verified-merchant-profile-release-9326c08-vendor).
 
 Run226 accepts the owned Ether Feast10176 request, typed0x78 start/completion,
 then observes the native slot cleared through direct45 handling. The snapshot
