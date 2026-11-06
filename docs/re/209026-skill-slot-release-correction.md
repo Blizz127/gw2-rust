@@ -72,3 +72,34 @@ The sole publisher's unanswered saved-versus-prepared roster prompt and the
 fresh shared-runtime lease remain preserved. An offline build/check receipt
 does not establish deployment; the last verified live kit remains
 82d8d04-cdn900 until a newer publisher receipt exists.
+
+## Replacement artifact, not deployed
+
+Source commit **00599af** was built in isolated worktree
+`/home/blizz/scratch/gw2-slot-release-20261106-src`, with its own target
+directory. The offline release build for `x86_64-unknown-linux-musl` passes.
+The static-PIE observer is:
+
+- Path: `/home/blizz/scratch/gw2-slot-release-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`.
+- Size: **1581800 bytes**.
+- SHA-256: **a31f6a21dca5f26f1fe4fe6afa2a1f6fb8ec8c8995b7f843372a068f89edadc2**.
+- Required paired supervisor: `/home/blizz/scratch/gw2-slot-release-20261106-src/deploy/gw2-server.sh`.
+- Supervisor SHA-256: **673a6cea9caa1d364204e16143f2378a5676273eedb035ba4dc117fe5c91eb10**.
+
+At **2026-11-06 02:21:24 UTC**, the exact binary passed prepared auth and
+Norn mission `--no-capture --check-config` checks, both confirming no listener
+started. The mission check uses the surviving explicit SkillBegin damage
+fixture, without the retired option. The actual binary rejects that retired
+option separately; both legacy-setting supervisor checks and shell syntax pass.
+Eight pinned fixture files and the run145 manifest remain unchanged.
+
+The four ignored schema files were copied from the already tested root inputs
+with hashes verified; no schema change was made. Private receipts:
+`~/re/gw2/notes/slot-release-build-inputs-20261106.json` and
+`~/re/gw2/notes/slot-release-build-checks-20261106.json`.
+Reproducible preflight wrapper:
+`~/re/gw2/notes/check-slot-release-build-20261106.py`.
+No client, working archive, shared runtime, saved store, online listener or
+publisher process was started or changed. Retain the previous live kit for
+rollback and deploy this binary with the corrected supervisor through the
+existing publisher once the actual owner prompt/holds permit it.

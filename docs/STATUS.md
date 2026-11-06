@@ -86,13 +86,18 @@ healing/success timing. [Mesmer resource consumers](re/209026-mesmer-resource-co
 establish displayed capacity/current count, not a live clone census or
 retail default. These remain offline changes under the same publisher hold.
 
-The [repeat-attack admission fix](re/209026-repeat-attack-admission.md)
-is committed as **c862325** and built as a private static observer artifact;
-three focused attack tests and auth/mission no-listener startup checks pass.
-It adds the same controlled-order admission bit already corrected in the
-cast diagnostic. Artifact SHA-256 begins834c723f; the full path/hash and
-01:41:33 UTC check receipt are in that note. It has not been deployed or
-substituted into the held run145 inputs. The separately tested
+The earlier [repeat-attack artifact](re/209026-repeat-attack-admission.md),
+c862325 / SHA834c723f…, is **superseded**. The complete
+[input lifecycle](re/209026-skill-input-action-lifecycle.md) proves slot0x2a
+can precede an admitted explicit SkillBegin, while0x29 comes from end paths.
+Commit **00599af** [removes casts and extra hits from both slot inputs](re/209026-skill-slot-release-correction.md).
+Three new regressions and the affected mission/shared-configuration checks
+pass. The isolated static binary, SHA **a31f6a21…**, and required paired
+supervisor, SHA **673a6cea…**, pass auth/mission no-listener checks at
+**02:21:24 UTC**, including legacy-profile compatibility. Full paths/hashes
+are in the correction note. It is ready for the sole publisher under the
+unchanged native prompt/holds; it is not deployed or staged into run145.
+The separately tested
 [server628 chain codec](re/209026-mesmer-sword-chain.md), commitf382933,
 provides exact predecessor/count state delivery, with three tests passed;
 it is not yet wired into attacks. The [authored story link](re/209026-quest154-authored-start.md)
@@ -117,6 +122,14 @@ now decodes type-13 facts and evaluates their numeric tooltip with explicit
 inputs. Seven focused tests, 16 frozen fact/mode comparisons, 48 numerical
 comparisons and three wrong-type rejections pass. It preserves the distinct
 flat/weapon rounding order and supplies no server-damage policy or deployment.
+
+[Sword action-data selection](re/209026-mesmer-sword-animation-data.md)
+now proves variant0 from the exact ability fields and checks all68 retained
+variants independently. Type3 quantities240/400/480 and type0 quantities
+900/800/1200 remain distinct from authoritative hit/cast timing. The
+[quest step identity trace](re/209026-quest154-step-identity-consumers.md)
+adds exact authored16-byte keys and a typed membership consumer, without
+recovering an actor/action-to-step rule.
 
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,

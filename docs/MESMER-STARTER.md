@@ -148,15 +148,18 @@ and kind. It does not yet identify the manual cancel-input path or a
 server interrupt response/policy. Existing raw client23 framing suffices
 to preserve the request; no speculative cancellation codec was added.
 
-The existing [repeat-attack response](re/209026-repeat-attack-admission.md)
-had the same controlled-empty-slot admission omission as the earlier cast
-diagnostic. Commitc862325 corrects it, preserving the other header fields.
-Three focused attack tests pass, including a complete client23→mission→
-server34 regression. Its isolated static build passes both auth and mission
-no-listener startup checks at01:41:33 UTC; path and full SHA are in the note.
-It is ready for the sole publisher, with no duplicate dispatch, native-prompt
-answer, run145 replacement or deployment. The native roster choice remains
-unanswered.
+The earlier [repeat-attack response artifact](re/209026-repeat-attack-admission.md)
+c862325 is superseded: the [complete input trace](re/209026-skill-input-action-lifecycle.md)
+proves that0x2a can precede a separate admitted SkillBegin and0x29 comes from
+deactivation/end paths. Commit **00599af** removes the extra cast/hit from
+slot inputs and retires the incorrect autoattack fixture. Older supervisor
+profiles remain bootable with an explicit retirement notice. Three new
+regressions and affected mission/shared-configuration checks pass. The
+[replacement static binary and paired supervisor](re/209026-skill-slot-release-correction.md#replacement-artifact-not-deployed)
+passed no-listener auth/mission preflights and retirement checks at02:21:24 UTC.
+It is ready under the existing publisher/native-prompt holds, not deployed.
+Run145 remains unchanged. Actual accepted-order animation/lifecycle and
+automatic repetition remain unfinished.
 
 The [sword-chain trace/codec](re/209026-mesmer-sword-chain.md), commitf382933,
 identifies server628's predecessor/count pair:10170 with count≥1 permits
@@ -166,7 +169,13 @@ unfinished. The [story-start trace](re/209026-quest154-authored-start.md)
 proves story2→starting quest154→goal1→map379; the story9 link, encounter
 actors/placement and step triggers are still unresolved. A bounded manual
 cancel-input follow-up reaches an indirect-call boundary; its documented
-next observation needs the same currently unavailable runtime window.
+next observation needs the same currently unavailable runtime window. The
+[sword action-data follow-up](re/209026-mesmer-sword-animation-data.md)
+proves the primary variant0 fields and checks68 exact variants; selected
+event quantities are not a recovered server schedule. The
+[step identity follow-up](re/209026-quest154-step-identity-consumers.md)
+provides the six authored16-byte keys and a typed membership query, leaving
+the actual actor/action-to-step rule unresolved.
 
 The [duration-expiry trace](re/209026-skill-order-duration-expiry.md) closes
 the client-local path from a valid ordinary command's deadline to its
