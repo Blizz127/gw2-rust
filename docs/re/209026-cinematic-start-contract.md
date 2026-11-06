@@ -6,6 +6,12 @@ playback fields. This establishes a concrete missing input for the Norn
 opening: the selected content key and authoritative trigger/sequence. It
 does not identify that opening or make character creation play it.
 
+The [bounded cache/biography follow-up](209026-cinematic-biography-cache-boundary.md)
+retains 1,366 type-7 index entries and verifies sample filename references.
+The inspected biography question/answer records contain no direct relocated
+cinematic reference. This does not exclude scalar or server selection and
+does not choose a Norn key.
+
 ## Registered messages
 
 Registration table **0x1421815b8** and the complete terminated descriptors
