@@ -43,6 +43,7 @@ use gw2_proto::{
     schema::{self, Message},
 };
 use std::io::{self, ErrorKind};
+use std::num::NonZeroU16;
 use std::time::{Duration, Instant};
 
 const MISSION_SCHEMA: &str = include_str!("../../../../../data/protocol/209026/mission.xml");
@@ -393,8 +394,8 @@ pub struct MissionPhase {
     /// Hostile NPCs the player hit that are still alive, oldest hit first; the
     /// last one is the aggro target that counter-attacks the player.
     aggro: Vec<u16>,
-    /// Research: answer SkillBegin with server 34 carrying a 0x78 order.
-    skill_order_echo: bool,
+    /// Research: explicit duration ms for server 34 carrying a 0x78 order.
+    skill_order_echo: Option<NonZeroU16>,
     /// Research: on each player SkillBegin, order the hostile NPC to cast this
     /// skill (server 34 + 0x78, slot 23), with its own behavior-value counter.
     npc_cast: Option<(u32, u32)>,
@@ -787,7 +788,7 @@ impl MissionPhase {
             hostiles: Vec::new(),
             last_target: None,
             aggro: Vec::new(),
-            skill_order_echo: false,
+            skill_order_echo: None,
             npc_cast: None,
             damage_on_skill: None,
             autoattack_skill: None,
@@ -860,9 +861,10 @@ impl MissionPhase {
     }
 
     /// Research hypothesis (docs/re/209026-npc-talk-loop.md section 6): answer
-    /// each SkillBegin with server 34 carrying the packed 0x78 order.
-    pub fn with_skill_order_echo(mut self) -> Self {
-        self.skill_order_echo = true;
+    /// each SkillBegin with server 34 carrying the packed 0x78 order. The caller
+    /// supplies diagnostic duration ms; no retail skill duration is inferred.
+    pub fn with_skill_order_echo(mut self, duration_ms: NonZeroU16) -> Self {
+        self.skill_order_echo = Some(duration_ms);
         self
     }
 
@@ -1495,7 +1497,7 @@ impl MissionPhase {
                 eprintln!("Mission phase: ordering hostile NPC {npc} to cast skill {skill_key} (server 34 0x78, value {value:#x})");
                 Ok(Some(out.freeze()))
             }
-            Seen::Skill(skill) if self.began && self.skill_order_echo => {
+            Seen::Skill(skill) if self.began && self.skill_order_echo.is_some() => {
                 let request = skill.request;
                 let order = SkillOrder209026 {
                     order_flags: 0,
@@ -1510,10 +1512,16 @@ impl MissionPhase {
                 AgentBehaviorOrderFrame209026 {
                     agent_index: skill.agent_index,
                     remote_tick: skill.remote_tick,
-                    command_flags: skill.command_flags,
+                    // Explicit research admission: 0x10 permits creation for
+                    // a controlled character with an empty selected slot and
+                    // bypasses a conditional pre-dispatch filter. This does
+                    // not establish the retail reply flags.
+                    command_flags: skill.command_flags | 0x10,
                     behavior_value: skill.behavior_value,
                     behavior_data: order.to_behavior_data().to_vec(),
-                    word: 0,
+                    // Ordinary kind2 execution asserts m_durationMs != 0,
+                    // before order-start, including an admitted player command.
+                    word: self.skill_order_echo.expect("guarded research echo duration").get(),
                 }
                 .encode_frame(&mut out)?;
                 eprintln!(
@@ -2356,15 +2364,44 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn skill_order_echo_answers_with_server_34_and_the_request_value() {
-        let mut phase = populated_phase().with_skill_order_echo();
+    fn skill_order_echo_encodes_explicit_duration_and_controlled_creation_flag() {
+        let mut phase = populated_phase().with_skill_order_echo(NonZeroU16::new(0x1234).unwrap());
         phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
         phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
         let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
         let reply = phase.respond(&seen[0]).unwrap().unwrap();
-        let frame = AgentBehaviorOrderFrame209026::decode_frame(&mut &reply[..]).unwrap();
-        assert_eq!((frame.agent_index, frame.remote_tick, frame.command_flags, frame.behavior_value), (1, 77, 3, 0));
+        assert_eq!(reply.as_ref(), &[
+            34, 0, 1, 0, 77, 0x13, 0, 13,
+            0x78, 0, 0xc0, 0x27, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+            0x34, 0x12,
+        ]);
+        let mut cursor = &reply[..];
+        let frame = AgentBehaviorOrderFrame209026::decode_frame(&mut cursor).unwrap();
+        assert!(cursor.is_empty(), "no recharge, healing or 0x53 reply appended");
+        assert_eq!((frame.agent_index, frame.remote_tick, frame.command_flags, frame.behavior_value), (1, 77, 0x13, 0));
+        assert_eq!(frame.word, 0x1234);
         assert_eq!(frame.behavior_data, [0x78, 0, 0xc0, 0x27, 0, 0, 0, 0, 1, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn skill_order_echo_preserves_request_fields_and_existing_flag_bits() {
+        let mut phase = populated_phase().with_skill_order_echo(NonZeroU16::MAX);
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        for flags in [0, 3, 0x10, 0xe3, 0xff] {
+            let request = Seen::Skill(SkillSeen {
+                agent_index: 1, remote_tick: 0x1234_5678, command_flags: flags,
+                behavior_value: 0x8765_4321,
+                request: SkillBeginRequest209026 { target: 9, skill_key: 10176, slot: 6 },
+            });
+            let reply = phase.respond(&request).unwrap().unwrap();
+            let frame = AgentBehaviorOrderFrame209026::decode_frame(&mut &reply[..]).unwrap();
+            assert_eq!((frame.agent_index, frame.remote_tick, frame.behavior_value),
+                (1, 0x1234_5678, 0x8765_4321));
+            assert_eq!(frame.command_flags, flags | 0x10);
+            assert_eq!(frame.word, 65535);
+            assert_eq!(frame.behavior_data, [0x78, 0, 0xc0, 0x27, 0, 0, 6, 0, 9, 0, 0, 0, 0]);
+        }
     }
 
     #[test]

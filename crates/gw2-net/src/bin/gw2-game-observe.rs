@@ -4,6 +4,7 @@ use std::{
     fs::{self, File, OpenOptions},
     io::{self, Read, Write},
     net::{SocketAddr, TcpListener, TcpStream},
+    num::NonZeroU16,
     path::{Path, PathBuf},
     sync::Arc,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
@@ -145,8 +146,8 @@ struct Fixtures<'a> {
     respawn_flag: bool,
     respawn_point: Option<[f32; 3]>,
     rejoin_route: Option<SocketAddr>,
-    /// Research: answer SkillBegin with server 34 + 0x78.
-    skill_order_echo: bool,
+    /// Research: answer SkillBegin with server 34 + 0x78 using explicit duration ms.
+    skill_order_echo: Option<NonZeroU16>,
     /// Research: hostile NPC casts this skill on each player SkillBegin.
     npc_cast: Option<u32>,
     /// Research: player skills aimed at the hostile NPC lower its health.
@@ -280,8 +281,8 @@ fn observe(
                     .with_hostile_npc(species, position)?,
             );
         }
-        if skill_order_echo {
-            mission = Some(mission.ok_or_else(|| invalid("skill order echo requires a mission phase"))?.with_skill_order_echo());
+        if let Some(duration_ms) = skill_order_echo {
+            mission = Some(mission.ok_or_else(|| invalid("skill order echo requires a mission phase"))?.with_skill_order_echo(duration_ms));
         }
         if let Some(skill) = npc_cast {
             mission = Some(mission.ok_or_else(|| invalid("NPC cast requires a mission phase"))?.with_npc_cast(skill));
@@ -496,7 +497,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut respawn_flag = false;
     let mut respawn_point: Option<[f32; 3]> = None;
     let mut rejoin_route: Option<SocketAddr> = None;
-    let mut skill_order_echo = false;
+    let mut skill_order_echo: Option<NonZeroU16> = None;
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
     let mut autoattack_skill: Option<u32> = None;
@@ -644,7 +645,15 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 let [x, y, z] = position;
                 talk_npc_spec = Some((species, [x?, y?, z?]));
             }
-            "--mission-skill-order-echo" => skill_order_echo = true,
+            "--mission-skill-order-echo" => {
+                if skill_order_echo.is_some() {
+                    return Err(invalid("duplicate --mission-skill-order-echo"));
+                }
+                let text = args.next().ok_or_else(|| invalid("missing research skill order duration in ms"))?;
+                skill_order_echo = Some(text.parse().map_err(|_| invalid(
+                    "research skill order duration must be 1..=65535 ms",
+                ))?);
+            }
             "--mission-kill-loot" => kill_loot = true,
             "--mission-sourced-damage" => {
                 let text = args.next().ok_or_else(|| invalid("missing sourced damage kind"))?;
@@ -805,7 +814,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--check-config] [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
+                    "usage: gw2-game-observe [--check-config] [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo DURATION_MS (RESEARCH, 1..=65535, no default)] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
                 ));
             }
         }
@@ -901,7 +910,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     if npc_cast.is_some() && hostile_npcs.is_empty() {
         return Err(invalid("--mission-npc-cast requires --mission-hostile-npc"));
     }
-    if skill_order_echo && !has_population {
+    if skill_order_echo.is_some() && !has_population {
         return Err(invalid("--mission-skill-order-echo requires a population"));
     }
     if !hostile_npcs.is_empty() && !has_population {

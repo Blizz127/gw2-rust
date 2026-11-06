@@ -336,8 +336,12 @@ It is the simplest bit-12 carrier.
 **Run 126** (`--mission-skill-order-echo`) answered the client's SkillBegin
 `[23][0][10176][0]` (value 0x80000009, tick 1799, flags 3). The answer was server 34 with
 the same agent, tick, flags and value, data `[78 00 c0270000 00 00 01000000 00]`, and
-Word 0. The client **accepted it without an assert or disconnect**, but **nothing visible
-happened**: no cast, no cooldown, health unchanged.
+Word 0. The client **remained connected without a reported assert**, but **nothing
+visible happened**: no cast, no cooldown, health unchanged. This establishes
+session survival, not command admission or execution. The later
+[echo-precondition trace](209026-skill-order-echo-preconditions.md) proves that
+ordinary kind-2 execution asserts on Word0 before the character order-start
+callback; that helper contains no exception for a controlled character.
 
 Candidates for the next trace:
 - the executor's other completion guards for kind 2;
@@ -396,10 +400,13 @@ own value counter starting at 0x40000000, and the packed 0x78 order is
 
 - **Run 127 (Word 0):** the client asserts **`AgBase.cpp:822 "command->m_durationMs"`**.
   The check (`0x141032c0a`, `cmp [command+0x70], 0`) reads command +0x70, which is
-  **server 34's trailing Word**. So that Word is the command duration in ms, and a
-  non-controlled agent's command must have one. The 0x78 order itself was accepted far
-  enough to be executed.
-- **Run 128 (Word 1000):** no assert and no disconnect; the command is accepted. A cast
+  **server 34's trailing Word**. So that Word is the command duration in ms.
+  The later source trace establishes a nonzero precondition in this ordinary
+  execution helper, without a control-state branch. Its assertion precedes the
+  character order-start callback, so this run does not prove that the packed
+  0x78 order was constructed or executed.
+- **Run 128 (Word 1000):** no assert and no disconnect; no direct order-lifecycle
+  observation was retained. A cast
   animation isn't clearly visible, because the NPC stands behind the player from the
   camera. That needs a better camera placement, or a hostile skill with a visible effect.
 

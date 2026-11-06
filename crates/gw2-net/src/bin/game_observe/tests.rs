@@ -345,6 +345,11 @@ fn check_config_validates_saved_profile_and_identity_without_binding() {
     ].into_iter().map(str::to_owned).collect();
     // This would fail with AddrInUse if the check attempted to bind.
     run(args.clone().into_iter()).unwrap();
+    for duration in ["1", "65535"] {
+        let mut echo = args.clone();
+        echo.extend(["--mission-skill-order-echo".into(), duration.into()]);
+        run(echo.into_iter()).unwrap();
+    }
     assert!(character_store::CharacterStore::open(store.clone()).unwrap().list().unwrap().is_empty());
     assert!(!log.exists());
     let mut zero_target = args.clone();
@@ -372,6 +377,24 @@ fn check_config_validates_saved_profile_and_identity_without_binding() {
 }
 
 #[test]
+fn skill_order_echo_config_requires_an_explicit_nonzero_u16_duration() {
+    let parse = |tail: &[&str]| {
+        run(["--check-config", "--no-capture"].into_iter().chain(tail.iter().copied())
+            .map(str::to_owned)).unwrap_err()
+    };
+    assert_eq!(parse(&["--mission-skill-order-echo"]).to_string(),
+        "missing research skill order duration in ms");
+    for duration in ["0", "65536", "-1", "1.5", "--mission-preamble"] {
+        assert_eq!(parse(&["--mission-skill-order-echo", duration]).to_string(),
+            "research skill order duration must be 1..=65535 ms");
+    }
+    assert_eq!(parse(&["--mission-skill-order-echo", "1", "--mission-skill-order-echo", "2"]).to_string(),
+        "duplicate --mission-skill-order-echo");
+    assert_eq!(parse(&["--mission-skill-order-echo", "1"]).to_string(),
+        "--mission-skill-order-echo requires a population");
+}
+
+#[test]
 fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
     use gw2_proto::{agent_behavior::AgentBehaviorFrame209026, map_load::ClientMapEvent, renown::RenownFrame209026};
     let scenario = saved_population::tests::SavedScenario::new();
@@ -392,7 +415,7 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
                 saved_population: Some(profile.clone()),
                 talk_npc: Some(server_talk.clone()),
                 hostile_npcs: vec![(101, [4.0, 5.0, 6.0])],
-                skill_order_echo: true, npc_cast: Some(10176), damage_on_skill: Some(200.0),
+                skill_order_echo: NonZeroU16::new(4321), npc_cast: Some(10176), damage_on_skill: Some(200.0),
                 autoattack_skill: Some(10176), xp_per_kill: Some(50), starter_bag: Some(959),
                 kill_loot: true, npc_attack: Some((10.0, 777.0)), sourced_damage: Some(1),
                 heart: Some((56, 5)),
@@ -420,7 +443,7 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
     let mut expected = mission::MissionPhase::new(379).unwrap()
         .with_population(scenario.expected(0)).unwrap()
         .with_talk_npc(talk).with_hostile_npc(101, [4.0, 5.0, 6.0]).unwrap()
-        .with_skill_order_echo().with_npc_cast(10176).with_damage_on_skill(200.0)
+        .with_skill_order_echo(NonZeroU16::new(4321).unwrap()).with_npc_cast(10176).with_damage_on_skill(200.0)
         .with_autoattack_skill(10176).with_xp_per_kill(50).with_starter_bag(959)
         .with_kill_loot().with_npc_attack(10.0, 777.0).with_sourced_damage(1)
         .with_heart(56, 5).unwrap();
@@ -456,7 +479,8 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
     let mut skill = BytesMut::new();
     AgentBehaviorFrame209026 {
         agent_index: 1, remote_tick: 77, command_flags: 3, behavior_value: 0,
-        behavior_data: vec![0x23, 3, 0, 0, 0, 0xc0, 0x27, 0, 0, 1],
+        // Attack10170 exercises damage; healing10176 is explicitly excluded.
+        behavior_data: vec![0x23, 3, 0, 0, 0, 0xba, 0x27, 0, 0, 1],
     }.encode_client_frame(&mut skill).unwrap();
     let seen = expected.push(&skill);
     assert!(matches!(seen.as_slice(), [mission::Seen::Skill(_)]));

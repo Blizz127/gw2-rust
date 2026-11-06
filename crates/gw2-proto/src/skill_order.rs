@@ -85,8 +85,10 @@ pub struct AgentBehaviorOrderFrame209026 {
     pub command_flags: u8,
     pub behavior_value: u32,
     pub behavior_data: Vec<u8>,
-    /// Stored at command +0x70 = `m_durationMs`. For a non-controlled agent
-    /// it must be nonzero (AgBase.cpp:822 asserts, sandbox run 127).
+    /// Stored at command +0x70 = `m_durationMs`. Ordinary base-agent execution
+    /// asserts it is nonzero before the character order-start callback; that
+    /// helper has no control-state exception. This raw codec preserves zero
+    /// and does not validate admission or select a skill's retail cast time.
     pub word: u16,
 }
 
