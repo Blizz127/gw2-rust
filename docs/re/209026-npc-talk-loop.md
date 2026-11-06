@@ -737,10 +737,20 @@ Dword skill, Dword source agent}` (handler `0x14124f990`):
 - It **adds** the deltas to both meters (`0x141275ee0`: `current = clamp(current + delta, 0,
   max)`).
 - It notifies the health listeners (`0x141207350` → list +0x48, slot 0).
-- Kind bytes 0..3 pass through; any other value fails.
+- Wire kind bytes map to listener kinds as **0 → 0, 1 → 2, 2 → 3, 3 → 1**;
+  any other value fails. Listeners receive the original deltas, including
+  when the meter update was capped by its maximum.
 
-The CombatTracker handler `0x1402e3be0` drops a negative change when `kind == 0` and the
-source agent's +0x58 is not 1. Every other case posts an event through `0x1402e2d20`.
+The CombatTracker handler `0x1402e3be0` drops a change when either delta is
+negative, the **mapped listener kind** is zero, and the **skill definition**
+is null or its kind at +0x58 is not 1. The previously attributed source-agent
+field was incorrect: the complete listener argument flow identifies this
+pointer as the skill definition. Other cases reach `0x1402e2d20`, which has
+additional observer/entity eligibility checks before posting an event.
+A positive first delta with second delta zero bypasses this negative-change
+filter for all four supported wire kinds. The [health-gain trace](209026-health-gain-delivery.md)
+establishes the UI notification path and the remaining kind/raw-Word policy
+boundary; it does not change the historical runtime observations below.
 
 | Run | Wire values | Result |
 |---|---|---|

@@ -165,8 +165,11 @@ impl HealthFrame209026 {
 /// stayed full). It then notifies the health listeners (list +0x48)
 /// with the kind, the skill definition (content type 0x40; 0 = none) and the
 /// source agent (resolved through `0x141024060`; 0 = none, a nonzero unknown
-/// agent asserts). Kinds 0..=3 map to change kinds 0..=3; others fail.
-/// Research codec: kind and raw_word meanings are unresolved.
+/// agent asserts). Wire kinds map to listener kinds as 0 -> 0, 1 -> 2,
+/// 2 -> 3, 3 -> 1; others fail. Listeners receive the original deltas,
+/// including when the current values were capped by their maxima.
+/// Research codec: retail kind selection and raw_word semantics remain
+/// unresolved; see docs/re/209026-health-gain-delivery.md.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SourcedHealthFrame209026 {
     pub character_index: u32,

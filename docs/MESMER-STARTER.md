@@ -115,6 +115,16 @@ character completion callback. A separate server84 is not required on that
 conditional path. Typed-order release, healing and recharge still need
 runtime evidence; this adds no server effect or retail timing default.
 
+The [typed-order release trace](re/209026-typed78-completion-release.md)
+now distinguishes that callback from releasing0x78: its return depends on
+flag0x2000, and correlated0x45 provides the demonstrated deferred/direct
+release path. Raw0x44/minimal0x45/0x47 payload codecs pass four focused tests
+using the existing server84 carrier; no update is sent or scheduled.
+The [positive-health delivery trace](re/209026-health-gain-delivery.md)
+establishes sourced255 meter/clamp and UI-notification behavior and corrects
+the wire-kind mapping. Heal amounts, cancellation timing, clone/condition
+effects and retail packet choices remain separate implementation work.
+
 ## Earlier source checkpoints
 
 - Historical baseline: Guardian entered Queensdale and walked (run110,
