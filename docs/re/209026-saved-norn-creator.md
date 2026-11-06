@@ -747,6 +747,43 @@ The next scoped proposal is one S750ms delivery observation with numeric
 owned-window/focus metadata and append-only scalar log snapshots before/after,
 without route continuation. No new run or resource request is staged here.
 
+## Run246: PointerRoot guard stops before input
+
+Fresh246 retains exact403ac37/N1, original synthetic144 and normalstage0.
+Its controller planned one S750ms input after visual attestation and passive
+numeric focus/process checks. The focus observer returned raw1 and refused
+`focus_not_selected_pair` before completing process identity admission. No
+pulse began, no movement was sent and no post-pulse delta exists. Baseline own
+log has53 lines and zero movement rows. Controller claim12:46:13.273265Z and
+release12:46:45.107208Z bound control to31.834s; launch/UI13 is incomplete.
+
+X11 defines1 as PointerRoot, whose effective focus is the pointer's screen
+root. This is a missing observer case, not evidence of a foreign application
+or a cause of run244's result. Run246 retained no pointer path, so its effective
+owned-window association cannot be reconstructed. The next fresh helper checks
+the pointer path through the selected root, parent and render child, plus the
+existing PID/start-time guards; it neither changes focus nor moves the mouse.
+[Primary Xlib semantics](https://raw.githubusercontent.com/mirror/libX11/master/man/XSetInputFocus.man).
+
+Window46 returned12:48:14.680415Z after container absence, unchanged executable
+hashes/original private record and console privacy were verified. Root did not
+visually review246 images; their admitted hashes remain in the readback. No
+route, delivery, walking failure or retail completion is claimed.
+
+Private evidence under `~/re/gw2/notes/`:
+
+- `209026-run246-norn-input-delivery-launch-20261106.json`, SHA-256
+  `95110fe7a41db605a6b60127f416d397bc382c1509a3f80eb927da16ab04bf14`,
+  REA `ev_13daba9a46aed3dc7eb95563015cb440fcad499e7a49ceff57d28d3c19e3d951`.
+- `209026-run246-norn-input-delivery-readback-20261106.json`, SHA-256
+  `9872ed2cf7c2d146309ec02c5330ef64e27465a3695963e18cd95419b0b6565d`,
+  REA `ev_0320ecf3b6db6f1c8cb1a38359aeaa9de02f94b16c8b613495395966e735c061`.
+- `209026-run246-norn-input-delivery-return-20261106.json`, SHA-256
+  `180fbec64b0bb74e3173dc649e6412dc27c1123b0635205856155698282a1476`,
+  REA `ev_b43a32792af16c27d4a21d270f5538eec376787e54595478d97f33cb9452f1de`.
+- Root outcome `run246-norn-input-delivery-outcome-20261106.json`, SHA-256
+  `8919b2143483cdccea44e9114d38dc4ba94d768b331fdf1eedfd0288fdde7604`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

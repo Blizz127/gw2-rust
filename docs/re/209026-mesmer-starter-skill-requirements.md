@@ -311,3 +311,33 @@ retained evidence: `209026-skill10334-flag10-consumer-evidence-20261106.json`,
 SHA-256 `4efda22c874af209e6a64a82cf6d251af68940c2885791dee1f95bf17da05991`.
 Arithmetic and branch receipt: `209026-skill10334-flag10-consumer-findings-20261106.json`,
 SHA-256 `c21bce87bd28eb060479bf288f3ad6c4d4a8916503b1f083ed841385f91442b5`.
+
+The actual104-byte fact-row filter is now bound: list enumeration
+`0x140890740` calls `0x140897c50` before forwarding the selected row through
+fact-widget virtual+0x30 to the formatter. Let A be `0x14140f5d0()` or
+character virtual+0x220 returning2, and B be `0x14140f9a0()` or
+`0x14140f9e0()` or that character result3. Both10334 rows have+0x4c=4,
+so their+0x60 masks remain2 and12. Mask0 or bit0x1 accepts all; otherwise
+each active A/B requires bit0x4/0x8 respectively; when neither is active,
+bit0x2 is required.
+This is the fact filter itself, not borrowed named-variable override semantics.
+For exact installed maps379 and28, map+0x9c bit13 is clear: the established
+map gate forces character+0x220 to4 before buff/related-character overrides,
+and all three map predicates are false. Consequently the normal branch selects
+**base0, coefficient0.449999988, display multiplier8** and excludes the
+coefficient0.128000006 row; mask12 selects that alternate row when A or B
+is active. Neither row has a description-variable override group. This is
+static composition for those installed maps, not a runtime sample of10334 or
+the fixture's character-context return, and it establishes no authoritative
+eight-strike count, actual damage, evasion or hit timing.
+
+Complete nine-capture evidence is
+`209026-skill10334-fact-context-filter-evidence-20261106.json`, SHA-256
+`dcb9bc0124d43095beced3364c967cf4f89e48b431214867ef79154a7a8aea0e`.
+The final findings, exact branch addresses and separately pinned map28/379
+evidence are in `209026-skill10334-fact-context-filter-final-findings-20261106.json`,
+SHA-256 `284f89eba78a46de2f94826d2a99fa45a8b0c6cc74f1ccd23fdf3133592eafba`.
+The decisive filter capture is
+`ev_26a55a7c4185df6bd239cdb61e9b35cbd726e0fb5c10fd6b8fb2f617eafa4986`;
+all raw/normalized frames are retained, with duplicate rendered-frame limits
+recorded. No gameplay admission or effect policy changed.

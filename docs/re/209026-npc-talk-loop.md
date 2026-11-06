@@ -1301,3 +1301,14 @@ Private findings `~/re/gw2/notes/209026-mail95-delivery-prerequisites-findings-2
 have SHA-256 `5d90ef5d0243e679f605afafa67884a5c4c5dfb26abaaefe090a7243fbb6b71f`;
 the complete evidence bundle `209026-mail95-delivery-prerequisites-evidence-20261106.json`
 has SHA-256 `f57faef4827785a6ae7edffef28483fc23067b6df2ca2a7c7bb81ce756c1c250`.
+
+The retained exact sender30730→species name-ID join reports zero matches among
+23653 catalog rows. The typed ordinary-name field is type67 Dword+0x194
+(`ev_8f0cc4f68e85cf3c58829d52c9f412623e439689444976536d2af2cc59cd067c`).
+This negative does not exclude another text ID, a custom name or the character
++0x140 override; it does not prove that the NPC definition is absent. No concrete
+species/appearance/spawn candidate follows. The next dependency is a typed actor
+instance binding or demonstrated custom-name producer. This reuses the prior
+archive-data join without repeating it or relabelling it as a fresh REA result.
+Receipt `heart56-sender-species-join-reuse-20261106.json`, SHA-256
+`80eb248211d839cf91bb988bc65fd75333062d753a394feba87f215e33628134`.

@@ -44,11 +44,15 @@ and none arrived while stationary. Launch/UI13 is incomplete; cleanup and
 window44 return pass. Fresh244 then permits one visually attested S100ms probe,
 but immediate/passive readbacks still have no position sample and images show
 no clear displacement. Launch/UI13 remains incomplete; window45 cleanup passes.
-The next step is retained input-delivery comparison, not a route obstruction
-claim. No403 traversal is claimed yet.
+Retained comparison found longer successful inputs in earlier fixtures but
+established no cause. Fresh246 stopped before its S750ms pulse: raw X focus1
+is PointerRoot, which the observer did not handle. Window46 returned12:48:14Z;
+no movement was sent. Fresh248 is being prepared with passive owned-pointer-path
+validation. No403 traversal is claimed yet.
 [Release readback](re/209026-saved-norn-live-activation.md#verified-movement-diagnostic-release-403ac37).
 [Run242 evidence](re/209026-saved-norn-creator.md#run242-normal-spawn-observed-initial-position-sample-missing).
 [Run244 evidence](re/209026-saved-norn-creator.md#run244-one-initial-input-sent-no-movement-sample-observed).
+[Run246 evidence](re/209026-saved-norn-creator.md#run246-pointerroot-guard-stops-before-input).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274
