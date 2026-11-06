@@ -227,3 +227,75 @@ applies. The previous eleven-record bundle is unchanged.
 | `ev_08a7c90a6a520af32b854910411885697294b7ebe33df6ec9d911418876c9fa1`, `ev_b66a0ed782c068427751d4aa7861a99bdba069d2603988a9351a9b415637dbf9` | Bounded owner-field reference listings. |
 | `ev_0175866f2f5a9cee82b447a99551b3ba7cd493f0987bd9974242e5f77c2613e4`, `ev_dc08ed825b00a43686d777f127d2ba059e0b25644a5668468cdaeb5ba97e2ef3` | Complete shared getter and exact direct reference. |
 | `ev_09e7b3d41327a73b391fd33a872e2a337997f4aa467659a20ad5e95ecd7de60d`, `ev_88d19293ed3669b462a566c643648d980be7a9aa2e7e576cf8706b1e3390e7ca`, `ev_331d3c0bc378ed506a288899a028029ac1922b0f835996eea252961d31e440ec` | Exact setter candidates, bounded direct callers, distinct named receiver construction. |
+
+## Prepared passive observation contract
+
+A private observer was prepared, **not launched**, to sample actual context
+nullness without introducing630 merely for inspection:
+`/home/blizz/re/gw2/notes/skill-recharge-context-probe-20261106.py`, SHA256
+`d610ab23bcd423a17dce580122e3dad26b5b1fa2ddff8be7990941eea69777af`.
+Its entry is `arm_skill_recharge_context(inf, slide)`, and its JSON prefix
+is `GW2_SKILL_RECHARGE_CONTEXT`. It retains no target object pointers
+between events and never dereferences a nonnull recharge context.
+
+| Native site | Current-frame relationship and output |
+| --- | --- |
+| `0x141109d00` | Existing ordinary-view control-enable callback: RCX is the view listener, RDX its character, R8D=1. Require listener table `0x142141558` and listener +`0xb10` equal the character. Read the character's current skillbar/recharge context nullness. No recharge packet is required. |
+| `0x14125c3b6` |630's native call to `0x1411fb470`: RCX=R15 is the current skillbar, R14 is the decoded message, RDX the resolved skill reference. Independently require decoded key and resolved definition +`0x28` both10176. Cross-check category/remaining/total/Word against native registers and outgoing stack arguments. Emit only the numeric key and those scalar inputs, before mutation. |
+| `0x1411fbb3d` | After the native pair lookup and before optional slot-recharge merging: RSI is skillbar, R15 skill reference, RDI query output, EBX category, EAX found. Require key10176 at the current definition +`0x28`, saved `[RSP+0x60]` equal that definition, and, when found, output +8 equal it and output category equal EBX. |
+
+Every sample validates the current skillbar table `0x142164cd8`, its
++`0xf0` owner back-reference, the owner's primary table `0x142160be0`,
+character +`0x520` pointing back to that skillbar, controlled/finalized
+bits +`0x178` mask`0x18`, and recharge table `0x142169cf8`. These are
+fresh native-frame relationships; repeated addresses are not asserted to
+be the same allocation or owner across events.
+
+Query sampling starts disabled. The independent skill observer may call
+Python-only `rco_begin_cast_window()` after its fully guarded10176 request.
+This touches observer state only, enables at most four10176 category0/1
+query samples within15 seconds, and is idempotent without extending the
+window. It invokes no native function. The skill key offset is independently
+bound by producer `0x141284212` in
+`ev_f2ce7d01798371752316661550bff761c8dd1de0ec4e1e1d7fa78540a1a49ad0`.
+
+The event schema contains only these scalar observations:
+
+* `control_enable`: common ownership/context fields, and optional
+  `tooltip_inputs`. Guard whole-character +8 table `0x142161250` and
+  coreStats table `0x142168da0`, then report signed effective attribute6
+  at core +`0xc8` and unsigned second level at +`0xe0`. Null, unsupported,
+  or failed optional reads remain local status values, not assumed zeros.
+  This uses the [tooltip-context source](209026-tooltip-character-context.md)
+  and does not prove an active tooltip adapter.
+* `recharge630`: key10176, category, remaining, total, raw Word;
+  `mutation_or_success_observed=false`.
+* `query_return`: found, requested category, key10176; when found, adjusted
+  remaining, remaining, total, category, and the stored count Dword.
+  The latter is a native query field, not a new wire Word.
+* Common sample fields identify the current native owner only and report
+  context `{status: sampled, present: boolean}` or a bounded-read-failure
+  status. No names, GUIDs, raw packets, filenames, heap addresses, context
+  vtables, or context methods are emitted.
+
+Limits are4 lifecycle,8 natural630,4 query samples;20 total output records
+including arm/window/terminal/error metadata;48 dispatched attempts; and
+480 seconds from arm. Time expiry is checked on the next native event,
+so a silent stopped process does not promise a terminal record. These are
+coverage bounds, not a claim that any packet or later state will occur.
+Breakpoints use the proven public command-list idiom, exact frozen-image
+and code guards, selected-inferior, architecture and all-stop checks.
+
+Sixteen focused host tests pass, covering native relationships, current
+object replacement, unknown context non-dereference, optional local failures,
+scalar pairing, decoded/resolved skill-key mismatch, query gating/idempotence/time/count limits, image/code and
+execution-mode guards, bounded reads, and privacy. Syntax compilation passes.
+Test receipt is `ev_7b7a72d53753e631795ac93acac64c029e7f723471930d4056c8691db79208b0`.
+Complete four-source-capture plus test bundle:
+`/home/blizz/re/gw2/notes/209026-skill-recharge-observer-contract-v2-20261106.json`,
+SHA256 `8f83f5206547d438cb9bcee9ae4be33f338f271c58278de50ee62b6776dd4490`.
+Exact three-site bytes are retained in
+`ev_e2a2f4099e0c8b3525592a97142f57d351c7d374902ee3728fa4b6f5bb34d2b8`;
+full callback/call relationships are in
+`ev_c0b08c7345032ef072e1aaf29c3a53132b16128aeb6d36cd32d52c29da1ef421`
+and `ev_74089555fe7f57ac5cbdeecbecc001009451d8e491cc8d5bb666b5fae34e6c1d`.

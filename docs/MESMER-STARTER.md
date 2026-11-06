@@ -32,7 +32,11 @@ API/wiki names may locate content but do not replace client verification.
 
 Latest independently verified live kit: **82d8d04-cdn900**, prepared mode,
 deployed 2026-11-05 23:56:31 UTC; kit/metadata hashes and four listeners
-verified at 23:56:53 UTC.
+reverified at 2026-11-06 00:54:19 UTC. The read-only check found the same
+kit and b126 launcher feed; all hashes and four owned listeners passed,
+with0 human connections. Receipt:
+`~/re/gw2/notes/209026-live-cdn900-independent-readback-20261106.json`,
+REA `ev_5b73e33ac58e8437dbe33ce42a687c1168c6036a207f12924e36320efbb5c34c`.
 The [saved creator record](re/209026-saved-norn-creator.md) covers real UI
 creation, durable initial save, restart relog, visible direct world entry and
 same-GUID waypoint rejoin. [Run142](re/209026-texture-remapall-private-candidate.md)
@@ -65,6 +69,22 @@ its explicit fixture level/attribute inputs, while
 [recharge consumers](re/209026-skill-recharge-consumers.md) distinguish
 ordinary cooldowns from count replenishment. These are source foundations;
 the cast transition and actual healing/recharge execution remain unfinished.
+
+The [activation-tooltip trace](re/209026-mesmer-cast-tooltip.md) binds the
+primary execute event1067 to the displayed1 through quarter-second formatting;
+it does not supply an authoritative server cast duration. The
+[seven-site lifecycle observer](re/209026-skill10176-lifecycle-observer.md)
+and [recharge/context observer](re/209026-skill-recharge-consumers.md#prepared-passive-observation-contract)
+pass28 and16 host mock tests respectively. Both are staged in the private
+run145 diagnostic using the offered runner0e6ac30 and live900 metadata.
+No run145 client has launched: a fresh shared-resource window from the
+existing integrator remains required. The staged server34/packed78 Word0
+experiment is being revised after source review proved a nonzero duration
+precondition on ordinary execution and a separate controlled-order admission
+flag. No positive duration is yet claimed as10176's retail cast time.
+The [map gate](re/209026-skill-context-map-gate.md) independently resolves
+context1 once map379 is installed, selecting the base recharge content20000
+before display modifiers. Actual recharge execution remains unimplemented.
 
 ## Earlier source checkpoints
 

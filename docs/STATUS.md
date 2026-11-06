@@ -8,7 +8,7 @@ The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
 tracks the remaining scope. The latest independently verified live server is
 **82d8d04-cdn900**, `/home/blizz/gw2-rust-82d8d04-cdn900`, deployed
-2026-11-05 23:56:31 UTC. At 23:56:53 UTC all kit hashes, selected metadata
+2026-11-05 23:56:31 UTC. At 2026-11-06 00:54:19 UTC all kit hashes, selected metadata
 and four owned listeners passed; it remains in
 prepared mode and includes walking, heart-coordinate/reward fixes and three
 ambient ravens. This is a diagnostic starter fixture, not the complete
@@ -42,6 +42,15 @@ widening. No compatible authorized owner-only update feed is verified;
 manual preview archives are not such a feed. This is not an HTTP/access
 denial. Runner objects and rollback are verified, with no duplicate upload
 or launcher release. Independent server fixes continue through their publisher.
+
+Tested commit5169b98 prevents Ether Feast from causing generic attack damage,
+target changes or retaliation; the sole publisher has the ready handoff,
+but no newer live receipt is available. Passive cast/recharge observers are
+staged with44 focused host mock tests passed. Run145 has not launched while
+the fresh shared test-resource reservation is pending. A new source trace
+also rejects the old experiment's zero-duration execution assumption; its
+research-only input is being corrected before use. See the
+[completion ledger](MESMER-STARTER.md#current-checkpoint) for the exact boundary.
 
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
