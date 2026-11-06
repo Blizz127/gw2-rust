@@ -88,6 +88,9 @@ The sole publisher's unanswered roster prompt and runtime hold are preserved.
 
 ## Checked cumulative artifact, not deployed
 
+The newer [9a8eb71 curve build](209026-earned-attribute-progression.md#checked-cumulative-artifact-not-deployed)
+includes this tested candidate. Its files and fixed37 profile remain intact.
+
 Source **d9d0bfe** includes the earlier slot-release and explicit skill-order
 composition fixes. Its offline `x86_64-unknown-linux-musl` release build passed
 in the isolated source tree below, using a separate target directory.

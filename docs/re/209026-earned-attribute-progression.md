@@ -58,3 +58,38 @@ are in `~/re/gw2/notes/attribute-curve-profile-20261106.json`.
 These are offline server-output checks. No new shipped-client observation or
 online deployment is claimed. The sole publisher's native owner question,
 run145 hold and resource requirements remain unchanged.
+
+## Checked cumulative artifact, not deployed
+
+Source **9a8eb71** includes the fixed starter baseline, slot-release correction
+and explicit skill-order composition changes. Its offline static-musl release
+build passed in the isolated source tree with its own target directory.
+
+- Binary: `/home/blizz/scratch/gw2-attribute-curve-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`.
+- Size: **1582816 bytes**, static PIE.
+- SHA256: **65a37f930a86b6e0820ae7c4cef7aa7affb472a321e8972ec05eff11b7c3e084**.
+- Paired supervisor: `/home/blizz/scratch/gw2-attribute-curve-20261106-src/deploy/gw2-server.sh`.
+- Supervisor SHA256: **c006b89524e011039a9b5bdb4df913d2505e82a9f44f7e69a31cd02b8735b6ad**.
+
+At **2026-11-06T02:56:49.008725Z**, this exact binary passed four
+`--no-capture --check-config` cases: prepared auth, prepared mission with the
+curve, prepared mission with fixed37, and saved mission with the curve. Each
+exited successfully without a listener. The saved case used an empty private
+temporary store. Mission cases also retained the earlier explicit synthetic
+damage/order test inputs; no retail timing claim follows.
+
+The retired CLI rejection, two legacy-setting compatibility checks and shell
+syntax passed. Eight fixture files, the run145 manifest and four schema input
+pins remained unchanged. Private receipts and wrapper:
+
+- `~/re/gw2/notes/attribute-curve-build-inputs-20261106.json`.
+- `~/re/gw2/notes/attribute-curve-build-checks-20261106.json`.
+- `~/re/gw2/notes/check-attribute-curve-build-20261106.py`.
+
+Pair the binary and supervisor with the candidate profile above. If the
+publisher's current profile differs from the recorded baseline, apply only
+the stated setting deltas and preserve other work and roster mode. Previous
+tested artifacts remain intact; this candidate is cumulative. Last verified
+live remains **82d8d04-cdn900**, deployed **2026-11-05T23:56:31Z** at
+`/home/blizz/gw2-rust-82d8d04-cdn900`, with rollback retained. No release,
+resource-lease acquisition or native prompt answer occurred here.
