@@ -158,3 +158,86 @@ evidence`ev_e1b517994577fb9dfa4b2f40fe61965ca0e1205fef56f35c6c2ba0fff7bd2b46`.
 Exit0 and owned cleanup are verified. One rendered terminal frame is truncated;
 all 9,314 raw bytes and normalized frames, plus the complete result JSON, are
 retained. Seven unrelated inaccessible process environments were left untouched.
+
+## Local geometry around the failed hall approaches
+
+The subsequent atlas exports selected triangles in map XY
+[-4096,512] × [-28160,-24576] from the same frozen decoded187611. One authorized
+extraction is retained as
+`ev_073857d8410273efa4a45de88c6237344bd64d6ecf35702cd875f364d5791d62`;
+the export is
+`ev_037f5b59cb8ac9c5dc1f816064ad23b5c6fb0f5bbcf464f564d805d2b56e3751`.
+All later sections and route calculations use cached exports only. The original
+probe and shared binaries are unchanged; the exporter uses an isolated source
+snapshot and target directory.
+
+The clipped crop contains3846 terrain,11666 prop and10 zone triangles. It
+retains277 exactly vertical original prop faces that the earlier vertical-ray
+probe cannot intersect. The grid contains4161 points and13589 all-layer hits,
+including shared-edge duplicates. Three focused geometry tests pass; independent
+barycentric calculations agree with the existing spawn/target terrain probes.
+Root viewed the hash-admitted atlas and horizontal-section PNGs.
+
+Prop3491/mesh373 has a large hall-like XY projection across
+[-2862.443,-1690.582] × [-27212.342,-25266.931]. The sparse run236 samples enter
+that projection; run237 passes its lower end. At H=-mapZ=3637, the final retained
+run237 XY[-2408,-27319] is2.336 map units from a section segment of
+prop2893/mesh391, near[-2408.2242,-27321.3252]. This is a geometric association,
+not proof of the actual collision/contact that stopped movement. Sparse sample
+connections are not verified continuous paths.
+
+Four section heights3637,3750,3765,3808 use the relevant retained pose or fixture
+height plus8. Exact e624 player and NPC fixtures supply radius1 and height16;
+these are compatibility placeholders, not recovered Norn dimensions. The extra8
+is only half that configured height, not a measured collision-contact offset.
+Neither thin sections nor the selected triangle soup model a swept character.
+
+The bounded species-dimension audit finds no supported replacement values.
+Callback1411dc6e0 reaches1410a30b0 through the supplied agent/full collider and
+updates collider+2e4, not height/radius/body-origin fields. Its definition lookup
+uses a context separately identified with RidingCliContext; that does not name
+the result's+64 field or supply ordinary species dimensions. The actual dimension
+replacement method1410a1d20 still needs a typed caller/content binding. No actor
+size, placement or server37 input changes follow from these observations.
+Private findings `species-dimensions-fidelity-findings-20261106.json`, SHA-256
+`e570dc81965d6053baef10bc83643a2d704ba62ea84794ed1a3593b5144e4097`,
+pin14 retained REA records and nine artifacts.
+
+## Upper route prefix for the next observation
+
+Cached geometry rejects the lower detour as a generous corridor: opposite
+64-unit offset probes intersect the hall and curved structure, and the terrain
+steepens nearby. A more promising observation prefix goes around the upper end:
+
+`[-3200,-25600] → [-3200,-25536] → [-3008,-25280] → [-2816,-25024] → [-2688,-25088] → [-2100,-25180]`.
+
+The prefix is1442.3 map units long. With samples at most32 units apart, the
+minimum sampled local horizontal-section separation is90.07 units, maximum
+top-terrain face slope5.73°, and maximum along-path grade3.06°. The nine tested
+terrain-following lines, at lateral offsets0/±64 and heights+1/+8/+16, have no
+selected-triangle intersections. These sparse lines are not a swept body or a
+collision-free guarantee. The placeholder radius1 is not used to admit a tiny
+gap. Beyond the endpoint, terrain steepens and later probes intersect other
+props; the full route remains unvalidated. Any native attempt should stop there
+for a fresh scene assessment before further movement.
+
+Coverage still omits23 empty/3 missing prop selections,92 global selected
+animation-blocker references, fallback boxes, convex margins, actor footprint,
+scene clipping and runtime filters. Highest selected terrain may not be the
+native support layer. No visual landmark, map-north or camera heading is inferred
+from the source XY axes. Original spawn, target and all actors remain unchanged.
+
+Private receipts under `~/re/gw2/notes/map379-local-atlas-20261106/`:
+
+- `receipt.json`, SHA-256
+  `06f56f53714b9fa3a48c2629b9a649bad0a39a19b11c87d33bdc771c09272740`.
+- `sections/receipt.json`, SHA-256
+  `d98087e25afefbbfad67191e407b35fc2978d68e99fd8dee67ce21644704a492`.
+- `routes/receipt.json`, SHA-256
+  `3cf03959bce25d5eb6bdd8c820c70affb0f2330e300ddd32576653d473d212a8`.
+- `routes/candidate-routes.md`, SHA-256
+  `a02440656559fa046d39db876af17f64dcda0c74643dca8450b13c292f20ed88`.
+
+The receipts retain complete arrays, calculations, plots, source pins and
+limitations. Section and route arithmetic checks pass. No native route traversal
+or full-hunt success is established by this source work.

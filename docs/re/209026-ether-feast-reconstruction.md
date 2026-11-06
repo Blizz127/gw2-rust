@@ -169,8 +169,61 @@ Private evidence under `/home/blizz/re/gw2/notes/`:
   `0a2b5d31e839bd812787bd3638c3c8d847262a99d2a5e2acef5180a0a51a359b`.
 
 Positive255 delivery, injury at effect time, cancellation, reconnect/carry and
-retail clone/modifier/scaling behavior remain outside this smoke. The health-gain
-and full-retail limitations above are unchanged.
+retail clone/modifier/scaling behavior remain outside run233. The later run240
+below observes positive native recovery, without decoding outbound255.
+
+## Run240: positive native health recovery
+
+On 2026-11-06, run240 exercises unchanged e624c8b in the prepared near-wolf
+fixture, using pristine145 inputs and production GDB only. The game binary is
+1830360 bytes, SHA-256
+`723b9c36947df9a747010334fe999a0e98cfd4308d120015751aab2f36089453`.
+It does not use a saved144 record or access the owner store. No health, damage,
+stage or actor-coordinate injection is introduced by this run.
+
+One ordinary10170/slot5 request hits selected wolf4 for30, leaving88 health.
+Seven ordinary19-point NPC attacks reduce logged player health388→255 before
+one10176/slot0 request. A later attack leaves236; after the scheduled effect,
+the next attack leaves338. The resulting121-point increase is inferred from
+successive damage logs. Two generic scheduled-update lines do not identify
+outbound packets. No extra sword attack, heal request, regeneration, target
+change or downed state contaminates the retained sequence.
+
+Root separately viewed three hash-admitted native images:
+
+| Image | Displayed player health | Other observation |
+| --- | ---: | --- |
+| `before-heal.png` | 274 | Selected wolf remains75%. |
+| `heal-effect-1p3s.png` | 255 | Health is still reduced. |
+| `heal-followup-4p3s.png` | 338 | Health rises; Ether Feast shows17 cooldown. |
+
+These images establish positive native health recovery while ordinary damage
+continues. Pixel subtraction does not establish the exact121 amount. The
+before-heal image lags the255 log gate; requested screenshot intervals are not
+precise network/effect timestamps. No healing floater is observed, and no
+outbound255 decode is claimed. This bounded check does not establish clones,
+modifiers, physical cancellation, saved-mode carry or a full tutorial run.
+
+Launch and UI exit0. Strict readback verifies60 immutable nonprefix inputs,
+the unchanged224-byte prepared record, privacy and frozen/working PE hashes.
+The shared container is absent; window42 was returned at11:35:27.966860Z.
+Full REA evidence is retained before interpretation:
+
+- Launch `ev_d38cdb49b9f9841ca3b7f5a73045c8a7f30b041c60b5b5aeaefc446cc6cf0655`,
+  `209026-run240-ether-feast-positive-gain-launch-20261106.json`, SHA-256
+  `aa99bd40a1a71b0143c2ee90a5a8e9b02ddd7fd4e7d1519b3aa79ef5fef9014a`.
+- Readback `ev_6021fa2da55f5e5b2d170fdb6ce8cf8ef53de02a70f36647dc1246281d14ba4a`,
+  `209026-run240-ether-feast-positive-gain-readback-20261106.json`, SHA-256
+  `2f1ac025a032d77337985868bab2893176cdd9435424d6f2470f98a5faea3e7f`.
+- Return `ev_fae41e61b9d0a323a5cdceee853fec23d18d88d0152368c093ccd26f41592892`,
+  `209026-run240-ether-feast-positive-gain-return-20261106.json`, SHA-256
+  `b097dfb1a833bb5647f4e541a977e2d94b8a9343a8dc25641176ba8bfbd7e0ea`.
+- Root outcome, including all three image pins:
+  `run240-ether-feast-positive-gain-outcome-20261106.json`, SHA-256
+  `ec669d8543ec0a4059aba0468cde7fff53d40f20ab2310cbddf54855935a3901`.
+
+All files are private under `~/re/gw2/notes/`. The run changes no live service
+and does not test the subsequent sword-chain candidate.
 
 ## Original-roster relog and configured destination resume
 
