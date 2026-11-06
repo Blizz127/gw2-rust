@@ -6,7 +6,11 @@ unchanged run-137 synthetic manifest records. **Run 142 passed the targeted
 creator-preview rendering smoke** with the complete visible male Norn Mesmer
 and no new assertion. This is a tested preview fix using that historical
 metadata set. It remains **not authenticated build-209026 metadata** and
-was not deployed by this investigation.
+was deployed by the sole server publisher in **82d8d04-cdn900** at
+**2026-11-05 23:56:31 UTC**, with the earlier kit retained for rollback.
+The [release receipt](209026-combat-release-3cf2483.md) records its successful
+compatibility smoke with the currently offered runner0e6ac30 and independent
+live hashes/health. Saved-mode activation remains held.
 
 The [compatibility audit](208784-mfst75-remap-compatibility.md) established
 the eligible mapping set. [Run 141](209026-texture-remap17-experiment.md#run-141-actual-failing-dimensions-captured-input-ids-remain-unknown)

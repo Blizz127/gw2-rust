@@ -30,14 +30,16 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-Latest independently verified live kit: **82d8d04**, prepared mode, deployed
-2026-11-05 22:27:03 UTC; hashes and four listeners verified at 23:24 UTC.
+Latest independently verified live kit: **82d8d04-cdn900**, prepared mode,
+deployed 2026-11-05 23:56:31 UTC; kit/metadata hashes and four listeners
+verified at 23:56:53 UTC.
 The [saved creator record](re/209026-saved-norn-creator.md) covers real UI
 creation, durable initial save, restart relog, visible direct world entry and
 same-GUID waypoint rejoin. [Run142](re/209026-texture-remapall-private-candidate.md)
 passes complete male Norn Mesmer preview rendering with no new assertion.
-The tested metadata artifact was handed to the sole publisher at 23:47 UTC;
-it was not live at handoff. Runner63 owner objects are uploaded, but the last
+The sole publisher deployed that tested metadata after a successful
+prepared-profile smoke with the current launcher runner; the release receipt
+is linked from the run142 note. Runner63 owner objects are uploaded, but the last
 launcher readback still selected b126/old runner. Existing saved-mode and
 owner-choice restrictions remain in effect. Normal owner character creation
 must not be advertised as available from these private tests alone.

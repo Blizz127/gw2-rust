@@ -7,8 +7,9 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
 tracks the remaining scope. The latest independently verified live server is
-**82d8d04**, `/home/blizz/gw2-rust-82d8d04`, deployed 2026-11-05 22:27:03 UTC.
-At 23:24 UTC all kit hashes and four owned listeners passed; it remains in
+**82d8d04-cdn900**, `/home/blizz/gw2-rust-82d8d04-cdn900`, deployed
+2026-11-05 23:56:31 UTC. At 23:56:53 UTC all kit hashes, selected metadata
+and four owned listeners passed; it remains in
 prepared mode and includes walking, heart-coordinate/reward fixes and three
 ambient ravens. This is a diagnostic starter fixture, not the complete
 retail Great Hunt sequence.
@@ -19,8 +20,9 @@ and same-GUID waypoint rejoin with process-local XP/loot/heart state. World
 progress is not durable across server restarts. **Run142 now passes the
 complete male Norn Mesmer creator-preview smoke** with no new assertion:
 [metadata fix and evidence](re/209026-texture-remapall-private-candidate.md).
-The compatible historical texture-remap set was handed to the sole server
-publisher at 23:47 UTC; a handoff is not a deployment receipt. The latest
+The compatible historical texture-remap set is now deployed in that kit,
+after a successful prepared-profile smoke with the current launcher runner.
+The latest
 launcher readback still advertises b126 with the old runner pin, although
 runner63bc59a's owner objects are uploaded and verified. Saved-mode activation
 and existing owner-choice restrictions remain in effect pending their actual

@@ -2,9 +2,9 @@
 
 The observer has opt-in, single-account persistence and a creation scene.
 Support first deployed in owner release `56242d1`. The integrator's latest
-receipt is `82d8d04` at `/home/blizz/gw2-rust-82d8d04`, live at
-2026-11-05 22:27:03 UTC in prepared mode, with rollback
-`/home/blizz/gw2-rust-cd4c3b6`; saved mode is not enabled in the host config.
+receipt is `82d8d04-cdn900` at `/home/blizz/gw2-rust-82d8d04-cdn900`, live at
+2026-11-05 23:56:31 UTC in prepared mode, with rollback
+`/home/blizz/gw2-rust-82d8d04`; saved mode is not enabled in the host config.
 The profile retains the Hero's Moot respawn point from `9961b56-hm`;
 the [release receipt](209026-combat-release-3cf2483.md) records hashes and checks.
 Run126 observed actual UI creation, durable save and transfer to a playable
@@ -18,9 +18,11 @@ Norn Mesmer preview**, with native graphics/animation readiness, no invalid
 textures and no new assertion, after restoring the complete compatible
 historical texture-remap metadata set. See the
 [tested metadata increment](209026-texture-remapall-private-candidate.md).
-It was handed to the sole server publisher at 23:47 UTC; that handoff is not
-a deployment receipt. Runner63bc59a owner objects are published and verified,
-but the last launcher-feed readback at 23:24 UTC still advertised b126 with
+The sole publisher deployed it after run202 verified prepared-profile
+character selection, world entry, combat, loot and heart progress with the
+currently offered runner0e6ac30. Root independently verified live metadata,
+all kit hashes and four owned listeners at 23:56:53 UTC. Runner63bc59a owner objects are published and verified,
+but the last launcher-feed readback at 23:56 UTC still advertised b126 with
 the old runner pin. Matching live metadata/runner availability and existing
 owner-choice restrictions remain prerequisites for saved-mode activation.
 

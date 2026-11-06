@@ -420,3 +420,13 @@ Checks:
 Not changed: saved-Norn activation stays held, and the launcher feed (b126 pins runner
 `0e6ac30`) belongs to the launcher lead. On first connect, the owner's client
 downloads the new 13.9 MB Launcher64 metadata through its normal patcher.
+
+Independent creator-lane readback at **2026-11-05 23:56:53 UTC** verified the
+current symlink, every kit checksum, the exact submitted root/main metadata
+hashes and selected latest line, and running/ready health with all four owned
+listeners (zero humans). Evidence:
+`ev_a68085dd92f7402e9aba8ee338b1fbc1a8ce494d3fcfbd23979d809bc7ab9585`.
+Private receipt `~/re/gw2/notes/209026-live-cdn900-independent-readback-20261105.json`,
+SHA-256 `808de6c09b1ef69ae9ec23396eed37b4b8b84e03a37b518e2bf1615dae29918f`.
+The same readback still found launcher b126. This read-only verification did
+not restart the service or change saved mode.
