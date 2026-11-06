@@ -89,22 +89,27 @@ no cast and exited9; cleanup/hash checks passed and window28 was returned
 stalled at a wagon. A nearby diagnostic target is being prepared; this does
 not change the live population or establish authored retail placement.
 
-The fresh `run216-skill10170-near-target-smoke` is staged with exactcf13a3b,
-the same availability grant, one nearby diagnostic wolf and125s settling
-time. Eleven reader checks and two no-listener configurations pass. It is
-**not launched**: window29 is reserved pending the publisher's separate
-`run217-world-handover` cleanup and explicit activation. No lease is inferred
-from that reservation or from elapsed time.
+The fresh `run216-skill10170-near-target-smoke` **passed** on exactcf13a3b:
+fresh hostile4 selection, matching10170 request, exactly one118→88 hit and
+no extra release-triggered hit/order. It used the17-byte grant with legacy
+autoattack/echo absent and a nearby diagnostic wolf. UI/cleanup/hash checks
+pass; window29 returned06:10:56Z. The skills/profile change was submitted
+immediately to the sole publisher; no new live receipt is claimed. Its
+diagnostic NPC placement is excluded. Full retail effects/timing remain open.
 
 A focused source check of the publisher's committedf0a45a4 handover found
 two concrete data/arrival issues: its process-global carry lacks character
 GUID/destination-map binding, and a map28 join without carry retains the
 tutorial's initial spawn. Root reported both through the existing native
 peer. The publisher has already committed the arrival correction as3bf7842;
-it is not a new live receipt. A narrow isolated carry-binding correction
-is being prepared with a regression that reproduces wrong-character carry
-theft before the fix. These findings do not change the verified live
-version above. No saved-format change or progress reset is authorized.
+it is not a new live receipt. Isolated carry-binding fixe9d6558 reproduces
+wrong-character carry theft before the fix, then passes four focused tests
+and a debug build. It binds intended GUID/map without consuming unrelated
+carry, preserves original saved bytes, and applies cleanly after3bf7842.
+The helper submitted it directly to the verified sole publisher. Separate
+test-only37cb716 adds two passing independent arrival/wire regressions.
+These handoffs do not change the verified live version above. No saved-format
+change or progress reset is authorized.
 
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).

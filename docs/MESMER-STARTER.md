@@ -16,7 +16,7 @@ API/wiki names may locate content but do not replace client verification.
 | Requirement | Current state | Evidence needed for completion |
 | --- | --- | --- |
 | Norn Mesmer creation/selection and correct appearance | Private creation/save/world/waypoint flow passes in run144; restart relog passes in run127. Saved mode enabled live03:29:33Z and independently verified03:43:51Z. | Creation/rendering and activation evidence available; preserve biography/appearance/equipment through the remaining full gameplay experience. |
-| Correct Mesmer components and startup skills/equipment | Partial: run209 confirms set4/item33355/palette90. Run214's private605 grant makes all four10170 predicates pass and produces a real request, but target0 causes no damage and final cache coverage is partial. Correction is not live. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
+| Correct Mesmer components and startup skills/equipment | Partial: set4/item33355/palette90 are observed. Run216's605 grant passes availability and produces a real targeted10170 request with one30-point response and no release hit. Small correction handed to publisher; live receipt pending. Final-cache instrumentation is partial; full unlock/stat/effect policy remains open. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Livecf13a3b has reconstructed story actions/NPCs and a stand-in boss; Thora/trophy-kill progression is client-smoked. Full sequence, authentic conditions and reward delivery remain unproved. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Shared terrain loaded through Great Hunt; open map 28 not played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
 | Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work; retail skill effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
@@ -30,19 +30,17 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-Run211 identifies the empty sword slot's availability failure. In root's
-subsequent `run214-skill10170-availability-smoke`, the17-byte grant makes
-slot, level, availability and locale predicates pass; candidate10170 returns1.
-The client emits a real owned10170/slot5 request, but target0 causes no
-damage. Final cache coverage is partial, so **the combat smoke has not
-passed**. Exact4b3c4c2 was used with legacy autoattack and echo omitted to
-avoid duplicate release-triggered damage. UI/cleanup/hash checks pass;
-window27 was returned05:37:58Z. Run215 removed Escape and required a hostile
-selection before casting, but acquired none; forward movement stalled at a
-wagon. It exited9 without casting and returned window28 cleanly05:52:57Z.
-A focused nearby-target fixture is being prepared. No grant or profile
-change is live, and no full retail unlock/effect policy is claimed.
-See the [runtime evidence](re/209026-sword-slot-selection-runtime.md#run214-availability-passes-targeted-combat-still-unproved).
+Run216 passes the targeted sword smoke on exactcf13a3b: fresh hostile4
+selection, one owned10170/slot5 request to4, one server255 response118→88,
+and one release with no extra order or hit. The17-byte grant enables native
+availability; legacy autoattack and echo are absent. UI/cleanup/hash checks
+pass and window29 was returned06:10:56Z. The small skills/profile correction
+was submitted to the sole publisher immediately; a live receipt is pending.
+The nearby wolf is only a diagnostic placement, excluded from that handoff.
+Final-cache instrumentation remains partial, and retail lifecycle, damage,
+chain, healing and cooldown behavior are not established by this smoke.
+Earlier214/215 failures remain retained. See the
+[runtime evidence](re/209026-sword-slot-selection-runtime.md#run216-targeted-ordinary-request-and-one-damage-response-pass).
 
 Released independent fix: **9451cf0**, the seven-line caster guard
 directly on then-live c2cb6fd. Eight focused tests, offline musl build and four

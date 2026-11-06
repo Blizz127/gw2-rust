@@ -285,6 +285,61 @@ It is not evidence of a null definition after candidate success. Receipt
 `slot5-return-guard-review-20261106.json`, SHA-256
 `ce7a2086e86094ad8e89e4522469b5fe5c179420e37a126780c389a587fb0766`.
 
+### Run216: targeted ordinary request and one damage response pass
+
+`run216-skill10170-near-target-smoke` completed on exactcf13a3b with the
+17-byte grant, damage30, and autoattack/echo absent. It used a fresh146
+pre-client prefix. Only diagnostic wolf NPC4 moved to the existing nearby
+test position(-3050,-25450,-3745); no movement input was used. The125s
+settle accounts for retained cold model loading. This placement is not an
+authored spawn or part of the release handoff.
+
+The changed-feature smoke **passes**:
+
+1. A fresh client227 selects hostile4 before the skill press.
+2. The controlled player1 sends one10170/slot5 request to target4.
+3. The server sends one255 response, lowering that target from118 to88.
+4. One subsequent29 release produces no legacy order, extra hit or echo.
+
+UI and outer run exit0; no assert text is found. Console and executable
+hash checks pass. Container absence was independently verified, then
+window29 returned complete **2026-11-06T06:10:56.781678Z**. The native10170
+predicates all pass in the second startup lookup; final-cache instrumentation
+still reports the known guard failure. That partial observation is retained
+separately from the actual selected-target/request/damage evidence.
+This verifies the small availability correction and removal of duplicate
+release-triggered damage, not retail damage, accepted lifecycle, attack
+chain, healing, cooldowns or the full Mesmer combat implementation.
+
+The concrete release handoff was submitted through the existing sole
+publisher's native inbox: install the17-byte skills batch and explicitly
+set effective kit-profile `GW2_AUTOATTACK_SKILL=` empty; retain damage30,
+echo off, and all newer profile/content/saved-mode changes. Merely deleting
+the assignment could inherit host configuration;0 is not disabled. The
+then-current4c46cad batch matches the original12-byte baseline
+`bf7e83481d73b5acb4836a742072e5118f7001c8a065766273b64c16c5b9e55e`.
+The publisher must merge the grant if its newer batch differs. Root does
+not publish or claim the candidate live from this submission.
+
+Private evidence:
+
+- Manifest SHA-256:
+  `0c389f213fef7fcae61b100d38e78793512ebe0c702e6bc33c0aa800149fdfb4`.
+- Staging: `run216-skill10170-near-target-staging-receipt-20261106.json`,
+  eleven reader checks, two no-listener checks and unchanged observer tests
+  reused by hash; shell/composition and executable-mode checks pass.
+- Launch: `209026-run216-near-target-launch-20261106.json`,
+  `ev_794476afaa6d1167f686229a41e18b086559ffc5a23ec4369ac47c8a4f3c5f48`.
+- Complete compact readback: `209026-run216-near-target-compact-readback-20261106.json`,
+  `ev_b0bc4fb7262a4ff39d25dc25d05367779b4ff4ba7c7b051ee5553ad177780ba6`.
+- Window return: `209026-run216-window-return-20261106.json`,
+  `ev_a24e52e37aaaaea40c7259c2e881a9aae34989f814ac4dce89d17497826e54c0`.
+- Native submission: `run216-release-native-handoff-20261106.json`.
+- Client log SHA-256:
+  `898fd3624e45d57f38275e035a860f722439690a83c66014bbfde11646295d98`.
+- Mission log SHA-256:
+  `81041dfa705740a395f609ee60ee66399c0ba8472b34ea788d23ecdde20dc1b1`.
+
 ### Earlier activation observations
 
 The private helper observes seven source-guarded entry, return and call sites.
