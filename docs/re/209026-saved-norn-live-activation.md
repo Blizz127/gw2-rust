@@ -1000,3 +1000,38 @@ evidence `ev_d65e78a4b604542f85b156827281c9e796c462ff82c1a2b157e0352d24aa5466`.
 Readback exits0, untruncated, with verified owned cleanup. This establishes
 publication of the tested binary, not native10334 execution, full starter
 completion, durable progression or a launcher-feed update.
+
+## Verified sword2 phase-diagnostic release: ec69643
+
+The sole publisher deployed exactec69643 to `/home/blizz/gw2-rust-ec69643`
+at **2026-11-06T13:52:31Z**, retainingf926ce0 for rollback. The increment
+adds a four-byte typed78 update codec and an explicit-duration, default-off
+phase observation. Both sword2 diagnostic options remain **disabled live**.
+No10334 damage, healing, evasion, recharge, aggro or reward is implemented.
+[Source contract and limits](209026-skill10334-accepted-phase-observation.md).
+
+Root reviewed the source diff and32 pinned inputs. Twenty focused scenarios,
+a final owner/session regression, the static musl build and two no-listener
+startup checks pass. Independent readback at **13:55:55.523827Z** verifies
+the exact running artifact, all current/rollback manifest sums, four healthy
+owned listeners, saved Norn mode, one private record/mode0700 and the unchanged
+activation backup. Zero humans/bots were present. The profile, supervisor,
+27-byte skills and existing chain/healing, world, wallet/vendor/POI settings
+matchf926ce0; movement logging retains its default20. No record contents were
+read or configuration changed.
+
+Game:1855408 bytes, SHA-256
+`92b815a654cb997e0a4a3608b14a8acad1c524f04d4697b7263f6bca6bfd7fd2`.
+Manifest SHA-256:
+`0d9080c3363ee05138979016e93b7f3adb9ddd5c70898ec1bb273d6b937b918b`.
+Private implementation receipt
+`observe-sword2-action-f926-20261106-checks/receipt.json`, SHA-256
+`2098facb1d65100360c4d782457c96898c2e9de69e7d080635e489b55d5573e2`.
+Scalar release receipt `ec69643-release-verification-20261106.json`, SHA-256
+`aec93056aff380f3010fc591909f9674f097523d26876f4de8e65dda9850fa21`.
+Full REA `209026-ec69643-release-readback-20261106.json`, SHA-256
+`94fdb77d99c2b49b18aa05619ae3bb60706c87617c86f27633dd362e8789cc77`,
+evidence `ev_5ffaac595f834acc66cc101d6c589e3170a40ee0ff809e07b6ad50035d7ba5c6`.
+Readback exits0 with complete output and verified owned cleanup. This verifies
+the server release; native10334 phase acceptance, full retail mechanics,
+durable progression and launcher-feed publication are not established.

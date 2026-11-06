@@ -30,7 +30,18 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**f926ce0 is verified live**, deployed at13:00:46Z to
+**ec69643 is verified live**, deployed at13:52:31Z to
+`/home/blizz/gw2-rust-ec69643`, rollbackf926ce0. Root's13:55:55Z readback
+verifies the exact tested artifact, current/rollback hashes, four healthy owned
+listeners, saved mode/one private record and unchanged backup. It adds an
+explicit-duration sword2 phase diagnostic, **disabled live**, with no10334
+damage, evasion or recharge. Twenty focused scenarios, musl build and two
+no-listener startup checks pass. Native phase acceptance remains unobserved.
+Profile, supervisor and current gameplay defaults remain unchanged.
+[Source and implementation](re/209026-skill10334-accepted-phase-observation.md).
+[Release readback](re/209026-saved-norn-live-activation.md#verified-sword2-phase-diagnostic-release-ec69643).
+
+Earlier **f926ce0**, now the rollback, was deployed at13:00:46Z to
 `/home/blizz/gw2-rust-f926ce0`, rollback403ac37. Root's13:03:57Z independent
 readback verifies the exact tested artifact, all current/rollback hashes,
 four healthy owned listeners, saved mode/one private record and unchanged
@@ -40,7 +51,7 @@ Twelve focused tests, musl build and two no-listener startup checks pass.
 Profile, supervisor, startup skills and current gameplay remain unchanged.
 [Release readback](re/209026-saved-norn-live-activation.md#verified-sword2-observation-release-f926ce0).
 
-Earlier **403ac37**, now the rollback, was deployed at11:54:07Z to
+Earlier **403ac37** was deployed at11:54:07Z to
 `/home/blizz/gw2-rust-403ac37`, rollback7cfe9c4. Root's independent11:56:13Z
 readback verifies the exact reviewed binary, all current/rollback hashes, four
 owned healthy listeners, saved mode/one private record and unchanged backup.
