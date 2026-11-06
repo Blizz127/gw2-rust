@@ -119,7 +119,8 @@ The record validates type64 and kind1; its classified local+0x60 reference
 resolves body offset4626176 in the same container. The checked body minimum
 is0x1c bytes: status key+0x14 is78 and class+0x18 is2. Status78 is not the
 excluded94, so this record belongs to the named condition-count subset above.
-No complete buff-structure size or localized buff name is established.
+No complete buff-structure size is established. The subsequent bounded lookup
+below resolves the localized name and the description's time input.
 
 `gw2_dat::buff_content::BuffContent209026` now validates the0x68 SkillDef,
 requires kind1 and resolves the classified body reference with a0x1c minimum.
@@ -140,6 +141,49 @@ Both exit0 without truncation and verify owned cleanup. Root checks16 distinct
 referenced pins and the bounded helpers. Only retained caches are read;
 unverified unrelated processes remain untouched. No archive or runtime access
 occurs in this follow-up.
+
+## Vulnerability identity and description time input
+
+Buff738's SkillDef+0x34 is textID334824, which resolves to **Vulnerability** in
+the retained localization cache. Both10170/10171 type2 fact payloads contain a
+signed literal1, the typed buff738 reference and named value `Vuln Duration`
+(string9477, hash2619650194). The named resolver selects time tag444 with
+signed64 value5000 in all four explicit mode combinations; the override group
+has no matching variable, so the base row supplies it.
+
+Native type2 duration code resolves payload+0x60 and reads tag444 through
+`1412e3ec0`. It converts the signed64 input to float, applies the selected
+multiplier and divides by1000 for display: multiplier1 yields5 seconds.
+The class2 branch can consult attribute9, level and modifier35, with a combined
+upper cap of2. Those current context inputs are not observed here, so this is
+not a claim that the effective runtime duration always equals5 seconds.
+The signed1 is used conditionally as a display multiplier/count for raw
+stacking type4. It does not prove authoritative stack count, stacking rules
+or the meaning of message735's raw value/byte5.
+
+This resolves description inputs, not on-hit admission, target choice, wire
+duration or damage/stacking/removal policy. A bounded type2 fact reader can
+now reuse the existing named-value resolver and typed buff reader; the live
+increment above does not yet implement that fact reader or a gameplay effect.
+
+Private findings `209026-mesmer-sword-buff-name-duration-findings-20261106.json`,
+SHA256 `3f615913606f540cc46d7f6a695facd373ab03c307558d8721ab243d43cffc1b`;
+complete bundle `209026-mesmer-sword-buff-name-duration-evidence-20261106.json`,
+SHA256 `6dff206c14478e3d99db33f190bb90e0d289b073d15dd07f20d9beeb06a2b238`.
+The actual cache read is
+`ev_fa6662bbafffd659f415e1fa0ff9a1418ecc540321261f59ce5b49271042cf7f`.
+The complete signed-time accessor and corrected duration tail are
+`ev_f1dae5a1789dd4a17bb88c29f1a49ae843300e3f5335dd19045fe8be54af6733`.
+Root checks the reader and referenced pins and inspects the duration fields,
+modifier branch and accessor instructions. Four retained source captures have
+aggregate truncation flags from rendered terminal output; their raw bytes are
+fully retained and normalized frames have zero omissions. Selected code and
+constant windows remain available; no blanket untruncated-capture claim is made.
+Exact bounds and truncation details are retained in
+`209026-mesmer-sword-buff-name-duration-coverage-addendum-20261106.json`,
+SHA256 `111830d57ef42fcbdefe018480db13a1ecbe5eb0df59fc3a2dca26cc0a6ec9f3`.
+The rejected first schema call and failed float-only resolver attempt remain
+preserved; the successful explicit time resolver supplies the result above.
 
 ## Implementation and checks
 

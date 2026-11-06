@@ -97,7 +97,10 @@ The next retained-record slice finds a concrete authored link:10170 and10171
 both reference buff SkillDef738/UID9153, status78/class2, through their type2
 description facts. The new bounded buff-body reader now reproduces these
 records through the classified-reference APIs without archive extraction.
-These facts do not establish application timing, duration or effect policy.
+The next source slice identifies buff738 as Vulnerability and resolves its
+named description time to5000 (5 seconds with UI multiplier1), with context
+modifiers handled separately. This still does not establish wire duration,
+application timing, stacking or effect policy.
 [Retained record and next reader](re/209026-buff-instance-lifecycle.md#retained-mesmer-sword-buff-record).
 
 Earlier **fccd1b0**, retained as rollback, had publisher deployment15:30:21Z to
