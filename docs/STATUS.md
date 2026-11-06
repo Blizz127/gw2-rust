@@ -68,6 +68,15 @@ dispatch, restart or publishing takeover is authorized. Preserve the sole
 publisher, native prompt and safe rollout. The00:54 UTC live readback above
 remains the deployment evidence.
 
+Independent source work adds bounded
+[recharge content selection](re/209026-skill-recharge-content.md) and raw
+[correlated skill-update payloads](re/209026-typed78-completion-release.md),
+with eight focused tests and a frozen10176 content check passed. The
+[health-gain trace](re/209026-health-gain-delivery.md) corrects the wire-kind
+mapping and establishes positive-delta meter/UI delivery. These commits add
+offline readers/codecs and source corrections; they do not send heals,
+schedule cooldowns, activate saved mode or establish a new deployment.
+
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
 heart56 and reward behaviors are fixture-backed; the authored quest154
