@@ -26,7 +26,9 @@ this is not full retail encounter completion. Root independently verified
 saved-norn mode, one saved record, backup hash, all kit hashes, metadata900,
 effective settings and four healthy listeners at **08:43:03Z**. Zero
 humans/bots were present then; recheck at rollout. Ether Feast healing and
-recharge remain unimplemented. Verified rollback is **9326c08-vendor**. Merchant
+recharge remain absent from this live artifact. The checked no-clone increment
+**7c26f45** was submitted09:21:27Z to the sole publisher; publication is unverified.
+Verified rollback is **9326c08-vendor**. Merchant
 appearance and placement remain fixture choices. Run224 observes Hero's Moot waypoint discovery; waypoint travel has
 offline checks but no client-click observation. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).

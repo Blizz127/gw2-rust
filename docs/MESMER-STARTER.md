@@ -30,6 +30,15 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+**7c26f45 is tested and submitted**, including5a6337b, to the existing sole
+publisher at09:21:27Z. It adds an explicit no-clone Ether Feast self-heal and
+20-second recharge, with guarded same-process health/cooldown carry. Root caught
+and corrected an original-roster379 versus pending-map28 login rejection; the
+actual TCP regression failed before and now follows1065 to restored state.
+Focused tests, musl build and eight off/on startup checks pass. Publication is
+unverified. Manual cancellation, clones/conditions and restart progression remain
+unsupported. [Implementation and limits](re/209026-ether-feast-reconstruction.md).
+
 Run230 completes an isolated input diagnostic on exacta223a90. Paired
 before/after D500ms images are consistent with lateral movement; exact yaw,
 binding and total displacement remain unmeasured. Tab produces no target227,
