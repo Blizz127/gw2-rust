@@ -19,7 +19,7 @@ API/wiki names may locate content but do not replace client verification.
 | Correct Mesmer components and startup skills/equipment | Partial: set4/item33355/palette90 are observed. Run216's605 grant passes availability and produces a real targeted10170 request with one30-point response and no release hit. Correction is live in4c46cad-sk and independently verified. Final-cache instrumentation is partial; full unlock/stat/effect policy remains open. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Reconstructed story actions/NPCs and a stand-in boss are live; Thora/trophy-kill progression is client-smoked. Publisher226 starts at stage4 and exercises fixed item/coin claim and map28 transfer. The full saved-character sequence, authentic conditions and retail XP/binding policy remain open. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Transfer/arrival is live in76af245. Prepared217 transfers379→28, renders the character and opens the map UI. Post-transfer movement/combat and combined saved-character runtime admission remain unobserved. | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
-| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast is live; run233 observes cooldown/retry/recast and run240 observes positive native health recovery under ordinary enemy damage. Sword-chain increment 7cfe9c4 is included in current403ac37; run241 observes all three native requests, matching hits and the slot icon cycle. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
+| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast is live; run233 observes cooldown/retry/recast and run240 observes positive native health recovery under ordinary enemy damage. Sword-chain increment 7cfe9c4 is included in verified live ec69643; run241 observes all three native requests, matching hits and the slot icon cycle. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | All15 map28 heart areas and14 substitute NPCs are in76af245. Generic inside-area kill progress and placeholder rewards remain fixture rules. Authored tasks/events and full discovery are incomplete. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
@@ -98,7 +98,7 @@ all60 immutable input checks pass; window42 returned11:35:27Z. This is not a
 saved-character/full-hunt, exact effect-timing or retail-mechanics test.
 [Evidence and limits](re/209026-ether-feast-reconstruction.md#run240-positive-native-health-recovery).
 
-Sword-chain increment **7cfe9c4**, now the rollback, was deployed at11:38:42Z to
+Sword-chain increment **7cfe9c4** was deployed at11:38:42Z to
 `/home/blizz/gw2-rust-7cfe9c4`; its rollback was e624c8b. Root's independent11:43:05Z
 readback verifies exact binary/profile/supervisor/27-byte skills, current and
 rollback hashes, four healthy owned listeners, saved mode/one private record
@@ -128,14 +128,15 @@ grant for observation while retaining chain rejection and all existing live
 defaults. Twelve focused tests, musl build and two startup checks pass;
 prepared run250 now observes the earned2 grant, unlocked second weapon icon
 and a native10334/slot6 request after the target respawns. Launch/UI0 and
-window48 cleanup pass. Accepted10334 execution/effects remain unimplemented.
+window48 cleanup pass. The later ec69643 diagnostic adds phase messages, but
+native acceptance remains unobserved and playable10334 effects remain unimplemented.
 [Implementation limits](re/209026-mesmer-starter-skill-requirements.md#earned-level-observation-increment-f926ce0-verified-live-disabled).
 [Native selection evidence](re/209026-mesmer-starter-skill-requirements.md#run250-earned-grant-and-native-sword2-selection).
 Private implementation receipt:
 `~/re/gw2/notes/mesmer-sword-chain-e624-20261106-checks/receipt.json`, SHA-256
 `1c709e3dfb679731737306ca432751808910296c1fc5300e101a441180dfe012`.
 
-Earlier **e624c8b**, now the rollback, was deployed by the sole publisher at10:35:43Z to
+Earlier **e624c8b** was deployed by the sole publisher at10:35:43Z to
 `/home/blizz/gw2-rust-e624c8b`. Rollback:7c26f45. Root's10:41:12.080308Z
 readback verifies the exact tested artifact, all kit/rollback hashes, four
 owned healthy listeners, saved mode/one private record and unchanged backup.
