@@ -28,9 +28,12 @@ runner63 repair. The full creator and returned-world avatar are visible;
 the sole saved record is unchanged, with no new crash-log bytes. This evidence
 was returned to the sole publisher for activation reassessment. The latest
 launcher readback still advertises b126/0e6ac30; runner63bc59a's owner objects
-are separately uploaded and verified. Saved-mode activation and existing
-native agreement/owner-choice restrictions remain in effect; the prepared
-live character is not normal character creation.
+are separately uploaded and verified. At00:14:31 UTC the publisher marked
+rendering resolved and requested a choice about replacing the prepared roster
+with an empty saved roster. That publisher hold is being reconciled with the
+owner's existing creation/deployment request; no separate owner-origin
+prohibition or new agreement prompt is cited. The prepared live character
+is not normal character creation.
 
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,

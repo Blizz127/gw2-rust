@@ -44,8 +44,9 @@ with the actual offered runner0e6ac30, without the runner63 repair: visible
 creator and returned-world avatar, unchanged initial record and no new
 crash-log bytes. It carries XP/loot/heart state only within the server process.
 Runner63 owner objects are uploaded, but the last
-launcher readback still selected b126/0e6ac30. Existing saved-mode and
-owner-choice restrictions remain in effect. Normal owner character creation
+launcher readback still selected b126/0e6ac30. The publisher marked rendering
+resolved and requested a roster choice; this new activation hold is being
+reconciled with existing owner authorization. Normal owner character creation
 must not be advertised as available from these private tests alone.
 
 Next work preserves the release workflow while the sole publisher reassesses
