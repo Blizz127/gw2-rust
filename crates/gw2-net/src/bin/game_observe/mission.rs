@@ -1319,6 +1319,13 @@ impl MissionPhase {
         let Some(fixture) = &self.population else {
             return Ok(None);
         };
+        // Server 83 grants this connection control of the fixture character.
+        // Reject another caster before target tracking or any fixture response.
+        if let Seen::Skill(skill) = seen
+            && u32::from(skill.agent_index) != fixture.plan.character_index
+        {
+            return Ok(None);
+        }
         if self.began
             && self.damage_on_skill.is_some()
             && let Seen::Skill(skill) = seen
@@ -2684,6 +2691,84 @@ pub(crate) mod tests {
 
     fn health_of(phase: &MissionPhase, agent: u16) -> f32 {
         phase.hostiles.iter().find(|h| h.plan.agent_index == agent).unwrap().health
+    }
+
+    fn skill_begin_from(agent_index: u16, target: u32, skill_key: u32) -> BytesMut {
+        let mut behavior_data = vec![0x23];
+        behavior_data.extend_from_slice(&target.to_le_bytes());
+        behavior_data.extend_from_slice(&skill_key.to_le_bytes());
+        behavior_data.push(5);
+        let mut frame = BytesMut::new();
+        AgentBehaviorFrame209026 {
+            agent_index, remote_tick: 77, command_flags: 3,
+            behavior_value: 0x8000_1234, behavior_data,
+        }.encode_client_frame(&mut frame).unwrap();
+        frame
+    }
+
+    #[test]
+    fn skill_caster_ownership_rejects_foreign_agents_before_side_effects() {
+        // Cover the hit+echo path, NPC-cast path, echo-only path and target-only
+        // path. Ether Feast also exercises the earlier healing exclusion.
+        for (damage, echo, npc_cast) in [
+            (true, true, true), (false, false, true),
+            (false, true, false), (false, false, false),
+        ] {
+            let mut phase = hostile_phase(LEVEL1_NPC_HEALTH)
+                .with_xp_per_kill(50).with_kill_loot()
+                .with_heart(56, 1).unwrap().with_npc_attack(5.0, 388.0);
+            if !damage { phase.damage_on_skill = None; }
+            if echo { phase = phase.with_skill_order_echo(NonZeroU16::new(4321).unwrap()); }
+            if npc_cast { phase = phase.with_npc_cast(999); }
+            let expected_npc_cast = phase.npc_cast;
+            phase.heart.as_mut().unwrap().inside = true;
+            phase.heart.as_mut().unwrap().player = Some(1);
+            phase.last_target = Some(3);
+            for caster in [0, 3, u16::MAX] {
+                for skill_key in [10170, 10176] {
+                    let seen = phase.push(&skill_begin_from(caster, 4, skill_key));
+                    assert!(matches!(seen.as_slice(), [Seen::Skill(skill)] if skill.agent_index == caster));
+                    let reply = phase.respond(&seen[0]).unwrap();
+                    assert!(reply.is_none(), "foreign caster {caster}, skill {skill_key}, fixtures {damage}/{echo}/{npc_cast}");
+                    assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (LEVEL1_NPC_HEALTH, LEVEL1_NPC_HEALTH));
+                    assert!(phase.hostiles.iter().all(|npc| npc.respawn.is_none()));
+                    assert_eq!(phase.last_target, Some(3));
+                    assert!(phase.aggro.is_empty());
+                    assert!(phase.npc_attack.is_some_and(|a| a.next.is_none() && a.player_health == 388.0));
+                    assert_eq!(phase.npc_cast, expected_npc_cast);
+                    assert_eq!(phase.xp, Some((50, 0, 1)));
+                    assert_eq!(phase.kill_loot, Some(0));
+                    assert!(phase.heart.is_some_and(|h| h.progress == 0 && !h.done && !h.rewarded));
+                    assert!(phase.enabled());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn skill_caster_ownership_uses_the_controlled_fixture_character() {
+        let mut phase = populated_phase()
+            .with_hostile_npc(100, [5.0, 0.0, 0.0]).unwrap()
+            .with_damage_on_skill(10.0)
+            .with_skill_order_echo(NonZeroU16::new(4321).unwrap());
+        phase.population.as_mut().unwrap().plan.character_index = 7;
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        let foreign = phase.push(&skill_begin_from(1, 3, 10170));
+        assert!(phase.respond(&foreign[0]).unwrap().is_none(), "agent1 is not this fixture's caster");
+        let owned = phase.push(&skill_begin_from(7, 3, 10170));
+        let reply = phase.respond(&owned[0]).unwrap().expect("controlled caster retains hit and echo");
+        let mut cursor = &reply[..];
+        let order = AgentBehaviorOrderFrame209026::decode_frame(&mut cursor).unwrap();
+        assert_eq!((order.agent_index, order.word), (7, 4321));
+        let health = HealthFrame209026::decode_frame(&mut cursor).unwrap();
+        assert_eq!(health.character_index, 3);
+        assert!(matches!(health.operation, HealthOperation209026::Currents { current, .. }
+            if current == LEVEL1_NPC_HEALTH - 10.0));
+        assert!(cursor.is_empty());
+        assert_eq!(health_of(&phase, 3), LEVEL1_NPC_HEALTH - 10.0);
+        assert_eq!(phase.last_target, Some(3));
+        assert_eq!(phase.aggro, [3]);
     }
 
     #[test]
