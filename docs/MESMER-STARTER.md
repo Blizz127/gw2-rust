@@ -78,10 +78,14 @@ and [recharge/context observer](re/209026-skill-recharge-consumers.md#prepared-p
 pass28 and16 host mock tests respectively. Both are staged in the private
 run145 diagnostic using the offered runner0e6ac30 and live900 metadata.
 No run145 client has launched: a fresh shared-resource window from the
-existing integrator remains required. The staged server34/packed78 Word0
-experiment is being revised after source review proved a nonzero duration
-precondition on ordinary execution and a separate controlled-order admission
-flag. No positive duration is yet claimed as10176's retail cast time.
+existing integrator remains required. The
+[echo-precondition trace and fix](re/209026-skill-order-echo-preconditions.md)
+replace the unlaunched Word0 experiment with commitcac0e9a's explicit
+nonzero-duration option and controlled-order admission flag. Eight focused
+tests and debug/static builds pass. Run145 now stages that static binary with
+analyst-selected1000ms; no positive duration is claimed as10176's retail cast
+time. Its1831-entry manifest is pinned, auth/mission no-listener preflights
+pass, and both archive diagnostic readers are private pinned copies.
 The [map gate](re/209026-skill-context-map-gate.md) independently resolves
 context1 once map379 is installed, selecting the base recharge content20000
 before display modifiers. Actual recharge execution remains unimplemented.

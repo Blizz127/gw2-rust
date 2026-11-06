@@ -4,8 +4,11 @@
 [prediction lifecycle](209026-predicted-skill-order-lifecycle.md) and
 [skill request boundary](209026-mesmer-skill-command-path.md). No client was
 launched, archive opened, packet changed or runtime result claimed here.
-The existing proposed fixture still sends server34/packed0x78 with Word0;
-the observer does not establish that Word's correct retail value.
+The initial proposed fixture sent server34/packed0x78 with Word0. Before any
+run145 launch, the [execution-precondition trace](209026-skill-order-echo-preconditions.md)
+replaced that input with an explicit nonzero diagnostic duration and the
+controlled-order admission flag. The observer is unchanged and does not
+establish a correct retail duration.
 
 ## Seven bounded source sites
 
@@ -123,3 +126,36 @@ syntax failure and an oversized partial factory capture, superseded by the
 successful exact-entry query. No claim relies on omitted factory bytes, the
 isolated executor prologue, jump-table bytes decoded as instructions, or
 unobserved runtime behavior.
+
+## Prepared run145 inputs, no runtime result
+
+The unlaunched private run is
+`/home/blizz/gw2-sandbox/runs/run145-mesmer-skill-order-observation`.
+It uses the exact offered runner0e6ac30 plus these seven passive sites and the
+three disjoint recharge/context sites, deployed metadata900, prepared synthetic
+inputs and no saved-character store. Removing only the helper insertions and
+their arm call restores the production GDB script exactly. The combined
+script hash is `429f56c0d1ad356e2060820d633bd11e4348de1f1468d9d08a30dfe9a46172c2`.
+
+The corrected research server is commitcac0e9a's static binary, SHA-256
+`52cc0108825effb3d00a0a4561be8ab10e1f7b98742dd82802325117073f0ea2`.
+Duration1000ms is explicitly selected for this experiment; it is not inferred
+from the rounded tooltip. The fixture has no hostile/damage/loot/heart/respawn
+options and introduces no healing or630 reply. Its UI presses key6 once.
+
+The final1831-entry input manifest is
+`probe-inputs.json`, SHA-256
+`3bf20d201df00ee1e3b000706b4327d9e4fb94150f2c7aa2383bc9de3aef47ec`.
+The earlier72770c6 manifest is retained privately. Shell/Python syntax and both
+auth/mission no-listener preflights pass. Private copied archive readers are
+included in the manifest. The launch wrapper rechecks the exact lease before
+archive preflight and immediately before launch. **NOT-LAUNCH-READY remains**;
+no fresh shared-resource window has been granted and no client has launched.
+
+Initial observer composition: REA
+`ev_f652257e9b531c6ac6b43c62fb07d910a0cca70b279dc509b59bf1ebf8542f65`.
+Corrected input preparation: REA
+`ev_b2c0ab515a7c9124189408eda3d057bfa9bda3e40c77826fb2646c538e82ec98`.
+Both captures exited zero with complete raw output and no runtime/archive
+access. Strict scalar readers retain incomplete coverage when terminal records
+are missing; preparation is not a successful native cast observation.

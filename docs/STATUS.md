@@ -47,9 +47,11 @@ Tested commit5169b98 prevents Ether Feast from causing generic attack damage,
 target changes or retaliation; the sole publisher has the ready handoff,
 but no newer live receipt is available. Passive cast/recharge observers are
 staged with44 focused host mock tests passed. Run145 has not launched while
-the fresh shared test-resource reservation is pending. A new source trace
-also rejects the old experiment's zero-duration execution assumption; its
-research-only input is being corrected before use. See the
+the fresh shared test-resource reservation is pending. Commitcac0e9a corrects
+the research option to require explicit nonzero duration and the demonstrated
+controlled-order admission flag; eight focused tests and both builds pass.
+Its static binary is staged privately and handed to the publisher, with no
+default profile activation or new live claim. See the
 [completion ledger](MESMER-STARTER.md#current-checkpoint) for the exact boundary.
 
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
