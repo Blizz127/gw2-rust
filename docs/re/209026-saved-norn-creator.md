@@ -1269,3 +1269,90 @@ neither supports exhaustive absence. Unverified unrelated processes are untouche
 Private bundles: `/home/blizz/re/gw2/notes/209026-norn-creator-run119-20261105.json`
 and `209026-norn-creator-run120-20261105.json`. Raw evidence/screenshots remain
 outside the repository.
+
+## Run266 incomplete movement-vector observation
+
+Run266 ran once under exact window56 and a fresh root controller permit. Its
+gate was removed only after the lease and permit were verified. It used the
+pristine unlaunchedrun145 prefix, unchanged154-byte syntheticrun144 record,
+exact11d2c56 game/pinned profile
+and CDN950 assets at normal stage0. Only diagnostic movement logging changes
+to every report. Spawn, actor placement and progression are not injected.
+
+The [movement source contract](#static-movement-vector-observation-contract-after-run264) supplies
+three passive sites: input vector entry, computed vector and composed vector.
+The additive observer starts disabled; a fresh nonce-bound ten-second marker
+permits baseline, input and post samples. Each pair verifies selected-thread
+Windows TLS, context, caller frame and source bytes. One S750 bootstrap needs
+root's current-image backward-ground attestation. A later single W250 needs
+a fresh actual anchor and a fully visible immediate-scene image. No other
+movement, turns, targeting, combat or story inputs are admitted.
+
+Thirty observer mocks,17 controller checks,10 independent writer/reader and
+physical-mount alias cases, eight execution-binding cases and both saved-profile
+no-listener checks pass. A false host success without native input/post samples
+is rejected. All1851 manifest entries and82 non-prefix entries are verified;
+removing the observer addition returns the production runner GDB bytes exactly.
+The actual GS-base exposure and GDB post-event sampling remain untested;
+the controller released incomplete without a retry. Generic vectors do not
+prove physical W consumption, controlled-player context, collision or a movement
+cause.
+
+Private ready receipt `run266-norn-input-vector-ready-20261106.json`,28108 bytes,
+SHA256 `f4e3cde60cacbd0cce6839dd3d5bff5e20d55017f56b2bff10aadc29fc81151d`.
+Manifest SHA256
+`1eda9c5d4d7fdb3c05d51b9f236c902faf93ac3a435d561223aec9ee4e97189d`.
+The exact lease/controller/cleanup templates preserve the825-second total
+budget and report observer cleanup separately from shared-resource return.
+
+After a fresh image review, one S750 input produced22 actual appended movement
+reports, from `[-3204,-25600,-3742]` to `[-3271,-25600,-3743]`. The next passive
+scene returned with9seconds of input time remaining, below the controller's
+22-second pre-focus guard. No W was authorized, attempted or sent. No targeting,
+combat, interaction or story input occurred. The observer window never opened:
+baseline/input/post each have zero complete samples. The released result and
+outer UI status13 remain incomplete; this does not diagnose W consumption or
+collision and does not establish a route or Great Hunt completion.
+
+The original strict final reader exited2 with `coverage terminal`: the controller
+had recorded a null terminal while releasing incomplete, then the debugger
+appended `inferior_exited` during shutdown. Both records are retained unchanged.
+A separately pinned supplemental reader validates the earlier release capture,
+zero-phase snapshot and incomplete outcome, then the exact later armed→terminal
+log and matching stopped handshake. It requires zero callbacks/samples, no W
+artifacts, source checking and disabled hooks; only the three temporal coverage
+fields are projected in memory for the original checks. Acceptance remains false.
+Ten focused reader tests pass, including mismatched snapshots, false completion,
+extra phases, missing terminal, wrong nonce and false cleanup. The separate return
+guard passes one positive and25 negative cases. Its lease,82 immutable-input and
+atomic exact-window CAS checks are unchanged.
+
+Window56 was returned at **2026-11-06 17:56:10Z**. Container absence, frozen and
+working PE hashes,82 non-prefix inputs, the154-byte synthetic record and console
+privacy passed. The final `inferior_exited` record and stopped handshake prove
+observer exit cleanup separately from the earlier incomplete controller snapshot.
+Root holds no resource and authorized no retry.
+
+Private retained evidence:
+
+- Launch `209026-run266-norn-input-vector-launch-20261106.json`, SHA256
+  `156bee9218748fc87940553fd37d396cd7ea79fae1e2b3484da706e715ed1fbc`,
+  `ev_11897a4161128e47e170a19bf95471855a1220d8356756f43571a5ab7ac244a8`,
+  exit13, untruncated, owned cleanup verified.
+- Original failed reader `209026-run266-norn-input-vector-readback-20261106.json`,
+  SHA256`9c619f4d05ea2b8666e55d9431cf91f6f99412f7fda073d869551c42ea3e75a7`,
+  exit2; diagnostic `209026-run266-strict-reader-diagnostic-20261106.json`
+  retains the exact exception.
+- Supplemental readback `209026-run266-postexit-incomplete-readback-20261106.json`,
+  SHA256`ea72c0349f1e2321e0ffd78bbadfa35712a85143d30beac9bcdbf509fb98807f`,
+  `ev_28762417b95667b225a8f53c79022739fee17ff283cf0f1c08876dffd5e2b15b`.
+- Resource return `209026-run266-postexit-resource-return-20261106.json`, SHA256
+  `94ff5cc968fb1289ed309909bc16c63e3e7bc080f03f00a9013bd7e96ab2055f`,
+  `ev_187348285d81fce58c134f1f311ea12498ed0a866e3e2510a5383bc13276e295`.
+
+The supplemental readback and resource return exit0, untruncated, with verified
+owned cleanup; those statuses do not change UI13 to a passed gameplay probe.
+Launch process observation reports66 unverified environment reads; return
+reports one. These observation limits are retained without attributing ownership
+to those processes. No runtime, original helper, readiness or manifest file was
+rewritten to make the result pass.

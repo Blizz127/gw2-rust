@@ -1282,3 +1282,83 @@ its three source/evidence pins. Capture exit0, untruncated output and owned
 cleanup pass. An unrelated process denied environment inspection and was
 left untouched; its ownership remains unverified. No live mutation or
 client/sandbox access occurred during the readback.
+
+## Verified buff-fact reader 664e2bd
+
+The sole publisher deployed `/home/blizz/gw2-rust-664e2bd` at
+2026-11-06T17:28:05Z after the server reached zero humans. The staged build
+was held while the owner was online. Rollback is `/home/blizz/gw2-rust-11d2c56`.
+This adds the typed buff-fact reader and byte-identical named-value resolver
+dependency on integratedf7674f1; release head is75ba240b6239dbaea07a45bf10caed829c4898fe.
+It adds no condition sender, effect policy or gameplay default. Seventeen
+focused tests, actual retained fact reads in eight mode/path combinations,
+the musl build and both saved auth/world startup checks pass.
+
+Independent root readback at17:35:01.502780Z verifies:
+
+- Game1893424 bytes, SHA256
+  `8f80b79229eca44b34f17d7693853ef20a554331809bc0911b90313e7fa7b3ee`.
+- Manifest SHA256
+  `9e17f6b7b28cc834529517d6b59b5f2c5b990d999b542ad684860626e31f615e`;
+  all current and rollback entries match. Only BUILD and game differ.
+- Four owned healthy listeners, zero humans/bots, saved mode ON, two private
+  0600 records in the0700 store. Record contents were not read; activation
+  backup remains unchanged.
+- Profile, supervisor,27-byte skills and all15 story arguments unchanged;
+  chain/Ether Feast remain enabled, sword2 diagnostics disabled, cadence20.
+- CDN latest `209026 0 0 2130706950 508`, root SHA256
+  `10fb2479c34c3a2e623214457b225aad78b2246001fc52ef2e50ad61ee002537`;
+  prior bytes/rows and served root/selected leaf responses match.
+
+Receipt `664e2bd-release-verification-20261106.json`,7514 bytes, SHA256
+`e4fd5ffbb8cc0fab1cc2727e742de8dd4a65229ef0c3ebae33a1375e6fd589ac`.
+Full REA `209026-664e2bd-release-readback-20261106.json`,61578 bytes, SHA256
+`0312db722c5036e5d550f2ef41dc6839a81dc9b4d0dc92f4a60c7b3d58480b01`,
+Evidence `ev_1a747a80f49d573fcff43eb3ab04d60cee9cdf92b3c7d301486113d6510fef2f`.
+Capture exits0 without truncation and verifies owned cleanup; five unrelated
+EACCES environments remain unverified and untouched. No live mutation or
+client launch occurs in readback. The frozen publisher receipt retains a stale
+prior BUILD hash; the verified manifest/local kit agrees on actual BUILD
+`65a9f176d28890ba73bfbfec5a3ba8c15f7eac83693d8fd7a24cb11a29ba7f00`.
+That metadata correction was reported directly to the publisher.
+
+## Verified quest164 release: 75ba240-veil
+
+The sole publisher deployed `/home/blizz/gw2-rust-75ba240-veil` at
+**2026-11-06 17:35:27Z**. Independent read-only REA verification passed at
+**17:43:36.393802Z**.
+
+- Game:1,938,888 bytes, SHA256
+  `33c150cb95be140544d52502bd6551024463fff7d0c15dfaf4301abb433f7580`.
+- Manifest:`10f539216e3c477a6224e52651bc2f69a2caccda0e4e35cb1eeb04cd24ccadd3`.
+- Profile:`116d465912223bfd72dda96cdf445da044edc3c998b333dcd17841bc515edc78`.
+- Supervisor:`0a66da0a6f0d34f336854c5c2ce6a3725ae1414a8fbb2487fab94f795196f2e8`.
+- Rollback:`/home/blizz/gw2-rust-664e2bd`, game
+  `8f80b79229eca44b34f17d7693853ef20a554331809bc0911b90313e7fa7b3ee`,
+  manifest`9e17f6b7b28cc834529517d6b59b5f2c5b990d999b542ad684860626e31f615e`.
+
+Current and rollback manifest sums passed. Four owned listeners were healthy,
+with zero humans/bots. Saved mode retained two private records (directory0700,
+records0600); no record contents were read, and the activation backup was
+unchanged. All31 story arguments, including quest164, matched the pinned
+profile. Diagnostic story seeds were absent. Ether Feast, sword chain,27-byte
+skills, damage30 and CDN950 were preserved; legacy autoattack, echo and both
+sword2 diagnostics remained off. Only BUILD, game, profile and supervisor
+differed from rollback.
+
+The publisher reports laneb09 completing the quest164 sequence with a prepared
+character, sandbox seed and diagnostic placements, including transfers393→401→28,
++2641XP and+70copper, without asserts. That used binary1351972 before the unused
+664e2bd readers were merged. This audit verified deployment and feed health;
+it did not rerun or raw-audit that native gameplay. Normal placements, the starter
+hand-off, saved-character story path and Svena/Garm appearances remain unproven.
+Dialogue/waves are reconstructed; durable progress, item rewards, the omitted
+cinematic and playable successors168/169 remain incomplete.
+
+Private receipt `75ba240-veil-release-verification-20261106.json`, SHA256
+`a03e0c1d1ca372aa63886f655d7aa284c71b884bd4133017fb773fbcf1388c3d`.
+Full REA `209026-75ba240-veil-release-readback-20261106.json`, SHA256
+`ec33bc460fede0f7666244b07a45aac59a5be2a137bc9c441ec00fe340da6836`,
+Evidence `ev_ec603144fbd2ae38e2ed646dba474635676111acada7af672e409e5c86a5a6e2`.
+The verifier exited0, untruncated, with verified owned cleanup. Four unrelated
+process-environment EACCES observations remain unverified and untouched.

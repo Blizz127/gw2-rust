@@ -208,8 +208,10 @@ exits0 without truncation and verifies owned cleanup; four unrelated EACCES
 process environments remain unverified and untouched. Retained evidence
 `209026-skill-buff-fact-rust-cache-smoke-20261106.json`, SHA256
 `0f3b2edcd907bcb27a8954ddd05120d1d561eb5c6494b0592856e837c8957ef0`.
-The exact artifact was handed to the sole publisher; delivery is not a live
-release claim. The later [duration/level trace](209026-buff-duration-level.md)
+The sole publisher deployed the exact artifact at17:28:05Z after the zero-human
+check; independent17:35:01Z readback passes with rollback11d2c56 and saved mode
+retained. See the [verified release](209026-saved-norn-live-activation.md#verified-buff-fact-reader-664e2bd).
+The later [duration/level trace](209026-buff-duration-level.md)
 also separates the client duration field, modifier level input and UI row count.
 
 The typed reader is commit `11d2c560025922c3729cd89585fdf53b8508fd12`, based

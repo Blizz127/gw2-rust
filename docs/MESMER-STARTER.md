@@ -23,25 +23,42 @@ API/wiki names may locate content but do not replace client verification.
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | All15 map28 heart areas and14 substitute NPCs are in76af245. Generic inside-area kill progress and placeholder rewards remain fixture rules. Authored tasks/events and full discovery are incomplete. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised. Verified live fccd1b0 adds a frozen normal-mode quest154 XP award paid once with item/coin; current2500-per-kill settings yield zero, and positive coverage is synthetic. Retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
-| Relevant starting story, scenes and audio | Quest162 is enabled in verified live d0288e1-pups. Publisher reports a prepared-fixture sequence through maps792/392 and return28; normal placements and saved-character story path remain unproven. Dialogue is reconstructed, item rewards and cinematic playback are missing. | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
+| Relevant starting story, scenes and audio | Quest164 is enabled in verified live75ba240-veil alongside162. Publisher reports prepared-fixture sequences through792/392 and393/401 with return28; normal placements and saved-character story paths remain unproven. Dialogue/waves are reconstructed, item rewards and cinematic playback are missing;168/169 remain unplayable. | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
 | Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state and the new guarded Ether Feast health/cooldown carry are process-local only. The existing store has no progression fields or update API; restart progression requires a separately authorized storage-format change. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards; preserve original creation data and rollback compatibility. |
 | Human Mesmer opening and Queensdale, after Norn | Incomplete | Equivalent creation/tutorial (138)/area (15) coverage, including source-backed identification of the remembered circus/town sequence. |
 | Final completion audit | Not reached | Every required item above proven with current source and runtime evidence; no placeholder counted as retail accurate. |
 
 ## Current checkpoint
 
-**664e2bd is tested and handed to the sole publisher, not yet verified live.**
-It adds the bounded type-2 buff-fact reader and its existing named-value resolver
-dependency on current `f7674f1`. Seventeen focused tests, both retained sword
-fact paths in all four explicit modes, the musl build and two current-profile
-startup checks pass. The [reader receipt](re/209026-buff-instance-lifecycle.md#implementation-and-checks)
-pins the artifact. Separately, the [duration/level trace](re/209026-buff-duration-level.md)
-closes client duration and UI row-count consumers and the modifier level-input
-role. These findings add no authoritative condition application/expiry policy.
-The movement-vector observer and run266 harness remain offline preparation;
-there is no new root runtime or resource lease.
+Latest independently verified live: **75ba240-veil**, deployed17:35:27Z and
+checked17:43:36Z on2026-11-06 at `/home/blizz/gw2-rust-75ba240-veil`;
+rollback664e2bd. Four healthy owned listeners, two private saved records and
+exact31 story arguments passed readback. Quest164 has publisher-reported
+prepared/seeded native smoke; normal placements, starter hand-off and the
+saved-character story path remain unproven. Full retail completion remains
+open. [Release evidence](re/209026-saved-norn-live-activation.md#verified-quest164-release-75ba240-veil).
 
-**11d2c56 is verified live at16:59:09Z**, deployed16:57:41Z to
+Earlier **664e2bd was independently verified live at17:35:01Z**, deployed17:28:05Z to
+`/home/blizz/gw2-rust-664e2bd`, rollback11d2c56. The sole publisher waited for
+zero humans before restarting. It adds the bounded type-2 buff-fact reader and
+existing named-value resolver dependency on `f7674f1`. Seventeen focused tests,
+both retained sword fact paths in all four explicit modes, the musl build and
+two current-profile startup checks pass. Readback verifies exact current/rollback
+hashes, four healthy owned listeners, saved mode/two private records, unchanged
+backup/profile/supervisor/all15 story arguments and CDN950 responses.
+[Release evidence](re/209026-saved-norn-live-activation.md#verified-buff-fact-reader-664e2bd).
+The [duration/level trace](re/209026-buff-duration-level.md) also closes the
+client duration and UI row-count consumers. Buff738's two authored modifier
+rows return constant1.0; exact labels are Incoming Damage and Incoming Condition
+Damage, with signed percent UI templates. Current selection remains unresolved.
+These findings add no authoritative condition application/expiry policy.
+Run266 closed incomplete under window56. One S750 produced22 movement reports;
+the remaining controller budget did not admit W, so no vector window or samples
+occurred. UI13 remains failure/incomplete evidence. Later observer exit cleanup,
+container absence and unchanged pinned inputs were verified separately; exact
+window56 was returned17:56:10Z. [Run266 evidence](re/209026-saved-norn-creator.md#run266-incomplete-movement-vector-observation).
+
+Earlier **11d2c56 was verified live at16:59:09Z**, deployed16:57:41Z to
 `/home/blizz/gw2-rust-11d2c56`, rollbackd0288e1-powder. It adds a pure bounded
 buff-body reader on integratedd0288e1. Eight focused tests, actual retained
 10170/10171 fact paths, musl build and two saved-profile startup checks pass.
@@ -75,9 +92,9 @@ and the saved-character story sequence remain unproven; progress is process-loca
 [Release and limitations](re/209026-saved-norn-live-activation.md#verified-integrated-story-release-d0288e1-pups).
 
 Future production artifacts must include the current integrated lineage
-`f7674f183ac7ce2e9f4d87459bde9f4106f383c0` (d0288e1 plus11d2c56), or be handed as commits to the sole
-publisher for merge/build/test, preserving the current950 assets. Run264 uses older403 only as an isolated
-diagnostic comparison. It is now staged and root-reviewed:9 controller tests,
+`75ba240b6239dbaea07a45bf10caed829c4898fe` (f7674f1 plus664e2bd), or be handed as commits to the sole
+publisher for merge/build/test, preserving the current950 assets. Run264 used older403 only as an isolated
+diagnostic comparison. Its preparation was root-reviewed:9 controller tests,
 8 reader tests, exact-name/syntax checks and two startup checks pass. Root
 verifies48 metadata pins and all1839 manifest rows. Run264 now stops incomplete:
 S750/A750 produce44 fresh reports, then W750 and one passive follow-up produce

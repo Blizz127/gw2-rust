@@ -157,3 +157,72 @@ trigger, target admission, level selection, multiplicity, stacking/merge/cap
 rules and expiry/removal scheduling remain server-side reconstruction questions.
 The same applies to combat damage changes and cleanse policy. No gameplay
 implementation, observed buff display or retail-equivalence claim is made here.
+
+## Exact buff738 modifier values
+
+A bounded follow-up reads only cached `1282857:4626176` and its direct modifier
+collection. One group at offset 4626320 contains two 72-byte rows at offsets
+4626504 and 4626576, with raw kinds 41 and 43. Both have formula type 6, base
+float 1.0, coefficients 0, condition 0, flags 0 and null optional references. The
+exact evaluator switch maps formula 6 to `1412c1be2`, which returns the base field
+directly without an instance getter. These two authored modifier values
+therefore do not consume byte 5's level input. Two modifier rows do not mean two
+stacks, strikes or applications. The later selector trace below binds the UI
+labels and percent suffix without establishing authoritative effect policy.
+
+The complete presentation collector `140894e40..1408952bd` groups matching
+kind/reference rows and applies context and prerequisite filters before passing
+selected rows to the evaluator. Current mode/filter results remain unobserved.
+Authoritative effect, application and stacking policy remain unresolved.
+Constant formulas do not justify an arbitrary wire-level
+byte 5 default.
+
+Collection source:
+`ev_0c7e223389b1349d1e30c0302a3962aeb8c0c0016a624eceed0ae129a80d7a9c`;
+typed cache read:
+`ev_aa574240cf36fa7a232967957e8ccdd5f5fa73c8e7d8782630aa620d4dad20db`;
+exact formula table:
+`ev_94c2c2142ab470abd5ed9a51ddc496a47ffa7cd9b75bc2450b4c1f9786946417`.
+Private findings `209026-buff738-modifier-findings-20261106.json`, 13,043 bytes,
+SHA256 `34f9278e462a7d3c635e73d206640219b682fd9807b4614bf548c1711f4a7b48`;
+full seven-record bundle `209026-buff738-modifier-source-evidence-20261106.json`,
+418,847 bytes, SHA256
+`81f5a803ea39ce49c08b075c955968c9078d6919fe7720fa09ce9f26156d3e93`.
+The collection capture has aggregate truncation from rendered output: all
+11,805 raw bytes and 35 raw frames are retained, with zero normalized omissions;
+12 of 35 rendered frames are retained and 23 have unknown size. Its full selected
+function is present. The data and table captures are untruncated. All three
+new captures exited zero; process cleanup and source/cache pins passed. No
+runtime, archive access or gameplay effect occurred.
+
+## Modifier labels and UI units
+
+The exact kind41 selector cell maps to `14088d901`, returning text187494,
+**Incoming Damage**. Kind43 maps to `14088d90b`, returning text590644,
+**Incoming Condition Damage**. Both category cells select return1 from
+`14088d391`; positive values use text82509 (`+%str2%%% %str1%`) and negative
+values use71511. These templates explicitly supply a percent suffix.
+
+Both authored formula6 values remain1.0. Neither kind takes the special42/44
+subtraction branch. Both pass the absolute numeric value to general formatter
+`1403124e0`; its body was outside this bounded trace, so the exact rendered
+numeric string is not asserted. The label is preserved as Incoming Damage,
+without renaming it to strike or physical damage. The UI suffix does not prove
+an authoritative damage formula, additive or multiplicative stacking, a cap,
+application timing, target eligibility, expiry or current filter selection.
+
+Private findings `209026-buff738-modifier-kind-findings-20261106.json`,17,520
+bytes, SHA256
+`007c0ddd8e03249264ae963be25b181da615f1418be8bc58ff205166d13bb1b5`;
+full11-record bundle `209026-buff738-modifier-kind-source-evidence-20261106.json`,
+644,496 bytes, SHA256
+`b94094a47b00cbd9b05a13e3d41ddfb392950caf2c8a2e3497200031708d4fe6`.
+Formatter evidence `ev_7d6f1d865657d7242a51ceb1681fd9cfdc3de2e72f6c3cd69fe5dbd09c25bbb7`;
+selectors `ev_80fba4a9abf7e00750adb04e6f4b1221677fe6d3eaba50e8c8654037c6563bb7`;
+exact cells `ev_821835c46e4a11e8a86be4877a5106686ba5837b29789ba2eab1fb9e7e68a975`;
+selected text `ev_ebe1078446cd3f184207a5da6c928d29e0345d3dc2469bd9e9289b85aba226a1`.
+All four captures exited0. The selector capture retains all19,457 raw bytes,
+28raw frames and zero normalized omissions; its aggregate truncation concerns
+rendered output only (10of28 frames retained). The exact-cell capture has two
+unrelated process-environment EACCES observations; owned cleanup is verified.
+No runtime, archive or gameplay change was made.
