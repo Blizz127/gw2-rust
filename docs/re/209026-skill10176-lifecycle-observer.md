@@ -219,3 +219,25 @@ Private REA receipts:
   `ev_6c151d910951cc08114de60592800ece3d292fad789b42b90e647aebeaa611bb`.
 - `209026-run220-window30-return-20261106.json`,
   `ev_35c445f13de4943093d1fa78d89985c49e4b2c7740f7f6bc2ada5724014d3276`.
+
+The bounded rejection audit excludes missing/stale marker, source/RIP/inferior,
+deadline and memory-read failures. Only the producer hook was enabled; one
+deliberate ownership/SkillDef/slot guard rejected the callback. The existing
+aggregate counter cannot identify which guard. The+58/80000 request gate and
+null target are reported fields, not rejection causes in this observer.
+The retained producer ABI agrees with its register handling. Known cached
+definition alignment does not prove runtime pointer alignment.
+
+The marker was touched immediately before key6 at06:45:32.986234Z. Because
+no qualifying request opened the observation window, RCO queries remained
+disabled. Its earlier context-null sample is not a cast-time observation.
+This is an instrumentation coverage failure, not evidence of failed native
+skill execution. The minimal next diagnostic is a bounded first-failed-guard
+enum at the same producer hook, preserving every guard and access order.
+
+Private review: `run220-slo-rejection-review-20261106.json`, SHA-256
+`3aca4b50907bebbae9cda9706d1614782f3ee510185884a2d43a4db3ef25fbab`.
+REA `ev_23bb78c21d8fdef3d01e577f39d0be7f631487f6b96775df38d192dfecea2913`;
+complete bundle `209026-run220-slo-rejection-audit-20261106.json`, SHA-256
+`8eb07a0b6720613e4bc2e76bbdd49c5bf6046c0a3ce600a75a0712efa19fa558`.
+No observer change or new runtime occurred during this audit.
