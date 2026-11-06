@@ -35,6 +35,14 @@ owner's existing creation/deployment request; no separate owner-origin
 prohibition or new agreement prompt is cited. The prepared live character
 is not normal character creation.
 
+The [launcher publisher's reconciliation](re/209026-empty-composite-runner.md#publisher-reconciliation-2026-11-06)
+identifies the separate b127 blocker: the existing updater channel is public
+and unauthenticated, while this request is owner-only with no audience
+widening. No compatible authorized owner-only update feed is verified;
+manual preview archives are not such a feed. This is not an HTTP/access
+denial. Runner objects and rollback are verified, with no duplicate upload
+or launcher release. Independent server fixes continue through their publisher.
+
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
 heart56 and reward behaviors are fixture-backed; the authored quest154

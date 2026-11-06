@@ -177,3 +177,27 @@ SHA-256 `8b46b1ee69ea94ff16598656dedaa2b534c306d97d2f11f621d7c8c77e469143`.
 The compiled-pin statement relies on the retained publisher receipt plus the
 current feed version; no remote assembly inspection or actual owner update
 offer was performed. Saved-norn activation remains held.
+
+### Publisher reconciliation, 2026-11-06
+
+The user relayed the launcher's reconciliation of `f45083e2793a`:
+commit `ee7326a4` changes only launcher version, compiled runner pins/sizes
+and tests. Signer and access behavior are unchanged. This is the publisher's
+reported diff review, not a new independent inspection by the creator lane.
+
+The existing b126 updater channel is public and uses unauthenticated HTTPS.
+The scoped b127 request requires owner-only distribution with no audience
+widening, so that public channel cannot satisfy it. Earlier owner previews
+were manually delivered archives using separate profiles; they were not a
+selected update feed. No compatible, already-authorized owner-only update
+path has been verified. **This is a scope/compatibility blocker, not a current
+HTTP or access denial.**
+
+The runner objects and rollback are already verified. Do not duplicate their
+upload, publish b127 on the public channel, invent an access/signing change,
+or take the launcher publisher's baton. The reconciliation caused no launcher
+release. Independent server increments remain within their established release
+path. Run144 also passed the complete creator flow with the currently offered
+runner0e6ac30 and deployed metadata900, so the blocked runner63 selection is
+not a demonstrated dependency of that tested flow; see the
+[saved creator record](209026-saved-norn-creator.md#run144-combined-flow-with-the-current-launcher-runner).
