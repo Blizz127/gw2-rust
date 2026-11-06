@@ -19,7 +19,7 @@ API/wiki names may locate content but do not replace client verification.
 | Correct Mesmer components and startup skills/equipment | Partial: set4/item33355/palette90 are observed. Run216's605 grant passes availability and produces a real targeted10170 request with one30-point response and no release hit. Correction is live in4c46cad-sk and independently verified. Final-cache instrumentation is partial; full unlock/stat/effect policy remains open. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Reconstructed story actions/NPCs and a stand-in boss are live; Thora/trophy-kill progression is client-smoked. Publisher226 starts at stage4 and exercises fixed item/coin claim and map28 transfer. The full saved-character sequence, authentic conditions and retail XP/binding policy remain open. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Transfer/arrival is live in76af245. Prepared217 transfers379→28, renders the character and opens the map UI. Post-transfer movement/combat and combined saved-character runtime admission remain unobserved. | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
-| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast is live; run233 observes cooldown/retry/recast and run240 observes positive native health recovery under ordinary enemy damage. Sword-chain increment 7cfe9c4 is included in verified live ec69643; run241 observes all three native requests, matching hits and the slot icon cycle. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
+| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast is live; run233 observes cooldown/retry/recast and run240 observes positive native health recovery under ordinary enemy damage. Sword-chain increment 7cfe9c4 is included in verified live ec69643-alpinehall; run241 observes all three native requests, matching hits and the slot icon cycle. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | All15 map28 heart areas and14 substitute NPCs are in76af245. Generic inside-area kill progress and placeholder rewards remain fixture rules. Authored tasks/events and full discovery are incomplete. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
@@ -30,13 +30,23 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**ec69643 is verified live**, deployed at13:52:31Z to
+**ec69643-alpinehall is verified live**, publisher deployment14:46:19Z to
+`/home/blizz/gw2-rust-ec69643-alpinehall`, rollbackec69643. Independent15:03:34Z
+readback verifies current/rollback hashes, four healthy owned listeners,
+saved mode/one private record, unchanged backup and the served asset feed.
+The new root adds `MapAlpineHall`; binaries, profile and gameplay defaults
+remain unchanged. Publisher reports Hoelbrak rendering; this readback verifies
+the feed and service health. Both sword diagnostics remain disabled live.
+[Asset-release readback](re/209026-saved-norn-live-activation.md#verified-alpine-hall-asset-release-ec69643-alpinehall).
+
+Earlier **ec69643**, now the rollback, was deployed at13:52:31Z to
 `/home/blizz/gw2-rust-ec69643`, rollbackf926ce0. Root's13:55:55Z readback
 verifies the exact tested artifact, current/rollback hashes, four healthy owned
 listeners, saved mode/one private record and unchanged backup. It adds an
 explicit-duration sword2 phase diagnostic, **disabled live**, with no10334
 damage, evasion or recharge. Twenty focused scenarios, musl build and two
-no-listener startup checks pass. Native phase acceptance remains unobserved.
+no-listener startup checks pass. The later private run260 below observes its
+diagnostic native phase flow; playable10334 effects remain unimplemented.
 Profile, supervisor and current gameplay defaults remain unchanged.
 [Source and implementation](re/209026-skill10334-accepted-phase-observation.md).
 [Release readback](re/209026-saved-norn-live-activation.md#verified-sword2-phase-diagnostic-release-ec69643).
@@ -45,10 +55,17 @@ Run256 now confirms that the six-site native phase observer arms in the
 production runner. UI8 stops before the combat sequence; no10334 request or
 phase is observed. Window51 returned14:42:16Z with61 immutable inputs,
 prepared224, executable hashes, privacy and container cleanup verified.
-The retained timing refusal requires a fresh probe with a consistent budget.
+The retained timing refusal is corrected in fresh260 with a consistent budget.
 [Run256 evidence](re/209026-skill10334-accepted-phase-observation.md#run256-observer-armed-combat-sequence-did-not-start).
 
-Earlier **f926ce0**, now the rollback, was deployed at13:00:46Z to
+Run260 observes the earned2 grant and single10334 request, then native typed78
+begin/start, phases0/1/2, completion cursors at each interval end and matching45
+slot clear. All expected wrapper fields match. Launch/UI0 and cleanup pass;
+window53 returned15:05:12Z. These are injected diagnostic phases, not retail
+damage, evasion, recharge or full-skill completion.
+[Native phase evidence](re/209026-skill10334-accepted-phase-observation.md#run260-native-diagnostic-phases-and-slot-clear-observed).
+
+Earlier **f926ce0** was deployed at13:00:46Z to
 `/home/blizz/gw2-rust-f926ce0`, rollback403ac37. Root's13:03:57Z independent
 readback verifies the exact tested artifact, all current/rollback hashes,
 four healthy owned listeners, saved mode/one private record and unchanged
@@ -143,7 +160,7 @@ defaults. Twelve focused tests, musl build and two startup checks pass;
 prepared run250 now observes the earned2 grant, unlocked second weapon icon
 and a native10334/slot6 request after the target respawns. Launch/UI0 and
 window48 cleanup pass. The later ec69643 diagnostic adds phase messages, but
-native acceptance remains unobserved and playable10334 effects remain unimplemented.
+run260 observes their native phase flow and playable10334 effects remain unimplemented.
 [Implementation limits](re/209026-mesmer-starter-skill-requirements.md#earned-level-observation-increment-f926ce0-verified-live-disabled).
 [Native selection evidence](re/209026-mesmer-starter-skill-requirements.md#run250-earned-grant-and-native-sword2-selection).
 Private implementation receipt:

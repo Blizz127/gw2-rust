@@ -62,8 +62,8 @@ Focused tests cover literal update framing, raw fields, truncation, encoded
 requests, fixed phase/release order, no effects, replay, rejected and admitted
 replacement, target/life/owner loss, delayed deadlines and configuration.
 The existing chain/heal and saved-profile controls remain separate. This
-increment has no native acceptance evidence; run250 proved only grant/selection
-and request10334. A later bounded native observation can verify the selected
+increment initially had no native acceptance evidence; run250 proved only
+grant/selection and request10334. Run260 below later verifies the selected
 wrapper, reused steps, completion and slot release. Injected durations cannot
 recover a retail server strike/evasion or phase policy.
 
@@ -139,3 +139,68 @@ Private complete Evidence in `~/re/gw2/notes/`:
 - `209026-run256-mesmer-sword2-phases-return-20261106.json`, SHA256
   `915c305fe730b8ed391947dd06d83dfb0a9e335e7134349b336ce0368e92b7d1`,
   `ev_673f289e39ea64b42d1a49d8a139819c18ef8bf2f6b9074a9a5bb1ab4fd526c0`.
+
+## Run260: native diagnostic phases and slot clear observed
+
+Fresh260 uses the reviewed330-second UI budget and465-second total envelope,
+the same exact ec69643 binary, prepared224 record, actor/profile inputs and
+six-site observer as256, and a pristine145 prefix. Root verifies34 metadata
+pins and1830 manifest rows. The nine changed budget cases and two startup
+checks pass; unchanged reader, input-sequence and observer tests are reused
+through exact pins/source inverses.
+
+The four ordinary requests10170/10171/10172/10170 match health118→88→58→28→0,
+then logged2500XP, earned2, the605/612 grant, target4 respawn and fresh target4
+selection precede one10334/slot6 request. Serials are2147483669/3674/3679/3684/
+3691, forward deltas5/5/5/7. No extra skill request or10334 damage occurs.
+
+The independent native observer records a qualified request, then correlated
+13-byte typed78 reception, active owned order/start dispatch, and phase0.
+Four-byte existing-order receptions subsequently select steps1 and2; each is
+followed by start and phase dispatch with the same scoped correlation. Every
+available wrapper snapshot matches base391, extra789, range[2,4), six steps
+and21 events. No optional phase-field read is unavailable.
+
+| Observed step | Selected event interval | Offset | Cursor at completion | Completed-step counter |
+| --- | --- | ---: | ---: | ---: |
+| 0 | [0,1) | 0 | 1 | 0 |
+| 1 | [1,3) | 40 | 3 | 0 |
+| 2 | [3,18) | 280 | 18 | 1 |
+
+All three completion callbacks return0: none requests release. A later matching45
+direct path clears slot0 while the tracked order remains identifiable immediately
+before its release dispatch. The observer stops at `tracked_slot_cleared`,
+record17, with20 callbacks and two rejected out-of-scope observations. Their
+stages are receiver/packet and start/order; the retained rejection scalars do
+not identify the rejected behavior kinds. Raw receiver register arguments are
+preserved and are not treated as decoded outbound wire flags. Slot clearing
+does not prove deallocation or successful effects.
+
+Root reviews the hash-admitted before-key2 and7-second images: the second
+weapon icon is colored; displayed health changes275→388, and the latter view
+shows Wolf100%. The server independently logs ordinary regeneration from
+236→274.8→313.59998→352.39996→388. This is not10334 healing. No tooltip/name,
+exact animation/cancellation, recharge, strike count or evasion is established.
+The injectedD1000 schedule and debugger observations cannot recover retail
+server timing. Event cursors reaching their interval ends do not identify
+individual event effects or authoritative combat outcomes.
+
+Launch/UI0 and cleanup pass. Window53 returns at15:05:12.167973Z with61 immutable
+non-prefix inputs, unchanged prepared224, both executable hashes, console
+privacy and absent container verified. Full raw/normalized Evidence is retained
+without truncation. Both diagnostics remain off live; no gameplay/default,
+record, schema or publisher-baton change follows from this observation.
+
+Private evidence in `~/re/gw2/notes/`:
+
+- Launch `209026-run260-mesmer-sword2-phases-launch-20261106.json`, SHA256
+  `b7057a7ec53716336b2086f80d23f44294a0baf9c49ce56bfff1ba9a7aa50836`,
+  REA `ev_027f929fec287281f6e0ce2117fe57f5437f3d2bef3c7db6cc45b743ae2dd9dd`.
+- Readback `209026-run260-mesmer-sword2-phases-readback-20261106.json`, SHA256
+  `0d35ebe013819c29e2aab1317dbaf6f1971d535f374fd864e35ec417345dcc7c`,
+  REA `ev_b7a35486b18494b2f463d98bc7ce5c5fb8cb11bbc3104f211d312ed3449507f9`.
+- Return `209026-run260-mesmer-sword2-phases-return-20261106.json`, SHA256
+  `c9d24be8f81f6170aa6c778ac577f5593b47a94c0aebcd7e377fceafc4efb186`,
+  REA `ev_cd3d88ce1238cb1ee920f923eebc1118d56b1f8e2905c07e91539cf9aa4a56fe`.
+- Root outcome `run260-mesmer-sword2-phases-outcome-20261106.json`, SHA256
+  `33cbe48ae53669cad596ef8fddbfcab54bd2122ea4852592921471bbe5c526d9`.

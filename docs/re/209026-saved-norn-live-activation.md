@@ -1035,3 +1035,53 @@ evidence `ev_5ffaac595f834acc66cc101d6c589e3170a40ee0ff809e07b6ad50035d7ba5c6`.
 Readback exits0 with complete output and verified owned cleanup. This verifies
 the server release; native10334 phase acceptance, full retail mechanics,
 durable progression and launcher-feed publication are not established.
+
+## Verified Alpine Hall asset release: ec69643-alpinehall
+
+The sole publisher reports deployment at **2026-11-06T14:46:19Z** to
+`/home/blizz/gw2-rust-ec69643-alpinehall`, with `ec69643` retained for rollback.
+Independent readback at **15:03:34.385355Z** verifies the selected kit, every
+current/rollback checksum, four healthy owned listeners, zero humans/bots,
+saved Norn mode, one record with0700 store/0600 record permissions and the
+unchanged activation backup. No record contents were read. Root reviewed
+the verifier delta and ten pinned evidence/source files.
+
+This is an asset-only release. It adds root manifest2130706940 (332 bytes)
+and the `MapAlpineHall` leaf2130706944; only `BUILD` and `data/latest.txt`
+change among prior files. All binaries, profile, supervisor, startup skills
+and existing four manifest rows remain unchanged. The running CDN arguments
+and actual `/latest64/101`, root and leaf responses match the selected kit.
+Both sword2 diagnostics remain off; existing healing/chain, saved mode,
+world28, wallet/vendor/POI and default movement cadence20 are preserved.
+
+The publisher reports a lane-B03 handover to Hoelbrak326 that fetched the new
+manifests and rendered the Norn in a lodge. That client smoke is separately
+publisher-reported. This audit independently verifies asset integrity/feed
+and service health; it does not independently establish Hoelbrak rendering
+or Great Lodge392 acceptance.
+
+The publisher's original "empty manifest" description is inaccurate:
+2130706944 is112 bytes, MFSTv6/build209026 with one8192/8192/3444/flags0
+record. Its hash is pinned by the publisher-specified kit manifest and matches
+the served bytes. There is no standalone8192 file/manifest entry in this kit;
+whether the existing client archive satisfies it was not queried. No
+compatibility failure is inferred from that absence. The description
+correction was sent to the publisher without requesting another release.
+Two preliminary verifier failures are retained: an added empty-shape
+assumption and an added address classifier that excluded the exact authorized
+CGNAT endpoint. Neither was a mismatch against the published release bytes.
+
+Kit manifest SHA256:
+`7b7c2489fbad6fa621af88352b198c27bd0815391d17ebf80dfe85a5bb3cf5c8`.
+Root SHA256:
+`8153e2febd44a97af0e8d22f6af930ecb0c84198a2567c09f6af93d9ef272312`.
+Leaf SHA256:
+`195226488309fb3558de1dce3e79b797e0b6d5246be5899d24f2c09d64fd23d5`.
+Private scalar receipt `ec69643-alpinehall-release-verification-20261106.json`,
+SHA256 `d57bb2533c4a855de94d297e2116ecb0f60512d28168bfdc4c70d998813aff92`.
+Full `209026-ec69643-alpinehall-release-readback-v3-20261106.json`, SHA256
+`b554d678829d1225e8d4ec8c9b87d60e6951954412dedec845891f8fca8b8516`,
+REA `ev_53f3c69e63a687eab539793982e8603b77acb7fc646726477e05160aec58fce2`.
+Readback exits0 with complete output and verified owned cleanup. No
+deployment/configuration change or launcher-feed publication was performed
+by this verification.
