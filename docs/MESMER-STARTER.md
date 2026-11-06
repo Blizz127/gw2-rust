@@ -53,6 +53,19 @@ Next work preserves the release workflow while the sole publisher reassesses
 activation dependencies and source-backed tutorial/skill behavior advances. The full goal
 remains open; diagnostic fixture results are not retail encounter completion.
 
+The tested server guard `5169b98` excludes Ether Feast10176 from generic
+attack damage and implicit attack-target changes. All32 mission tests, build
+and no-listener startup preflight passed; it is handed to the publisher,
+without a newer live receipt yet. See the
+[damage correction](re/209026-ether-feast-damage-guard.md).
+The [literal amount reader](re/209026-mesmer-tooltip-facts.md) passes eight
+focused tests and actual frozen-record checks. The
+[character-backed context](re/209026-tooltip-character-context.md) grounds
+its explicit fixture level/attribute inputs, while
+[recharge consumers](re/209026-skill-recharge-consumers.md) distinguish
+ordinary cooldowns from count replenishment. These are source foundations;
+the cast transition and actual healing/recharge execution remain unfinished.
+
 ## Earlier source checkpoints
 
 - Historical baseline: Guardian entered Queensdale and walked (run110,
