@@ -50,6 +50,39 @@ selection and damage behavior tests continue to pass.
 Command:
 `cargo test -p gw2-net --bin gw2-game-observe mission::tests::auto_attack -- --test-threads=1`.
 
+## Built artifact, not deployed
+
+The isolated source worktree is
+`/home/blizz/scratch/gw2-repeat-admission-20261106-src`, commit **c862325**.
+Its dedicated target directory avoids reuse with the active working tree.
+`cargo build --offline -p gw2-net --bin gw2-game-observe --release --target x86_64-unknown-linux-musl`
+passes and produces a static-PIE executable:
+
+- Path: `/home/blizz/scratch/gw2-repeat-admission-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`.
+- Size: **1,582,024 bytes**.
+- SHA-256: **834c723f8d38139f7b60cd10700629e415fe333fc0c08db684880a8c7ed8e439**.
+
+The first isolated build lacked the four git-ignored extracted schema inputs.
+Exact copies from the already-tested root tree were then supplied privately,
+with hashes verified before the successful build. Their receipt is
+`~/re/gw2/notes/repeat-admission-build-inputs-20261106.json`. No source or
+schema substitution was inferred from a different client version.
+
+At **2026-11-06 01:41:33 UTC**, that exact binary passed two
+`--no-capture --check-config` startup checks: prepared auth and prepared
+Norn mission inputs. The mission check enables the corrected repeat option
+with a synthetic hostile argument and damage amount; it checks argument/
+fixture construction, not an authored NPC or rendered attack. Both checks
+report no listener started. Eight existing fixture input files were verified
+against the pinned run145 manifest and remained unchanged. The run145 script,
+staged binary, manifest and NOT-LAUNCH-READY state were not replaced.
+
+Check wrapper and retained receipt:
+`~/re/gw2/notes/check-repeat-admission-build-20261106.py` and
+`~/re/gw2/notes/repeat-admission-build-checks-20261106.json`.
+No native runtime, working archive, shared container, saved-character store,
+publisher process, feed or online service was accessed by these checks.
+
 The existing1000ms duration remains an explicitly labeled diagnostic
 placeholder. This correction does not derive a weapon's cast duration or
 change gameplay defaults. The standalone run145 Ether Feast observation
