@@ -12,6 +12,7 @@ pub mod archive;
 pub mod ability_value_content;
 pub mod animation_sequence;
 pub mod appearance;
+pub mod buff_content;
 pub mod content;
 pub mod content_name;
 pub mod creation_equipment_content;
