@@ -728,6 +728,25 @@ Private launch/readback/return records under `~/re/gw2/notes/`:
 - Root outcome `run244-norn-upper-route-outcome-20261106.json`, SHA-256
   `a10e0361a8469e8dbef41fc79851d2c42741ea32d3e4212a2437ea68fd715e44`.
 
+The retained input comparison confirms the same xdotool keydown/sleep/keyup
+structure and2s settle in236/237/244. Successful earlier S inputs requested750
+or1500ms;244 requested100ms. Earlier first translations also followed turns,
+and those UI scripts attempted F/conditional Escape before controller handoff.
+None recorded numeric input focus or actual application key delivery. These
+differences do not establish a duration, focus, binding or gameplay-state cause.
+Comparison receipt `run244-input-delivery-comparison-20261106.json` has SHA-256
+`4c8916434fc7bdbf22de7f1f20db0be0083504b02e3d98b6f2b8d9d47bc9ac01`.
+
+A subsequent strict scalar read of the retained59-line log reports generic
+messages5,191,278,280,424 and one each412/420, but still no movement. There is
+no pre-probe baseline or per-line timestamp, so these totals cannot establish
+post-probe activity. Complete receipt `209026-run244-input-counts-20261106.json`,
+SHA-256 `fff26b18876bb5d78f8f13a6b7e82d43c6589e8854c72b713f78fb2f9e1061bb`,
+REA `ev_5fa4fcbe1f0a8a59574e2b3560f280e6d54456f5c77152e56336dce16970ffbc`.
+The next scoped proposal is one S750ms delivery observation with numeric
+owned-window/focus metadata and append-only scalar log snapshots before/after,
+without route continuation. No new run or resource request is staged here.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
