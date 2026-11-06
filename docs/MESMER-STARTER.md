@@ -48,14 +48,23 @@ with the actual offered runner0e6ac30, without the runner63 repair: visible
 creator and returned-world avatar, unchanged initial record and no new
 crash-log bytes. It carries XP/loot/heart state only within the server process.
 Runner63 owner objects are uploaded, but the last
-launcher readback still selected b126/0e6ac30. The publisher marked rendering
-resolved and requested a roster choice; this new activation hold is being
-reconciled with existing owner authorization. Normal owner character creation
+launcher readback still selected b126/0e6ac30. At00:14:31 UTC the publisher
+marked rendering resolved and requested a roster choice; reconciliation of
+that activation hold with existing owner authorization remains unresolved.
+Normal owner character creation
 must not be advertised as available from these private tests alone.
 
-Next work preserves the release workflow while the sole publisher reassesses
-activation dependencies and source-backed tutorial/skill behavior advances. The full goal
+Next work preserves the release workflow while activation reassessment remains
+unresolved and source-backed tutorial/skill behavior advances. The full goal
 remains open; diagnostic fixture results are not retail encounter completion.
+
+The coordinator's00:42 UTC project-state check identified the native Claude
+publisher as waiting/input needed, with the cause unknown and no task-ledger
+receipt for5169b98. This does not prove release work is running or identify
+which input is needed; its connection to the earlier roster choice is unknown.
+Earlier handoffs and the latercac0e9a handoff remain
+recorded; no duplicate dispatch, restart or publisher takeover is authorized.
+The00:54 UTC live readback remains the latest deployment verification.
 
 The tested server guard `5169b98` excludes Ether Feast10176 from generic
 attack damage and implicit attack-target changes. All32 mission tests, build

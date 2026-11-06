@@ -30,8 +30,8 @@ was returned to the sole publisher for activation reassessment. The latest
 launcher readback still advertises b126/0e6ac30; runner63bc59a's owner objects
 are separately uploaded and verified. At00:14:31 UTC the publisher marked
 rendering resolved and requested a choice about replacing the prepared roster
-with an empty saved roster. That publisher hold is being reconciled with the
-owner's existing creation/deployment request; no separate owner-origin
+with an empty saved roster. Reconciliation of that publisher hold with the
+owner's existing creation/deployment request remains unresolved; no separate owner-origin
 prohibition or new agreement prompt is cited. The prepared live character
 is not normal character creation.
 
@@ -41,7 +41,7 @@ and unauthenticated, while this request is owner-only with no audience
 widening. No compatible authorized owner-only update feed is verified;
 manual preview archives are not such a feed. This is not an HTTP/access
 denial. Runner objects and rollback are verified, with no duplicate upload
-or launcher release. Independent server fixes continue through their publisher.
+or launcher release. Independent server fixes remain handed off to the sole publisher.
 
 Tested commit5169b98 prevents Ether Feast from causing generic attack damage,
 target changes or retaliation; the sole publisher has the ready handoff,
@@ -53,6 +53,15 @@ controlled-order admission flag; eight focused tests and both builds pass.
 Its static binary is staged privately and handed to the publisher, with no
 default profile activation or new live claim. See the
 [completion ledger](MESMER-STARTER.md#current-checkpoint) for the exact boundary.
+
+The coordinator's **00:42 UTC publisher-state check**, supplied later in
+conversation, identifies the native Claude publisher as **waiting / input
+needed**. The reason is unknown; this does not establish that release work is
+running or connect the wait to the earlier roster choice or another hold. The task ledger has no
+receipt for5169b98. Existing direct handoffs stand, including the latercac0e9a
+handoff; no duplicate dispatch, restart or publishing takeover follows from
+this status. Preserve the sole publisher, actual holds and safe rollout.
+The later00:54 UTC live readback above remains the deployment evidence.
 
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
