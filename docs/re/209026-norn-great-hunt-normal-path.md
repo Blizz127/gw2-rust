@@ -259,3 +259,119 @@ reader evidence in a fresh resource scope; closed window 65 cannot be reused.
 Retain the freshness limit and refresh the image before a delayed action.
 No new production change or deployment resulted from run275, and normal
 trophy/Ido progression and the full retail-accuracy goal remain incomplete.
+
+### Run276: bounded turn support, stopped before the first turn
+
+The new controller admits Q/E for 50–500ms, at most eight times, after Thora
+and explicitly closed dialogue. It retains the existing ownership, freshness
+and deadline checks, releases keys in `finally` and exit cleanup, rejects any
+sampled XYZ change or unintended target/interaction/combat/story event during
+a turn, and requires a short measured movement before longer holds afterward.
+No movement report is required for a turn; missing reports establish neither
+stationarity nor yaw. Six focused controller groups, seven parser groups
+(11 scenarios), and five actual-writer reader cases passed. These are mock
+checks, separate from native runtime evidence.
+
+Run276 retained the current `633fff8` configuration. Thora, step 1, dialogue
+and dismissal were observed. Eight successful holds produced 177 movement
+reports, ending at `[-2166,-25151,-3760]`. The next W200 request and its one
+passive observation produced no new report. The controller recorded
+`missing_translation_sample` and released incomplete, before executing Q/E.
+It still had 432 input seconds at the hold and 423 at the passive check, so
+this was not deadline exhaustion. Collision versus lost input remains unknown.
+
+UI and outer capture exited 13; strict readback is valid and incomplete.
+Window66 returned at **2026-11-06T22:09:11.072855Z**, with the container absent,
+79 immutable inputs, original synthetic record, executable hashes and privacy
+verified. Full capture, readback and return are untruncated; the first-view
+binder retains its rendered-terminal truncation flag. The full capture verified
+owned cleanup and retained 37 unverified process observations without acting
+on them. No hostile, hit, step 2, Ido/step 3 or native turn was observed.
+
+Private evidence:
+
+- `run276-native-controller-turn-checks-20261106.json`, SHA256
+  `037b08f49959bb974b0d044bb6fc74e0335fe7bcdff6c21a37b19c89e5017024`.
+- `run276-story-readers-checks-20261106.json`, SHA256
+  `61fe02da5ea8c00adf8884b4789e16f8a8cb6643376aa7995969a4ad2990b8c0`.
+- `run276-root-story-route-observation-20261106.json`, SHA256
+  `f1429947c5e214b3f20ca565ef49629ab9b8d44d53864327569b0804d0feeb2e`.
+- `run276-terminal-retained-audit-20261106.json`, SHA256
+  `c1e6bdb864f06b53e8d3008591d0790f908cf4e07b05d9bba15838dd90a060f2`.
+- Full launch: `ev_1dc4af6253efea848838a8bbd15a90b347d5aaa1f26176866bba997a5e80e81f`.
+- Readback: `ev_a0f50f404fbd21480dbe828e39b08ba662058fd9dd70bd051d33d53c80b44bf3`.
+- Return: `ev_71c4d27e652414f89d91b6bc57afe5b072228bf9545945a196aed59f68a984e6`.
+
+The next attempt should inspect the view earlier, from the starting apron
+after Thora's dialogue closes, then select visible ground toward a hostile
+and return to Ido. Run236's retained E500 view exposes the right apron;
+it does not prove onward passage or measured heading. The guards and full
+normal-path objective remain unchanged.
+
+### Run277: native turns and the right apron route
+
+Run277 changes helper identities and reader pins only; numeric constants and
+behavior match the tested run276 helpers. Its two staged no-listener checks
+passed. The fresh grant explicitly allowed the same bounded Q/E actions,
+starting with E250 after Thora's dialogue closed. The first two images lacked
+some hall geometry; the second candidate hover showed the hall and Thora's
+name before the single selection click. Target 21, interaction, step 1,
+dialogue and dismissal were then observed normally.
+
+Seven turn inputs were admitted. The first E250 did not visibly shift the
+background; the following E500 moved the doorway left and exposed the right
+apron. Later Q/E actions also changed the visible landmarks. All seven turn
+intervals had zero new position reports and zero typed parser events, so this
+does not exercise same-position rotation reports or establish yaw, continuous
+stationarity or camera-only motion. Five subsequent 250ms movement checks
+cleared calibration with measured XY changes; the first covered two consecutive
+turns. The final turn remained uncalibrated because root released incomplete
+without further movement.
+
+Sixteen measured holds produced 260 reports and traversed the right apron,
+covered carts and a different hall corner:
+
+| Observation | Final reported XYZ |
+| --- | --- |
+| First post-turn calibration | `[-3163,-25660,-3743]` |
+| Right apron onward | `[-2908,-26082,-3719]` |
+| Cart clearance with readable third-person view | `[-3083,-26811,-3722]` |
+| Far corner with readable near footing | `[-2906,-27040,-3738]` |
+| Foliage obstructing footing | `[-2796,-27081,-3745]` |
+| Final measured sidestep | `[-2743,-27074,-3747]` |
+
+The requested holds total 7250ms and turns 2600ms; neither is native processing
+time or a speed/angle measurement. The final view exposed forest downslope
+through foliage, without establishing a connected route toward a hostile.
+Root released incomplete with 78 input seconds remaining. No guard refused
+an action, no movement remained pending, and neither deadline nor turn limit
+had expired. There was no hostile selection, attack, death, step 2 or Ido/step 3.
+
+Strict readback validates all 29 actions and remains incomplete; UI and outer
+capture exited 13. Window67 returned at **2026-11-06T22:27:29.705028Z**, after
+container absence, 79 immutable inputs, the original record, executable hashes
+and console privacy were verified. Full capture verified owned cleanup and
+retained 74 unverified process observations without attribution or intervention.
+Root reviewed controller images, not all 67 retained images. Bind omitted one
+rendered frame and readback four, of unknown sizes; their raw and normalized
+terminal data remain complete. Full launch and resource return are untruncated.
+
+Private evidence:
+
+- `run277-root-story-route-observation-20261106.json`, SHA256
+  `717fb09f410e4c14b5bef2b7d13f700985ed73d64659c6d6b6e8ebcf6f10f85c`.
+- `run277-retained-turn-action-audit-20261106.json`, SHA256
+  `f4ff8bee1e20e87ee7f55e305a15e08170ea8dbed4adf1f4c0bb8cfcd663f530`.
+- `run277-retained-far-corner-findings-20261106.json`, SHA256
+  `5241be21defed4628abf5bed1df87b9069dc83ccb94faf233cab8b82690e5a54`.
+- First shifted view: `ev_e5888b594a0426a5891c6cae27d167066d31b2cc13e92a1b74338ff020970697`.
+- Full launch: `ev_f601d05292aad3cbeccfb77271a67984323397d97ad72f88ef41f76e9b5eefce`.
+- Readback: `ev_b43415bf9351c3a37110a9466ffb269ccbe5caa5b8e2ff342f3c4775c6be82cf`.
+- Return: `ev_04614fefdc1aedf922f6ba738f32344ae958e97f145e07ccec161a1ccceb153c`.
+
+The right-side route is now observed up to the far corner. Onward passage,
+normal trophy/Ido completion and full retail accuracy remain unproved. A clear
+view of the far-side ground is needed before entering the obscured section;
+the final forest view does not authorize an inferred descent. Repeating the
+same obscured movement/turn sequence would add little evidence. No production
+change or deployment resulted from these diagnostics.
