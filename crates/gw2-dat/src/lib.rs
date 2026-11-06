@@ -9,6 +9,7 @@
 //! (usually `InvalidData` / `UnexpectedEof`) and never panics.
 
 pub mod archive;
+pub mod animation_sequence;
 pub mod appearance;
 pub mod content;
 pub mod content_name;
