@@ -30,6 +30,12 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+Run220 reached the world and observed one Ether Feast10176 request plus the
+explicit1000ms diagnostic reply. Its lifecycle observer rejected one sample,
+so native execution remains unconfirmed; no healing/recharge is claimed.
+UI, cleanup and executable checks passed, and window30 was returned
+06:46:22Z. [Bounded result](re/209026-skill10176-lifecycle-observer.md#run220-request-and-diagnostic-reply-observed-lifecycle-incomplete).
+
 The independent earned-attribute increment **e78b028** on76af245 passed its
 isolated build,15 focused Rust tests,3 supervisor checks and4 no-listener
 preflights. Its concrete artifact was submitted to the sole publisher.

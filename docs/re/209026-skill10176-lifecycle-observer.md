@@ -160,7 +160,7 @@ Both captures exited zero with complete raw output and no runtime/archive
 access. Strict scalar readers retain incomplete coverage when terminal records
 are missing; preparation is not a successful native cast observation.
 
-## Fresh run220 staged; not yet launched
+## Fresh run220 preparation
 
 `/home/blizz/gw2-sandbox/runs/run220-skill10176-lifecycle` copies the pinned
 never-launched145 inputs without modifying them. Corrected cac0e9a server,
@@ -183,4 +183,39 @@ publisher. No grant is implied by submission. The launcher requires a fresh
 exact active lease, completed publisher working-copy operation and removal
 of the preparation sentinel. It checks the copy gate before and after
 archive preflight. Preflight45s, run345s and kill-grace15s bound execution.
-No client, archive access or shared container operation has occurred for220.
+At this preparation checkpoint no client, archive access or shared container
+operation had occurred for220. The subsequent run is recorded below.
+
+## Run220: request and diagnostic reply observed; lifecycle incomplete
+
+The publisher completed the separate working-copy operation and granted
+window30 at06:39:42Z. Root verified the exact active grant, copy marker,
+native publisher identity and staged pins at06:40:36Z, then launched once.
+The seven mapped-asset checks passed before launch. UI and outer run exited0;
+the container was removed, frozen/working PE hashes matched and console
+privacy checks passed. Root returned window30 complete at
+**2026-11-06T06:46:22Z**. Run145 remains unchanged and unlaunched.
+
+One native10176 slot0 request reached the observer server, which emitted one
+explicit1000ms diagnostic echo. This confirms request/carrier behavior only.
+SLO recorded armed and terminal events, with one callback rejected,
+`window_open=false` and partial coverage. No typed-start/completion sample
+was accepted. RCO sampled the native control listener: its guarded owner had
+second level1, effective attribute6=0 and a null recharge context at that
+instant. It recorded no query/630 events and no terminal. That isolated null
+sample does not establish later context state or an accepted healing cast.
+
+No retail duration, animation completion, healing or recharge success is
+established. The rejected producer sample requires a bounded guard audit;
+guards must not be relaxed to turn incomplete instrumentation into a pass.
+
+Private REA receipts:
+
+- `209026-run220-window30-verification-20261106.json`,
+  `ev_7f2e020c5807e0c84fdef8392fd5e1ff2edb40f69f4ce5160ffb28f5eaa657ab`.
+- `209026-run220-lifecycle-launch-20261106.json`,
+  `ev_f2dc465f0262c5091ed347de6a15ac3a2b21097caadd21fc09cd94567b8a83a1`.
+- `209026-run220-lifecycle-readback-20261106.json`,
+  `ev_6c151d910951cc08114de60592800ece3d292fad789b42b90e647aebeaa611bb`.
+- `209026-run220-window30-return-20261106.json`,
+  `ev_35c445f13de4943093d1fa78d89985c49e4b2c7740f7f6bc2ada5724014d3276`.
