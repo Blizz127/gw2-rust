@@ -6,6 +6,11 @@ playback fields. This establishes a concrete missing input for the Norn
 opening: the selected content key and authoritative trigger/sequence. It
 does not identify that opening or make character creation play it.
 
+The [creation-view bridge](209026-creation-cinematic-view-bridge.md) now
+binds the scene's view callbacks to creation-cinema loading/playback and
+the name-based join continuation. Its conditional transitions do not
+establish a Norn content key or server sequence.
+
 The [bounded cache/biography follow-up](209026-cinematic-biography-cache-boundary.md)
 retains 1,366 type-7 index entries and verifies sample filename references.
 The inspected biography question/answer records contain no direct relocated

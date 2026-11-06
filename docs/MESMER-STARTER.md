@@ -48,6 +48,15 @@ also corrects a fixture comment: maximum 100 / divisor 2 produces quotient 50,
 not two segments; no values changed. These are source/documentation changes,
 not a new playable artifact or a reason to rebuild 5516cb4.
 
+The [creation-cinema view bridge](re/209026-creation-cinematic-view-bridge.md)
+now binds playback to the conditional creation loading/playback views and
+their name-based join continuation. The
+[terminal UI submit](re/209026-creation-submit-cinematic-boundary.md) reaches
+client415 and its known submission-control event without directly choosing
+a cinematic. This narrows the remaining intro dependency to authentic
+Norn playback inputs/sequence; the generic UI/view wiring does not select
+them. No Norn cinematic is emitted and no further gameplay build was made.
+
 Latest independently verified live kit: **82d8d04-cdn900**, prepared mode,
 deployed 2026-11-05 23:56:31 UTC; kit/metadata hashes and four listeners
 reverified at 2026-11-06 00:54:19 UTC. The read-only check found the same

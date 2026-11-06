@@ -63,6 +63,12 @@ no heal/cooldown trigger. A misleading endurance comment is corrected with
 no value change. This slice adds no new gameplay build; 5516cb4 remains the
 latest checked candidate and 82d8d04-cdn900 the last verified live kit.
 
+The [creation-cinema view bridge](re/209026-creation-cinematic-view-bridge.md)
+also binds concrete playback callbacks to loading/playback states and the
+post-cinematic name-based join. The terminal submit and its known UI-disable
+event choose no cinematic directly. Norn-specific playback inputs and the
+server sequence remain unresolved; no fixture, build or release changed.
+
 New source notes bound [second-level scaling](re/209026-second-core-level.md),
 [command queue ordering](re/209026-agent-command-queue-order.md), and the
 [Norn goal-marker filter](re/209026-norn-map-goal-marker-filter.md). They do
