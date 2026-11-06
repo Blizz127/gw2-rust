@@ -130,3 +130,29 @@ Aggregate verification receipt:
 `b87f43a0088bf37f7184e071bcc4da156624acfc9396d3b0c1e78759d8759e37`.
 Publication watch: `earned-attributes-release-watch-20261106.json`, SHA-256
 `4539fba7eeae5b2990091ce8d470b7ce3aa07493d9daded46e2d6829973a1b36`.
+
+## Verified live release 0763c47
+
+The sole publisher shipped this increment separately at
+**2026-11-06T06:54:42Z**, kit `/home/blizz/gw2-rust-0763c47`, rollback
+`/home/blizz/gw2-rust-76af245`. The later discovery branch remains separate.
+Root independently verified the running release at **06:55:45Z**:
+
+- Both complete kit manifests and expected game/manifest pins pass.
+- Four listeners belong to their expected processes; zero humans/bots.
+- The game process uses `--mission-base-attributes default-curve`.
+- The17-byte skills, damage30, absence of autoattack/echo, map28 and14 heart
+  NPCs remain effective. Existing heart data hash also matches.
+- Saved-norn mode, one0700 record store and unchanged activation backup
+  pass. Character contents were not read; no configuration was modified.
+
+Game SHA-256:
+`b3478950101539115d46f006c33df786a7e178cbb00d22b1fe2d74a6e1d2f551`.
+Manifest SHA-256:
+`bbbc55b6f3cd251ff2fa430f5877c64e8eb10365b0663f123ce386ed49156043`.
+Receipt: `209026-live-0763c47-readback-20261106.json`, REA
+`ev_f9a09a24c6752a1266d164ba78b67afcad5cd56b358104cffabe95a836241852`.
+Read-only verifier exited0. Root reported the result to the existing native
+publisher and coordinator and marked the e78 handoff published. No duplicate
+release or launcher publication was requested. This release does not complete
+second-level/effective-attribute scaling, health growth or restart persistence.

@@ -30,6 +30,15 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+**0763c47 is now live**, deployed06:54:42Z at
+`/home/blizz/gw2-rust-0763c47`. Root independently verified all current and
+rollback hashes, effective default-curve setting, saved mode/one record,
+unchanged backup and four owned listeners at06:55:45Z; zero humans/bots.
+It ships the independent baseline/earned-attribute increment below and
+retains76af245 as rollback. Effective-level/health scaling, healing and
+durable progression remain incomplete. Discovery work is not in this release.
+[Release evidence](re/209026-earned-attribute-progression.md#verified-live-release-0763c47).
+
 Run220 reached the world and observed one Ether Feast10176 request plus the
 explicit1000ms diagnostic reply. Its lifecycle observer rejected one sample,
 so native execution remains unconfirmed; no healing/recharge is claimed.
@@ -38,12 +47,13 @@ UI, cleanup and executable checks passed, and window30 was returned
 
 The independent earned-attribute increment **e78b028** on76af245 passed its
 isolated build,15 focused Rust tests,3 supervisor checks and4 no-listener
-preflights. Its concrete artifact was submitted to the sole publisher.
+preflights. Its concrete artifact was submitted to the sole publisher and
+subsequently released in0763c47 above.
 Only `GW2_BASE_ATTRIBUTES=default-curve` is added to the latest profile;
-effective-level/health scaling remains incomplete. This handoff is not a
-deployment claim. [Evidence](re/209026-earned-attribute-progression.md#independent-port-onto-live-world-handover-source).
+effective-level/health scaling remains incomplete.
+[Evidence](re/209026-earned-attribute-progression.md#independent-port-onto-live-world-handover-source).
 
-**76af245 is live**, deployed 2026-11-06T06:21:31Z at
+Earlier **76af245**, deployed 2026-11-06T06:21:31Z at
 `/home/blizz/gw2-rust-76af245`. Root independently verified hashes, effective
 settings, saved mode, health and rollback at06:25:42Z. It includes the
 Wayfarer transfer, GUID/destination-bound carry and world arrival fixes,
