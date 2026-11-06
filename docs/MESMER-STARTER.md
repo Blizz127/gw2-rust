@@ -48,11 +48,20 @@ the full retail goal is incomplete.
 [Verified release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45);
 [implementation and limits](re/209026-ether-feast-reconstruction.md).
 
+Run236 observes E/Q turning on exact7c26f45, but the normal-stage0 route enters
+the camp hall. Only Thora/step1 completes; no hostile selection, attack, kill,
+reward or transfer occurs. UI/launch exit13 records the failed full-hunt
+predicate. Release meets the210-second target; cleanup, privacy, executable
+hashes and original synthetic record pass. Window39 returned10:16:44Z.
+The next route must go around the hall, with less controller planning overhead;
+no conclusion about globally unreachable hostiles follows from this attempt.
+[Result and limits](re/209026-saved-norn-creator.md#run236-turning-observed-full-hunt-route-fails).
+
 Run235 reaches native Control Options: W/S forward/back, A/D strafe, Q/E turn;
 weapon1 and healing6 are also displayed. Root independently viewed the admitted
-image. No settings or gameplay input changed; actual Q/E response remains to be
-exercised. Controller release was within56 seconds; cleanup, privacy, executable
-hashes and original synthetic record pass. Window38 returned09:52:33Z.
+image. No settings or gameplay input changed. Controller release was within56
+seconds; cleanup, privacy, executable hashes and original synthetic record pass.
+Window38 returned09:52:33Z.
 [Bindings and scope](re/209026-saved-norn-creator.md#run235-displayed-movement-and-turn-bindings-established).
 
 Earlier run234 reaches General Options and its displayed F11 shortcut, but does not

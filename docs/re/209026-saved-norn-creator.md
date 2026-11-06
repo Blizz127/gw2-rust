@@ -511,6 +511,61 @@ Return: `209026-run235-window38-return-20261106.json`, REA
 The admitted `controller-controls-bindings-2.png` has SHA-256
 `be4acce1c9bc95d3f3e3f10f869998fda34aea273f8a7a23046cd30400cc5400`.
 
+## Run236: turning observed, full hunt route fails
+
+Run236 uses exact7c26f45, the original154-byte synthetic saved record, normal
+stage0 and unchanged actor positions. An85-second rendering allowance precedes
+the first controller image, which shows the detailed hall. E500ms visibly turns
+the view right; Q250ms later turns it back left. Three W1500ms holds approach
+and enter the hall/cooking room. The view faces the oven and back wall; no
+onward passage or hostile is demonstrated. One S1500ms hold backs toward the
+entrance. Root independently hash-admitted and viewed the initial, E-turn,
+Q-alignment and interior images.
+
+Only Thora/step1 completes. There is no target227, attack/heal input, hostile
+death, payout, reward claim or map28 transfer. UI and launch exit13 preserve
+the failed full-hunt predicate at step2. Successful controller helper exits
+do not mean the hunt passed. The failure concerns the selected route; it does
+not establish broken movement, invalid placement or globally unreachable
+hostiles. The exterior route remains untested.
+
+Controller release completes at10:11:57.878Z, within the210-second target and
+240-second hard limit. Several inter-capture gaps are20–46seconds and include
+image interpretation, planning and tool turns; they cannot all be attributed
+to rendering. The source logs movement only when `moves_seen % 20 == 1`
+(`game_observe/mission.rs:3005` at7c26f45). Thus the last recorded position
+`[-2512,-26213,-3757]` is a sparse sample, not the exact final pose or yaw.
+
+The existing REA CLI captured the foreground launch under a730-second scenario
+through a yielded exec session. No host configuration change or detached
+client was required. Complete Evidence was saved privately before compact
+output. Strict readback and window return pass: the sandbox is absent, frozen
+and working PE hashes and original synthetic record are unchanged, and console
+privacy is verified. Window39 returned **2026-11-06T10:16:44.368582Z**. No
+preferences, stage, owner store, server implementation or release changed.
+
+Launch Evidence is untruncated with owned-process-group cleanup verified;
+45 unrelated process-environment permission failures remain recorded and
+untouched. Readback reports overall truncation because one rendered terminal
+frame has unknown size, while all5336 raw terminal bytes and both normalized
+frames are retained. Its parsed JSON and fresh strict readback agree. The first
+root summary validator rejected the blanket truncation flag before any writes;
+the corrected validator checks this narrower completeness claim without
+repeating the runtime or readback.
+
+Private root outcome: `run236-saved-norn-hunt-turn-outcome-20261106.json`, SHA-256
+`3aaf7c5dbe693b535908c67c2a2d044a9fa7c082b2b5152bb210cbdf5cce6a00`.
+Controller outcome: `run236-hunt-controller-outcome-20261106.json`, SHA-256
+`e2ce913742876e99705117f1302cad2205325b456258e58a5fd3cb31d1b9e0bd`.
+Launch: `209026-run236-saved-norn-hunt-turn-launch-20261106.json`, REA
+`ev_f4f2011f6d644ed23b7b2210564e395bc94804d976be17f15ce042bc3eb5af4b`.
+Readback: `209026-run236-saved-norn-hunt-turn-readback-20261106.json`, SHA-256
+`450a972d14fe6a43b6236d27f27cf9cbae4a63e639632487ea88759eadab826b`, REA
+`ev_542867b857b12275bc47b597de4a1a23584de7bd8274a8b14435e650c789468c`.
+Return: `209026-run236-window39-return-20261106.json`, SHA-256
+`19da2ad1b40a0ef76ef6b9b8a7230cccdeebf08b998435e77a16232a5c7ae1d7`, REA
+`ev_eb1bbadab713ff74398483e46143f54f43897ad741da8e881f1a25e38249e14f`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

@@ -48,11 +48,14 @@ The latest feed readback at06:25:42Z offers b128; its runner pin and audience
 were not inspected by that query. Existing audience restrictions remain.
 The earlier native roster prompt is resolved.
 
-Run235 independently establishes this fixture's displayed controls: W/S move
-forward/back, A/D strafe and Q/E turn. The controller released within its target;
-cleanup, privacy, client hashes and the synthetic record passed. Actual turning
-and the complete saved-character hunt still need a gameplay run. See the
-[binding evidence](re/209026-saved-norn-creator.md#run235-displayed-movement-and-turn-bindings-established).
+Run235 establishes the displayed controls: W/S move forward/back, A/D strafe
+and Q/E turn. Run236 then observes E/Q turning, but its route enters the camp
+hall and stops without selecting a hostile. The full saved-character hunt
+fails at step2; no attack, reward or transfer occurred. The controller released
+within its target. Cleanup, privacy, client hashes and the original synthetic
+record pass; window39 returned at10:16:44Z. This is a navigation failure in the
+probe, not evidence of broken movement or globally unreachable hostiles.
+See the [run236 result](re/209026-saved-norn-creator.md#run236-turning-observed-full-hunt-route-fails).
 
 Independent fix **9451cf0** applies the seven-line caster
 guard directly to current live c2cb6fd, preserving its combat settings and
