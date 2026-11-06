@@ -236,6 +236,55 @@ Private evidence:
 - Mission log SHA-256:
   `0332d110886c3c7477ff1ad027cd148abc19a2350564191231b76df6f96d3641`.
 
+### Run215: no target acquired; no cast issued
+
+`run215-skill10170-targeted-smoke` used the exactcf13a3b binary, unchanged
+availability grant and passive observer, with autoattack/echo absent. The
+UI removed Escape, required a fresh hostile227 selection before one key1
+press, and allowed four targeting stages with at most six seconds of
+forward movement. Ten focused reader checks and two no-listener startup
+checks passed before the run. Publisher window28 was verified05:47:58Z.
+
+All four10170 predicates again passed in the second startup lookup, with
+candidate result1 and the same partial final-return guard. The targeting
+stages produced **no227 event**, so the harness correctly issued no skill
+press. UI/outer exit9 is a failed combat smoke; no damage occurred. Cleanup,
+console and executable-hash checks passed. Window28 was returned complete
+at **2026-11-06T05:52:57.618120Z**, with no shared container remaining.
+
+Retained screenshots show the first world-ready capture was still loading.
+Later target captures show the world without the Escape menu. Movement
+advanced from approximately(-3188,-25600,-3742) to(-2605,-25643,-3750), then
+stalled nearx=-2598. The later camera is occluded by a wagon/wheel ahead of
+spawn. Thus repeated forward input is not a demonstrated route to the
+distant hostiles. The next focused test will use an explicitly diagnostic
+nearby hostile placement and bounded world-settle time, preserving the
+real client selection/request/damage checks. No live population changes
+or retail placement claim follow from that test fixture.
+
+Private receipts:
+
+- Launch: `209026-run215-targeted-launch-20261106.json`,
+  `ev_7225e4a200ee2f8276d49df9808a1f8288a2588de2fc145b061ee70b8aaf2634`.
+- Compact readback: `209026-run215-targeted-compact-readback-20261106.json`,
+  `ev_8dce571811fec1c597a53ec11d376b6371b0e48ed7e77b71e2fa52aae7e0aa20`.
+  The earlier verbose readback was truncated; this bounded readback is
+  complete and pins both logs below.
+- Window return: `209026-run215-window-return-20261106.json`,
+  `ev_3a08abfc9e9a31b692bec6018082a38e465f793bd471858bf6525b091679a852`.
+- Client log SHA-256:
+  `057ac8d1237b907c0b7ca16b44ffdbb87d5a9e6d4e6d0ab382511832f78c0c1b`.
+- Mission log SHA-256:
+  `519a9285b1e844be1f7c6dd0fd23679937ea2a083546e1eb38ef5638f61dd4db`.
+
+The separate return-guard review found no proven success-path ABI change
+or invalid alignment check. Cached10170 definition/body offsets satisfy
+the reader under an aligned synthetic mapping. The coarse exception still
+cannot distinguish parent/owner, output selection or cached selection.
+It is not evidence of a null definition after candidate success. Receipt
+`slot5-return-guard-review-20261106.json`, SHA-256
+`ce7a2086e86094ad8e89e4522469b5fe5c179420e37a126780c389a587fb0766`.
+
 ### Earlier activation observations
 
 The private helper observes seven source-guarded entry, return and call sites.

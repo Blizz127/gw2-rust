@@ -82,6 +82,13 @@ damage. Final lookup coverage is partial. UI/cleanup/hash checks pass and
 window27 was returned05:37:58Z. Targeting is being corrected; this is not a
 combat pass or a live profile change. Retail lifecycle/effects remain open.
 
+Root's follow-up `run215-skill10170-targeted-smoke` again passed all10170
+availability predicates but acquired no hostile target. It correctly made
+no cast and exited9; cleanup/hash checks passed and window28 was returned
+05:52:57Z. The retained movement/screenshots show the forward approach
+stalled at a wagon. A nearby diagnostic target is being prepared; this does
+not change the live population or establish authored retail placement.
+
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).
 Norn cinematic selection/trigger and actual tutorial shrine locations remain

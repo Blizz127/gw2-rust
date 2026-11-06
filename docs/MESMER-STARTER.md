@@ -37,8 +37,11 @@ The client emits a real owned10170/slot5 request, but target0 causes no
 damage. Final cache coverage is partial, so **the combat smoke has not
 passed**. Exact4b3c4c2 was used with legacy autoattack and echo omitted to
 avoid duplicate release-triggered damage. UI/cleanup/hash checks pass;
-window27 was returned05:37:58Z. A targeted UI correction is next. No grant
-or profile change is live, and no full retail unlock/effect policy is claimed.
+window27 was returned05:37:58Z. Run215 removed Escape and required a hostile
+selection before casting, but acquired none; forward movement stalled at a
+wagon. It exited9 without casting and returned window28 cleanly05:52:57Z.
+A focused nearby-target fixture is being prepared. No grant or profile
+change is live, and no full retail unlock/effect policy is claimed.
 See the [runtime evidence](re/209026-sword-slot-selection-runtime.md#run214-availability-passes-targeted-combat-still-unproved).
 
 Released independent fix: **9451cf0**, the seven-line caster guard
