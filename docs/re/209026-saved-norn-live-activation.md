@@ -479,7 +479,7 @@ The complete REA contract evidence is retained privately as
 `209026-raven-heart-mail-contract-evidence-20261106.json`, SHA-256
 `ca11692b025566be020ec299f419fda993f56db882138703c6f4663d4e3b4b03`.
 
-## Independent pending fix: interleaved character transfers
+## Independent fix: interleaved character transfers
 
 Commit **98bae4f7539beda97703778b69578328b9dd06af**, based on live0763c47,
 fixes a second in-memory carry loss. The single global pending slot let a
@@ -504,3 +504,33 @@ queue helper during integration; this is documented in the handoff and is
 not a dependency of the live-base fix. Submission receipt:
 `interleaved-carry-native-publisher-handoff-20261106.json`, SHA-256
 `f32724d4e62aa8141aaed086e38c009d5fd89a89832f768b0ea4cc0277e8d251`.
+
+## Verified live release b2d6d24
+
+The sole publisher integrated98bae4f and adapted the discovery waypoint
+producer to the same queue helper. Release **b2d6d249bb02e1654e76dcd60f2caa6b29b4b6e6**
+was deployed **2026-11-06T07:17:51Z** at
+`/home/blizz/gw2-rust-b2d6d24`, retaining0763c47 as rollback. It also enables
+the publisher's in-memory wallet and preserves the earned-attribute increment.
+Vendor and POI discovery implementations are compiled but their flags are
+absent from the observed live process. This is not a quest154 payout release.
+
+Independent read-only REA verification at **07:23:22Z** passed all current
+and rollback manifest sums, four owned listeners, zero humans/bots, effective
+default-curve/damage30/17-byte skills/world28 settings, saved-norn mode,
+one0700 saved record and unchanged activation backup. No character contents
+were read. Legacy autoattack/echo remain absent;14 heart NPCs,5 hostiles and
+4 ambient actors remain configured. Wallet is enabled exactly once.
+
+Game SHA-256:
+`7b8fa261ee871ef65e5a6129ec4863ec6f6e2bc90cb55cc1b168d9bdb38cb66c`.
+Manifest SHA-256:
+`225c4cd41a2ce7d3e167b1a9ac6d36fbbedcfe68c5fe8a44773ea83a9124a435`.
+Effective profile SHA-256:
+`c4fb0754613e3ab77984424729fe6c105166634b234d738b500e57a7c2880fe3`.
+Receipt: `209026-live-b2d6d24-carry-wallet-readback-20261106.json`, SHA-256
+`a404eb994a888d1273591799abc9c4cd5d18b695cb89f36c646abd298ce81922`,
+REA `ev_f4f56181c1c7d3aee54dfc713bc3af01154566705cd205e7f0ad602a0a23d2bb`.
+The capture exited0 without truncation and verified owned cleanup.
+This readback does not establish client reward interaction, full retail
+economy, restart persistence or any launcher audience change.

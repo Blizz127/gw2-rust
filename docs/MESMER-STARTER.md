@@ -30,20 +30,22 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**0763c47 is now live**, deployed06:54:42Z at
-`/home/blizz/gw2-rust-0763c47`. Root independently verified all current and
-rollback hashes, effective default-curve setting, saved mode/one record,
-unchanged backup and four owned listeners at06:55:45Z; zero humans/bots.
-It ships the independent baseline/earned-attribute increment below and
-retains76af245 as rollback. Effective-level/health scaling, healing and
-durable progression remain incomplete. Discovery work is not in this release.
-[Release evidence](re/209026-earned-attribute-progression.md#verified-live-release-0763c47).
+**b2d6d24 is now live**, deployed07:17:51Z at
+`/home/blizz/gw2-rust-b2d6d24`. Independent readback verified all current and
+rollback hashes, effective settings, saved mode/one record, unchanged backup
+and four owned listeners at07:23:22Z; zero humans/bots. It includes98bae4f's
+interleaved-character transfer fix and enables the publisher's wallet support.
+Vendor and POI discovery code is compiled but disabled. The earlier earned
+attribute increment remains active. Rollback is0763c47. Effective-level/health
+scaling, healing, quest154 payout and durable progression remain incomplete.
+[Release evidence](re/209026-saved-norn-live-activation.md#verified-live-release-b2d6d24).
 
-Run220 reached the world and observed one Ether Feast10176 request plus the
-explicit1000ms diagnostic reply. Its lifecycle observer rejected one sample,
-so native execution remains unconfirmed; no healing/recharge is claimed.
-UI, cleanup and executable checks passed, and window30 was returned
-06:46:22Z. [Bounded result](re/209026-skill10176-lifecycle-observer.md#run220-request-and-diagnostic-reply-observed-lifecycle-incomplete).
+Run223's source-corrected Ether Feast observer accepted the owned10176
+request, typed0x78 start and completion callback. The callback did not request
+normal order release; post-completion release remains unobserved. The1000ms
+duration is diagnostic, and no healing/recharge is claimed. UI, cleanup and
+executable checks passed; window32 was returned07:22:15Z.
+[Bounded result](re/209026-skill10176-lifecycle-observer.md#run223-typed-start-and-completion-callback-observed).
 
 The independent earned-attribute increment **e78b028** on76af245 passed its
 isolated build,15 focused Rust tests,3 supervisor checks and4 no-listener

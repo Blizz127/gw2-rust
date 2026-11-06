@@ -6,10 +6,11 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **0763c47** is at
-`/home/blizz/gw2-rust-0763c47`, deployed **2026-11-06T06:54:42Z**. It adds
-the explicit default primary-attribute baseline and earned-attribute increases
-on level gain/rejoin. Effective-level/health scaling remains incomplete.
+tracks the remaining scope. Live kit **b2d6d24** is at
+`/home/blizz/gw2-rust-b2d6d24`, deployed **2026-11-06T07:17:51Z**. It adds
+the interleaved-character transfer fix and enables wallet support. The
+explicit default primary-attribute baseline and earned-attribute increases
+remain active. Effective-level/health scaling remains incomplete.
 It retains Great Hunt completion transfer to Wayfarer Foothills, character-bound
 same-process progress transfer, correct world arrival, and 14 heart NPCs.
 It retains the sword availability fix, damage30, and disabled legacy
@@ -18,10 +19,10 @@ the combined saved-character transfer has not been observed in the client.
 Heart tasks, rewards, NPC looks and placement still include substitutions;
 this is not full retail encounter completion. Root independently verified
 saved-norn mode, one saved record, backup hash, all kit hashes, metadata900,
-effective settings and four healthy listeners at **06:55:45Z**. Zero
+effective settings and four healthy listeners at **07:23:22Z**. Zero
 humans/bots were present then; recheck at rollout. Ether Feast healing and
-recharge remain unimplemented. Verified rollback is **76af245**. Discovery
-changes are still separate unpublished work. See the
+recharge remain unimplemented. Verified rollback is **0763c47**. Vendor and
+POI discovery code is compiled but disabled in the live profile. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
 The owner can create a Norn Mesmer through the saved roster; the prepared

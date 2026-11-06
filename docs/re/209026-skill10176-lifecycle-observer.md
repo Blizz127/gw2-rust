@@ -309,3 +309,42 @@ Manifest SHA-256:
 `93a41ae9a5527c125c8242b809dcc74dadd76b51bb398d021de1b9570eacfb53`.
 A fresh window request was submitted to the sole publisher. Previous inputs
 remain unchanged and no grant is inferred from that submission.
+
+## Run223: typed start and completion callback observed
+
+Window32 was granted07:12:16Z and independently verified07:13:12Z. Root
+launched the pinned native-reference observer once. The run and UI exited0;
+one10176/slot0 request received one explicit1000ms diagnostic reply. The
+observer accepted all four callbacks with zero rejections:
+
+| Event | Bounded native observation |
+| --- | --- |
+| Request | Controlled owner,10176/slot0; request gate does not block; recharge observer notified. |
+| Receiver | Kind0x78, empty order slot0, packed flags0; outer flags41948179. |
+| Start dispatch | Current owned order active in slot0, flags18688/0x4900; pending typed callback dispatch. |
+| Completion return | Same active slot and matching behavior; flags20736/0x5100; callback returns false, so it does not request the normal release path. |
+
+The lifecycle terminal reports inferior exit and partial coverage. No
+post-completion flag clear, order release or visible animation completion
+was sampled. A false completion return is distinct from a failed callback.
+RCO opened its window after the guarded request, but recorded no query-return
+or630 events and no terminal. Its earlier control-time sample still has null
+context, second level1 and effective attribute6=0. It does not establish
+cast-time context. Healing, recharge and retail timing remain unknown.
+
+The strict readback, console privacy and frozen/working executable hashes
+passed. Root verified shared-container absence and returned only
+`window_32.cleanup` at **2026-11-06T07:22:15Z**. Resource cleanup succeeded;
+incomplete observer coverage is retained separately. This diagnostic changes
+no live server/profile and is not a retail Ether Feast implementation.
+
+Private REA receipts:
+
+- `209026-run223-window32-verification-20261106.json`,
+  `ev_57c5a490f555fa7649c959e05360f42b6181291aefff1b8a5c810222286cead1`.
+- `209026-run223-native-reference-launch-20261106.json`,
+  `ev_7b44e2903b497a7970a68149ded67190aa412cd5ba2f5e7ad6e0d0239a44b23e`.
+- `209026-run223-native-reference-readback-20261106.json`,
+  `ev_c3cee6ee1623a8712065204e674f5a2e098732b30df48fc3b54ac2aabcf57427`.
+- `209026-run223-window32-return-20261106.json`,
+  `ev_22a983fdee8eef0963a8ec345ce40b2db774d043acd50fe1e3678571df482165`.

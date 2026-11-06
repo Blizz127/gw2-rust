@@ -218,3 +218,55 @@ Complete REA bundle: `209026-quest154-reward-claim-evidence-20261106.json`,
 SHA-256 `c75053c36d78cec2aa5cd9ac573960d74bc2df21721552fe78cc33f68fec830e`.
 One exploratory widget-prefix capture omitted unrelated dispatch bytes and
 is not complete-body proof; the selected typed paths are retained separately.
+
+## Item, wallet and acknowledgement delivery contracts
+
+The follow-up traces three independent client updates; the claim itself does
+not credit any of them:
+
+- Server959 resolves the item definition and selects its native constructor.
+  For32138 this is a constructed weapon; the generic initializer preserves
+  constructor weapon fields and authored default skin. This avoids inventing
+  explicit971 weapon fields. It does not prove retail959 usage, raw binding
+  flags or a retail item GUID policy.
+- Server276 places an already-created instance into an empty inventory slot.
+  Allocated array capacity is not usable bag capacity: the starter backpack
+  has20 usable slots even when305 reserves160 array entries. Instance identity
+  and exact creation kind must survive process-local transfers.
+- Server204 sends an **absolute** currency amount. Key1 is coins. A72-copper
+  grant therefore requires checked addition to the tracked balance; blindly
+  sending72 could erase previous funds.
+
+Server526 carries player index and quest key. Handler1412585a0 reaches
+141200d30, which notifies the matching completed active quest's listener.
+The reward widget listener1408329f0 calls140831060, closes/unsubscribes and
+clears its quest reference. Thus526 can acknowledge the completed panel
+without destroying the active quest. Server530 independently removes the
+active quest and reaches its destructor listener; repeated removal is not
+idempotent. Neither message itself grants an item or coins. Client widget
+unsubscription is not a substitute for a server once-only claim flag.
+
+Create-before-placement is a real dependency. Exact retail ordering among
+independent wallet/item updates is not recovered. The server implementation
+must validate completion/profession/fixed selection, inventory capacity,
+unique instance and checked balance before committing a complete output
+batch. Failed validation must preserve the pending claim. Carry must retain
+the exact item, wallet and claim state; a kill-loot count would reconstruct
+the wrong item. No fixed XP amount is selected by these findings.
+
+The old12-second automatic transfer can destroy an unclaimed panel. The
+implementation in progress delays transfer for eligible pending154 rewards
+until successful claim, then retains12 seconds. This is a stated compatibility
+choice, not recovered retail timing. Recreating completed154 on map28 is
+avoided because its lifecycle is not established. All proposed state remains
+process-local; original character415 files and the pending schema restriction
+remain untouched. Later b2d6d24 supplies wallet/exact bag infrastructure but
+does not yet implement this claim.
+
+Private contract: `209026-quest154-payout-ack-20261106.json`, SHA-256
+`b9fc844c96083ef645aa3ef6e54928d521ff4e752eef76364096f78a598ced4d`.
+Complete eight-capture REA bundle:
+`209026-quest154-payout-ack-evidence-20261106.json`, SHA-256
+`1ca06104cb27cecf724f67cc668bedde8b974477ba0f9d1b737a1cb7242b0bea`.
+Its audit describes exact0570b950 source; later wallet/carry changes must be
+reviewed before implementation rather than treating that audit as current.
