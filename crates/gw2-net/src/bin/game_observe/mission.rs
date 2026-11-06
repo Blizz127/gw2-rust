@@ -860,8 +860,10 @@ impl MissionPhase {
     }
 
     /// Research hypothesis (docs/re/209026-npc-talk-loop.md section 6): answer
-    /// each SkillBegin with server 34 carrying the packed 0x78 order. The caller
-    /// supplies diagnostic duration ms; no retail skill duration is inferred.
+    /// SkillBegin with server 34 carrying the packed 0x78 order, including
+    /// alongside the damage fixture. The NPC-cast diagnostic retains priority
+    /// when no hit is applied. The caller supplies diagnostic duration ms;
+    /// no retail skill duration is inferred.
     pub fn with_skill_order_echo(mut self, duration_ms: NonZeroU16) -> Self {
         self.skill_order_echo = Some(duration_ms);
         self
@@ -968,6 +970,41 @@ impl MissionPhase {
     /// Slot of the living hostile NPC with this agent index.
     fn living_hostile(&self, agent: u32) -> Option<usize> {
         self.hostiles.iter().position(|h| u32::from(h.plan.agent_index) == agent && h.health > 0.0)
+    }
+
+    /// Append the explicitly configured diagnostic order without applying
+    /// gameplay effects. Damage fixtures can compose it with their own reply.
+    fn encode_skill_order_echo(&self, skill: &SkillSeen, player: u32, out: &mut BytesMut) -> io::Result<()> {
+        let Some(duration) = self.skill_order_echo else { return Ok(()) };
+        let request = skill.request;
+        let order = SkillOrder209026 {
+            order_flags: 0,
+            skill_key: request.skill_key,
+            slot: request.slot,
+            raw_7: 0,
+            // Target 0 (none): the caster itself (placeholder choice).
+            agent: if request.target == 0 { player } else { request.target },
+            byte_12: 0,
+        };
+        AgentBehaviorOrderFrame209026 {
+            agent_index: skill.agent_index,
+            remote_tick: skill.remote_tick,
+            // Explicit research admission: 0x10 permits creation for a
+            // controlled character with an empty selected slot and bypasses
+            // a conditional filter. This does not establish retail flags.
+            command_flags: skill.command_flags | 0x10,
+            behavior_value: skill.behavior_value,
+            behavior_data: order.to_behavior_data().to_vec(),
+            // Ordinary kind2 execution asserts m_durationMs != 0 before
+            // order-start, including an admitted player command.
+            word: duration.get(),
+        }
+        .encode_frame(out)?;
+        eprintln!(
+            "Mission phase: answering SkillBegin (skill {}, slot {}, value {:#x}) with server 34 0x78 order",
+            request.skill_key, request.slot, skill.behavior_value
+        );
+        Ok(())
     }
 
     /// One player hit on hostile NPC `slot`: lower its health, send the change,
@@ -1172,14 +1209,18 @@ impl MissionPhase {
         };
         if self.began
             && self.damage_on_skill.is_some()
-            && matches!(seen, Seen::Skill(skill) if skill.request.skill_key == 10176)
+            && let Seen::Skill(skill) = seen
+            && skill.request.skill_key == 10176
         {
             // Ether Feast's client facts are healing/condition removal.
             // An enemy selection must not cause damage, change the selected target
             // or start NPC retaliation. Real cast/effects remain unimplemented.
+            // The explicitly configured order echo is still diagnostic only.
             // See docs/re/209026-mesmer-heal-animation-data.md and run144's
             // separately retained Ether Feast tooltip observation.
-            return Ok(None);
+            let mut out = BytesMut::new();
+            self.encode_skill_order_echo(skill, fixture.plan.character_index, &mut out)?;
+            return Ok((!out.is_empty()).then(|| out.freeze()));
         }
         // Retain explicit SkillBegin target tracking independently of damage.
         // Slot activation/deactivation never selects a target or starts a hit.
@@ -1406,6 +1447,7 @@ impl MissionPhase {
                 let player = fixture.plan.character_index;
                 let slot = self.living_hostile(skill.request.target).unwrap();
                 let mut out = BytesMut::new();
+                self.encode_skill_order_echo(skill, player, &mut out)?;
                 let what = format!("skill {}", skill.request.skill_key);
                 self.hit_hostile(slot, player, skill.request.skill_key, skill.remote_tick, &what, &mut out)?;
                 Ok(Some(out.freeze()))
@@ -1442,36 +1484,8 @@ impl MissionPhase {
                 Ok(Some(out.freeze()))
             }
             Seen::Skill(skill) if self.began && self.skill_order_echo.is_some() => {
-                let request = skill.request;
-                let order = SkillOrder209026 {
-                    order_flags: 0,
-                    skill_key: request.skill_key,
-                    slot: request.slot,
-                    raw_7: 0,
-                    // Target 0 (none): the caster itself (placeholder choice).
-                    agent: if request.target == 0 { fixture.plan.character_index } else { request.target },
-                    byte_12: 0,
-                };
                 let mut out = BytesMut::new();
-                AgentBehaviorOrderFrame209026 {
-                    agent_index: skill.agent_index,
-                    remote_tick: skill.remote_tick,
-                    // Explicit research admission: 0x10 permits creation for
-                    // a controlled character with an empty selected slot and
-                    // bypasses a conditional pre-dispatch filter. This does
-                    // not establish the retail reply flags.
-                    command_flags: skill.command_flags | 0x10,
-                    behavior_value: skill.behavior_value,
-                    behavior_data: order.to_behavior_data().to_vec(),
-                    // Ordinary kind2 execution asserts m_durationMs != 0,
-                    // before order-start, including an admitted player command.
-                    word: self.skill_order_echo.expect("guarded research echo duration").get(),
-                }
-                .encode_frame(&mut out)?;
-                eprintln!(
-                    "Mission phase: answering SkillBegin (skill {}, slot {}, value {:#x}) with server 34 0x78 order",
-                    request.skill_key, request.slot, skill.behavior_value
-                );
+                self.encode_skill_order_echo(skill, fixture.plan.character_index, &mut out)?;
                 Ok(Some(out.freeze()))
             }
             Seen::Conversation(reply) if self.began => {
@@ -2345,6 +2359,113 @@ pub(crate) mod tests {
             assert_eq!(frame.word, 65535);
             assert_eq!(frame.behavior_data, [0x78, 0, 0xc0, 0x27, 0, 0, 6, 0, 9, 0, 0, 0, 0]);
         }
+    }
+
+    #[test]
+    fn skill_order_echo_with_damage_answers_only_explicit_skill_begin() {
+        let mut phase = hostile_phase(10.0)
+            .with_skill_order_echo(NonZeroU16::new(4321).unwrap())
+            .with_npc_cast(999)
+            .with_npc_attack(5.0, 388.0)
+            .with_xp_per_kill(50);
+        let mut begin = vec![0x23];
+        begin.extend_from_slice(&3u32.to_le_bytes());
+        begin.extend_from_slice(&10170u32.to_le_bytes());
+        begin.push(5);
+        let mut attack_due = None;
+        for (step, data) in [vec![0x2a, 5], begin, vec![0x29, 5], vec![0x29, 5]].into_iter().enumerate() {
+            let request = AgentBehaviorFrame209026 {
+                agent_index: 1, remote_tick: 0x1234_5678, command_flags: 0xe3,
+                behavior_value: 0x8000_4321, behavior_data: data,
+            };
+            let mut incoming = BytesMut::new();
+            request.encode_client_frame(&mut incoming).unwrap();
+            let seen = phase.push(&incoming);
+            assert_eq!(seen.len(), 1);
+            let reply = phase.respond(&seen[0]).unwrap();
+            if step == 1 {
+                let reply = reply.expect("one combined order and damage response");
+                let mut cursor = &reply[..];
+                let order = AgentBehaviorOrderFrame209026::decode_frame(&mut cursor).unwrap();
+                assert_eq!((order.agent_index, order.remote_tick, order.command_flags, order.behavior_value),
+                    (1, 0x1234_5678, 0xf3, 0x8000_4321));
+                assert_eq!(order.word, 4321);
+                assert_eq!(order.behavior_data, [0x78, 0, 0xba, 0x27, 0, 0, 5, 0, 3, 0, 0, 0, 0]);
+                let health = HealthFrame209026::decode_frame(&mut cursor).unwrap();
+                assert_eq!(health.character_index, 3);
+                assert!(matches!(health.operation, HealthOperation209026::Currents { current, second_current }
+                    if current == LEVEL1_NPC_HEALTH - 10.0 && second_current == 0.0));
+                assert!(cursor.is_empty(), "exactly one order and one hit, no NPC order");
+                attack_due = phase.npc_attack.unwrap().next;
+                assert!(attack_due.is_some());
+            } else {
+                assert!(reply.is_none(), "slot inputs never become casts");
+            }
+            assert_eq!(health_of(&phase, 3), if step == 0 { LEVEL1_NPC_HEALTH } else { LEVEL1_NPC_HEALTH - 10.0 });
+            assert_eq!(health_of(&phase, 4), LEVEL1_NPC_HEALTH);
+            assert_eq!(phase.npc_attack.unwrap().next, attack_due);
+            assert_eq!(phase.npc_cast, Some((999, 0x4000_0000)), "damage fixture retains priority over NPC cast");
+            assert_eq!(phase.xp.unwrap().1, 0);
+        }
+    }
+
+    #[test]
+    fn skill_order_echo_with_damage_preserves_ether_feast_guard() {
+        let mut phase = hostile_phase(LEVEL1_NPC_HEALTH)
+            .with_skill_order_echo(NonZeroU16::new(1234).unwrap())
+            .with_npc_cast(999)
+            .with_xp_per_kill(50)
+            .with_kill_loot()
+            .with_heart(56, 1).unwrap()
+            .with_npc_attack(5.0, 388.0);
+        phase.heart.as_mut().unwrap().inside = true;
+        phase.heart.as_mut().unwrap().player = Some(1);
+        phase.last_target = Some(3);
+        phase.npc_attack.as_mut().unwrap().player_health = 200.0;
+        let seen = phase.push(&client_23(&[0x23, 4, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
+        assert_eq!(seen.len(), 1);
+        let reply = phase.respond(&seen[0]).unwrap().expect("explicit diagnostic echo survives healing guard");
+        let mut cursor = &reply[..];
+        let order = AgentBehaviorOrderFrame209026::decode_frame(&mut cursor).unwrap();
+        assert_eq!(order.word, 1234);
+        assert_eq!(order.behavior_data, [0x78, 0, 0xc0, 0x27, 0, 0, 0, 0, 4, 0, 0, 0, 0]);
+        assert!(cursor.is_empty(), "no damage, heal, recharge or NPC order");
+        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (LEVEL1_NPC_HEALTH, LEVEL1_NPC_HEALTH));
+        assert!(phase.hostiles.iter().all(|h| h.respawn.is_none()));
+        assert_eq!(phase.last_target, Some(3));
+        assert!(phase.aggro.is_empty());
+        assert!(phase.npc_attack.is_some_and(|a| a.next.is_none() && a.player_health == 200.0));
+        assert_eq!(phase.npc_cast, Some((999, 0x4000_0000)));
+        assert_eq!(phase.xp.unwrap().1, 0);
+        assert_eq!(phase.kill_loot, Some(0));
+        assert!(phase.heart.is_some_and(|h| h.progress == 0 && !h.done && !h.rewarded));
+    }
+
+    #[test]
+    fn skill_order_echo_preserves_npc_fixture_priority_without_a_hit() {
+        let mut phase = hostile_phase(10.0)
+            .with_skill_order_echo(NonZeroU16::new(1234).unwrap())
+            .with_npc_cast(999);
+        // No living hostile target: the existing explicit NPC-cast diagnostic
+        // still takes priority over the player's echo-only fallback.
+        let reply = phase.respond(&skill_at(0)).unwrap().unwrap();
+        let mut cursor = &reply[..];
+        let order = AgentBehaviorOrderFrame209026::decode_frame(&mut cursor).unwrap();
+        assert_eq!((order.agent_index, order.word), (3, 1000));
+        assert_eq!(order.behavior_data, [0x78, 0, 0xe7, 3, 0, 0, 23, 0, 3, 0, 0, 0, 0]);
+        assert!(cursor.is_empty());
+        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (LEVEL1_NPC_HEALTH, LEVEL1_NPC_HEALTH));
+        assert_eq!(phase.npc_cast, Some((999, 0x4000_0001)));
+        // With damage disabled, even Ether Feast remains an explicit trigger
+        // for the NPC-cast diagnostic. Preserve that existing exception.
+        phase.damage_on_skill = None;
+        let seen = phase.push(&client_23(&[0x23, 4, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
+        let reply = phase.respond(&seen[0]).unwrap().unwrap();
+        let mut cursor = &reply[..];
+        let order = AgentBehaviorOrderFrame209026::decode_frame(&mut cursor).unwrap();
+        assert_eq!((order.agent_index, order.word, order.behavior_value), (4, 1000, 0x4000_0001));
+        assert!(cursor.is_empty(), "NPC-cast fixture does not also echo the player");
+        assert_eq!(phase.npc_cast, Some((999, 0x4000_0002)));
     }
 
     #[test]

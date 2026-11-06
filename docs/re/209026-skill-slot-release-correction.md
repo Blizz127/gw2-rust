@@ -60,10 +60,12 @@ zero forwarded arguments and the configured-only deprecation notice.
 ## Remaining gameplay boundary
 
 This fixes duplicate/invalid execution, not complete retail combat. The
-damage-enabled SkillBegin branch currently returns before the separate
-`skill_order_echo` diagnostic, so that combination still lacks an explicit
-accepted-order animation lifecycle. The removed release response must not
-be restored to hide this gap. Actual cast acceptance, hit timing, automatic
+damage-enabled SkillBegin branch originally returned before the separate
+`skill_order_echo` diagnostic. The later
+[reply composition fix](209026-skill-reply-composition.md) permits both
+explicit fixtures in one response; it does not establish an accepted retail
+animation lifecycle. The removed release response must not be restored to
+hide this gap. Actual cast acceptance, hit timing, automatic
 repetition, sword-chain progression, healing and cooldown execution remain
 separate work. Tooltip calculations and animation event quantities alone
 do not prove those server rules.
