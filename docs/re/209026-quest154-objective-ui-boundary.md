@@ -183,3 +183,40 @@ report unrelated `/proc/.../environ` inspection permission failures in their
 residual process observations; those limitations remain in the bundles.
 Raw source data and disassembly remain private. No runtime or gameplay
 validation is claimed, and no code tests were necessary for this note.
+
+## Retained Thora opening audit
+
+The 2026-11-06 retained-source audit distinguishes the authored step objective
+from the reconstructed conversation. Step1's type343 record
+`1282830:4146312` references text **34078** and sector201; this does not prove
+that 34078 is Thora's spoken opener or establish an actor/action trigger.
+The selected encrypted text records lack a recovered valid key. That is not
+evidence that all dialogue keys are absent from the client. See the
+[quest content](209026-quest154-content.md),
+[inline-key follow-up](209026-quest154-inline-key-followup.md), and
+[localization DataLink ledger](209026-localization-key-datalink-provenance.md).
+The latter already closes the five local key-setter calls as item DataLink
+handling, rather than a quest154 key source.
+
+In exact server source `464cce3dfa2050f58808f7055e4f5982ee824161`,
+`StoryRole::Thora` supplies two literal reconstructed pages. At stage0, a
+matching Interact opening calls `story_talked` and emits server542/step1
+before any client275 page choice is required. This is the implemented
+reconstruction, not a recovered retail dialogue-completion rule. The
+[talk-loop ledger](209026-npc-talk-loop.md) proves conversation transport:
+server758 supplies the speaker, and server760 supplies coded page text and
+speaker fields. It does not select an authenticated Thora dialogue record.
+
+The next concrete missing input is one authentic Thora first-conversation
+span containing **758/760**, any required **748** text-key entry, and the
+associated **542** timing. That would permit decoding only the referenced
+cached text and checking whether step1 follows opening or a 275 choice.
+Reconstructed server streams cannot establish that authored text or trigger;
+no new broad key search or gameplay change follows from this audit.
+
+The private [audit receipt](/home/blizz/re/gw2/notes/269-thora-authored-boundary-retained-audit-20261106.json)
+(6221 bytes), SHA-256
+`f1273cbc72fb151fa5adde1a72d32d8e68ddc4b13db7ff988a74866812ac7adb`,
+pins the complete retained Evidence bundles, source file and reviewed
+ledgers. This follow-up used retained evidence and own source only; it adds
+no runtime observation or new client-source query.

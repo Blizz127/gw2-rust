@@ -1461,3 +1461,59 @@ All three exited0 with owned cleanup verified. Launch/return are untruncated;
 readback retains all45,674 raw bytes and12 raw frames, with zero normalized
 omissions, while three rendered frames were omitted. The launch retains36
 unverified process-environment observations, without attributing ownership.
+
+## Runs269/270: stationary Thora check remains incomplete
+
+Both fresh runs used exact464cce3/CDN950, all31 normal story arguments,
+pristine145 prefixes and the unchanged original154-byte synthetic record.
+Production runner GDB was byte-identical; no movement observer or cadence
+override was added. The bounded plan allowed one fresh-image candidate click,
+then one F only after a new227 target21 and root-reviewed visible Thora/Greet.
+Acceptance additionally required ordered Interact21, Thora opening and step1
+logs plus the matching native dialogue image. No movement or input retry was
+allowed. Two actual staged no-listener checks passed for each run.
+
+Run269 failed before controller ownership or gameplay input: root wrote an
+authorization record to the path reserved for the binder's container-bound
+GO record. The binder's initial absence assertion correctly refused. Root
+retained the file and did not retry; automatic UI exited11 for no controller.
+Window59 returned **2026-11-06 19:18:42Z**. This was root orchestration error,
+not evidence of a client or server interaction defect.
+
+The fresh run270 kept the same helper logic with verified run-identity
+substitutions. One canonical writer-reader fixture passed; prior focused
+tests were reused as unchanged logic, not rerun. Root left the GO path absent
+and checked absence before launch and binder invocation. The binder then
+created its own record after verifying the exact container and mount, claimed
+control, and supplied the first image at19:24:12Z.
+
+Root chose the visible central NPC candidate at `[645,378]`. The one click
+produced new client227 target45, not21. The postclick image showed a
+**Juvenile Raven** target bar and **Veteran Thora Griffonbane** hover label
+above the central NPC. Both focus observations admitted the same owned
+process/window identity. Root released incomplete without F, retargeting or
+another click. No interaction, dialogue or quest step occurred; UI/launcher13
+remains incomplete. These observations do not yet explain the target mismatch.
+Historical pixels are not a recipe for a future run.
+
+Window60 returned **2026-11-06 19:25:23Z**. Each return verified container
+absence,79 immutable non-prefix inputs, original synthetic record, unchanged
+frozen/working PE hashes and console privacy. No live deployment, owner store
+or schema changed. No resource remains held by these runs.
+
+Private run269 binder receipt `209026-run269-controller-bind-claim-20261106.json`,
+SHA256 `2c2ba844425fbdc92712f533c84a1efcf73e60788570bcb1a199f23af7a23bfd`,
+Evidence`ev_309e8966a37eea25da6f88f8d5e5461fa5fde44790ba501e62b91b4f86ada96f`.
+Run269 return `209026-run269-resource-return-20261106.json`, SHA256
+`ff25150db1f256646b4f0a937581827e7dba5f6b948c927de173f4c9be011056`,
+Evidence`ev_93dd1e5b0fa815d5df8cd0d046ddca69fc0ffca1f82ab788590df62305322695`.
+Run270 selection `209026-run270-controller-select-20261106.json`, SHA256
+`401397332ca0932631f439c5bff34eb708a29489003b7b06d22e55e2f1163973`,
+Evidence`ev_f28ea428ffb5a437a14aeafdaec554a8651bafe1827ba5beaea788a61e4ddf09`.
+Run270 return `209026-run270-resource-return-20261106.json`, SHA256
+`86a348700120c614d00acd86ddfa9cef319a071b0fcce133b98f891b79449aaf`,
+Evidence`ev_8e5da52c59cc843d7ecf4194bc1021e496cb02fd105b137e63c93efa713d74d6`.
+Return receipts pin the corresponding launch and strict readback Evidence.
+All four captures above are untruncated with owned cleanup verified. The
+launches retain39/34 unverified process-environment observations respectively;
+these do not establish ownership of those unrelated processes.

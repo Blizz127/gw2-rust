@@ -88,6 +88,18 @@ UI0, observer hook cleanup and final readback pass; window58 was returned
 progression test, without diagnosing earlier stalls or proving full-route
 clearance. [Run268 evidence](re/209026-saved-norn-creator.md#run268-guarded-three-phase-movement-observation-passes).
 
+The stationary Thora follow-up remains incomplete. Run269's binder refused
+because root prematurely created its reserved GO file; no controller input
+occurred. Run270 corrected that orchestration error, but its single candidate
+click selected45/Juvenile Raven. Root released without F; UI13 and no step1
+remain failure evidence. Windows59/60 returned19:18:42Z/19:25:23Z with cleanup
+verified. The next work is a retained pointer/input audit, not a blind click
+retry. [Evidence](re/209026-saved-norn-creator.md#runs269270-stationary-thora-check-remains-incomplete).
+The [Thora source audit](re/209026-quest154-objective-ui-boundary.md#retained-thora-opening-audit)
+also distinguishes objective text34078 from an unproven spoken opener and
+the reconstructed opening-to-step1 rule. No authentic dialogue replacement
+or full retail completion follows from these checks.
+
 Earlier **11d2c56 was verified live at16:59:09Z**, deployed16:57:41Z to
 `/home/blizz/gw2-rust-11d2c56`, rollbackd0288e1-powder. It adds a pure bounded
 buff-body reader on integratedd0288e1. Eight focused tests, actual retained
