@@ -115,8 +115,62 @@ Focused checks passed:11 healing/guard and actual TCP relog tests,16 compatibili
 build and8 exact-profile no-listener checks (option off/on, prepared/saved,
 auth/world). The saved regression covers two characters, duplicate live joins,
 wrong destination, interrupted join, transfer, retired-source rejection and
-unchanged original415/auth record bytes. These checks do not claim a native client
-run; deployment is separately established by the release readback above.
+unchanged original415/auth record bytes. These focused checks are separate from
+the bounded native cooldown observation below; deployment is established by the
+release readback above.
+
+## Retained run233: native cooldown, retry and recast
+
+The retained `run233-ether-feast` artifacts were independently audited through REA
+at **2026-11-06T09:35:13Z**. Its1830336-byte game binary has SHA-256
+`89d68f855ba34a42eebe963578a25aac3191f8f53d668f2d190da08b06347088`,
+matching the released7c26f45 implementation. This was a prepared synthetic
+character smoke, not an owner saved-record/relog test.
+
+The UI script presses key6 three times. The server log records two controlled
+agent1 SkillBegin requests for10176/slot0, with selected target80 and behavior
+values2147483711/2147483722. Around the middle retry it records the ordinary
+input/release messages but no10176 SkillBegin. The retained screenshots establish
+native cooldown presentation: `heal-1.png` shows19; `heal-recharging.png` shows16
+and the red **“Skill recharging.”** message; `heal-2.png` shows a new19 countdown
+after the later request. This demonstrates the bounded retry/recast sequence,
+not an exact measurement of a20000ms native timer.
+
+**Positive healing gain was not exercised.** Before the first heal request,
+server4.log:134 records out-of-combat regeneration350→388; the request is at147.
+`after-fight.png` and all three heal screenshots display health388. The four
+generic `Ether Feast scheduled update` records are not four heals or decoded
+packet identities. In the matching source, full-health effect emits630 without
+positive255, and the later presentation deadline emits correlated84/45; both
+outcomes use that same log message. This attribution is source-supported
+interpretation, not a plaintext outbound-wire capture. Neighboring `net` times
+and compressed byte counts do not establish exact effect/release timing.
+
+The retained wrapper records network isolation, container cleanup, unchanged
+frozen/working executable hashes and a credential-safe console check. The bounded
+client/wine log scan found no assertion/crash record beyond the benign
+`crash report armed` message. These are retained cleanup checks, not a fresh
+container query; the audit's own REA process also exited0 with complete output
+and verified cleanup. The UI completion marker alone is not a gameplay pass:
+the script disables errexit during its later diagnostic sequence. No running
+client, owner store or live service was accessed by this audit.
+
+Private evidence under `/home/blizz/re/gw2/notes/`:
+
+- `209026-run233-ether-feast-audit-20261106.json`, SHA-256
+  `d8821c5a8a6c9dc2c8030da25b1c752c96acfc8c653cf00752d62ab3c4962b29`;
+  REA `ev_e8b76dbfee11394ca6140bcc88c74294c455ef6632dbe7f1b5e4b7d875af0987`.
+- `209026-run233-ether-feast-audit-receipt-20261106.json`, SHA-256
+  `fb59d10e7a7dcd81b4403dfcee9d7e7b8b973c759658e581e886b5281a326a73`,
+  pins the reader, source, binary, retained logs and all four viewed images.
+- `server4.log` SHA-256
+  `c5289c87303f9b15d0417d8e9b5a502827162209548c20a4ecd2941790d6a8ca`;
+  `heal-recharging.png` SHA-256
+  `0a2b5d31e839bd812787bd3638c3c8d847262a99d2a5e2acef5180a0a51a359b`.
+
+Positive255 delivery, injury at effect time, cancellation, reconnect/carry and
+retail clone/modifier/scaling behavior remain outside this smoke. The health-gain
+and full-retail limitations above are unchanged.
 
 ## Original-roster relog and configured destination resume
 
@@ -141,7 +195,8 @@ This uses the already-observed post-BeginPlaying timing; no earlier loader-time
 acceptance is assumed. The real TCP regression failed on the previous rejection,
 then passed through an aborted379 join, a fresh379 login, its received28 redirect,
 and the correct28 join with health321, active cooldown, XP5000 and immutable saved
-bytes. No native client test is claimed.
+bytes. No native client relog test is claimed; run233 covers only the separate
+cooldown/retry/recast scope above.
 
 The newer quest162 branch must also expose each configured story destination to
 this resume lookup; admitting its map for recharge context is insufficient by

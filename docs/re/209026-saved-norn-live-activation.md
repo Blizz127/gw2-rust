@@ -809,9 +809,43 @@ evidence `ev_f55126920cf34a21d00b0614726c8f68c05c3390626d294ec74db0d537d1866a`.
 Profile comparison: `7c26f45-profile-comment-comparison-20261106.json`,
 SHA-256 `d5f911f6e9e2df3a39d15c7cf1211c12a3c9cd8f9407bc32d2ef460838c7f81e`.
 
-This readback establishes deployment and health, not a native healing gameplay
-smoke. Manual cancellation, clones/conditions/modifiers, effective-level scaling
+This readback establishes deployment and service health. The separate retained
+run233 audit below establishes a bounded native cooldown smoke, but no positive
+health gain. Manual cancellation, clones/conditions/modifiers, effective-level scaling
 and restart progression remain unsupported. The separate quest162 branch is not
 included in this artifact. No launcher feed, audience, frozen client or schema
 changed. The pending owner storage exception and full retail completion goal
 remain open.
+
+### Retained run233 cooldown smoke
+
+The independent **09:35:13Z** REA audit of the publisher's retained
+`run233-ether-feast` uses the same game SHA-256
+`89d68f855ba34a42eebe963578a25aac3191f8f53d668f2d190da08b06347088`.
+Its prepared synthetic character sent two controlled10176/slot0 requests.
+Three scripted key6 inputs produced a visible19 countdown, a middle retry with
+**“Skill recharging.”** and16, then a later request and new19 countdown.
+The middle retry has input/release records but no10176 SkillBegin in the retained
+server log. This is positive native cooldown presentation/retry/recast evidence.
+
+It is **not a positive-heal smoke**: server4.log:134 records regeneration350→388
+before the first10176 request at147, and the before/after screenshots all show388.
+Four generic scheduled-update records do not identify four heals. The matching
+source's full-health branch emits630 and later84/45, without positive255; that is
+source interpretation rather than a plaintext outbound-wire capture. Exact
+native effect timing, health gain, saved relog/carry and retail equivalence are
+not established. See the [full bounded audit](209026-ether-feast-reconstruction.md#retained-run233-native-cooldown-retry-and-recast).
+
+The retained wrapper reports cleanup, executable hash preservation and console
+privacy checks; no assertion/crash was found in the bounded client/wine scan.
+No fresh container/live check or owner-store read was made. The audit reader
+exited0 with complete output and verified owned cleanup.
+
+Private files under `/home/blizz/re/gw2/notes/`:
+
+- `209026-run233-ether-feast-audit-20261106.json`, SHA-256
+  `d8821c5a8a6c9dc2c8030da25b1c752c96acfc8c653cf00752d62ab3c4962b29`;
+  REA `ev_e8b76dbfee11394ca6140bcc88c74294c455ef6632dbe7f1b5e4b7d875af0987`.
+- `209026-run233-ether-feast-audit-receipt-20261106.json`, SHA-256
+  `fb59d10e7a7dcd81b4403dfcee9d7e7b8b973c759658e581e886b5281a326a73`;
+  exact binary, source, log and four screenshot pins are retained there.

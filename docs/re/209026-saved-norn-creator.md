@@ -419,6 +419,47 @@ and images, SHA-256
 The staging receipt is `run230-saved-norn-heading-staging-receipt-20261106.json`,
 SHA-256 `22bf2b0af1285fe7321cc5ca795b6fa17623e56efbccf8bff1f3e473b3e0fe45`.
 
+## Run234: General Options reached, Controls still unobserved
+
+`run234-norn-controls` used exact7c26f45, its tested Ether Feast profile,
+the unchanged154-byte native-created synthetic record, normalstage0 and original
+positions. The sole publisher granted window37 at09:34:17Z; root verified it
+at09:34:55Z. The single controller sent only observed menu clicks and Escape.
+It reached the Game Menu and General Options. Root separately hash-admitted and
+viewed those images: General Options displays `[F11]`, a mouse-shaped category
+icon and FPS2. The shortcut was not invoked and the icon's category was not
+opened. No Controls label, movement binding or camera behavior was established.
+Capture labels such as `controller-controls` describe intended observations;
+that image actually shows the Game Menu.
+
+The controller released at09:40:04.416–09:40:05.050Z, with3 helper seconds left.
+It stayed inside the90-second hard limit but **missed the80-second target**.
+No preference, binding, movement or attack input was sent. Twelve controller
+captures were retained. The binder has complete883-byte raw/normalized output
+and10 raw frames; one rendered frame is omitted and process sampling reaches
+its40-entry limit. Other controller captures are untruncated. Full Evidence was
+saved privately before compact output or image delivery.
+
+Wrapper/UI exit0 establishes a completed bounded observation only. Story remains
+at step1. Root verified cleanup, shared-container absence, privacy, unchanged
+frozen/working executable hashes and the original synthetic record, then returned
+window37 at **09:40:45.981259Z**. Unrelated processes with denied environment
+reads were untouched. The next probe can use the now-observed F11 label and
+category layout, with fewer action/capture round trips and an earlier navigation
+cutoff. A fresh resource window is required for any new run.
+
+Private root outcome: `run234-norn-controls-outcome-20261106.json`, SHA-256
+`12b26825d23c17e26a80b07a521e85246fb0613a0df7f0de4799380e148030e2`.
+Controller outcome: `run234-controls-controller-outcome-20261106.json`, SHA-256
+`6de430600e39db3e49a466a0082919e7128bcca5d7e49de93f3189ea6a90e9a8`.
+
+| Retained REA | Evidence |
+| --- | --- |
+| `209026-run234-window37-verification-20261106.json` | `ev_0ab4aea6fa7bb3456ab5244faa792df11f1d02d8673708afcdde40ee73b005d1` |
+| `209026-run234-norn-controls-launch-20261106.json` | `ev_7491aa3963848dece6e434a9b4eb3b002b206c6500a47cfede7625b1b6e49640` |
+| `209026-run234-norn-controls-readback-20261106.json` | `ev_04be95ad71b0db1b4a431d5fb65bfc38f00d80e24ea7afd99c2047d3603c632e` |
+| `209026-run234-window37-return-20261106.json` | `ev_1c2fbbdcf53338f86cd85c481667f11467572d6d03ba98dd14552e378186e1b4` |
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

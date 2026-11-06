@@ -30,8 +30,9 @@ backup, exact artifact/current and rollback hashes, metadata900, effective
 settings and four owned healthy listeners at **09:27:43.186242Z**. Zero
 humans/bots were present then. Ether Feast is enabled and `story_branch` is
 `none`; verified rollback is **a223a90**. Focused tests, musl build and eight
-off/on startup checks passed. Deployment readback does not establish native
-client acceptance of the new heal/cooldown gameplay. Physical cancellation,
+off/on startup checks passed. The separate run233 audit observes native cooldown,
+rejected retry and later recast. Regeneration restored full health before the first
+cast, so positive healing remains unobserved. Physical cancellation,
 clones/conditions, retail scaling and restart progression remain unsupported.
 See the [verified Ether Feast release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45).
 Merchant appearance and placement remain fixture choices. Run224 observes Hero's Moot waypoint discovery; waypoint travel has

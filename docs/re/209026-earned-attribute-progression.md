@@ -29,6 +29,33 @@ That remaining limitation is not claimed to reproduce retail scaling. Skill
 execution, localization keys and authored Great Hunt encounters also remain
 incomplete. XP and heart state still reset when the server restarts.
 
+### Source audit: health and healing-power baseline
+
+A follow-up exact-source audit confirms that health388 and attribute6=0 are
+consistent with the current unmodified level-one Mesmer. The baseline leaf
+returns0 for selectors5 and above; prefix112 and the absent upgrades add no
+attribute6. Earned-level growth therefore does not by itself require a healing
+power increase. The missing progression input is the independently selected
+second level, followed by matching effective attributes and health updates.
+
+The complete101-row player-health LUT and retained Mesmer coefficient/default
+primary curve give conditional health baselines388 at level1,476 at2,564 at3
+and15922 at80. These are results for an explicitly selected second level,
+not a recovered rule selecting it from earned level and map/sector. Server190
+accepts the selected level;189 independently supplies effective attributes,
+and256/259 supply health. Updating one without the others or without the heal
+evaluator and character-bound carry would leave inconsistent state. How current
+health changes when maximum health changes is also an unresolved server policy.
+
+Private audit receipt: `mesmer-effective-health-progression-receipt-20261106.json`,
+SHA-256 `d760bc10e3238f7e2361a518b8f9f726058417a05695da4c1dc9425051c708a3`.
+Fresh LUT/evaluation REA:
+`ev_d22bc5d33e224afc091dfef25a9f97e1aa822bb0218e172abcc0ffc3d78daa1a`,
+complete raw/normalized output, exit0 and verified owned cleanup. Full bundle
+`209026-mesmer-effective-health-progression-evidence-20261106.json`, SHA-256
+`bdada5d1771e578b3859781c578ba20476387146e2f7097170822102135396f0`.
+The earlier missing-cache attempt is retained; no archive fallback ran.
+
 ## Configuration and checks
 
 The existing supervisor forwards `GW2_BASE_ATTRIBUTES=default-curve` to the

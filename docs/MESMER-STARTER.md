@@ -19,7 +19,7 @@ API/wiki names may locate content but do not replace client verification.
 | Correct Mesmer components and startup skills/equipment | Partial: set4/item33355/palette90 are observed. Run216's605 grant passes availability and produces a real targeted10170 request with one30-point response and no release hit. Correction is live in4c46cad-sk and independently verified. Final-cache instrumentation is partial; full unlock/stat/effect policy remains open. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Reconstructed story actions/NPCs and a stand-in boss are live; Thora/trophy-kill progression is client-smoked. Publisher226 starts at stage4 and exercises fixed item/coin claim and map28 transfer. The full saved-character sequence, authentic conditions and retail XP/binding policy remain open. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Transfer/arrival is live in76af245. Prepared217 transfers379→28, renders the character and opens the map UI. Post-transfer movement/combat and combined saved-character runtime admission remain unobserved. | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
-| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast healing/recharge is verified live in 7c26f45; its new gameplay path has no native client acceptance yet. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
+| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast healing/recharge is verified live in 7c26f45; run233 observes native cooldown/retry/recast, but no positive health gain because regeneration had already restored full health. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | All15 map28 heart areas and14 substitute NPCs are in76af245. Generic inside-area kill progress and placeholder rewards remain fixture rules. Authored tasks/events and full discovery are incomplete. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
@@ -40,11 +40,20 @@ It adds an explicit no-clone self-heal and 20-second recharge, with guarded
 same-process health/cooldown carry. The original-roster 379 versus pending-map 28
 login rejection was corrected; the actual TCP regression failed before and now
 follows 1065 to restored state. Focused tests, musl build and eight off/on startup
-checks pass. This readback establishes deployment, not native acceptance of the
-new heal/cooldown gameplay. Manual cancellation, clones/conditions and restart
-progression remain unsupported; the full retail goal is incomplete.
+checks pass. The separate retained run233 audit observes cooldown19, a rejected
+retry with “Skill recharging”/16, and a later fresh19. Regeneration had already
+restored350→388 before the first cast, so positive healing is still unobserved.
+Manual cancellation, clones/conditions and restart progression remain unsupported;
+the full retail goal is incomplete.
 [Verified release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45);
 [implementation and limits](re/209026-ether-feast-reconstruction.md).
+
+Run234 reaches General Options and its displayed F11 shortcut, but does not
+reach Controls or read movement bindings. The controller stayed within its90-second
+hard limit but missed the80-second target. Cleanup, privacy, executable hashes and
+the original synthetic record pass; window37 returned09:40:45Z. The next probe
+uses the observed menu route with fewer round trips and an earlier navigation cutoff.
+[Bounded result](re/209026-saved-norn-creator.md#run234-general-options-reached-controls-still-unobserved).
 
 Run230 completes an isolated input diagnostic on exacta223a90. Paired
 before/after D500ms images are consistent with lateral movement; exact yaw,
