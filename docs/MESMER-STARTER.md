@@ -41,10 +41,14 @@ no gameplay or client hooks. The native sword/heal observations below remain
 their exact earlier artifacts. Run242 renders normal saved spawn on403 but sends
 no movement: its controller required a position sample before the first input,
 and none arrived while stationary. Launch/UI13 is incomplete; cleanup and
-window44 return pass. A fresh fixture will admit one bounded initial calibration
-before requiring actual samples. No403 traversal is claimed yet.
+window44 return pass. Fresh244 then permits one visually attested S100ms probe,
+but immediate/passive readbacks still have no position sample and images show
+no clear displacement. Launch/UI13 remains incomplete; window45 cleanup passes.
+The next step is retained input-delivery comparison, not a route obstruction
+claim. No403 traversal is claimed yet.
 [Release readback](re/209026-saved-norn-live-activation.md#verified-movement-diagnostic-release-403ac37).
 [Run242 evidence](re/209026-saved-norn-creator.md#run242-normal-spawn-observed-initial-position-sample-missing).
+[Run244 evidence](re/209026-saved-norn-creator.md#run244-one-initial-input-sent-no-movement-sample-observed).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274
@@ -73,6 +77,13 @@ Launch/UI0 and cleanup/privacy/PE/prepared-record checks pass; window43 returned
 [Release readback](re/209026-saved-norn-live-activation.md#verified-sword-chain-release-7cfe9c4);
 [implementation and limits](re/209026-mesmer-sword-chain-reconstruction.md).
 [Native combo evidence](re/209026-mesmer-sword-chain-reconstruction.md#run241-native-three-tap-cycle).
+
+The next weapon slot has a separate gap: earned-level notification188 already
+supplies the level2 unlock input, but skill10334/slot6 is excluded by both fixed
+startup availability and the chain request gate. Its distinct multi-segment
+action needs implementation before widening admission; its display multiplier
+does not establish server strike count or timing.
+[Slot6 source boundary](re/209026-mesmer-starter-skill-requirements.md#earned-level-2-slot-6-admission-and-skill-10334).
 Private implementation receipt:
 `~/re/gw2/notes/mesmer-sword-chain-e624-20261106-checks/receipt.json`, SHA-256
 `1c709e3dfb679731737306ca432751808910296c1fc5300e101a441180dfe012`.

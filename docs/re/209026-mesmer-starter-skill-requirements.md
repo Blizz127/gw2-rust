@@ -243,3 +243,71 @@ protocol messages were sent by this investigation. The initial retail
 selection policy, broader
 unlock policy, all alternative availability modes and successful combat
 remain outside this bounded result.
+
+## Earned level 2: slot 6 admission and skill 10334
+
+The November 6 follow-up separates an existing level notification from a
+missing skill implementation. The final slot predicate reads **earned** level
+through `0x141207f20`, not the second/effective level. Palette90's profession7,
+category4 row has one candidate, skill10334, with entry minimum level1 and
+ordinary slot6 fallback level2. The retained [peer run143 observation](209026-npc-talk-loop.md)
+reports the second weapon icon after191/188 awarded level2; it does not identify
+the resolved skill or prove execution. Current XP progression already sends188.
+
+In the reviewed server commit `7cfe9c404968c330407eec0dfb6121be185b71dd`,
+`SkillFixture::available` remains the initial605 set. Additionally, when the
+sword-chain feature is enabled, `MissionPhase::respond` applies its gate to
+every skill request: only10176/slot0 or the expected chain key/slot5 passes.
+Thus adding10334 to availability alone would still reject slot6. A dedicated
+slot6 action must be distinguished from chain sequencing, with availability
+used consistently for admission and matching-character rejoin. Granting the
+whole palette at startup is not a level-unlock correction: explicit availability
+can bypass the final level fallback. The authored server grant policy remains
+unrecovered.
+
+One bounded REA read of existing caches establishes the distinct action data:
+
+| Field | Exact cached value |
+| --- | --- |
+| Skill definition | Type64, UID3386, key10334; file1282860 offset3881776 |
+| Ability | Offset3882216; flags +0x70 =8 |
+| Recharge input | Base10000; no context overrides; available-count base0 |
+| Action selection | Primary token `0x4d195684f7`, variant `0x3ef495582`; alternate0 |
+| Selected animation | Cached pack184788, row217904;21 events,6 segments |
+| Distinct event quantities | Type3:1080; type0:1180 |
+
+The [retained selector and initializer](209026-mesmer-sword-animation-data.md)
+support that exact nonzero variant and the type0 contribution to action+0x10.
+Do not substitute the sword-chain variant0. Segment flags include0x10/0x20/0x80,
+so the simple one-segment heal interpretation also does not transfer. Two
+type13 display facts contain integer multiplier8; one coefficient is about0.45,
+the other named `Damage Multiplier` resolves to about0.128. These facts do not
+establish eight authoritative strikes, their cadence, target defense, evade
+behavior, or a recharge-start moment. Type2/type7 facts remain uninterpreted in
+this slice. Neither an admission relaxation nor generic flat damage implements
+this separate action.
+
+Exact cached-read evidence is
+`ev_4a63cf671ba4f1772c1e42371bdd4ca3aa92e51c18bc7652c6325390377d19c8`:
+exit0, untruncated, owned-process cleanup verified, input hashes rechecked.
+Complete private evidence
+`209026-mesmer-slot6-skill10334-evidence-20261106.json` has SHA-256
+`3748e49a5d77cb3b3e28e6b6d565d696e4dff375322f5b5c461ce8f15164e2b3`.
+The compact source/code findings and proposed guards are in
+`209026-mesmer-slot6-admission-and-effect-findings-20261106.json`, SHA-256
+`d18426c39814e8533c79955084350c2b6e12c5ce5da901569cdece90931ed733`.
+No archive, game runtime, gameplay code or skill policy was changed.
+
+The retained full initializer further resolves segment flag0x10 as the start
+of an accumulated range, closed by0x20: for10334, wrapper+0x28 is720+69=789
+and the segment bounds at+0x2c/+0x30 are **[2,4)**. Its final wrapper+0x10
+is **1180−789=391**, not the raw type0 quantity1180. The already-bound
+correlated-step helper `0x141287410..0x141287492` adds789 to order+0xf0 when
+the incoming step equals2. Completion `0x141285ca0..0x141285d9b` increments
+order+0xec for steps2/3; its independent0x2000 release test remains unchanged.
+This closes local timing/counter bookkeeping, not an evade, strike, recovery,
+or authoritative timer rule. No new query was needed. Complete seven-record
+retained evidence: `209026-skill10334-flag10-consumer-evidence-20261106.json`,
+SHA-256 `4efda22c874af209e6a64a82cf6d251af68940c2885791dee1f95bf17da05991`.
+Arithmetic and branch receipt: `209026-skill10334-flag10-consumer-findings-20261106.json`,
+SHA-256 `c21bce87bd28eb060479bf288f3ad6c4d4a8916503b1f083ed841385f91442b5`.
