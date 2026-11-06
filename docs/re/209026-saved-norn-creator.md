@@ -1005,6 +1005,61 @@ Private evidence under `~/re/gw2/notes/`:
 - Controller receipt `run258-controller-outcome-receipt-20261106.json`, SHA256
   `71537197155d772e8baae3a83975b180fadb03375c1994e9f1e3ab36b11774ca`.
 
+## Run262: corner view observed; onward clearance unresolved
+
+Fresh262 keeps the exact 403 comparison with movement-log cadence 1, original 154-byte
+record, pristine 145 prefix, stage 0 placements and production client hooks.
+The controller approaches B5 using fresh images and position feedback, then
+performs one terminal E250 ms view and releases. Root checks 46 preparation pins
+and 1839 manifest entries. Four focused endpoint/UI cases, exact run-name
+binding, syntax and two startup checks pass. An actual UI fixture catches and
+corrects the host/container image-path alias before staging is frozen; unchanged
+controller, reader, focus and timing checks are reused.
+
+Ten translation holds produce 229 sequential movement reports. Nine request 750 ms
+and the final W hold 600 ms. The first actual sample is [-3204,-25600,-3742]; final
+actual [-2120,-25147,-3760] is 38.587563 XY units from B5. The terminal E250 ms has
+zero new position reports. Every completed action admits the same owned focus
+identity. No further hold, targeting, combat, interaction, story or transfer
+occurs. These are observed actions, not instructions for blind replay.
+
+Root independently views the pinned terminal image: the male Norn in purple,
+health 388, stands on a narrow grassy/rocky strip between steep rock on the left
+and the hall's dark arched end/adjoining wood wall on the right. A large gray
+foreground occlusion covers the left third. No continuous onward passage is
+established. Exact yaw remains unknown, and an absent position report does not
+prove a perfectly stationary position. The image establishes neither global
+unwalkability nor a complete route to the hunt.
+
+Controller claim/release output is collected at 15:37:39.683Z/15:41:26.039Z,
+226.356 seconds apart; these are not exact target-event or marker timestamps.
+All 13 controller captures exit 0 without truncation. Root independently checks
+the 39 files pinned by the final controller receipt. Launch/UI 0 and cleanup pass;
+window 54 returns at 15:42:22.993843Z and the publisher records it closed. All 70
+immutable non-prefix inputs, original record, executable hashes, console
+privacy and named-container absence pass. The readback preserves all 38,978 raw
+bytes/10 frames and all normalized output; only duplicated terminal rendering
+is partial. Unverified unrelated host processes remain untouched. No live
+profile, saved mode, actor placement or schema changes result.
+
+Private evidence under `~/re/gw2/notes/`:
+
+- Launch `209026-run262-norn-corner-view-launch-20261106.json`, SHA256
+  `23952bd9b2630aaa541b3cfc520972ac504859cae5f454819adf056b9a538072`,
+  REA `ev_654ad826d612e295688e963bd36cac617fd6dcbee08c90ee556f12a7fbff1d79`.
+- Readback `209026-run262-norn-corner-view-readback-20261106.json`, SHA256
+  `958adaebc6c7c28029b1d4bec6fbd3ccf14e7443803fa31acc3d4858bebbf1aa`,
+  REA `ev_5d2aa0c0ff0d46d88884864eab098b180a12aa9be4a522bea288aab9de3bb7f7`.
+- Return `209026-run262-return-window 54-20261106.json`, SHA256
+  `f13adf171bc29ab2d2717b40e96eca825348f1c41a1fd117fb3ab1ab9e4eb1de`,
+  REA `ev_a01e1d3722674d4450ef9af7b358bc3121bd88d1ad03953eb0410b99ac018a56`.
+- Controller receipt `run262-controller-outcome-receipt-20261106.json`, SHA256
+  `172baee556d072c5a9e4bafd4fee53a7480e04cfbcdcc0874e9ccc098849e70c`.
+- Root outcome `run262-norn-corner-view-outcome-20261106.json`, SHA256
+  `8322200dd32fef469689bf120e8549fa3e5ba1134466bd9ec5e26d5d0edbf095`.
+- Terminal image `controller-corner-view.png`, 1,105,801 bytes, SHA256
+  `d47c400ffc94d56e1bec6efd1798de8099f262e046ab5fb2b64db431bdc1f40e`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

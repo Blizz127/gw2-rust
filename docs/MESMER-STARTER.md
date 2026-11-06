@@ -134,6 +134,13 @@ window52 returned14:52:33Z with70 immutable inputs and the original record
 unchanged. Onward clearance and the full hunt remain unproven.
 [Run258 route prefix](re/209026-saved-norn-creator.md#run258-b5-route-prefix-observed).
 
+Run262 repeats the bounded approach using fresh feedback, reaches B5 proximity
+with 229 reports, and captures one terminal E250 ms view. The image exposes the
+hall end beside steep rock; a continuous onward passage remains unproven.
+Launch/UI 0 and cleanup pass; window 54 returned 15:42:22Z. No onward translation,
+combat, story or live change results from this probe.
+[Run262 corner view](re/209026-saved-norn-creator.md#run262-corner-view-observed-onward-clearance-unresolved).
+
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274
 before healing,255 at the first post-input capture,338 at the follow-up with
