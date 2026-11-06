@@ -115,3 +115,34 @@ SHA-256 `65922c91566ed5e8b9c4812cd4b82311f665184889e77d88355945e242966700`.
 Both new captures exited zero with complete raw output and verified owned
 process-group cleanup. No runtime, shared archive, deployment or saved-mode
 activation was performed.
+
+## Display modifier boundary
+
+A bounded follow-up recovered the complete modifier at0x140898050. Query
+0x76 returns a skill-filtered sum V and accepted-row count N. The native
+single-precision sequence is T=0 when N=0, otherwise
+T=V/(float(N)*100)-1, then factor=max(float(N)*T+1,0). When the raw caller
+selector is12..18, a separate query0x74 supplies P and divides the factor by
+P/100+1, with an assertion P>-100. Algebraic simplification can change
+rounding. N counts accepted modifier rows, not clones.
+
+The character adapter's iterator is0x14088e1d0, reached through character
+virtual108, interface virtual40 and collection virtual28. Its actual contents
+remain unknown; it is not the separately traced virtual50 buff collection.
+An empty iterator would yield factor1, but emptiness has not been established
+for this character. The widget forwards its incoming raw selector; this
+slice does not prove that every caller supplies an equipped-slot index.
+
+Consequently authored20000 cannot yet be advertised as an observed20-second
+cooldown. Category-zero's Word and accepted-heal timing remain unresolved.
+The earlier map379 context1 proof also does not establish map28's context.
+The planned nonzero-duration lifecycle test remains diagnostic, without
+healing or recharge replies.
+
+Private findings: `ether-feast-next-execution-boundary-20261106.md`, SHA-256
+`c20828e812ebf194394ecf843584a9a3ba0523924643f6b5338d849649047ecb`.
+Complete seven-capture bundle:
+`209026-ether-feast-recharge-modifier-20261106.json`, SHA-256
+`57b51fbe31690733f5d95b91a35639ce0c0bbdcf23f51ba0e96ab725158afab1`.
+All captures exited0. One duplicate rendered stream was truncated; raw and
+normalized output remain complete. No gameplay or runtime change occurred.
