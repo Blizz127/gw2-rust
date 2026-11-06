@@ -398,8 +398,8 @@ pub struct MissionPhase {
     /// Research: on each player SkillBegin, order the hostile NPC to cast this
     /// skill (server 34 + 0x78, slot 23), with its own behavior-value counter.
     npc_cast: Option<(u32, u32)>,
-    /// Research: on each player SkillBegin aimed at a hostile NPC, lower its
-    /// health by this amount through server 257.
+    /// Research: on player SkillBegin aimed at a hostile NPC, lower its health
+    /// by this amount through server 257. Known healing skill10176 is excluded.
     damage_on_skill: Option<f32>,
     /// Research: answer `[0x29][slot]` with server 34 + 0x78 for this skill key,
     /// aimed at the hostile NPC (auto-attack hypothesis).
@@ -874,7 +874,7 @@ impl MissionPhase {
     }
 
     /// Research: player skills aimed at the hostile NPC lower its health by
-    /// `amount` via server 257 (the NPC spawns with 100). Clamped at 0.
+    /// `amount` via server 257. Known healing skill10176 is excluded.
     pub fn with_damage_on_skill(mut self, amount: f32) -> Self {
         self.damage_on_skill = Some(amount);
         self
@@ -1191,6 +1191,17 @@ impl MissionPhase {
         let Some(fixture) = &self.population else {
             return Ok(None);
         };
+        if self.began
+            && self.damage_on_skill.is_some()
+            && matches!(seen, Seen::Skill(skill) if skill.request.skill_key == 10176)
+        {
+            // Ether Feast's client facts are healing/condition removal.
+            // An enemy selection must not cause damage, retarget auto-attack
+            // or start NPC retaliation. Real cast/effects remain unimplemented.
+            // See docs/re/209026-mesmer-heal-animation-data.md and run144's
+            // separately retained Ether Feast tooltip observation.
+            return Ok(None);
+        }
         // Auto-attack follows the NPC last attacked with a SkillBegin, whatever
         // the damage setting (or a defeat) does with the skill itself.
         if self.began
@@ -2385,7 +2396,7 @@ pub(crate) mod tests {
             remote_tick: 5,
             command_flags: 0,
             behavior_value: 0,
-            request: SkillBeginRequest209026 { target, skill_key: 10176, slot: 1 },
+            request: SkillBeginRequest209026 { target, skill_key: 10170, slot: 1 },
         })
     }
 
@@ -2401,6 +2412,33 @@ pub(crate) mod tests {
 
     fn health_of(phase: &MissionPhase, agent: u16) -> f32 {
         phase.hostiles.iter().find(|h| h.plan.agent_index == agent).unwrap().health
+    }
+
+    #[test]
+    fn ether_feast_with_a_hostile_selected_does_not_deal_fixture_damage() {
+        let mut phase = hostile_phase(LEVEL1_NPC_HEALTH)
+            .with_xp_per_kill(2500)
+            .with_kill_loot()
+            .with_heart(56, 1).unwrap()
+            .with_npc_attack(19.0, 388.0);
+        phase.heart.as_mut().unwrap().inside = true;
+        phase.heart.as_mut().unwrap().player = Some(1);
+        phase.last_target = Some(3);
+        // Real SkillBegin layout: selected hostile, Ether Feast key10176,
+        // healing palette slot0. A selected target does not make it an attack.
+        for target in [3u8, 4] {
+            let seen = phase.push(&client_23(&[0x23, target, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
+            assert_eq!(seen.len(), 1);
+            assert!(phase.respond(&seen[0]).unwrap().is_none());
+            assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (LEVEL1_NPC_HEALTH, LEVEL1_NPC_HEALTH));
+            assert!(phase.hostiles.iter().all(|npc| npc.respawn.is_none()));
+            assert_eq!(phase.xp, Some((2500, 0, 1)));
+            assert_eq!(phase.kill_loot, Some(0));
+            assert!(phase.heart.is_some_and(|h| h.progress == 0 && !h.done && !h.rewarded));
+            assert_eq!(phase.last_target, Some(3));
+            assert!(phase.aggro.is_empty());
+            assert!(phase.npc_attack.is_some_and(|a| a.next.is_none() && a.player_health == 388.0));
+        }
     }
 
     fn contains(haystack: &[u8], needle: &[u8]) -> bool {
@@ -2452,10 +2490,10 @@ pub(crate) mod tests {
         let mut phase = hostile_phase(59.0);
         // Skill hits on NPC 3: 118 -> 59 -> 0.
         let hit = phase.respond(&skill_at(3)).unwrap().unwrap();
-        assert!(!contains(&hit, &dead_frame(3, 10176, 5)));
+        assert!(!contains(&hit, &dead_frame(3, 10170, 5)));
         assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (59.0, LEVEL1_NPC_HEALTH));
         let kill = phase.respond(&skill_at(3)).unwrap().unwrap();
-        assert!(contains(&kill, &dead_frame(3, 10176, 5)), "kill frame for agent 3");
+        assert!(contains(&kill, &dead_frame(3, 10170, 5)), "kill frame for agent 3");
         assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (0.0, LEVEL1_NPC_HEALTH));
         assert!(phase.hostiles[0].respawn.is_some() && phase.hostiles[1].respawn.is_none());
         // A dead NPC takes no more hits and the live one is still hittable.
@@ -2464,7 +2502,7 @@ pub(crate) mod tests {
         assert_eq!(health_of(&phase, 4), 59.0);
         // Kill NPC 4 too, then make only NPC 3's timer due.
         let kill = phase.respond(&skill_at(4)).unwrap().unwrap();
-        assert!(contains(&kill, &dead_frame(4, 10176, 5)));
+        assert!(contains(&kill, &dead_frame(4, 10170, 5)));
         let now = Instant::now();
         let first_due = phase.hostiles[0].respawn.unwrap();
         assert!(phase.hostiles[1].respawn.unwrap() >= first_due);
