@@ -35,8 +35,9 @@ payload pointers are classified local references in entry +0x40.
 A definition's content type is Dword +0x10: both targets are type 377.
 Its data type is Dword +0x2c. The complete formatter
 `0x140891f50..0x140892a57`, crossing its pdata fragments, dispatches on this
-definition data type through `0x140894a50..0x140894ad4`. Type zero at
-`0x140892013..0x140892020` forwards entry +0x40 to `0x140892ab0`.
+definition data type through `0x140894a50..0x140894ad4`. The type-zero branch
+`0x140892013..0x1408920ce` loads entry +0x40 at `0x140892082` and calls
+`0x140892ab0` at `0x140892098`.
 The cached entry +0x48 tag is not that dispatch discriminator.
 
 The definition resolver `0x140894dd0..0x140894e3f` can also look up a null
