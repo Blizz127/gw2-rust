@@ -942,6 +942,69 @@ Private evidence under `~/re/gw2/notes/`:
 - Controller receipt `run254-controller-outcome-receipt-20261106.json`, SHA-256
   `c248a2949c3c1268f3ebc4b6b14dbc18084c1e1a317cbc0dee964128764ed8ce`.
 
+## Run258: B5 route prefix observed
+
+Fresh run258 retains the original154-byte synthetic record, pristine145 prefix,
+unchanged normal-stage0 spawn/actors/profile, production client hooks and the
+403ac37 comparison binary with movement-log cadence1. It extends the controller
+input/release/hard bounds to300/330/360 seconds. The focus, fresh-position,
+image, calibration and hold limits are unchanged. Seven changed-boundary
+tests, exact run-name binding, compact-output and two startup checks pass.
+Root verifies41 metadata pins and1839 manifest rows before launch.
+
+The controller claims at14:47:52.984197Z and releases at14:51:39.434437Z,
+after226.450240 seconds. Eleven completed holds produce235 fresh, sequential
+movement reports. Ten holds request750ms; the final W hold requests600ms.
+There are no turns, failed attempts, unresolved translations, target, combat,
+story, interaction or transfer events. Every before/after focus check admits
+the same owned client/window identity. Requested hold durations and host command
+timings do not establish exact application key timing or camera yaw.
+
+| Hold | Last new ordinal | Last actual position |
+| --- | ---: | --- |
+| S750 bootstrap | 17 | [-3263,-25600,-3743] |
+| A750 | 39 | [-3263,-25456,-3746] |
+| W750 | 62 | [-3016,-25456,-3743] |
+| A750 | 82 | [-3016,-25327,-3746] |
+| A750 | 104 | [-3016,-25183,-3749] |
+| A750 | 122 | [-3013,-25068,-3750] |
+| W750 | 150 | [-2708,-25068,-3751] |
+| W750 | 174 | [-2472,-25068,-3753] |
+| D750 | 195 | [-2472,-25205,-3746] |
+| W750 | 215 | [-2261,-25205,-3757] |
+| W600 | 235 | [-2085,-25205,-3761] |
+
+These are retained observations, not a replay sequence. The bootstrap's first
+actual sample is[-3204,-25600,-3742]; configured spawn is not treated as an
+observed pre-input endpoint. Final XY is29.154759 units from B5. The controller
+attests the current view, and root independently reviews the hash-admitted final
+image: health388, character on narrow ground beside a hall corner, rock face
+and foliage. Onward clearance is not visible. The bounded B5 proximity/image
+predicate passes; complete walkability, a route to hostiles and the full hunt
+remain unproven. The next retained plan concerns viewing around this corner.
+
+Launch/UI0 and cleanup pass. Window52 returns at14:52:33.045497Z with70 immutable
+non-prefix inputs, original record, both executable hashes, console privacy and
+container absence verified. All38,427 raw readback bytes/10 frames and normalized
+frames are preserved; only duplicated terminal rendering is partial. No live
+profile, actor coordinates, record or schema changes result from this probe.
+
+Private evidence under `~/re/gw2/notes/`:
+
+- Launch `209026-run258-norn-upper-route-launch-20261106.json`, SHA256
+  `f0761bc25c582ed6a1bbe8edb46a0cf077e6310322b67903f952878b0a6d3b28`,
+  REA `ev_23f4bb3ab3a82465c4b335f69e3586ee6095210f0ad2f6f607b19f86d455f5c9`.
+- Readback `209026-run258-norn-upper-route-readback-20261106.json`, SHA256
+  `81d029635dac77af35e81d4d494b3bcfc483373b9ef96919c74ec77f56d41928`,
+  REA `ev_6ca1b93769558d8935164fa465b2b64783c05775ac1e34d28b99c8af07f14568`.
+- Return `209026-run258-norn-upper-route-return-20261106.json`, SHA256
+  `a7b09935992ddd0214c1acc92e3e097cfd0c3a9948a1123ce4d617a90802156d`,
+  REA `ev_955a974294255f4d0be121c9bb6d71ae46f7372fb3d2cb15f174374365e19dfb`.
+- Root outcome `run258-norn-upper-route-outcome-20261106.json`, SHA256
+  `3b621de958283303d804ef90b0c6b58a227452e66092962c0f0f908d2ed51837`.
+- Controller receipt `run258-controller-outcome-receipt-20261106.json`, SHA256
+  `71537197155d772e8baae3a83975b180fadb03375c1994e9f1e3ab36b11774ca`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

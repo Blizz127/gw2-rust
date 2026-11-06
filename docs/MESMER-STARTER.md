@@ -41,6 +41,13 @@ Profile, supervisor and current gameplay defaults remain unchanged.
 [Source and implementation](re/209026-skill10334-accepted-phase-observation.md).
 [Release readback](re/209026-saved-norn-live-activation.md#verified-sword2-phase-diagnostic-release-ec69643).
 
+Run256 now confirms that the six-site native phase observer arms in the
+production runner. UI8 stops before the combat sequence; no10334 request or
+phase is observed. Window51 returned14:42:16Z with61 immutable inputs,
+prepared224, executable hashes, privacy and container cleanup verified.
+The retained timing refusal requires a fresh probe with a consistent budget.
+[Run256 evidence](re/209026-skill10334-accepted-phase-observation.md#run256-observer-armed-combat-sequence-did-not-start).
+
 Earlier **f926ce0**, now the rollback, was deployed at13:00:46Z to
 `/home/blizz/gw2-rust-f926ce0`, rollback403ac37. Root's13:03:57Z independent
 readback verifies the exact tested artifact, all current/rollback hashes,
@@ -88,6 +95,13 @@ retains the incomplete route; window50 returned14:05:23Z with cleanup checks
 passed. No complete route, hunt or retail claim follows.
 [Failure and cleanup](re/209026-saved-norn-creator.md#run252-mismatched-helper-run-name-stops-before-movement).
 [Run254 movement and limits](re/209026-saved-norn-creator.md#run254-five-movements-observed-upper-route-remains-incomplete).
+
+Fresh258 reaches the B5 prefix boundary with11 bounded holds and235 fresh
+position reports. Final actual[-2085,-25205,-3761] is29.15XY units from B5;
+root reviews the final corner/rock/foliage image. Launch/UI0 and cleanup pass;
+window52 returned14:52:33Z with70 immutable inputs and the original record
+unchanged. Onward clearance and the full hunt remain unproven.
+[Run258 route prefix](re/209026-saved-norn-creator.md#run258-b5-route-prefix-observed).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274
