@@ -30,7 +30,15 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-Latest independently verified live: **75ba240-veil**, deployed17:35:27Z and
+Latest independently verified live: **464cce3**, deployed18:20:31Z and
+checked18:28:19Z on2026-11-06 at `/home/blizz/gw2-rust-464cce3`;
+rollback75ba240-veil. This fixes two fixed-size chunk iterator warnings in
+the named ability-value reader. All current/rollback hashes, four owned
+listeners, saved mode/two private records, backup,31 story arguments and
+CDN950 passed readback. Held53a8989 is excluded. This adds no new gameplay
+claim. [Release evidence](re/209026-saved-norn-live-activation.md#verified-named-value-reader-maintenance-464cce3).
+
+Earlier **75ba240-veil**, deployed17:35:27Z and
 checked17:43:36Z on2026-11-06 at `/home/blizz/gw2-rust-75ba240-veil`;
 rollback664e2bd. Four healthy owned listeners, two private saved records and
 exact31 story arguments passed readback. Quest164 has publisher-reported
@@ -57,6 +65,14 @@ the remaining controller budget did not admit W, so no vector window or samples
 occurred. UI13 remains failure/incomplete evidence. Later observer exit cleanup,
 container absence and unchanged pinned inputs were verified separately; exact
 window56 was returned17:56:10Z. [Run266 evidence](re/209026-saved-norn-creator.md#run266-incomplete-movement-vector-observation).
+
+Run267 proves the corrected release/final-log reader works on retained runtime
+output. Its S750 produced13 reports, but the W command capture started48.634s
+after its scene, beyond the45s guard. The controller never reached its native
+W worker; zero samples and UI13 remain incomplete. Window57 was returned18:23:42Z
+with83 immutable inputs and cleanup verified. The next fresh run will use root
+as sole image reviewer/controller to remove delivery delay while preserving
+the guard. [Run267 evidence](re/209026-saved-norn-creator.md#run267-stale-scene-guard-no-native-vector-window).
 
 Earlier **11d2c56 was verified live at16:59:09Z**, deployed16:57:41Z to
 `/home/blizz/gw2-rust-11d2c56`, rollbackd0288e1-powder. It adds a pure bounded
@@ -92,7 +108,7 @@ and the saved-character story sequence remain unproven; progress is process-loca
 [Release and limitations](re/209026-saved-norn-live-activation.md#verified-integrated-story-release-d0288e1-pups).
 
 Future production artifacts must include the current integrated lineage
-`75ba240b6239dbaea07a45bf10caed829c4898fe` (f7674f1 plus664e2bd), or be handed as commits to the sole
+`464cce3dfa2050f58808f7055e4f5982ee824161` (direct child of75ba240-veil), or be handed as commits to the sole
 publisher for merge/build/test, preserving the current950 assets. Run264 used older403 only as an isolated
 diagnostic comparison. Its preparation was root-reviewed:9 controller tests,
 8 reader tests, exact-name/syntax checks and two startup checks pass. Root

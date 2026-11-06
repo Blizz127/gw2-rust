@@ -1362,3 +1362,39 @@ Full REA `209026-75ba240-veil-release-readback-20261106.json`, SHA256
 Evidence `ev_ec603144fbd2ae38e2ed646dba474635676111acada7af672e409e5c86a5a6e2`.
 The verifier exited0, untruncated, with verified owned cleanup. Four unrelated
 process-environment EACCES observations remain unverified and untouched.
+
+## Verified named-value reader maintenance: 464cce3
+
+The sole publisher deployed `/home/blizz/gw2-rust-464cce3` at
+**2026-11-06 18:20:31Z**. Independent read-only REA verification passed at
+**18:28:19.915108Z**; root checked the complete capture result against the
+receipt and verified its artifact pins. Rollback is75ba240-veil.
+
+The exact source464cce3dfa2050f58808f7055e4f5982ee824161 has75ba240 as its
+direct parent and changes only the two constant-size chunk iterators in the named
+ability-value reader. Nine focused resolver tests and clippy with warnings
+denied pass on that source. The publisher reports the musl build,116 data
+tests and saved-mode startup smoke; this readback did not rerun those checks.
+Held53a89896c7ff97ccda63c1575b622e901dda239a is not an ancestor and remains
+excluded. Do not infer that a newer publisher branch head is authorized.
+
+- Game:1,938,896 bytes, SHA256
+  `f38a645868500dd6c7ad979fd21c33acda4a0e0759be1eecd78d5467f85dbcbf`.
+- Manifest:`191f0fceae7a5769da20686c6acdbbd65e6d797066d98c82b9940e645cdde039`.
+- BUILD:`412eacff5e62c27a19efcdfdf1d66d1b806d20f4adbbe4b647c933a76dd46f36`.
+
+All current/rollback hashes passed; only BUILD and game changed. Four owned
+listeners were healthy, with zero humans/bots. Saved mode, two0600 records
+in the0700 store, activation backup, profile/supervisor,31 story arguments,
+skills and CDN950 remained unchanged. Record contents were not read. This
+maintenance release supplies no new native gameplay evidence and does not
+resolve the quest164 limitations above.
+
+Private receipt `464cce3-release-verification-20261106.json`, SHA256
+`2b34d7a9086138e1f9cb8afe5b967404d7f1bc187965f3715dd2ea238e62c6d7`.
+Full REA `209026-464cce3-release-readback-20261106.json`,61,866 bytes, SHA256
+`25836d7ae378281ccac2b02667e5cc308ae858ba87105bdc84a991679ea40bec`,
+Evidence`ev_79315ee087e2720233b2f658bf65497a054dcdaa32c4c50249dc5a5e866dd28c`.
+The capture exited0, untruncated, with verified owned cleanup. A stale inherited
+publisher note still mentions the prior warnings; the exact source diff,
+focused test receipt and current BUILD establish their correction.

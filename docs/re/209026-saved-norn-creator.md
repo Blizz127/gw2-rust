@@ -1356,3 +1356,53 @@ Launch process observation reports66 unverified environment reads; return
 reports one. These observation limits are retained without attributing ownership
 to those processes. No runtime, original helper, readiness or manifest file was
 rewritten to make the result pass.
+
+## Run267: stale scene guard, no native vector window
+
+Run267 used current75ba240-veil, its exact31 story arguments and CDN950, normal
+stage0 and the unchanged154-byte synthetic record. Only movement logging was
+overridden to1. Fifteen writer/reader integration cases,14 prefix fixtures,
+eight execution-binding cases and two actual staged startup checks passed.
+The version2 coverage record binds both the complete-line prefix and all bytes
+observed by the same release read; later cleanup is reported separately.
+
+One S750 produced13 fresh reports, ending at `[-3242,-25600,-3743]`. The passive
+vector scene was recorded18:20:55.511Z; the single W command capture began
+18:21:44.145Z, **48.634seconds later**, already beyond the45-second scene guard.
+That command exited1 with a generic refusal. The exact first failed assertion
+is not recorded, but the persistent attempt, phase, pulse and W action records
+are all absent. In the pinned controller, attempt persistence precedes the
+native worker. Together these establish that this controller did not reach its
+W worker; they do not diagnose client W consumption or collision. No retry
+occurred. The observer retained only guarded arm and `inferior_exited` records,
+with zero callbacks/samples. The UI result remains13/incomplete.
+
+The new reader successfully validates the earlier incomplete coverage snapshot
+and later matching stopped/terminal cleanup without rewriting either. Exact
+window57 was returned **2026-11-06 18:23:42Z**, verifying container absence,
+83 immutable inputs, both PE hashes, synthetic record and privacy. Root retains
+no resource. A future fresh test will put image review and native commands with
+the same root controller to avoid the inter-agent delivery delay; the45-second
+image guard, per-action review and fresh lease remain required.
+
+Before any binder/GO/claim, root added the omitted controller helper digest to
+the initial permit. The original permit and correction receipt are retained;
+scope, nonce, lifetime, lease, contract and manifest were unchanged. This was
+not a native input retry or a change to frozen runtime inputs.
+
+Private launch `209026-run267-norn-input-vector-launch-20261106.json`, SHA256
+`f9630f820879fd68dbdc7002b65726b7d32f6ee28098ad9ce924afe08559b5cb`,
+Evidence`ev_4fa682bde24b88514bfb3ca0abd5c9f13191dd8fb9503daf67ea79404598c74c`.
+Strict readback `209026-run267-norn-input-vector-readback-20261106.json`, SHA256
+`2d42fc9b3227689e804d8a93fe072865a7afb1471e375d2aa7add83146804310`,
+Evidence`ev_65992eff0686e756ccbc2bb756d1e9b1fe5160f5d57393d2484ebaa0822fa464`.
+Return `209026-run267-resource-return-20261106.json`, SHA256
+`9273cd7ecc4446d3005c305bb767461c7101fa4f52e0807ccd6e70d7d8502892`,
+Evidence`ev_743b5c7508d08cbba8598e01945b5b353e20dccdd5bc7b0873de024a4a3a9404`.
+Refusal audit `209026-run267-vector-refusal-audit-20261106.json`, SHA256
+`80d16f380fdc431cdb23d8cff3a689b41b85406d3e9ac58b354b7f7b0f6e9071`,
+Evidence`ev_e671be3004bf97218c896ab519ca02cfe7eeea772a4f02cb98b903949ea624ce`.
+All captures are untruncated with owned cleanup verified. Launch exits13;
+readback, return and retained audit exit0. The launch reports35 unverified
+process-environment reads and readback six; these remain observation limits,
+not attributions of ownership or gameplay success.
