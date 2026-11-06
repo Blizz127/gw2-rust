@@ -1406,3 +1406,58 @@ All captures are untruncated with owned cleanup verified. Launch exits13;
 readback, return and retained audit exit0. The launch reports35 unverified
 process-environment reads and readback six; these remain observation limits,
 not attributions of ownership or gameplay success.
+
+## Run268: guarded three-phase movement observation passes
+
+Run268 used current464cce3, its unchanged31 story arguments/profile/supervisor
+and CDN950, normal stage0, pristine145 prefix and the original154-byte synthetic
+record. Root was the sole image reviewer and native controller. The controller
+kept the45-second scene limit and the same S750/W250 scope. Both launch paths
+now validate the ready-pinned controller digest before shared-resource reads;
+the pure permit builder derives that digest instead of requiring manual entry.
+Twenty-nine helper cases and two actual staged no-listener checks passed;
+root verified55 metadata pins and83 immutable non-prefix inputs.
+
+One S750 produced13 fresh reports ending `[-3242,-25600,-3743]`. Root reviewed
+the fully rendered scene at18:41:58.231Z. The W250 command capture started
+18:42:07.504Z,9.273seconds later, and completed the guarded observer window.
+Fifteen new movement reports ended at `[-3124,-25600,-3742]`. The captured
+generic current-thread context produced these three complete triples:
+
+| Host phase | Input move | Computed vector | Composed vector |
+| --- | --- | --- | --- |
+| Baseline | `[0,0,0]` | `[0,0,0]` | `[0,0,0]` |
+| Input | `[0,1,0]` | `[1,0,0]` | `[1,0,0]` |
+| Post | `[0,0,0]` | `[0,0,0]` | `[0,0,0]` |
+
+All nine callbacks passed TLS context, frame and source guards. The terminal
+reported three samples, no pending pair and cleanup complete, with reason
+`marker_removed`; the matching stopped handshake verifies disabled hooks.
+The observer's bounded sampling still labels overall coverage partial. The
+defined probe requires at least one complete triple in each phase and passed
+both release and final readback. UI and launcher exited0. The same-read
+release prefix/observed buffer is80,676 bytes, SHA256
+`3b37a6a454179fcdc1920f564cd89d4eeee7489447272f6c4a32265ae4cd9c71`;
+no observer event was appended after release.
+
+Exact window58 was returned **2026-11-06 18:43:57Z**. Container absence,
+83 immutable inputs, both PE hashes, synthetic record and console privacy
+passed. Root holds no live runtime or resource. No targeting, combat,
+interaction or story event occurred. This proves the sampled generic movement
+path and observer operation in this run. It does not identify that context as
+the controlled player, establish physical key-consumption timing, diagnose the
+earlier failures, prove collision/route clearance or complete the Great Hunt.
+
+Private launch `209026-run268-norn-input-vector-launch-20261106.json`, SHA256
+`0b993ca7db92e60f5acf87ed23cab42385e5fd3c2dc249c0e6f7140a6659b5a5`,
+Evidence`ev_f9ec69d424119cc635390d4770d718c42789f00809d721436179ccb0eb203d7a`.
+Strict readback `209026-run268-norn-input-vector-readback-20261106.json`, SHA256
+`e35d84893ca0f36db9ebcfc035ba9b4fd12846c5c1343fc6d0023c502f9c57cc`,
+Evidence`ev_a6245af7cf11b8385a72a689b031495075135f47fc953966db305c18808212fb`.
+Return `209026-run268-resource-return-20261106.json`, SHA256
+`d54464284d465ea6b0b04c5db165d9e7e7dbbac8f680ac159d9e88dfd0637784`,
+Evidence`ev_7020d483a752fe31d237f6d29cc28a6c007fc0ac4759c8fc791a7e325b585223`.
+All three exited0 with owned cleanup verified. Launch/return are untruncated;
+readback retains all45,674 raw bytes and12 raw frames, with zero normalized
+omissions, while three rendered frames were omitted. The launch retains36
+unverified process-environment observations, without attributing ownership.

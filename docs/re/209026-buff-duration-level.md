@@ -226,3 +226,46 @@ All four captures exited0. The selector capture retains all19,457 raw bytes,
 rendered output only (10of28 frames retained). The exact-cell capture has two
 unrelated process-environment EACCES observations; owned cleanup is verified.
 No runtime, archive or gameplay change was made.
+
+## Two modifier eligibility predicates
+
+Both authored buff738 rows pass the condition predicate `1412c09b0` on normal
+return. The caller at `140895031` passes row+0x14 as ECX; both rows contain0.
+The exact switch cell selects `1412c09f8`, returning EAX1 at `1412c0a07`
+independently of EDX. Incoming EDX4 still calls `14140f1d0` before dispatch and
+replaces EDX with its result. That external call's side effects, exception or
+nonreturn behavior are outside this slice; its returned value cannot change
+condition0's result. Current selector mode is therefore not an unresolved
+input for this predicate's Boolean result.
+
+The later call at `1408951b6` passes the actual row in R8 to `1412c0ef0`.
+Its first test is byte[row+0x28]&0x1e. Both authored flags are0, selecting the
+direct EAX1/return path `1412c1016..1412c1039`. This path calls no external
+function and does not dereference the character/context arguments or read the
+extra stack flags. Both recorded rows pass this second predicate as well.
+
+These results close two specific collection filters. Kind/reference matching,
+visited-row filtering and other collection context still matter; no current
+rendered tooltip or authoritative application, duration, stacking, cap or damage
+policy is inferred. No gameplay change follows from these presentation checks.
+
+Each target-free REA capture reads a fixed window of at most512 bytes from the
+pinned frozen PE, stopping at the exception-directory boundary. The condition
+body/table is256 bytes; the later body is342 bytes. Root reviewed the complete
+relevant instruction paths, table cell, caller registers and authored fields.
+Private condition finding `209026-buff738-condition-zero-findings-20261106.json`,
+SHA256`0462f6ff847a3b073c39c6f8b48b2e23af356ca0c00336ef489e529222caa06a`.
+Later predicate finding `209026-buff738-later-predicate-findings-20261106.json`,
+SHA256`faac408979080252c1307e5c302cfdffaa484704cfc05b7a1f63e685fdcc23eb`.
+Full captures:
+
+- `209026-buff738-condition-zero-window-20261106.json`, SHA256
+  `13c34df94546d9a56427587589b611d07dacf35c159bbab378dc4513ca9deff2`,
+  Evidence`ev_6faf71c7af508efd220fa47f87dfa057794869339ba016f2088be2fd4e617db3`.
+- `209026-buff738-later-predicate-window-20261106.json`, SHA256
+  `d63f2eca7eb70214bfdae9febecf7b95c27a241b1e12610156ece9d40c78c416`,
+  Evidence`ev_bfffa666b4d3354ae3fb944911f1f067259b74c562ec405f1f0b8ef420cc41aa`.
+
+Both new captures retain all raw, normalized and rendered output, exit0 and
+verify owned cleanup and unchanged frozen-PE/helper hashes. The previously
+retained caller's rendered-output omissions remain as documented above.

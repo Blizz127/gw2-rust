@@ -60,6 +60,9 @@ client duration and UI row-count consumers. Buff738's two authored modifier
 rows return constant1.0; exact labels are Incoming Damage and Incoming Condition
 Damage, with signed percent UI templates. Current selection remains unresolved.
 These findings add no authoritative condition application/expiry policy.
+The two actual rows now also pass their condition0 and flags0 collection
+predicates by complete bounded source paths; other collection context and
+the runtime tooltip remain unobserved.
 Run266 closed incomplete under window56. One S750 produced22 movement reports;
 the remaining controller budget did not admit W, so no vector window or samples
 occurred. UI13 remains failure/incomplete evidence. Later observer exit cleanup,
@@ -73,6 +76,14 @@ W worker; zero samples and UI13 remain incomplete. Window57 was returned18:23:42
 with83 immutable inputs and cleanup verified. The next fresh run will use root
 as sole image reviewer/controller to remove delivery delay while preserving
 the guard. [Run267 evidence](re/209026-saved-norn-creator.md#run267-stale-scene-guard-no-native-vector-window).
+
+Run268 passes the bounded vector probe with root controlling input directly:
+S750 produced13 reports and W250 produced15 more. One complete guarded triple
+per baseline/input/post phase records zero→forward→zero movement vectors.
+UI0, observer hook cleanup and final readback pass; window58 was returned
+18:43:57Z. This provides a successful comparison for the next normal tutorial
+progression test, without diagnosing earlier stalls or proving full-route
+clearance. [Run268 evidence](re/209026-saved-norn-creator.md#run268-guarded-three-phase-movement-observation-passes).
 
 Earlier **11d2c56 was verified live at16:59:09Z**, deployed16:57:41Z to
 `/home/blizz/gw2-rust-11d2c56`, rollbackd0288e1-powder. It adds a pure bounded
