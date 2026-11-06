@@ -162,6 +162,11 @@ The [static hostile surface comparison](re/209026-norn-terrain-v14.md#existing-h
 does not establish model-foot placement or automatic grounding; no actor
 coordinate change is justified by those measurements alone.
 
+The [entry-position audit](re/209026-norn-entry-position-boundary.md) confirms
+server37 supplies initial character position;1060 supplies a separate streaming
+centre. The configured spawn remains reconstructed. A typed fresh-Norn entry
+selector or authoritative original entry tuple is still missing.
+
 Run236 observes E/Q turning on exact7c26f45, but the normal-stage0 route enters
 the camp hall. Only Thora/step1 completes; no hostile selection, attack, kill,
 reward or transfer occurs. UI/launch exit13 records the failed full-hunt
