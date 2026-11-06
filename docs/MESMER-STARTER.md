@@ -57,12 +57,15 @@ no clear displacement. Launch/UI13 remains incomplete; window45 cleanup passes.
 Retained comparison found longer successful inputs in earlier fixtures but
 established no cause. Fresh246 stopped before its S750ms pulse: raw X focus1
 is PointerRoot, which the observer did not handle. Window46 returned12:48:14Z;
-no movement was sent. Fresh248 is being prepared with passive owned-pointer-path
-validation. No403 traversal is claimed yet.
+no movement was sent. Fresh248 then passes one S750ms input with passive
+owned-pointer-path validation:29 new movement reports, last actual position
+[-3301,-25600,-3745]. Launch/UI0 and window47 cleanup pass. This establishes
+bounded input delivery, not a full403 route traversal.
 [Release readback](re/209026-saved-norn-live-activation.md#verified-movement-diagnostic-release-403ac37).
 [Run242 evidence](re/209026-saved-norn-creator.md#run242-normal-spawn-observed-initial-position-sample-missing).
 [Run244 evidence](re/209026-saved-norn-creator.md#run244-one-initial-input-sent-no-movement-sample-observed).
 [Run246 evidence](re/209026-saved-norn-creator.md#run246-pointerroot-guard-stops-before-input).
+[Run248 evidence](re/209026-saved-norn-creator.md#run248-one-input-produces-fresh-movement-reports).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274

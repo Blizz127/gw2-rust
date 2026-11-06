@@ -784,6 +784,53 @@ Private evidence under `~/re/gw2/notes/`:
 - Root outcome `run246-norn-input-delivery-outcome-20261106.json`, SHA-256
   `8919b2143483cdccea44e9114d38dc4ba94d768b331fdf1eedfd0288fdde7604`.
 
+## Run248: one input produces fresh movement reports
+
+Fresh248 retains exact403ac37/N1, original synthetic154-byte record, stage0,
+unchanged actors and production hooks. Its observer handles raw focus1 only
+after two matching passive pointer paths through root→owned parent→render leaf,
+same screen/in-bounds coordinates and matching PID/start ticks. Raw focus1,
+effective screen root543 and owned leaf8391711 remain separate fields.
+Before/after observations admit the same process/window identity; no focus or
+mouse change is made during the probe.
+
+The sole controller claims13:08:04.088967Z and sends one S750ms request from
+13:08:14.193099Z to13:08:15.106459Z. The host command takes913.275441ms;
+that is not the application's exact key-event duration. Append-only own-log
+comparison finds39 new lines/2183 bytes, including29 new message18 movement
+reports and one each message4/11. The last actual ordinal29 is
+**[-3301,-25600,-3745]**. The pre-input snapshot has no position, so configured
+spawn is not substituted for a measured starting point. This is a positive
+bounded input-delivery observation, not a causal isolation of run244's result.
+
+Control releases13:08:39.095272Z,35.006305s after claim, with no second pulse,
+route, attack, interaction or story input. Root reviewed hash-admitted first
+and post-input images: the avatar/immediate ground are visible and the later
+scene has more streamed detail. Streaming change is kept separate from movement
+evidence. Launch/UI0; window47 returns13:09:22.386747Z with container absence,
+unchanged PE/original record and privacy verified. No full route is claimed.
+
+The original delivery console exceeds its12KB limit and remains unchanged.
+The complete persisted result is separately pinned; a later strict scalar
+recovery and root final readback are complete and untruncated. Future action
+output should retain full focus records privately and print compact metadata.
+
+Private records under `~/re/gw2/notes/`:
+
+- `209026-run248-norn-input-delivery-launch-20261106.json`, SHA-256
+  `70206ef09e67b2c02f4800072bccc1a5e1172b565677e7a6e06e5eacf2027a85`,
+  REA `ev_839fdb0e731f7cb4ca3feb74f90444ea5d41a536e488beb2601fc9387f15127c`.
+- `209026-run248-norn-input-delivery-readback-20261106.json`, SHA-256
+  `b513a676157f3dd20fe926a8d1029c37be9a03e6e7c33ce280afd631d4dbdee7`,
+  REA `ev_a803c37e770a511dc5d98a3c94ecc942ef05a448922556ee0863bf34a17befa0`.
+- `209026-run248-norn-input-delivery-return-20261106.json`, SHA-256
+  `18e0ac696de28190d1bfb3772713919a7cf812e454309584c957ef85ef7ffefc`,
+  REA `ev_a59e5a6256e01f126b55f12ef0c8d81b615a82bb36130dd6c87a5500ccfe7046`.
+- Controller receipt `run248-controller-outcome-receipt-20261106.json`, SHA-256
+  `4665784724041d543347052b2fe5e1930ded62e90d494aafa471e75b7cd1fff9`.
+- Root outcome `run248-norn-input-delivery-outcome-20261106.json`, SHA-256
+  `3e79060ad5e383174a5d75752e88c5ebb1657a1c6335f46ae1f06046c75669ff`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
