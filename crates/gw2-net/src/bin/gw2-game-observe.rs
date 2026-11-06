@@ -152,8 +152,6 @@ struct Fixtures<'a> {
     npc_cast: Option<u32>,
     /// Research: player skills aimed at the hostile NPC lower its health.
     damage_on_skill: Option<f32>,
-    /// Research: weapon repeat-start answered with a 0x78 order for this skill.
-    autoattack_skill: Option<u32>,
     /// Research: experience awarded per NPC kill.
     xp_per_kill: Option<u32>,
     /// Research: item-creation message for the Starter Backpack.
@@ -195,7 +193,6 @@ fn observe(
         skill_order_echo,
         npc_cast,
         damage_on_skill,
-        autoattack_skill,
         xp_per_kill,
         starter_bag,
         kill_loot,
@@ -301,9 +298,6 @@ fn observe(
         }
         if let Some(per_kill) = xp_per_kill {
             mission = Some(mission.ok_or_else(|| invalid("experience requires a mission phase"))?.with_xp_per_kill(per_kill));
-        }
-        if let Some(skill) = autoattack_skill {
-            mission = Some(mission.ok_or_else(|| invalid("auto-attack requires a mission phase"))?.with_autoattack_skill(skill));
         }
         if let Some(amount) = damage_on_skill {
             mission = Some(mission.ok_or_else(|| invalid("damage requires a mission phase"))?.with_damage_on_skill(amount));
@@ -500,7 +494,6 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut skill_order_echo: Option<NonZeroU16> = None;
     let mut npc_cast: Option<u32> = None;
     let mut damage_on_skill: Option<f32> = None;
-    let mut autoattack_skill: Option<u32> = None;
     let mut xp_per_kill: Option<u32> = None;
     let mut starter_bag: Option<u16> = None;
     let mut kill_loot = false;
@@ -684,8 +677,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 xp_per_kill = Some(text.parse().map_err(|_| invalid("invalid experience per kill"))?);
             }
             "--mission-autoattack-skill" => {
-                let text = args.next().ok_or_else(|| invalid("missing auto-attack skill key"))?;
-                autoattack_skill = Some(text.parse().map_err(|_| invalid("invalid auto-attack skill key"))?);
+                return Err(invalid("--mission-autoattack-skill was retired: slot release is not a cast request; use explicit SkillBegin fixtures"));
             }
             "--mission-damage-on-skill" => {
                 let text = args.next().ok_or_else(|| invalid("missing damage amount"))?;
@@ -814,7 +806,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--check-config] [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo DURATION_MS (RESEARCH, 1..=65535, no default)] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-autoattack-skill KEY] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
+                    "usage: gw2-game-observe [--check-config] [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo DURATION_MS (RESEARCH, 1..=65535, no default)] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
                 ));
             }
         }
@@ -900,9 +892,6 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     }
     if xp_per_kill.is_some() && hostile_npcs.is_empty() {
         return Err(invalid("--mission-xp-per-kill requires --mission-hostile-npc"));
-    }
-    if autoattack_skill.is_some() && hostile_npcs.is_empty() {
-        return Err(invalid("--mission-autoattack-skill requires --mission-hostile-npc"));
     }
     if damage_on_skill.is_some() && hostile_npcs.is_empty() {
         return Err(invalid("--mission-damage-on-skill requires --mission-hostile-npc"));
@@ -1083,7 +1072,6 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                 skill_order_echo,
                 npc_cast,
                 damage_on_skill,
-                autoattack_skill,
                 xp_per_kill,
                 starter_bag,
                 kill_loot,

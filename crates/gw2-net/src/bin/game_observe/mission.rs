@@ -85,9 +85,12 @@ pub enum Seen {
     Conversation(ConversationReply209026),
     /// Client 23 carrying SkillBegin 0x23, with its outer behavior header.
     Skill(SkillSeen),
-    /// Client 23 2-byte `[0x29][skill-bar slot]` (inferred SkillRepeatStart; key 1
-    /// sends slot 5, the weapon's first skill), with the header to echo.
-    RepeatStart(SkillSeen),
+    /// Exact two-byte slot inputs: activation path 0x2a, deactivation path
+    /// 0x29. Neither is an independent SkillBegin or authority to deal damage.
+    SkillSlotInput {
+        opcode: u8, slot: u8, agent_index: u16, remote_tick: u32,
+        command_flags: u8, behavior_value: u32,
+    },
     /// Client 227 `{Dword agent}` (sender `0x1412646b0`, CharForce.cpp): the
     /// selected target's agent id (object +0xc, the same field SkillBegin's
     /// target uses), 0 when none. Run 168: sent after Tab.
@@ -402,9 +405,6 @@ pub struct MissionPhase {
     /// Research: on player SkillBegin aimed at a hostile NPC, lower its health
     /// by this amount through server 257. Known healing skill10176 is excluded.
     damage_on_skill: Option<f32>,
-    /// Research: answer `[0x29][slot]` with server 34 + 0x78 for this skill key,
-    /// aimed at the hostile NPC (auto-attack hypothesis).
-    autoattack_skill: Option<u32>,
     /// Research: experience per NPC kill, running total and earned level.
     xp: Option<(u32, u32, u8)>,
     /// Research: item-creation message used to give the Starter Backpack.
@@ -791,7 +791,6 @@ impl MissionPhase {
             skill_order_echo: None,
             npc_cast: None,
             damage_on_skill: None,
-            autoattack_skill: None,
             xp: None,
             starter_bag: None,
             late_npc: None,
@@ -882,12 +881,6 @@ impl MissionPhase {
         self
     }
 
-    /// Research: answer the weapon repeat-start signal with a 0x78 order.
-    pub fn with_autoattack_skill(mut self, skill_key: u32) -> Self {
-        self.autoattack_skill = Some(skill_key);
-        self
-    }
-
     /// Research: award `per_kill` experience on every NPC kill (level 1 start).
     pub fn with_xp_per_kill(mut self, per_kill: u32) -> Self {
         self.xp = Some((per_kill, 0, 1));
@@ -975,22 +968,6 @@ impl MissionPhase {
     /// Slot of the living hostile NPC with this agent index.
     fn living_hostile(&self, agent: u32) -> Option<usize> {
         self.hostiles.iter().position(|h| u32::from(h.plan.agent_index) == agent && h.health > 0.0)
-    }
-
-    /// Auto-attack target (the client names none): the NPC the player last hit
-    /// with a SkillBegin if alive, else the living hostile NPC nearest `origin`
-    /// (the player spawn; the first added wins a tie), else nothing.
-    fn autoattack_target(&self, origin: [f32; 3]) -> Option<usize> {
-        if let Some(slot) = self.last_target.and_then(|agent| self.living_hostile(u32::from(agent))) {
-            return Some(slot);
-        }
-        let distance = |p: [f32; 3]| (0..3).map(|i| (p[i] - origin[i]).powi(2)).sum::<f32>();
-        self.hostiles
-            .iter()
-            .enumerate()
-            .filter(|(_, h)| h.health > 0.0)
-            .min_by(|(_, a), (_, b)| distance(a.plan.position).total_cmp(&distance(b.plan.position)))
-            .map(|(slot, _)| slot)
     }
 
     /// One player hit on hostile NPC `slot`: lower its health, send the change,
@@ -1198,14 +1175,14 @@ impl MissionPhase {
             && matches!(seen, Seen::Skill(skill) if skill.request.skill_key == 10176)
         {
             // Ether Feast's client facts are healing/condition removal.
-            // An enemy selection must not cause damage, retarget auto-attack
+            // An enemy selection must not cause damage, change the selected target
             // or start NPC retaliation. Real cast/effects remain unimplemented.
             // See docs/re/209026-mesmer-heal-animation-data.md and run144's
             // separately retained Ether Feast tooltip observation.
             return Ok(None);
         }
-        // Auto-attack follows the NPC last attacked with a SkillBegin, whatever
-        // the damage setting (or a defeat) does with the skill itself.
+        // Retain explicit SkillBegin target tracking independently of damage.
+        // Slot activation/deactivation never selects a target or starts a hit.
         if self.began
             && let Seen::Skill(skill) = seen
             && let Some(slot) = self.living_hostile(skill.request.target)
@@ -1406,7 +1383,7 @@ impl MissionPhase {
                 Ok(Some(out.freeze()))
             }
             Seen::Target(agent) if self.living_hostile(*agent).is_some() => {
-                // The player's selection drives auto-attack (it carries no target).
+                // Retain the player's explicit target selection.
                 self.last_target = u16::try_from(*agent).ok();
                 Ok(None)
             }
@@ -1419,43 +1396,6 @@ impl MissionPhase {
                     if reply.is_some() { "talk NPC: opening conversation" } else { "not the talk NPC" }
                 );
                 Ok(reply.map(BytesMut::freeze))
-            }
-            Seen::RepeatStart(start) if self.began && self.autoattack_skill.is_some() && !self.hostiles.is_empty() => {
-                let player = fixture.plan.character_index;
-                // The client sends no target with auto-attack (repeat start).
-                let Some(slot) = self.autoattack_target(fixture.plan.position) else { return Ok(None) };
-                let npc = self.hostiles[slot].plan.agent_index;
-                let skill_key = self.autoattack_skill.unwrap();
-                let order = SkillOrder209026 {
-                    order_flags: 0,
-                    skill_key,
-                    slot: start.request.slot,
-                    raw_7: 0,
-                    agent: u32::from(npc),
-                    byte_12: 0,
-                };
-                let mut out = BytesMut::new();
-                AgentBehaviorOrderFrame209026 {
-                    agent_index: start.agent_index,
-                    remote_tick: start.remote_tick,
-                    // The native 0x29 request uses flags 3. As with the
-                    // SkillBegin echo, controlled empty slots require 0x10
-                    // to admit this incoming 0x78; preserve the other bits.
-                    // docs/re/209026-repeat-attack-admission.md
-                    command_flags: start.command_flags | 0x10,
-                    behavior_value: start.behavior_value,
-                    behavior_data: order.to_behavior_data().to_vec(),
-                    word: 1000, // placeholder duration (m_durationMs)
-                }
-                .encode_frame(&mut out)?;
-                eprintln!(
-                    "Mission phase: repeat-start slot {} answered with server 34 0x78 skill {skill_key} on NPC {npc}",
-                    start.request.slot
-                );
-                if self.damage_on_skill.is_some() && !self.npc_attack.is_some_and(|a| a.defeated) {
-                    self.hit_hostile(slot, player, skill_key, start.remote_tick, "auto-attack", &mut out)?;
-                }
-                Ok(Some(out.freeze()))
             }
             Seen::Skill(skill)
                 if self.began
@@ -1622,9 +1562,8 @@ impl MissionPhase {
                 Seen::Interact(request) => eprintln!("Mission phase: client 23 interact {request:?}"),
                 Seen::Conversation(reply) => eprintln!("Mission phase: client conversation {reply:?}"),
                 Seen::Skill(skill) => eprintln!("Mission phase: client 23 {skill:?}"),
-                Seen::RepeatStart(start) => eprintln!(
-                    "Mission phase: client 23 repeat-start [29 {:02x}] value {:#x}",
-                    start.request.slot, start.behavior_value
+                Seen::SkillSlotInput { opcode, slot, behavior_value, .. } => eprintln!(
+                    "Mission phase: client 23 slot input [{opcode:02x} {slot:02x}] value {behavior_value:#x} (no cast response)"
                 ),
                 // Short fixed-layout messages without text (17 Word, 47 Byte,
                 // 248): log their bytes for research. Never dump others; they
@@ -1676,14 +1615,14 @@ impl MissionPhase {
             }
             AgentBehaviorFrame209026::CLIENT_MESSAGE_ID => {
                 let behavior = AgentBehaviorFrame209026::decode_client_frame(&mut input).ok()?;
-                if let [0x29, slot] = behavior.behavior_data[..] {
-                    return Some(Seen::RepeatStart(SkillSeen {
+                if let [opcode @ (0x29 | 0x2a), slot] = behavior.behavior_data[..] {
+                    return Some(Seen::SkillSlotInput {
+                        opcode, slot,
                         agent_index: behavior.agent_index,
                         remote_tick: behavior.remote_tick,
                         command_flags: behavior.command_flags,
                         behavior_value: behavior.behavior_value,
-                        request: SkillBeginRequest209026 { target: 0, skill_key: 0, slot },
-                    }));
+                    });
                 }
                 if let Ok(request) = SkillBeginRequest209026::from_behavior_data(&behavior.behavior_data) {
                     return Some(Seen::Skill(SkillSeen {
@@ -1852,7 +1791,7 @@ pub(crate) mod tests {
                         Seen::Map(ClientMapEvent::MapLoaded) => 420,
                         Seen::Map(ClientMapEvent::FailedToLoad) => 418,
                         Seen::Map(ClientMapEvent::AgentsLoaded) => 412,
-                        Seen::Interact(_) | Seen::Skill(_) | Seen::RepeatStart(_) => 23,
+                        Seen::Interact(_) | Seen::Skill(_) | Seen::SkillSlotInput { .. } => 23,
                         Seen::Target(_) => 227,
                         Seen::Moved { id, .. } => *id,
                         Seen::Conversation(ConversationReply209026::Choose { .. }) => 275,
@@ -2355,9 +2294,9 @@ pub(crate) mod tests {
     #[test]
     fn other_client_23_payloads_stay_raw_and_keep_the_phase() {
         let mut phase = talk_phase();
-        // A 2-byte 0x2a signal is neither interact, skill nor repeat start.
-        assert_eq!(phase.push(&client_23(&[0x2a, 0])), [Seen::Other(23)]);
-        assert!(matches!(phase.push(&client_23(&[0x29, 5]))[..], [Seen::RepeatStart(_)]));
+        // An unclassified 0x2b payload stays raw; 0x29/0x2a are typed slot inputs.
+        assert_eq!(phase.push(&client_23(&[0x2b, 0])), [Seen::Other(23)]);
+        assert!(matches!(phase.push(&client_23(&[0x29, 5]))[..], [Seen::SkillSlotInput { .. }]));
         // SkillBegin is recognised but unanswered without the research flag.
         let seen = phase.push(&client_23(&[0x23, 0, 0, 0, 0, 0xc0, 0x27, 0, 0, 0]));
         assert!(matches!(seen[..], [Seen::Skill(SkillSeen { request: SkillBeginRequest209026 { skill_key: 10176, .. }, .. })]));
@@ -2424,8 +2363,7 @@ pub(crate) mod tests {
             .unwrap()
             .with_hostile_npc(101, [5.0, 0.0, 0.0])
             .unwrap()
-            .with_damage_on_skill(damage)
-            .with_autoattack_skill(77);
+            .with_damage_on_skill(damage);
         phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
         phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
         phase
@@ -2438,16 +2376,6 @@ pub(crate) mod tests {
             command_flags: 0,
             behavior_value: 0,
             request: SkillBeginRequest209026 { target, skill_key: 10170, slot: 1 },
-        })
-    }
-
-    fn repeat_start() -> Seen {
-        Seen::RepeatStart(SkillSeen {
-            agent_index: 1,
-            remote_tick: 6,
-            command_flags: 0,
-            behavior_value: 0,
-            request: SkillBeginRequest209026 { target: 0, skill_key: 0, slot: 1 },
         })
     }
 
@@ -2574,81 +2502,85 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn auto_attack_hits_the_last_skill_target_else_the_nearest_living_hostile() {
-        let mut phase = hostile_phase(10.0);
-        // No SkillBegin yet: the nearest NPC to the spawn (agent 4 at x=5) is hit.
-        phase.respond(&repeat_start()).unwrap().unwrap();
-        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (LEVEL1_NPC_HEALTH, 108.0));
-        // A SkillBegin on the far NPC makes it the auto-attack target.
-        phase.respond(&skill_at(3)).unwrap().unwrap();
-        phase.respond(&repeat_start()).unwrap().unwrap();
-        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (98.0, 108.0));
-        // Once it is dead the nearest living one is hit again.
-        phase.hostiles[0].health = 5.0;
-        phase.respond(&repeat_start()).unwrap().unwrap();
-        assert_eq!(health_of(&phase, 3), 0.0);
-        phase.respond(&repeat_start()).unwrap().unwrap();
-        assert_eq!(health_of(&phase, 4), 98.0);
-        // Nothing alive: nothing to attack.
-        phase.hostiles[1].health = 0.0;
-        assert!(phase.respond(&repeat_start()).unwrap().is_none());
-    }
-
-    #[test]
-    fn auto_attack_follows_a_skill_target_without_the_damage_setting() {
-        let mut phase = populated_phase()
-            .with_hostile_npc(100, [50.0, 0.0, 0.0])
-            .unwrap()
-            .with_hostile_npc(101, [5.0, 0.0, 0.0])
-            .unwrap()
-            .with_autoattack_skill(77);
-        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
-        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
-        let order_for = |agent: u32| {
-            let order = SkillOrder209026 { order_flags: 0, skill_key: 77, slot: 1, raw_7: 0, agent, byte_12: 0 };
-            order.to_behavior_data().to_vec()
-        };
-        let reply = phase.respond(&repeat_start()).unwrap().unwrap();
-        assert!(contains(&reply, &order_for(4)), "nearest NPC first");
-        assert!(phase.respond(&skill_at(3)).unwrap().is_none());
-        let reply = phase.respond(&repeat_start()).unwrap().unwrap();
-        assert!(contains(&reply, &order_for(3)), "then the last SkillBegin target");
-    }
-
-    #[test]
-    fn auto_attack_admits_a_controlled_order_and_preserves_the_request_header() {
-        let mut phase = populated_phase()
-            .with_hostile_npc(100, [5.0, 0.0, 0.0])
-            .unwrap()
-            .with_autoattack_skill(10170);
-        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
-        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
-        // The native repeat producer sends 3. Also cover an already-admitted
-        // byte and unrelated high/track bits; none may be lost in the reply.
-        for (request_flags, expected_flags) in [(3, 0x13), (0, 0x10), (0x13, 0x13), (0xe3, 0xf3)] {
-            let request = AgentBehaviorFrame209026 {
-                agent_index: 1,
-                remote_tick: 0x1234_5678,
-                command_flags: request_flags,
-                behavior_value: 0x8000_4321,
-                behavior_data: vec![0x29, 5],
-            };
-            let mut incoming = BytesMut::new();
-            request.encode_client_frame(&mut incoming).unwrap();
+    fn skill_slot_activation_begin_release_sequence_hits_only_on_begin() {
+        let mut phase = hostile_phase(10.0).with_npc_attack(5.0, 388.0).with_xp_per_kill(50);
+        let mut begin = vec![0x23];
+        begin.extend_from_slice(&3u32.to_le_bytes());
+        begin.extend_from_slice(&10170u32.to_le_bytes());
+        begin.push(5);
+        for (step, data) in [vec![0x2a, 5], begin, vec![0x29, 5], vec![0x29, 5]].into_iter().enumerate() {
+            let incoming = client_23(&data);
             let seen = phase.push(&incoming);
-            assert!(matches!(seen.as_slice(), [Seen::RepeatStart(_)]));
-            let reply = phase.respond(&seen[0]).unwrap().unwrap();
-            let mut cursor = &reply[..];
-            let frame = AgentBehaviorOrderFrame209026::decode_frame(&mut cursor).unwrap();
-            assert!(cursor.is_empty(), "no damage or other fixture effect was enabled");
-            assert_eq!((frame.agent_index, frame.remote_tick, frame.command_flags, frame.behavior_value),
-                       (1, 0x1234_5678, expected_flags, 0x8000_4321));
-            assert_eq!(frame.word, 1000, "existing diagnostic duration remains explicit in the fixture");
-            assert_eq!(frame.behavior_data, SkillOrder209026 {
-                order_flags: 0, skill_key: 10170, slot: 5, raw_7: 0, agent: 3, byte_12: 0,
-            }.to_behavior_data());
-            assert_eq!(health_of(&phase, 3), LEVEL1_NPC_HEALTH);
+            assert_eq!(seen.len(), 1);
+            let reply = phase.respond(&seen[0]).unwrap();
+            assert_eq!(reply.is_some(), step == 1);
+            assert_eq!(health_of(&phase, 3), if step == 0 { LEVEL1_NPC_HEALTH } else { LEVEL1_NPC_HEALTH - 10.0 });
+            assert_eq!(health_of(&phase, 4), LEVEL1_NPC_HEALTH);
+            assert_eq!(phase.xp.unwrap().1, 0);
+            if step == 0 {
+                assert!(phase.aggro.is_empty());
+                assert!(phase.npc_attack.unwrap().next.is_none());
+            } else {
+                assert_eq!(phase.aggro, [3]);
+            }
         }
+    }
+
+    #[test]
+    fn skill_slot_inputs_preserve_raw_slot_and_header_without_gameplay() {
+        let mut phase = hostile_phase(LEVEL1_NPC_HEALTH).with_xp_per_kill(50).with_kill_loot();
+        for opcode in [0x29, 0x2a] {
+            for slot in [0, 5, 23, u8::MAX] {
+                let request = AgentBehaviorFrame209026 {
+                    agent_index: 1, remote_tick: 0x1234_5678, command_flags: 0xe3,
+                    behavior_value: 0x8000_4321, behavior_data: vec![opcode, slot],
+                };
+                let mut incoming = BytesMut::new();
+                request.encode_client_frame(&mut incoming).unwrap();
+                let seen = phase.push(&incoming);
+                assert_eq!(seen, [Seen::SkillSlotInput {
+                    opcode, slot, agent_index: 1, remote_tick: 0x1234_5678,
+                    command_flags: 0xe3, behavior_value: 0x8000_4321,
+                }]);
+                assert!(phase.respond(&seen[0]).unwrap().is_none());
+                assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), (LEVEL1_NPC_HEALTH, LEVEL1_NPC_HEALTH));
+                assert!(phase.aggro.is_empty());
+                assert!(phase.last_target.is_none());
+                assert_eq!(phase.xp.unwrap().1, 0);
+                assert_eq!(phase.kill_loot, Some(0));
+            }
+        }
+        for data in [&[0x29][..], &[0x2a, 5, 0][..]] {
+            assert!(matches!(phase.push(&client_23(data)).as_slice(), [Seen::Other(23)]));
+        }
+    }
+
+    #[test]
+    fn skill_slot_release_does_not_create_a_cast_or_extra_damage() {
+        let mut phase = hostile_phase(10.0).with_npc_attack(5.0, 388.0);
+        // A real SkillBegin still exercises the existing explicit damage
+        // fixture. Releasing its input must not manufacture another hit.
+        phase.respond(&skill_at(3)).unwrap().unwrap();
+        let health = (health_of(&phase, 3), health_of(&phase, 4));
+        let target = phase.last_target;
+        let aggro = phase.aggro.clone();
+        let attack_due = phase.npc_attack.unwrap().next;
+        let request = AgentBehaviorFrame209026 {
+            agent_index: 1,
+            remote_tick: 0x1234_5678,
+            command_flags: 3,
+            behavior_value: 0x8000_4321,
+            behavior_data: vec![0x29, 5],
+        };
+        let mut incoming = BytesMut::new();
+        request.encode_client_frame(&mut incoming).unwrap();
+        let seen = phase.push(&incoming);
+        assert_eq!(seen.len(), 1);
+        assert!(phase.respond(&seen[0]).unwrap().is_none(), "deactivation must not start a cast");
+        assert_eq!((health_of(&phase, 3), health_of(&phase, 4)), health);
+        assert_eq!(phase.last_target, target);
+        assert_eq!(phase.aggro, aggro);
+        assert_eq!(phase.npc_attack.unwrap().next, attack_due);
     }
 
     #[test]

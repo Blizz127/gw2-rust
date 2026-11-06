@@ -68,7 +68,11 @@ for npc in ${GW2_HOSTILE_NPC:-}; do mission_args+=(--mission-hostile-npc "$npc")
 # GW2_AMBIENT_NPC: neutral load-time NPCs, space-separated SPECIES,X,Y,Z entries.
 for npc in ${GW2_AMBIENT_NPC:-}; do mission_args+=(--mission-ambient-npc "$npc"); done
 [[ -z "${GW2_DAMAGE_ON_SKILL:-}" ]] || mission_args+=(--mission-damage-on-skill "$GW2_DAMAGE_ON_SKILL")
-[[ -z "${GW2_AUTOATTACK_SKILL:-}" ]] || mission_args+=(--mission-autoattack-skill "$GW2_AUTOATTACK_SKILL")
+# Compatibility with older profiles: the former release-triggered cast was
+# incorrect. Keep old profiles bootable, but never forward that retired option.
+if [[ -n "${GW2_AUTOATTACK_SKILL:-}" ]]; then
+    echo "GW2_AUTOATTACK_SKILL is retired; slot release no longer creates a cast or hit." >&2
+fi
 [[ -z "${GW2_XP_PER_KILL:-}" ]] || mission_args+=(--mission-xp-per-kill "$GW2_XP_PER_KILL")
 [[ -z "${GW2_STARTER_BAG:-}" ]] || mission_args+=(--mission-starter-bag "$GW2_STARTER_BAG")
 [[ "${GW2_KILL_LOOT:-0}" != 1 ]] || mission_args+=(--mission-kill-loot)

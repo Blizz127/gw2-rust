@@ -1,5 +1,13 @@
 # Build 209026: repeat-attack order admission correction
 
+**Superseded request mapping:** the later
+[input lifecycle trace](209026-skill-input-action-lifecycle.md) proves that
+0x29 is reached by deactivation/end paths. The
+[slot-release correction](209026-skill-slot-release-correction.md) removes
+the synthesized cast/hit. The c862325 artifact below is retained history,
+not the latest releasable build. The separate admission-mask finding remains
+valid for actual incoming orders.
+
 2026-11-06. The existing repeat-attack fixture sent server34/typed0x78 with
 the request's outer flags copied unchanged. The frozen client's repeat
 producer sends flags3; the inspected controlled-empty-slot receiver requires

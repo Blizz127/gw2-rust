@@ -416,7 +416,7 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
                 talk_npc: Some(server_talk.clone()),
                 hostile_npcs: vec![(101, [4.0, 5.0, 6.0])],
                 skill_order_echo: NonZeroU16::new(4321), npc_cast: Some(10176), damage_on_skill: Some(200.0),
-                autoattack_skill: Some(10176), xp_per_kill: Some(50), starter_bag: Some(959),
+                xp_per_kill: Some(50), starter_bag: Some(959),
                 kill_loot: true, npc_attack: Some((10.0, 777.0)), sourced_damage: Some(1),
                 heart: Some((56, 5)),
                 no_capture: true,
@@ -444,7 +444,7 @@ fn shared_creation_combat_options_apply_only_to_the_saved_world_join() {
         .with_population(scenario.expected(0)).unwrap()
         .with_talk_npc(talk).with_hostile_npc(101, [4.0, 5.0, 6.0]).unwrap()
         .with_skill_order_echo(NonZeroU16::new(4321).unwrap()).with_npc_cast(10176).with_damage_on_skill(200.0)
-        .with_autoattack_skill(10176).with_xp_per_kill(50).with_starter_bag(959)
+        .with_xp_per_kill(50).with_starter_bag(959)
         .with_kill_loot().with_npc_attack(10.0, 777.0).with_sourced_damage(1)
         .with_heart(56, 5).unwrap();
     let mut heart_opening = BytesMut::new();
