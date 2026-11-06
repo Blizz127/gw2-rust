@@ -524,3 +524,100 @@ controlled-player identity, exact key-consumption time or collision. A new
 scope must preserve the existing no-report terminal and cleanup guards; no
 new observer was installed in run279. Full normal trophy/Ido completion and
 retail accuracy remain unproved. This diagnostic made no production change.
+
+## Run280: native vector sample and camp path (2026-11-06)
+
+The run-local controller now offers one explicit `vector-hold` action: a
+root-selected W/A/S/D hold of exactly 250ms. It reuses run268's unchanged
+three-site observer and independent prefix validator. A complete baseline
+sample must precede input; the worker rechecks the existing scene/input cutoff
+after waiting for readiness. Complete host dispatch, baseline/input/post
+coverage and disabled-hook cleanup are required before further input. Ordinary
+movement comparisons, measured calibration and the one-passive/no-report stop
+remain unchanged. There is no retry or extended hold on failure.
+
+Seven controller test groups, six actual-writer reader groups covering 18
+scenarios, eight composition checks, four permit cases and two staged
+configuration checks passed. The source observer retains its 600-second arm,
+10-second window, one-second pair, 64-callback and nine-sample bounds. Its
+diagnostic GDB composition belongs only to this run; the exact inverse matches
+the pinned production GDB source. This is not a byte-identical production GDB
+run. The current `cb8622a-q171` server, 126 story arguments and original
+synthetic character were preserved.
+
+Normal Thora interaction produced step 1. After dialogue dismissal, two E500
+turns exposed a different clear camp path. The single instrumented W250
+produced 12 movement reports and three matched native sample triples:
+
+| Host phase | Input vector | Computed/composed vector |
+| --- | --- | --- |
+| Baseline | `[0,0,0]` | `[0,0,0]` |
+| Input | `[0,1,0]` | `[-0.841389,-0.540430,0]` |
+| Post | `[0,0,0]` | `[0,0,0]` |
+
+Source, thread/context and paired-frame guards passed. Nine callbacks spanned
+an observer window from elapsed 268970ms to 270078ms. The terminal reason was
+`marker_removed`, all hooks were disabled, the active marker was absent and
+final readback found no later observer events. These are sampled generic
+movement-context values, not controlled-player identity or exact native key
+timestamps. Debugger callback spans do not establish frame rate or normal
+unobserved execution timing.
+
+The route then followed visible ground outside the camp and turned back toward
+grass and tables. Six successful holds produced 125 contiguous reports:
+
+| Hold | Final reported XYZ | New reports |
+| --- | --- | --- |
+| Instrumented W250 | `[-3299,-25664,-3741]` | 12 |
+| W750 | `[-3476,-25779,-3720]` | 22 |
+| W750 | `[-3662,-25903,-3683]` | 23 |
+| W1000 | `[-3934,-26078,-3615]` | 30 |
+| W250 after Q500 | `[-3928,-26159,-3606]` | 9 |
+| W1000 | `[-3901,-26471,-3647]` | 29 |
+
+At the final table, an A250 sidestep and the single passive check added no
+position report or typed parser event. Their server-log prefixes were identical
+at 14542 bytes/276 lines. The controller stopped with
+`missing_translation_sample`; root released incomplete with 343 input seconds
+remaining. The earlier observer was already stopped, so this run contains no
+native-vector sample of that A input. Its host command completed in about
+565ms, which does not establish client consumption or explain the silence.
+
+The 15 actions comprised five story actions, three turns and seven movement
+holds, including the final unresolved hold. No zoom, hostile selection, attack,
+death, step 2 or Ido/step 3 occurred. The clearest path image shows a dirt strip
+bending between grassy banks toward a brazier; passage beyond the bend and a
+connection to configured trophy targets remain unproved. Final images show
+a table ahead, a stool to the right and visible near-side grass, without
+establishing collision or passage past the table.
+
+Strict readback is valid; vector coverage is accepted while story completion
+remains false. UI and outer capture exited 13. Window70 returned at
+**2026-11-06T23:51:07.888575Z**, with container absence, 83 immutable inputs,
+the original 154-byte record, executable hashes and privacy verified. Owned
+cleanup passed; 53 unverified process observations were left untouched. Root
+reviewed the first image, all 15 post-action images and the final passive image,
+not all 41 retained images. Readback retains all 22128 raw/normalized bytes and
+six data frames, but only four of six rendered frames, so its overall
+truncation flag remains true. Bind also retains a rendered-coverage flag;
+launch and resource return are untruncated.
+
+Private evidence under `/home/blizz/re/gw2/notes`:
+
+- `run280-root-vector-route-observation-20261106.json`, SHA256
+  `5b8a2ac5abbec4919b5bb0a1b24e4594a9a22a9a4ee34e0f048bfff76975d620`.
+- `run280-retained-input-terminal-audit-20261106.json`, SHA256
+  `a27da618ee7f101b1ba288c94fd35be1c79eed9562e6d4be7eaf8d857ac51079`.
+- `run280-retained-vector-lateral-audit-20261106.json`, SHA256
+  `50de6de498a33b5cedf0ac21f0b0cd30d2e13fe0f357d65d575721c4aa65d932`.
+- `run280-retained-camp-path-guide-20261106.json`, SHA256
+  `f7f8f0a6abc7c0d9d0f9f5f4e178bd27eb323861d139124663b1c01dc4c0162b`.
+- Instrumented W: `ev_768153e7d1cabee63317cad81f86393b9581ec85557e94e0247b29dfa813288e`.
+- Readback: `ev_04d4980552162c37cc7cd0d8abfc0476c4374e6078b64dc028ff7819db991f08`.
+- Return: `ev_92bd51f96a1c7d2f49606834cc5df757ec7104c577316d3c1296adf393355e18`.
+
+The next discriminating observation should reserve the single instrumented
+250ms pulse for a root-selected lateral key on freshly reviewed ground, before
+the unchanged observer deadline. Successful W sampling does not diagnose the
+later unsampled A input. No longer-hold fix, collision cause, full normal hunt
+or retail accuracy is established. This diagnostic produced no live release.
