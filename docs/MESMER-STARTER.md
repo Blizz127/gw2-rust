@@ -19,10 +19,10 @@ API/wiki names may locate content but do not replace client verification.
 | Correct Mesmer components and startup skills/equipment | Partial: set4/item33355/palette90 are observed. Run216's605 grant passes availability and produces a real targeted10170 request with one30-point response and no release hit. Correction is live in4c46cad-sk and independently verified. Final-cache instrumentation is partial; full unlock/stat/effect policy remains open. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Reconstructed story actions/NPCs and a stand-in boss are live; Thora/trophy-kill progression is client-smoked. Publisher226 starts at stage4 and exercises fixed item/coin claim and map28 transfer. The full saved-character sequence, authentic conditions and retail XP/binding policy remain open. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Transfer/arrival is live in76af245. Prepared217 transfers379→28, renders the character and opens the map UI. Post-transfer movement/combat and combined saved-character runtime admission remain unobserved. | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
-| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast is live; run233 observes cooldown/retry/recast and run240 observes positive native health recovery under ordinary enemy damage. Sword-chain increment 7cfe9c4 is included in verified live ec69643-alpinehall; run241 observes all three native requests, matching hits and the slot icon cycle. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
+| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast is live; run233 observes cooldown/retry/recast and run240 observes positive native health recovery under ordinary enemy damage. Sword-chain increment 7cfe9c4 is included in verified live fccd1b0; run241 observes all three native requests, matching hits and the slot icon cycle. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | All15 map28 heart areas and14 substitute NPCs are in76af245. Generic inside-area kill progress and placeholder rewards remain fixture rules. Authored tasks/events and full discovery are incomplete. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
-| XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
+| XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised. Verified live fccd1b0 adds a frozen normal-mode quest154 XP award paid once with item/coin; current2500-per-kill settings yield zero, and positive coverage is synthetic. Retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
 | Relevant starting story, scenes and audio | Playback missing; client cinematic start/stop contract recovered, Norn selection unresolved | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
 | Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state and the new guarded Ether Feast health/cooldown carry are process-local only. The existing store has no progression fields or update API; restart progression requires a separately authorized storage-format change. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards; preserve original creation data and rollback compatibility. |
 | Human Mesmer opening and Queensdale, after Norn | Incomplete | Equivalent creation/tutorial (138)/area (15) coverage, including source-backed identification of the remembered circus/town sequence. |
@@ -30,7 +30,21 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**ec69643-alpinehall is verified live**, publisher deployment14:46:19Z to
+**fccd1b0 is verified live**, publisher deployment15:30:21Z to
+`/home/blizz/gw2-rust-fccd1b0`, rollbackec69643-alpinehall. Independent15:35:13Z
+readback verifies the exact tested game, current/rollback sums, four healthy
+owned listeners, saved mode/one private record, unchanged backup and served
+AlpineHall940 feed. Only BUILD and the game binary changed. Twenty-seven
+focused tests, musl build and two saved-profile startup checks pass.
+Quest154 now freezes normal-mode `max(2000-totalXP,0)` before final542 and
+pays it atomically once on205 with the existing item/coin. Sampling remains
+explicit reconstruction policy; delayed panels can display a newer amount.
+Current2500-per-kill settings yield zero quest XP, so this is not a positive
+native payout observation. No profile, durable schema or live skill change.
+[Implementation](re/209026-quest154-xp-award.md);
+[release readback](re/209026-saved-norn-live-activation.md#verified-quest154-xp-release-fccd1b0).
+
+Earlier **ec69643-alpinehall**, now the rollback, had publisher deployment14:46:19Z to
 `/home/blizz/gw2-rust-ec69643-alpinehall`, rollbackec69643. Independent15:03:34Z
 readback verifies current/rollback hashes, four healthy owned listeners,
 saved mode/one private record, unchanged backup and the served asset feed.

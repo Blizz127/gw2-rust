@@ -1085,3 +1085,44 @@ REA `ev_53f3c69e63a687eab539793982e8603b77acb7fc646726477e05160aec58fce2`.
 Readback exits0 with complete output and verified owned cleanup. No
 deployment/configuration change or launcher-feed publication was performed
 by this verification.
+
+## Verified quest154 XP release fccd1b0
+
+The sole publisher deployed **fccd1b0 at2026-11-06T15:30:21Z** to
+`/home/blizz/gw2-rust-fccd1b0`, retaining
+`/home/blizz/gw2-rust-ec69643-alpinehall` as rollback. Independent readback at
+**15:35:13.586153Z** verifies the exact reviewed1855496-byte game artifact
+from commit `fccd1b0905a93a26317cde51a7e997e0f88bfa5a`, on ec69643.
+Only BUILD and `bin/gw2-game-observe` differ from rollback; no files were
+added or removed. Current and rollback manifest sums pass.
+
+Four owned listeners are healthy, with zero humans/bots at that check.
+Saved-Norn mode remains enabled with one record, store0700/record0600 and
+the unchanged activation backup. Record contents were not read. Profile,
+supervisor,27-byte skills, population, wallet/vendor/POI settings and default
+movement cadence are preserved. Ether Feast and sword chain remain on;
+both sword2 diagnostics remain off, with no story branch enabled.
+
+The running CDN serves `209026 0 0 2130706940 332`. All five root rows and
+all asset bytes match rollback, including the112-byte, one-record AlpineHall
+leaf. This verifies service/feed and deployed bytes, not a native positive
+XP payout. The [XP policy and focused tests](209026-quest154-xp-award.md)
+retain the completion-time sampling qualification; the current2500-per-kill
+fixture yields a zero quest award. No durable progression was added.
+
+Game SHA256:
+`d715ee7853730e0cc21982affa77fbec09782131ea79c78096eec78c2553876f`.
+Kit manifest SHA256:
+`9f87aba76abac856f0b1ce21866cc49831f45fb8820bd1b406ad1ef18f995c94`.
+Private verification receipt `fccd1b0-release-verification-20261106.json`,
+SHA256 `20c5ba74bd7b80e1aaf83501c2cc01b54142be5461097573e115815734e3aa04`.
+Full `209026-fccd1b0-release-readback-20261106.json`, SHA256
+`8dc55dc5f682b880d43be0d8b8aa7464bb02723ba06f24721ba4b6f11cd15668`,
+REA `ev_3ba9bd5350cea3c760cb3be4095b29d5f0cebc8960cff13818a0b65b6a08245a`.
+The separate publisher receipt has SHA256
+`f1ea3789e8f31b35868cb0081ac3d7e664e234e4131c5b3ceac6d9a78ca08f86`.
+Root reviewed the complete output against the scalar receipt and verified
+its three source/evidence pins. Capture exit0, untruncated output and owned
+cleanup pass. An unrelated process denied environment inspection and was
+left untouched; its ownership remains unverified. No live mutation or
+client/sandbox access occurred during the readback.

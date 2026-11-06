@@ -433,3 +433,7 @@ A completion-time XP snapshot and atomic205 payment remain a separate
 proposal, not part of this fix. Matching the immediate panel would not by
 itself prove retail server payout timing or equivalence after delayed panel
 creation. Durable progression remains under its existing owner restriction.
+
+The later [fccd1b0 increment](209026-quest154-xp-award.md) implements that
+bounded normal-mode proposal and is independently verified live. It preserves
+the sampling/display qualification above and adds no durable progression.
