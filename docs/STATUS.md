@@ -30,10 +30,14 @@ was returned to the sole publisher for activation reassessment. The latest
 launcher readback still advertises b126/0e6ac30; runner63bc59a's owner objects
 are separately uploaded and verified. At00:14:31 UTC the publisher marked
 rendering resolved and requested a choice about replacing the prepared roster
-with an empty saved roster. Reconciliation of that publisher hold with the
-owner's existing creation/deployment request remains unresolved; no separate owner-origin
-prohibition or new agreement prompt is cited. The prepared live character
-is not normal character creation.
+with an empty saved roster. The coordinator now confirms that the publisher
+is stopped at that native owner question. Enabling saved characters hides
+the prepared Banshee Mesmer and presents an empty roster; newly created
+characters persist, but XP/heart progress resets at server restart. The
+alternative retains the prepared character. The coordinator surfaced this
+choice to the owner and has received no answer. Preserve the native prompt;
+do not auto-answer or bypass it. The prepared live character is not normal
+character creation.
 
 The [launcher publisher's reconciliation](re/209026-empty-composite-runner.md#publisher-reconciliation-2026-11-06)
 identifies the separate b127 blocker: the existing updater channel is public
@@ -54,14 +58,15 @@ Its static binary is staged privately and handed to the publisher, with no
 default profile activation or new live claim. See the
 [completion ledger](MESMER-STARTER.md#current-checkpoint) for the exact boundary.
 
-The coordinator's **00:42 UTC publisher-state check**, supplied later in
-conversation, identifies the native Claude publisher as **waiting / input
-needed**. The reason is unknown; this does not establish that release work is
-running or connect the wait to the earlier roster choice or another hold. The task ledger has no
-receipt for5169b98. Existing direct handoffs stand, including the latercac0e9a
-handoff; no duplicate dispatch, restart or publishing takeover follows from
-this status. Preserve the sole publisher, actual holds and safe rollout.
-The later00:54 UTC live readback above remains the deployment evidence.
+The coordinator's **00:42 UTC publisher-state check** first established
+waiting/input needed without a known cause. Its later concrete availability
+report confirms the native saved-character question above as the reason.
+No owner answer, newer release receipt or shared-resource lease is established.
+The delivered5169b98 andcac0e9a handoffs remain separate from that decision;
+they are not deployment receipts or proof of release work running. No duplicate
+dispatch, restart or publishing takeover is authorized. Preserve the sole
+publisher, native prompt and safe rollout. The00:54 UTC live readback above
+remains the deployment evidence.
 
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,

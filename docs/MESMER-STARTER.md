@@ -49,21 +49,24 @@ creator and returned-world avatar, unchanged initial record and no new
 crash-log bytes. It carries XP/loot/heart state only within the server process.
 Runner63 owner objects are uploaded, but the last
 launcher readback still selected b126/0e6ac30. At00:14:31 UTC the publisher
-marked rendering resolved and requested a roster choice; reconciliation of
-that activation hold with existing owner authorization remains unresolved.
-Normal owner character creation
-must not be advertised as available from these private tests alone.
+marked rendering resolved and requested a roster choice. The coordinator
+subsequently confirmed the publisher is waiting at this native owner question:
+enable saved characters, hiding the prepared Banshee Mesmer behind an empty
+roster, or retain the prepared character. Character creation persists in saved
+mode, while XP/heart progress resets at restart. The choice was surfaced to
+the owner; no answer has arrived. The native prompt must not be auto-answered
+or bypassed. Normal owner character creation must not be advertised as live.
 
-Next work preserves the release workflow while activation reassessment remains
-unresolved and source-backed tutorial/skill behavior advances. The full goal
+Next work preserves the release workflow and unanswered native owner prompt
+while independent source-backed tutorial/skill behavior advances. The full goal
 remains open; diagnostic fixture results are not retail encounter completion.
 
 The coordinator's00:42 UTC project-state check identified the native Claude
-publisher as waiting/input needed, with the cause unknown and no task-ledger
-receipt for5169b98. This does not prove release work is running or identify
-which input is needed; its connection to the earlier roster choice is unknown.
-Earlier handoffs and the latercac0e9a handoff remain
-recorded; no duplicate dispatch, restart or publisher takeover is authorized.
+publisher as waiting/input needed, initially without a known cause or task-ledger
+receipt for5169b98. The later concrete report identifies the native roster-choice
+prompt as the cause. No newer receipt or resource lease is established.
+The5169b98 andcac0e9a handoffs remain delivered and separate from that decision;
+no duplicate dispatch, restart or publisher takeover is authorized.
 The00:54 UTC live readback remains the latest deployment verification.
 
 The tested server guard `5169b98` excludes Ether Feast10176 from generic

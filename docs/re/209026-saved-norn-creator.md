@@ -25,18 +25,21 @@ all kit hashes and four owned listeners at 23:56:53 UTC. **Run144 then passed
 the full creation/save/world/defeat/waypoint flow with the actual offered
 runner0e6ac30 and that metadata**, without the runner63 composite repair.
 This removes the demonstrated need for runner63 in this tested flow; it does
-activate saved mode. The result was handed to the sole server publisher.
+not activate saved mode. The result was handed to the sole server publisher.
 Runner63bc59a owner objects are published and verified,
 but the last launcher-feed readback at 23:56 UTC still advertised b126 with
 the old runner pin. At00:14:31 UTC the publisher explicitly marked the renderer
 dependency resolved, then requested an owner choice about replacing the
 prepared roster with an initially empty saved roster and process-local world
-progress. This is the publisher's current activation hold; the reviewed
-record cites no separate owner-origin prohibition. It is being reconciled
-with the existing request for Norn creation and continuous releases. The
-native agreement was already accepted under the recorded owner direction;
-no new pending agreement prompt is evidenced here. Preserve actual prompts
-if encountered and the sole publisher's baton.
+progress. The coordinator now confirms that native Claude publisher session
+6f90f24c is waiting at that owner question: enable saved characters, hiding
+the prepared Banshee Mesmer behind an empty roster, or keep the prepared
+character. Initial character creation persists; XP/heart progress resets at
+server restart. The coordinator surfaced the exact choice and has received
+no owner answer. The native prompt must not be auto-answered or bypassed.
+The previously accepted native agreement is separate from this unanswered
+roster decision. Preserve the sole publisher's baton; delivered fix handoffs
+remain separate, with no newer release receipt or resource lease established.
 
 The live integrator held activation under the owner's exclusion of known
 broken builds: the creator preview and direct-entry avatar must render.
@@ -53,10 +56,12 @@ All44 local kit files matched the manifest. The plan preserves the complete
 current profile, including revised hostile positions and ambient ravens, and
 incorporates run144's acceptance within its exact fixture scope. A mode-only
 rollback keeps CDN900 and restores prepared mode while retaining every saved
-record; it does not assume a tested client metadata downgrade. Activation
-must still revalidate the then-current kit, host mode and player state.
+record; it does not assume a tested client metadata downgrade. This is a
+prepared plan, not permission to answer the native prompt. Activation awaits
+the owner's saved-mode choice, then revalidation of the then-current kit,
+host mode and player state through the sole publisher.
 The separate heart preflight/combination-coverage fix `d175bd5` shipped in
-`018cb96`; it does not clear the rendering hold.
+`018cb96`; it did not by itself clear the then-existing rendering hold.
 
 The later respawn rejoin carries XP/level, configured loot drops, heart
 progress and waypoint position through one process-local slot. This is separate
