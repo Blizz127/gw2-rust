@@ -342,7 +342,7 @@ The decisive filter capture is
 all raw/normalized frames are retained, with duplicate rendered-frame limits
 recorded. No gameplay admission or effect policy changed.
 
-### Earned-level observation increment f926ce0 (tested; publication pending)
+### Earned-level observation increment f926ce0 (verified live; disabled)
 
 Isolated commit `f926ce06bd165ab912c02947e24e0bd85c4f03a1`, based on exact
 `403ac377dc4606e5188bfda6a94d0c120c13efa0`, adds default-off CLI option
@@ -365,7 +365,11 @@ duplicate, effect-free rejection and replay/option-off compatibility. Nine
 chain/config controls, the static musl build and two no-listener auth/world
 startup checks also pass. Root reviewed the full diff and verified22 receipt
 pins, then handed the increment directly to the existing native publisher.
-No native execution of10334 or deployment is claimed here.
+It was deployed13:00:46Z to `/home/blizz/gw2-rust-f926ce0`, rollback403ac37.
+Root's independent13:03:57Z readback verifies all hashes, four healthy owned
+listeners, unchanged saved mode/record/backup and the diagnostic flag's absence.
+No native execution of10334 is claimed.
+[Release evidence](209026-saved-norn-live-activation.md#verified-sword2-observation-release-f926ce0).
 
 Artifact:
 `/home/blizz/scratch/gw2-observe-mesmer-sword2-403ac377-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`,

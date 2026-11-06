@@ -30,7 +30,17 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**403ac37 is verified live**, deployed at11:54:07Z to
+**f926ce0 is verified live**, deployed at13:00:46Z to
+`/home/blizz/gw2-rust-f926ce0`, rollback403ac37. Root's13:03:57Z independent
+readback verifies the exact tested artifact, all current/rollback hashes,
+four healthy owned listeners, saved mode/one private record and unchanged
+activation backup. The default-off earned-level sword2 diagnostic is available
+in the binary but disabled in the live profile; it adds no playable10334 effect.
+Twelve focused tests, musl build and two no-listener startup checks pass.
+Profile, supervisor, startup skills and current gameplay remain unchanged.
+[Release readback](re/209026-saved-norn-live-activation.md#verified-sword2-observation-release-f926ce0).
+
+Earlier **403ac37**, now the rollback, was deployed at11:54:07Z to
 `/home/blizz/gw2-rust-403ac37`, rollback7cfe9c4. Root's independent11:56:13Z
 readback verifies the exact reviewed binary, all current/rollback hashes, four
 owned healthy listeners, saved mode/one private record and unchanged backup.
@@ -88,11 +98,11 @@ startup availability and the chain request gate. Its distinct multi-segment
 action needs implementation before widening admission; its display multiplier
 does not establish server strike count or timing.
 [Slot6 source boundary](re/209026-mesmer-starter-skill-requirements.md#earned-level-2-slot-6-admission-and-skill-10334).
-Tested isolated incrementf926ce0 adds a default-off post-earned188 availability
+Verified live incrementf926ce0 adds a default-off post-earned188 availability
 grant for observation while retaining chain rejection and all existing live
-defaults. Twelve focused tests, musl build and two startup checks pass; the
-sole publisher has the artifact. Publication and native10334 observation remain
-pending. [Implementation limits](re/209026-mesmer-starter-skill-requirements.md#earned-level-observation-increment-f926ce0-tested-publication-pending).
+defaults. Twelve focused tests, musl build and two startup checks pass;
+native10334 observation remains pending.
+[Implementation limits](re/209026-mesmer-starter-skill-requirements.md#earned-level-observation-increment-f926ce0-verified-live-disabled).
 Private implementation receipt:
 `~/re/gw2/notes/mesmer-sword-chain-e624-20261106-checks/receipt.json`, SHA-256
 `1c709e3dfb679731737306ca432751808910296c1fc5300e101a441180dfe012`.

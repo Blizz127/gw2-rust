@@ -969,3 +969,34 @@ All receipts remain private under `~/re/gw2/notes/`; readback exits0 with comple
 output and verified owned cleanup. Run241's native combo evidence is specifically
 on the preceding7cfe9c4 artifact. No403 native route traversal, full-retail,
 durable-progression or launcher-feed claim follows from this diagnostic release.
+
+## Verified sword2-observation release: f926ce0
+
+The sole publisher deployed exactf926ce0 to `/home/blizz/gw2-rust-f926ce0`
+at **2026-11-06T13:00:46Z**, retaining403ac37 for rollback. Its default-off
+`--mission-observe-mesmer-sword2` option is fixture observation tooling: it
+grants10334 after an actual earned-level188 reaches2, then rebuilds the skill
+bar once. Chain admission still rejects10334 before combat effects. The
+option is **disabled live**. Profile, supervisor, skills and gameplay defaults
+remain unchanged. [Implementation and checks](209026-mesmer-starter-skill-requirements.md#earned-level-observation-increment-f926ce0-verified-live-disabled).
+
+Root independently verified the release at **13:03:57.637653Z**: exact running
+artifact, all current/rollback manifest sums, four healthy owned listeners,
+saved Norn mode, one private record/mode0700 and unchanged activation backup.
+Zero humans/bots were present. Both diagnostic flags are absent, preserving
+movement-log cadence20 and sword2 observation disabled. Ether Feast, sword chain,
+wallet/vendor/POI, world route and population inputs remain as reviewed.
+No record contents were read or configuration changed.
+
+Game:1846128 bytes, SHA-256
+`bffb89e2d20b68cc234520017395006940e79ee96d0bf4f73091b309e4a16d3f`.
+Manifest SHA-256:
+`015d69b6b61715e5348b0f4611c6482afc0b503fbd7e3af215823a01ef443446`.
+Private scalar receipt `f926ce0-release-verification-20261106.json`, SHA-256
+`bf057d5e7ee5391175e8a9c21c345ab84c5e0c735ee37c2a968d65ab6a9a02a7`.
+Full REA `209026-f926ce0-release-readback-20261106.json`, SHA-256
+`25484b6b6921e3ef23818e40a8823170d89bae397f0a5e502e312e3fd67922c8`,
+evidence `ev_d65e78a4b604542f85b156827281c9e796c462ff82c1a2b157e0352d24aa5466`.
+Readback exits0, untruncated, with verified owned cleanup. This establishes
+publication of the tested binary, not native10334 execution, full starter
+completion, durable progression or a launcher-feed update.
