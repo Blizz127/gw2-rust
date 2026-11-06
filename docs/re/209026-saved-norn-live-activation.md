@@ -374,3 +374,36 @@ The final comparison proves only the autoattack **value** changed; raw
 profile text also has formatting/comment differences. No character contents
 were read and root made no deployment. Feed runner/audience constraints
 were not reverified or cleared.
+
+## Private world-handover observation; not in 4c46cad-sk
+
+The publisher's retained `run217-world-handover` uses prepared-character
+mode and `--mission-hunt-start-stage 4` onf0a45a4. It observes a boss kill,
+step5, the completion panel, one1065 transfer to map28, and a second
+MapLoaded/AgentsLoaded/1036 sequence. The character renders afterward;
+scripted M opens a map titled Wayfarer Foothills. No deliberate movement or
+combat after transfer was exercised. This is not a full authored Great
+Hunt playthrough or a saved-character runtime admission test.
+
+The mission log records restored loot2 and XP5000/level3. Heart56's carried
+tuple retains2/5. Its bootstrap log prints a literal0/5 regardless of state;
+exactf0a45a4 source restores matching heart state on MapLoaded, then emits
+1089 for nonzero progress after creating counters on AgentsLoaded. That
+source path would send2 for heart56, without completion. Actual fractional
+heart progress in the UI was not inspected, so the log's0/5 is not a reset
+finding. The completion panel displays a weapon icon and72 copper; no
+Accept click or actual reward-credit proof exists.
+
+Arrival uses configured Hero's Moot waypoint coordinates, with no proven
+authored tutorial-arrival selector. Source tests cover saved-GUID admission
+separately. The publisher integrated root's carry-identity guard as3135b29
+and the independent arrival regressions as76af245; integration is not a
+deployment receipt. All of this remains outside the independently verified
+4c46cad-sk kit described above.
+
+Private corrected audit:
+`209026-run217-world-handover-audit-v2-20261106.json`, SHA-256
+`e7b8d9f1b7817783550cd623622f0ca15b365026a92e162f7c8908cec011b057`.
+Complete retained evidence:
+`209026-run217-world-handover-evidence-20261106.json`, SHA-256
+`06e9259ac86f3f3cf6c232277674d59892f1603fbd93cadd4368fe4cba14ad8d`.
