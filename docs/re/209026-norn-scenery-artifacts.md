@@ -1,11 +1,13 @@
 # Build 209026: Norn distant scenery artifact diagnostic
 
-The sharp-edged blue planes in run 115 remain unresolved. The captured run
-does **not** establish missing CDN assets or a correct retail scene. The most
-useful next comparison is the same stationary view with only `lodDistance`
-changed from `low` to `high`, followed, if needed, by a separate `shaders`
-comparison. This isolates the distant-detail and material paths before changing
-map packets or assets.
+The sharp-edged blue planes first recorded in run115 remain unidentified.
+Neither missing CDN assets nor malformed meshes are established. The later
+[run234/235 comparison](#retained-run235-comparison-scene-completion-remains-open)
+shows a detailed camp hall occupying the previously exposed blue region; saved
+run235 frames now establish its late appearance within that same run, after
+`READY_WAIT`. The remaining dependency is the hall model/prop's load-to-draw
+boundary, not another run just to demonstrate the visual transition. The
+historical high-LOD comparison below did not resolve the earlier artifact.
 
 ## Captured observations
 
@@ -74,7 +76,10 @@ A textual `m_impostors` search led to a UI text-editing path, not a proven
 scenery renderer. That lead is discarded. No map/scene field has been tied
 to these visible planes in this slice.
 
-## Next bounded experiment
+## Original bounded experiment plan
+
+This was the run115 plan; the high-LOD test and newer comparison below supersede
+its immediate next-action priority.
 
 1. Hold map, position, facing, camera and runner constant; capture the current
    view, set only `lodDistance=high` through the existing graphics option, and
@@ -175,3 +180,130 @@ was found. Ready screenshot SHA-256:
 Soak SHA-256:
 `8a4ecbf8449e5fd2d69da0d8cf68d52f9a921fb10b0fa077c3d00c6834b6a2b5`.
 Private bundle: `~/re/gw2/notes/209026-norn-mesmer-run117-20261105.json`.
+
+## Retained run234 scenery audit
+
+The completed `run234-norn-controls` image `shots/controller-blocked.png`
+(SHA-256 `3377d982c16560a0569409b6fad2ce9d1f2109e30c980950ee216b94c737119b`)
+shows large sharp-edged blue polygons behind the Options panel, with faint
+surface detail. Their resemblance to the earlier artifact does not establish
+the same owning object, an untextured material, malformed vertices or a
+diagnostic draw.
+
+The retained loader trace completes map, model, map-asset and agent streaming,
+reaching `STATE_READY_WAIT` at **2026-11-06T09:37:57Z** and its continuation
+at09:37:58Z. The complete two-line CDN log contains only the latest-manifest
+response selecting2130706900 and connection close: no file fetch or asset error.
+The bounded exact-pattern scan of complete client/wine logs finds no missing-
+texture/material-load/assertion diagnostic. Loader completion does not prove
+every material valid, and console absence does not observe the silent warning
+branch described above. DXVK3.10/llvmpipe, the full-texture patch and saved low
+LOD/shader/texture settings remain recorded variables, not a causal diagnosis.
+
+The run234 audit proposed **material identity**, using the already-proven
+read-only warning site `0x140aa8997`, conditioned on the slid message pointer
+`RDX == 0x141c32e38 + slide`, with a bounded material-name read fromR8. A name
+would justify a specific asset lookup. No event would leave the owning draw
+unresolved, not prove all textures valid. The prior high-LOD failure stands;
+no missing-asset/mesh fix or repeated LOD experiment is inferred here. The
+run235 comparison below defers this hook pending the scene-completion distinction;
+no hook was staged.
+
+Private files under `~/re/gw2/notes/`:
+
+- `209026-run234-scenery-audit-receipt-20261106.json`, SHA-256
+  `110ad23d2e0a39e26bff691182e450d9937edd6bf693215d26a6e8972c543853`.
+- `209026-run234-scenery-audit-20261106.json`, SHA-256
+  `d911ad3cf3ff93adab82335d6bfc8213b33e71d4e47f2b06009cc622ef2846a2`;
+  REA `ev_796f23a9ce81340aaee8adcad2bfee0d2e818738c5b55b8bf2e7e0dc9b860537`.
+- `209026-run234-scenery-stages-20261106.json`, SHA-256
+  `6b337c1a6291cc9ca0a7246234a7899004baca1b9da68e0c2eb4288d0cde325e`;
+  REA `ev_5eabf2f64b9d82cc88663e721b63c664549f06d0b2ffc2ee0ac7d6f2bc08f16b`.
+
+Both readers exited0 with verified owned-process cleanup. The first capture
+omitted two rendered-terminal frames but retained every raw/normalized output
+byte; its intentionally capped broad excerpts are supplemented by the second,
+untruncated exact-pattern capture. Unrelated inaccessible process samples were
+left untouched. This audit read only retained234 artifacts and existing source
+evidence: no235/live query, archive access, runtime action or graphics change.
+
+## Retained run235 comparison: scene completion remains open
+
+A subsequent read-only comparison admits run235's
+`shots/controller-controls-bindings-2.png` (1274863 bytes, SHA-256
+`be4acce1c9bc95d3f3e3f10f869998fda34aea273f8a7a23046cd30400cc5400`)
+against run234's pinned `controller-blocked.png` above. The retained run metadata
+keeps the game, profile and spawn unchanged, with no movement or graphics change.
+Near ground/props align in the two views. Run235 shows a detailed, textured camp
+hall and fireplace occupying the right-hand region where run234 exposed blue
+polygons; the displayed FPS reads4 rather than2.
+
+This weakens a persistent malformed-mesh interpretation and makes scene/model
+draw completion after the recorded loader readiness a plausible explanation.
+It does **not** establish that the blue polygons themselves changed or vanished:
+the newly visible hall can occlude them. This initial comparison used different
+runs; the retained same-run follow-up below closes that particular limitation.
+No exact native completion time, owning asset, renderer cause or whole-scene fix
+is proved.
+
+This initially called for a time-correlated stationary-view comparison before
+pursuing a missing-texture diagnosis. Existing saved frames supply it below;
+no new stationary runtime is needed for that question. If blue geometry remains
+exposed after the relevant scenery appears, the material-identity hook remains a
+possible investigation. No hook, settings experiment or runtime was staged.
+
+Root's complete, exit0 readback is
+`~/re/gw2/notes/209026-run235-norn-controls-direct-readback-20261106.json`,
+SHA-256 `188e5c78b0c104c819952c5ce50b6acb5d810b91c18e919f7e0ad60b193f3c2d`,
+REA `ev_e9d5bd296d134f6df749321aac24bb5fe6ee1be1813c2d5006c5d5eb635d7e41`.
+It pins the compared image and reports retained cleanup/privacy/executable-hash
+checks; output is untruncated with verified reader cleanup. No live query,
+archive read or new capture was performed by this comparison.
+
+### Existing periodic frames establish late hall appearance
+
+A bounded REA inventory found18 retained run235 PNGs, including9 periodic
+`shot-NNN.png` files. Only three admitted frames were viewed for this follow-up.
+The exact retained loader lines place `STATE_READY_WAIT` entry at09:49:46Z and
+its continuation at09:49:47Z on2026-11-06.
+
+| Saved frame | File-write time UTC | Visible scenery |
+| --- | --- | --- |
+| `shot-006.png` | 09:50:15.607006 | Hall absent; blue polygons exposed beyond the rendered ground, props and player. |
+| `shot-008.png` | 09:50:57.325802 | Hall still absent behind Control Options; blue polygons exposed; FPS4. |
+| `controller-controls-bindings-2.png` | 09:51:13.025908 | Detailed hall/fireplace visible at the same camera; FPS4. |
+
+The saved observations bracket the hall's appearance across15.700106 seconds,
+approximately70–86 seconds after the loader continuation. File modification
+times are image-write observations, and the loader trace has second resolution;
+this is not an instrumented native completion deadline. Both bracket frames
+already show FPS4, so an FPS increase is not established as the trigger.
+The late visible transition within one stationary run is now demonstrated,
+while blue-geometry occlusion, exact asset/job identity and the reason for the
+delay remain unresolved. Prior `READY_WAIT` alone was insufficient to establish
+that this scenery had drawn. Investigate that model/prop readiness-to-draw
+boundary only if pursuing the remaining delay; do not infer a missing texture
+or repeat the stationary experiment merely to reproduce this transition.
+
+Exact additional image pins:
+
+- `shot-006.png`:1157417 bytes, SHA-256
+  `5d1f1ee14d726d875f2e241fe35592877db0cdd700d259e69aa2aba6a0a4679e`.
+- `shot-008.png`:1171748 bytes, SHA-256
+  `fe393b8b12be11925f802d1727c9d25467541c8ec556be121530ea9881fc3de0`.
+
+Private files under `~/re/gw2/notes/`:
+
+- `209026-run235-scenery-shots-inventory-20261106.json`, SHA-256
+  `4729faec8a2ef8d668cf0f1c26090a9aff2bb4ff17c7fdec2817f6d4c19df610`;
+  REA `ev_ec629380ac4aa48bb874a0a7c1ad615f518c717c396a364843564a904f473a3b`.
+- `209026-run235-scenery-transition-20261106.json`, SHA-256
+  `00caf7b162164ae0c26c27a43c8553c7b39f530497355f979d30244f8a031430`;
+  REA `ev_3c1517e29e43e0f6f15cf4b69ee883d14c3968971b75e2f0d53091021fe58ee5`.
+- `209026-run235-scenery-transition-receipt-20261106.json`, SHA-256
+  `8cc18eb98030dd13cfa1a5b53c7659bbb4e5c94eca01555e61d8a3f4f139b564`.
+
+Both readers exited0, untruncated, with verified owned cleanup; unrelated
+inaccessible process samples were untouched. Full evidence was saved before
+image inspection. No236/live query, runtime/container/archive action or graphics
+change occurred.
