@@ -341,3 +341,36 @@ The decisive filter capture is
 `ev_26a55a7c4185df6bd239cdb61e9b35cbd726e0fb5c10fd6b8fb2f617eafa4986`;
 all raw/normalized frames are retained, with duplicate rendered-frame limits
 recorded. No gameplay admission or effect policy changed.
+
+### Earned-level observation increment f926ce0 (tested; publication pending)
+
+Isolated commit `f926ce06bd165ab912c02947e24e0bd85c4f03a1`, based on exact
+`403ac377dc4606e5188bfda6a94d0c120c13efa0`, adds default-off CLI option
+`--mission-observe-mesmer-sword2`. It requires validated Mesmer sword-chain mode,
+positive XP per kill, primary palette366/slot0/locale0 with10176, no startup10334
+and no legacy autoattack/echo/NPC cast. After a real earned188 reaches level2,
+it emits60510334 followed by the existing612 rebuild once per connection.
+Initial skill bytes remain unchanged; only in-memory availability is extended.
+The unchanged chain gate rejects10334 before target, health, aggro or pending-heal
+mutation. No accepted action, damage, recharge, strike count or timing is added.
+
+Matching existing process-local XP carry can regrant after its replayed188,
+only while the option remains enabled. There is no new persisted grant bit,
+storage format or restart progression. This is fixture observation tooling,
+not retail unlock policy or a playable second skill. The current profile and
+supervisor are unchanged, so normal live behavior remains unchanged on release.
+
+Three new encoded-wire/state tests cover grant order, no level1 grant or
+duplicate, effect-free rejection and replay/option-off compatibility. Nine
+chain/config controls, the static musl build and two no-listener auth/world
+startup checks also pass. Root reviewed the full diff and verified22 receipt
+pins, then handed the increment directly to the existing native publisher.
+No native execution of10334 or deployment is claimed here.
+
+Artifact:
+`/home/blizz/scratch/gw2-observe-mesmer-sword2-403ac377-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`,
+1846128 bytes, SHA-256
+`bffb89e2d20b68cc234520017395006940e79ee96d0bf4f73091b309e4a16d3f`.
+Private complete checks:
+`~/re/gw2/notes/observe-mesmer-sword2-403ac377-20261106-checks/receipt.json`,
+SHA-256 `4c1527b6e01d4d6d1b07faf117a4baf62bd09dbc26263ce5b64fa6673d76c1b9`.

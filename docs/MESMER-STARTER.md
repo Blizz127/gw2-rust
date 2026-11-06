@@ -88,6 +88,11 @@ startup availability and the chain request gate. Its distinct multi-segment
 action needs implementation before widening admission; its display multiplier
 does not establish server strike count or timing.
 [Slot6 source boundary](re/209026-mesmer-starter-skill-requirements.md#earned-level-2-slot-6-admission-and-skill-10334).
+Tested isolated incrementf926ce0 adds a default-off post-earned188 availability
+grant for observation while retaining chain rejection and all existing live
+defaults. Twelve focused tests, musl build and two startup checks pass; the
+sole publisher has the artifact. Publication and native10334 observation remain
+pending. [Implementation limits](re/209026-mesmer-starter-skill-requirements.md#earned-level-observation-increment-f926ce0-tested-publication-pending).
 Private implementation receipt:
 `~/re/gw2/notes/mesmer-sword-chain-e624-20261106-checks/receipt.json`, SHA-256
 `1c709e3dfb679731737306ca432751808910296c1fc5300e101a441180dfe012`.
