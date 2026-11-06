@@ -81,8 +81,13 @@ bounded input delivery, not a full403 route traversal.
 Run252 stops before movement because its focus helper retained the wrong run-name
 suffix. Launch/UI13, no movement reports or gameplay events; window49 returned
 13:46:34Z with70 immutable inputs, original record and executable hashes intact.
-Fresh254 preparation corrects that binding; no route pass is claimed.
+Fresh254 corrects the binding and observes five S/A/W/A/A movements with107
+fresh reports, ending nearB2; B5 remains881 map units away. The next attempt
+was already outside the input admission margin and sent no input. Launch/UI13
+retains the incomplete route; window50 returned14:05:23Z with cleanup checks
+passed. No complete route, hunt or retail claim follows.
 [Failure and cleanup](re/209026-saved-norn-creator.md#run252-mismatched-helper-run-name-stops-before-movement).
+[Run254 movement and limits](re/209026-saved-norn-creator.md#run254-five-movements-observed-upper-route-remains-incomplete).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274

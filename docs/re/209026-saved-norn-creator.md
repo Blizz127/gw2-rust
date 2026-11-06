@@ -882,6 +882,66 @@ Private evidence under `~/re/gw2/notes/`:
 - Controller outcome `run252-controller-outcome-receipt-20261106.json`, SHA-256
   `83a84fb5c5e7bc24fe4517968103819d1e1522706f64dc55cddd5591a7a04ac8`.
 
+## Run254: five movements observed; upper route remains incomplete
+
+Fresh254 corrects only the complete helper run-name binding, preserving the
+exact403 comparison binary, dense logging, original144 synthetic record,
+pristine145 prefix and stage0 placements. The staged observer, contract,
+manifest and owned marker agree. Three focused binding tests include the
+actual252 mismatch; unchanged controller/reader/focus tests are reused through
+exact source-rename comparisons. Two startup checks and1839 input pins pass.
+
+The native run admits the same PointerRoot/owned process identity before and
+after each completed hold. Append-only logs contain107 fresh movement reports:
+
+| Requested hold | New reports | Last actual map XYZ |
+| --- | --- | --- |
+| S750ms | 25 | [-3284,-25600,-3744] |
+| A750ms | 24 | [-3284,-25442,-3747] |
+| W750ms | 28 | [-2978,-25442,-3743] |
+| A750ms | 19 | [-2978,-25319,-3746] |
+| A750ms | 11 | [-2978,-25255,-3747] |
+
+The first new sample is[-3204,-25600,-3742]; there is no observed pre-bootstrap
+position, and configured spawn is not substituted. Final proximity is39.051
+map units fromB2 and881.197 fromB5. Root viewed the pinned first/final images:
+the character remains outdoors near the hall's tables and covered carts.
+These observations establish bounded movement, not a collision cause, complete
+walkability or B5 arrival. No turns, target, skill, combat, story or travel
+inputs occur.
+
+Claim13:59:48.327749Z to release14:02:57.228132Z is188.900383 seconds.
+The sixth attempt began164.809251 seconds after claim, already outside the
+required18-second admission margin before the180-second input cutoff. No
+attempt/action record exists; those writes precede native input. It was
+budget-ineligible before input, while the generic exception does not reveal
+the precise failed assertion. Completed action captures total24.664 seconds;
+intervening review gaps, rather than native hold durations alone, consumed much
+of the budget. No retry or in-flight extension occurred.
+
+Launch/UI13 retains the incomplete route result. Root returned window50 at
+14:05:23.881468Z after verifying container absence, all70 immutable non-prefix
+inputs, the original154-byte record, executable hashes and console privacy.
+All root captures preserve complete raw and normalized output. A separate
+read-only plan will consider review overhead and a longer bounded window;
+this is not a new runtime grant.
+
+Private evidence under `~/re/gw2/notes/`:
+
+- Launch `209026-run254-norn-upper-route-launch-20261106.json`, SHA-256
+  `4467ea93afad02ab6f69e442c750b91a7763979c68e05feaa568ff32215d1e44`,
+  REA `ev_de12f0f9d526ad3565fa14dbfb7ad841b3cbb0763f036c05ab909c760ce85462`.
+- Readback `209026-run254-norn-upper-route-readback-20261106.json`, SHA-256
+  `b6f1cf21ccf4256a6a1efd95e7dd17cf9cda21f41c2e89297f1f4b913474dcb3`,
+  REA `ev_e1030c79f80175503920b10a372b668887fa802ba799ff4ff8eedbf118849bf0`.
+- Return `209026-run254-norn-upper-route-return-20261106.json`, SHA-256
+  `5d119b76c7337eac1df72d2a1704aa4796a9b2154a3ec69a18aecb789c870a11`,
+  REA `ev_93d32ec044cc3bf496c5c6cc7bd0c796fd4874121338f47c95cfb1057390d7b4`.
+- Root outcome `run254-norn-upper-route-outcome-20261106.json`, SHA-256
+  `74bde3988e077117bfd8709f72a1275b72318c950f2639f46db902ab4e2498bd`.
+- Controller receipt `run254-controller-outcome-receipt-20261106.json`, SHA-256
+  `c248a2949c3c1268f3ebc4b6b14dbc18084c1e1a317cbc0dee964128764ed8ce`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
