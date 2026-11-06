@@ -16,8 +16,8 @@ API/wiki names may locate content but do not replace client verification.
 | Requirement | Current state | Evidence needed for completion |
 | --- | --- | --- |
 | Norn Mesmer creation/selection and correct appearance | Private creation/save/world/waypoint flow passes in run144; restart relog passes in run127. Saved mode enabled live03:29:33Z and independently verified03:43:51Z. | Creation/rendering and activation evidence available; preserve biography/appearance/equipment through the remaining full gameplay experience. |
-| Correct Mesmer components and startup skills/equipment | Partial: run209 confirms set4/item33355/palette90. Run211 confirms row7/3 and base10170 visitation: slot and level pass, availability fails. A base-skill availability correction is being prepared; positive selection/cast is not yet verified. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
-| Norn opening tutorial (Great Hunt, key 379) | Isolated map entry and local movement pass at diagnostic position; gameplay missing | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
+| Correct Mesmer components and startup skills/equipment | Partial: run209 confirms set4/item33355/palette90. Run214's private605 grant makes all four10170 predicates pass and produces a real request, but target0 causes no damage and final cache coverage is partial. Correction is not live. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
+| Norn opening tutorial (Great Hunt, key 379) | Livecf13a3b has reconstructed story actions/NPCs and a stand-in boss; Thora/trophy-kill progression is client-smoked. Full sequence, authentic conditions and reward delivery remain unproved. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Shared terrain loaded through Great Hunt; open map 28 not played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
 | Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work; retail skill effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
@@ -30,16 +30,16 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-Run211 identifies the current empty sword slot's observed cause: base10170
-passes slot and level checks but fails native availability. Two complete
-owned palette90/profession7/category3 lookups agree. The locale predicate
-is not reached. Window26 was returned complete at05:15:07Z. A private
-17-byte skill batch adds only605(10170) before the unchanged612 rebuild;
-typed/schema/parser/startup checks pass. The next smoke uses exact live4b3c4c2
-with legacy autoattack omitted, because real SkillBegin plus the old29
-release fallback can produce duplicate damage. No grant/profile change
-is live yet, and no full retail unlock/effect policy is claimed. See the
-[runtime evidence](re/209026-sword-slot-selection-runtime.md#run211-base-sword-availability-rejects-selection).
+Run211 identifies the empty sword slot's availability failure. In root's
+subsequent `run214-skill10170-availability-smoke`, the17-byte grant makes
+slot, level, availability and locale predicates pass; candidate10170 returns1.
+The client emits a real owned10170/slot5 request, but target0 causes no
+damage. Final cache coverage is partial, so **the combat smoke has not
+passed**. Exact4b3c4c2 was used with legacy autoattack and echo omitted to
+avoid duplicate release-triggered damage. UI/cleanup/hash checks pass;
+window27 was returned05:37:58Z. A targeted UI correction is next. No grant
+or profile change is live, and no full retail unlock/effect policy is claimed.
+See the [runtime evidence](re/209026-sword-slot-selection-runtime.md#run214-availability-passes-targeted-combat-still-unproved).
 
 Released independent fix: **9451cf0**, the seven-line caster guard
 directly on then-live c2cb6fd. Eight focused tests, offline musl build and four
@@ -96,14 +96,17 @@ a cinematic. This narrows the remaining intro dependency to authentic
 Norn playback inputs/sequence; the generic UI/view wiring does not select
 them. This source slice emits no Norn cinematic and changes no gameplay.
 
-Latest independently verified live kit: **4b3c4c2**, deployed04:46:24Z.
-It includes the caster guard and an Eir Stegalkin composite appearance near
-spawn, manually placed and neutral with no dialogue. Existing wildlife also
-remains placeholder population. Quest542/544 codecs are included; the
-research steps-on-kill option is off. Ether Feast damage exclusion and
-diagnostic attack behavior remain enabled.
+Latest independently verified live kit: **cf13a3b**, deployed05:32:09Z.
+It adds ordered Great Hunt story actions, talkable Thora/Ido/Eir, a stand-in
+wurm boss and placeholder out-of-combat regeneration. The publisher exercised
+Thora, a trophy kill and regeneration in the client; later story steps have
+unit coverage but no completed client smoke. Placement, dialogue and some
+appearances are reconstructed. Completion-panel display does not establish
+reward delivery or authentic action conditions. Hunt progress is currently
+connection-local and resets on login or waypoint rejoin. Ether Feast damage
+exclusion and diagnostic attack behavior remain enabled; healing is missing.
 Saved-norn mode has been on since03:29:33Z, following the owner's03:29:03
-native choice. At04:53:03Z root independently verified
+native choice. At05:38:38Z root independently verified
 mode/store, one private saved record, activation backup hash, all kit hashes,
 metadata900, four owned listeners and zero humans.
 [Activation/readback evidence](re/209026-saved-norn-live-activation.md).

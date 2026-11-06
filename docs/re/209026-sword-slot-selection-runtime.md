@@ -179,6 +179,49 @@ Evidence under `~/re/gw2/notes/`:
 - Mission log SHA-256:
   `1cc158c7528e0a5138f7752b540dc40faa875c1d646a8695470b20a1f34343b1`.
 
+### Run214: availability passes, targeted combat still unproved
+
+Root's `run214-skill10170-availability-smoke` used exact4b3c4c2 with the
+17-byte availability batch above, damage30, and both legacy autoattack and
+diagnostic echo omitted. This is distinct from the publisher's
+`run214-great-hunt-4`. Window27 was explicitly activated05:30:30Z and
+verified05:33:12Z before the one bounded launch.
+
+The first startup lookup still failed availability. In the second, all
+four predicates passed: slot, level, availability and locale0. The native
+10170 candidate returned1. The final outer lookup was unavailable to the
+observer, so a final cache-selection claim is not established. The client
+sent one owned10170/slot5 request, but its target was0. A release input
+followed, with no legacy order, echo or extra hit. **No damage occurred;
+this is not a combat smoke pass or a release-ready profile change.**
+The next correction is to the bounded UI targeting step.
+
+UI and outer run exited0; no assert text was found. Console and executable
+hash checks passed, and container absence was independently verified before
+returning window27 complete at **2026-11-06T05:37:58.599062Z**. Cleanup does
+not resolve the partial observer coverage or the missing damage result.
+
+An isolated exact4b regression passed one test: an encoded targeted10170
+request causes one30-point hit; subsequent29/2a input causes no extra
+response, damage or target/retaliation mutation when autoattack is absent.
+The legacy-enabled positive control reproduces the extra order/hit. Its
+receipt is `4b3c4c2-autoattack-omission-regression-20261106.json`, SHA-256
+`fe63bc7b7558e60e57ab5117d1181666f462f0e8c5feefd14fd442537365bfdb`.
+This synthetic regression does not supply the missing targeted client smoke.
+
+Private evidence:
+
+- Launch: `209026-run214-availability-launch-20261106.json`,
+  `ev_afe393f16027e8fb89d2d8b95bbba185c842bf100108ad776a0e34362da35561`.
+- Compact readback: `209026-run214-availability-compact-readback-20261106.json`,
+  `ev_e01fb0ec1d22aaf85763534123b185101405bcc8a7a88a0f61bc07d5a9dada23`.
+- Window return: `209026-run214-window-return-20261106.json`,
+  `ev_ea5ba815d98b3da8abe6baf1e72417b3ddbc09af12240e6c52852610e194e49a`.
+- Client log SHA-256:
+  `3e92903926fb0e8fee3ba53a0f4eda15efc6f60fc50ae22a746fc08e52c09a69`.
+- Mission log SHA-256:
+  `0332d110886c3c7477ff1ad027cd148abc19a2350564191231b76df6f96d3641`.
+
 ### Earlier activation observations
 
 The private helper observes seven source-guarded entry, return and call sites.

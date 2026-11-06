@@ -6,15 +6,17 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **4b3c4c2** is at
-`/home/blizz/gw2-rust-4b3c4c2`, deployed **2026-11-06T04:46:24Z**. It
-includes the caster-ownership guard and an Eir Stegalkin composite appearance
-near spawn. She is manually placed and neutral, with no dialogue; the
-existing wildlife is also placeholder population. Quest542/544 codecs are
-included, while the research steps-on-kill option is off. Saved-norn mode
-remains enabled. Root independently verified one saved record, backup hash,
-all kit hashes, metadata900, four healthy listeners and zero humans/bots at
-**04:53:03Z**. Healing remains unimplemented. Rollback is c2cb6fd-amb. See the
+tracks the remaining scope. Live kit **cf13a3b** is at
+`/home/blizz/gw2-rust-cf13a3b`, deployed **2026-11-06T05:32:09Z**. It adds
+Great Hunt story-action progression with talkable Thora/Ido/Eir, a stand-in
+wurm boss and placeholder out-of-combat regeneration. Publisher client
+smokes exercised Thora, a trophy kill and regeneration; later story steps
+remain unobserved in the client. Placements, dialogue and some appearances
+are reconstructed; this is not full retail encounter completion. Saved-norn
+mode remains enabled. Root independently verified one saved record, backup
+hash, all kit hashes, metadata900, four healthy listeners and zero
+humans/bots at **05:38:38Z**. Ether Feast healing remains unimplemented.
+Rollback is4b3c4c2. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
 The owner can create a Norn Mesmer through the saved roster; the prepared
@@ -22,7 +24,7 @@ Banshee Mesmer is hidden. Initial creation persists, while XP/loot/heart
 progress resets at restart. [Run144](re/209026-saved-norn-creator.md) is the
 prior private creator/save/world/defeat/waypoint acceptance with runner0e6ac30
 and live metadata900. This remains an incomplete diagnostic starter fixture.
-The latest feed readback at04:53:04Z offers b128; its runner pin was not
+The latest feed readback at05:38:39Z offers b128; its runner pin was not
 inspected by that query. The earlier native roster prompt is resolved.
 
 Independent fix **9451cf0** applies the seven-line caster
@@ -69,10 +71,13 @@ complete at04:52:21Z. Actual row/candidate selection and its eligibility
 results were the next observation. Run211 subsequently proved that row7/3
 is selected and base10170's slot and level checks pass, but availability
 returns0. Two complete attempts agree; locale evaluation is not reached.
-Window26 was returned complete05:15:07Z. A private single-skill availability
-candidate is prepared for a fresh smoke on live4b3c4c2 with legacy autoattack
-disabled to avoid duplicate release-triggered hits. This correction is not
-yet live; retail skill lifecycle/effects remain incomplete.
+Window26 was returned complete05:15:07Z. Root's subsequent
+`run214-skill10170-availability-smoke` used the17-byte grant on exact4b3c4c2
+with legacy autoattack and echo absent. All four native predicates pass in
+the second lookup and the client emits10170/slot5, but target0 produces no
+damage. Final lookup coverage is partial. UI/cleanup/hash checks pass and
+window27 was returned05:37:58Z. Targeting is being corrected; this is not a
+combat pass or a live profile change. Retail lifecycle/effects remain open.
 
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).

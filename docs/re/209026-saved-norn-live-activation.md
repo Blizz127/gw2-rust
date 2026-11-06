@@ -246,3 +246,36 @@ The helper exited0 without truncation and verified owned cleanup; unrelated
 processes with inaccessible ownership metadata were left untouched. Feed
 metadata remains b128 at04:53:04Z. Runner pin and audience were not
 reverified; root made no server or launcher publication.
+
+## Great Hunt story actions and regeneration: cf13a3b
+
+The sole publisher records deployment at **2026-11-06T05:32:09Z** to
+`/home/blizz/gw2-rust-cf13a3b`, rollback
+`/home/blizz/gw2-rust-4b3c4c2`. Its release record reports talkable Thora,
+Ido and Eir, a stand-in wurm boss, ordered story-action progression and
+out-of-combat regeneration. NPC placement, Thora/Ido appearances, boss,
+dialogue and regeneration pacing include reconstruction or placeholders.
+Publisher client smokes exercised talking to Thora, a trophy kill and
+regeneration; later story steps have unit coverage but no completed client
+smoke. The earlier completion-panel observation does not prove reward
+acceptance/delivery or authentic authored action conditions. Hunt state is
+connection-local and restarts on login or waypoint rejoin. Ether Feast
+healing/recharge and full retail combat remain unfinished.
+
+Root independently verified the selected kit at **05:38:38Z**: all kit
+hashes pass, four owned listeners are healthy, zero humans/bots are present,
+saved-norn mode remains enabled with one record and0700 store permissions,
+the original activation backup hash is unchanged, and CDN900 root/main
+hashes pass. No character contents were read and no configuration changed.
+
+- Game SHA-256:
+  `944a7a6747e9db21de0aae010c78ba13cc469795c96fce2cf20f4ada6236a8f0`.
+- Manifest SHA-256:
+  `33d573479e8de6e39ad1e43b06787f59777c6aab0acf1d031553b81122666e05`.
+- Receipt: `~/re/gw2/notes/209026-live-cf13a3b-readback-20261106.json`.
+- REA: `ev_d626d70589872c880095b542358cd6222f1706c66b10e4977bc4b68de468f0e5`.
+
+Readback exited0 without truncation. Feed metadata remains b128 at05:38:39Z;
+runner pin and audience were not reverified. The availability correction
+from root's separate run214 is **not live**: its request had target0 and
+did not demonstrate damage. No competing publication occurred.
