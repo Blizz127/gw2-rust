@@ -568,3 +568,33 @@ Live REA: `ev_c5867ecd65863879dc027c84d9d3f72cd98e0390bafd06cadbd0e82b37dddb3a`.
 Run224 REA: `ev_92cff1c4debbfc5d0dc4dc64f07f654ec633e4b84fafb4939a8e619b9818fc43`.
 Both read-only captures exited0 with owned cleanup. Unrelated processes whose
 environment could not be read remain unverified and were untouched.
+
+## Raven-heart task conditions: prose locator, server-authored behavior missing
+
+The retained decoded text catalog's entry84428 mentions finding raven eggs,
+returning them to roosts, defeating skelk and destroying nests. Entry25956
+describes a fallen Raven Egg;621628 mentions returning an egg to a nest in
+Wayfarer Foothills. These are useful locators, but the old catalog lacks
+per-row raw/width hashes. Exact packed-record revalidation remains pending
+an authorized archive window. No typed heart56-to84428, species or task-credit
+binding was recovered, so these entries do not authorize guessed kill rules.
+
+Fresh cached-record REA checks confirm that the exact type72/287 records
+expose title/mail/level and polygon references, with type72+44..54 zero.
+The native657 handler14123fb40 calls14123e1d0, which copies two received UTF16
+strings to subregion+10/+30 and stores a runtime objective ID at+6c. The
+subregion table's+8 getter independently derives the title from definition+30;
+getters+10/+18 return the received strings. Objective counters arrive from
+the server. Neither these records nor this UI consumer supplies egg/roost/
+skelk/nest instance bindings, credit weights or completion thresholds.
+
+The generic kill-based heart fixture therefore remains explicitly incomplete.
+The next source dependency is concrete authored action/instance binding and
+credit rules, rather than another generic kill handler. This investigation
+made no archive access, gameplay change or runtime launch.
+
+Private findings: `209026-raven-heart-task-conditions-20261106.json`, SHA-256
+`4a77b563aee144c39ac5ce8af372cf13f72fc749d6493f7e82041ffb118298fb`.
+Complete REA bundle:
+`209026-raven-heart-task-conditions-evidence-20261106.json`, SHA-256
+`d381abeb55b9b5806e24e135bf60dcae568651b21ff8273fcdcf38a301c62cc2`.

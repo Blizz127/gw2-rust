@@ -38,7 +38,7 @@ interleaved-character transfer fix and enables the publisher's wallet support.
 Map28 POI discovery is now enabled; run224 observes waypoint371 discovery.
 Waypoint travel is offline-tested but not exercised by a client click.
 Vendor remains disabled. The earlier earned attribute increment remains active.
-Rollback isb2d6d24. Effective-level/health
+Rollback is b2d6d24. Effective-level/health
 scaling, healing, quest154 payout and durable progression remain incomplete.
 [Release evidence](re/209026-saved-norn-live-activation.md#verified-live-release-b2d6d24-poi).
 

@@ -270,3 +270,50 @@ Complete eight-capture REA bundle:
 `1ca06104cb27cecf724f67cc668bedde8b974477ba0f9d1b737a1cb7242b0bea`.
 Its audit describes exact0570b950 source; later wallet/carry changes must be
 reviewed before implementation rather than treating that audit as current.
+
+## Checked fixed-payout increment, submitted to the sole publisher
+
+Commit **9914a8359529e6938014185bbec71a7adaaf8133**, based on b2d6d24,
+changes only mission.rs. It accepts client205/0 for an owned completed Mesmer
+quest154 on map379, with the wallet, starter bag and item allocator enabled.
+It pre-encodes959/276/204/526, then commits one item32138, checked balance+72
+and the claimed flag together. Invalid, duplicate, full-bag, overflow or
+instance-collision requests leave state unchanged. No quest XP is added.
+
+Exact item construction kind, key, instance, count and slot travel with the
+existing wallet and claim state through all three supported carry producers.
+Incompatible destinations preserve the queued carry and reject the join.
+The old connection stops changing reward state or processing timers after
+redirect. Pending claims delay tutorial exit; a successful claim starts the
+existing12-second compatibility delay. A claimed tutorial respawn resumes
+that delay without recreating the panel or paying again. The deadline now
+participates in socket scheduling, so it does not depend on further client
+traffic or an NPC respawn. Retired phases expose no stale timer deadline.
+
+One usable backpack slot is reserved while this eligible reward is waiting
+or pending. Existing full inventories are preserved; no item is overwritten
+and no partial reward is acknowledged. The native-default item path uses
+existing flags0/absent GUID compatibility choices; retail binding, upgrades,
+XP policy, full-bag UI retry and arbitrary disconnect/restart persistence
+remain unresolved. No schema, original415 file or live profile changes.
+
+Seven payout checks pass, including literal wire outputs, duplicate/invalid
+claims, bag/balance limits, exact saved-character handoffs and the scheduler
+regression that failed before its fix. Fourteen earlier focused economy/
+carry/golden checks and six affected timer checks pass; three timer checks
+repeat earlier coverage. A zero-test filter invocation is retained separately
+and is not counted. The final isolated musl build and four current-profile
+prepared/saved auth/world no-listener checks pass. Root reviewed the complete
+production diff and independently checked the artifact hash.
+
+Artifact:
+`/home/blizz/scratch/gw2-quest154-fixed-payout-b2d6d24-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`,
+1800176 bytes, SHA-256
+`e97c24f2bd639dc5e111f898c864fad9a0ed034c68f8bd2037110ee04836416f`.
+Receipt: `quest154-fixed-payout-b2d6d24-20261106-receipt.json`, SHA-256
+`a25a1563d5c10fb39c6282f37e9abccb73c34499d9e3eb529c5abea98b73b8bb`.
+Root submitted the artifact once through the existing verified native
+publisher path, recorded in `quest154-payout-native-handoff-20261106.json`.
+This checkpoint establishes build/offline checks and submission, not a
+deployment or native reward-click result. The continuous-release order adds
+no routine client-playtest or approval gate before the publisher's rollout.
