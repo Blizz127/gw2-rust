@@ -46,3 +46,38 @@ order encoding does not supply those server policies.
 The native publisher's unanswered saved-versus-prepared character prompt
 and the shared-runtime lease hold remain in force. No client, working
 archive, run145 input or online deployment was changed by this fix.
+
+## Checked cumulative artifact, not deployed
+
+Source **87ef495** includes the slot-release correction00599af and was
+built offline in isolated worktree
+`/home/blizz/scratch/gw2-skill-reply-composition-20261106-src`, with a distinct
+target directory. The `x86_64-unknown-linux-musl` release build passes.
+
+- Binary: `/home/blizz/scratch/gw2-skill-reply-composition-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`.
+- Size: **1581984 bytes**, static PIE.
+- SHA256: **45c52f1fb072cc7b02a02d64262c8cb1a924ec6bdbf8241db6420685c8642395**.
+- Required paired supervisor: `/home/blizz/scratch/gw2-skill-reply-composition-20261106-src/deploy/gw2-server.sh`.
+- Supervisor SHA256: **673a6cea9caa1d364204e16143f2378a5676273eedb035ba4dc117fe5c91eb10**.
+
+At **2026-11-06T02:31:21.206487Z**, this exact binary passed prepared auth
+and Norn mission `--no-capture --check-config`, both with no listener started.
+The private mission preflight combines an explicitly requested1000ms echo
+with the existing synthetic hostile/damage fixture; that value is not a
+retail duration or a new deployment default. The retired autoattack CLI is
+rejected, the supervisor's absent/configured legacy-setting checks pass,
+and shell syntax passes. Eight pinned fixture files and the run145 manifest
+are unchanged. Four ignored schema inputs match the previously tested pins.
+
+Private receipts and reproducible wrapper:
+
+- `~/re/gw2/notes/skill-reply-composition-build-inputs-20261106.json`.
+- `~/re/gw2/notes/skill-reply-composition-build-checks-20261106.json`.
+- `~/re/gw2/notes/check-skill-reply-composition-build-20261106.py`.
+
+This is the latest checked cumulative replacement. The previous00599af
+artifact remains intact as a tested earlier candidate; c862325 remains
+withdrawn because it manufactured a cast from slot release. The last verified
+live kit remains **82d8d04-cdn900**, with its existing rollback retained.
+Publication still belongs to the sole publisher after the actual owner
+prompt and resource holds permit it; no deployment is claimed here.

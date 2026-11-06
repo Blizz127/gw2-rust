@@ -299,3 +299,55 @@ Exact three-site bytes are retained in
 full callback/call relationships are in
 `ev_c0b08c7345032ef072e1aaf29c3a53132b16128aeb6d36cd32d52c29da1ef421`
 and `ev_74089555fe7f57ac5cbdeecbecc001009451d8e491cc8d5bb666b5fae34e6c1d`.
+
+## Source-local writer follow-up
+
+A later offline follow-up checked a different bounded edge rather than
+repeating the constructor-xref or whole-image exact-setter searches. An
+aligned disassembly of the known recharge implementation neighborhood
+`0x1412122d0..0x141214c10` selected explicit Qword stores to +`0x28` and
+LEAs of that field. It found ten candidates. The only recharge-object
+context write among them was the already established constructor store at
+`0x141212313`, which writes null. The other nine candidates address
+`RSP+0x28`, including local palette adapters; they are not assignments to
+the recharge receiver's context. This neighborhood also contains unrelated
+shared skill helpers, so address proximity alone was not used as type proof.
+
+Two exact adjacent/virtual bodies were then closed:
+
+- Actual recharge table entry `0x141212500` calls destructor
+  `0x1412123b0`, optionally frees the 0x78-byte object, and returns it.
+  It provides no context-binding operation. The adjacent `0x141212540`
+  operates on another interface with virtual +`0xe8`; it is not another
+  entry of the two-slot recharge table.
+- Complete `0x141214c10..0x141214c9b`, immediately following the known
+  per-skill query, searches the separate slot-recharge list at receiver
+  +`0x68` by entry +`0x10` and +`0x20`, then tail-calls query converter
+  `0x141214a90`. Its named assertion is `recharge` in `CharSkillbar.cpp`.
+  It does not assign context or consume the per-skill category0 Word.
+
+The result remains deliberately limited: no concrete context assignment,
+receiver vtable, or named category0 Word callback was recovered. The local
+instruction filter does not cover other regions, pointer arithmetic,
+inlined copies or every possible write encoding. Shared-source naming and
+the unbound callback do not prove that the callback is server-only, nor
+that every client object remains context-null. If a particular setter
+invocation has null context, the known notification is skipped, but its
+raw Word still enters the stored/query record. No new default or packet
+recipe follows from this negative result.
+
+The useful next boundary is still an actual assignment to this typed
+receiver's +`0x28`, or a separately authorized observation of a nonnull
+current context followed by its concrete table binding. The prepared
+passive observer above can distinguish null from nonnull without first
+injecting630; this follow-up did not run it or access any staged run.
+
+Evidence `ev_81a45a1b2cdfa5b104949bece97e461c4159da9dad46c703880ef6464e588103`
+and `ev_c1faf79feaeccf3b39da3d8c31171f4780dc9955bbf4a2d0287437cdc907c19c`
+are retained in
+`/home/blizz/re/gw2/notes/209026-recharge-local-writer-boundary-20261106.json`,
+SHA256 `ba298520dc67b8e9d7cb8139380a42722caa5feca4720f068a3cb30fbf04aa77`.
+Both exited0 with nontruncated output and verified owned-process cleanup.
+The private bounded candidate helper is
+`recharge-context-local-writers-20261106.py`, SHA256
+`4b2f34cfdee89607221e15f7f40db26748d868de266f03616d57dec794a9606c`.

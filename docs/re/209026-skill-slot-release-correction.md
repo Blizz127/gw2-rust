@@ -77,6 +77,10 @@ does not establish deployment; the last verified live kit remains
 
 ## Replacement artifact, not deployed
 
+The later [87ef495 cumulative artifact](209026-skill-reply-composition.md)
+includes this correction and the explicit diagnostic response composition.
+The artifact below is retained unchanged as a tested earlier candidate.
+
 Source commit **00599af** was built in isolated worktree
 `/home/blizz/scratch/gw2-slot-release-20261106-src`, with its own target
 directory. The offline release build for `x86_64-unknown-linux-musl` passes.
