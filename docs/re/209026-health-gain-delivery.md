@@ -149,6 +149,44 @@ magnitude pair. It also supplies the receiver-derived position through
 event 0x4f. This establishes a health-gain floater **dispatch**, not its
 rendered color, visibility, or pixels under current UI state.
 
+## Positive floater magnitude does not require a populated Word
+
+A bounded follow-up traced that exact callback into its numeric display
+consumer. `0x1403a99a0` forwards the custom events through `0x1403aaf80`
+to `0x1403a96c0`. The exact table at `0x1403a9970` binds event 0x52 to
+`0x1403a986a`, storing the floater type at control +0xf0, and event 0x53
+to `0x1403a98d4`, storing the magnitude pair at +0xe8/+0xec. Event 0x51
+separately stores the skill reference at +0xe0. These setters receive no
+wire kind or raw Word.
+
+For type 13, the exact digit-builder table selects `0x1403ac5d7` inside
+`0x1403ac4a0`. With second magnitude zero, it skips the secondary digit
+loop and builds decimal glyph geometry from the first magnitude at +0xe8,
+using division by ten and each remainder. An incoming pair `[121, 0]`
+therefore supplies the digits for 121. The selected display-resource
+getter returns the nonnull static reference `0x141ae1614`; the animation
+selector stores type 1. Neither reference nor animation type is assigned
+a rendered color, asset identity or semantic name here. Resource readiness
+and actual pixels remain outside this static result.
+
+The known kind-2 distinction does not create a positive-heal Word
+requirement. Wire kind 2 sets event +0x28 bit 5, read by virtual +0xa8 at
+`0x1402e16e0`. Its demonstrated subdivision and aggregation uses first
+require virtual +0xa0's negative-change, kind-1-skill predicate. Exact
+Ether Feast is a kind-0 skill and a positive first delta fails that
+predicate. The traced positive path reaches the numeric display from the
+delta regardless of whether the raw Word is zero. This is not a global
+equivalence claim for all health listeners or a recovered retail Word
+default; it excludes the damage fixture's magnitude-as-Word hypothesis as
+a prerequisite for this positive floater.
+
+Given an explicitly supplied finite +121 first delta and zero second
+delta, hypothetical current 200/maximum 388 becomes 321 and supplies 121
+to this display path. At current 388/maximum 388 the meter stays full but
+the original 121 is still notified. These are source arithmetic examples,
+not runtime observations or a choice of server overheal policy. Separate
+alive/downed/dead state and the accepted effect moment remain unchanged.
+
 ## Supported next increment and remaining policy
 
 The existing `SourcedHealthFrame209026` can represent an explicit positive
@@ -157,11 +195,18 @@ and raw discriminator/Word supplied by the caller. The client will apply
 the bounded meter update and attempt the sourced UI notification above.
 An absolute-current frame alone does not provide this event path.
 
-This source does **not** choose the retail heal amount, server-side cap,
-clone contribution, conditions removed, success/cancel point, or recharge.
+The complete authored per-fact equation is already established in
+[literal amount facts](209026-mesmer-tooltip-facts.md), with its second-level
+and effective-attribute inputs bound in the
+[character context](209026-tooltip-character-context.md). Those source
+contracts are independent of run 144's observed tooltip number.
+
+This delivery trace does **not** establish authoritative execution of those
+facts, server-side cap, clone contribution, conditions removed, success/cancel
+point, or recharge.
 It also does not select a retail discriminator/Word pair. Tooltip amount
 evaluation and command completion are separate source contracts; deriving
-a displayed value does not authorize applying it at a guessed time.
+a displayed value does not establish a server execution time.
 No gameplay implementation or packet defaults were changed in this pass.
 
 ## Evidence and coverage
@@ -187,3 +232,18 @@ shared return, without claiming all unrelated event cases were traced.
 | `ev_dd09e254fc320a6770829370b3ae1cbd3eacce72a0763b90b72554e746792073` | Continuation to concrete floater call and return. |
 | `ev_47d25617dd875973cd943db43d32d871d07d9e447c8270aa532103fb4aa4c86a` | Complete UI entity-eligibility helper and event getters. |
 | `ev_5d4e8bc75cc1cf273200e9e2cae5a1639ba1f95d6ff6aed898ff1ef9f7c4140b`, `ev_3d57617ce79e6dc8e851498644a03eef2ac75824affa91ed187c97f3163b3dfb` | Complete magnitude-conversion leaf and exact -0.5/+0.5 constants. |
+
+Positive-floater follow-up bundle:
+`~/re/gw2/notes/209026-ether-feast-positive-floater-20261106.json`, SHA-256
+`d63e03ed455b95cb1320298eb7f0dcc61ec158a4235a5d236a0914dd0836c2e5`.
+It retains nine complete process captures: one prior event-body reread and
+eight bounded frozen-source reads. All exited zero without truncation and
+with owned-process cleanup verified. The logical switch tails were captured
+separately where pdata ended early; table bytes after returns are treated
+as data. No new runtime, archive or gameplay change occurred.
+
+| REA evidence | Follow-up contract |
+| --- | --- |
+| `ev_6687d9e7887ad601ff4f935339e93c5f571a242613c36501ec67a53a3088b38e` | Exact custom-event table and type/magnitude setter tail. |
+| `ev_1fef712420a135596d5f912d4a028695ef05a178764f52e56770fd9693790e38` | Exact type-13 decimal digit case and common exit. |
+| `ev_0c7e0ed2056f05275519ed810cfd9e5257ec5ed3e2ddeef00a39c5f13e4e7e8d` | Exact type-13 display-resource, animation, digit and exit targets. |

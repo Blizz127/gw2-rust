@@ -30,11 +30,19 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-Run228 on the current build observes normal saved-character entry and the
-Thora conversation from stage0. Its controller timed out before attempting
-the remaining route; no trophy kill, reward or map28 transfer occurred.
-It is a failed integration attempt, with cleanup verified and window34
-returned08:19:24Z. [Evidence and harness correction](re/209026-saved-norn-creator.md#run228-saved-stage0-entry-incomplete-tutorial-route).
+Run229 corrects the earlier controller failure and exercises native movement,
+but stops with only Thora/step1 completed. The only selected/attacked target
+is neutral raven45; Tab selects no new target. Navigation reaches the hillside
+and does not acquire a hostile, so this is no full hunt or combat-code pass.
+Cleanup passes and window35 was returned08:35:16Z.
+[Retained attempts](re/209026-saved-norn-creator.md#run229-native-control-and-targeting-boundary).
+
+**a223a90** is checked and submitted to the sole publisher. It restores
+carried XP/earned stats before quest-completion replay initializes the
+reward panel, fixing a constructor-XP0 sampling defect. A failure-before
+regression,21 distinct focused tests, musl build and four startup checks
+pass. It adds no XP payout policy or schema; it is not yet verified live.
+[Fix and source binding](re/209026-quest154-content.md#reward-initialization-timing-and-carried-xp-ordering-fix).
 
 **9326c08-vendor is now live**, deployed07:55:30Z at
 `/home/blizz/gw2-rust-9326c08-vendor`. Independent readback verified all current and

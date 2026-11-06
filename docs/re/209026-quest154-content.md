@@ -367,3 +367,67 @@ Private findings: `209026-quest154-xp-expression-20261106.json`, SHA-256
 `c09faf2722f2e73621d7a11c6575eeabe272df8bc7b9139854692f64d00b948c`.
 Full REA bundle: `209026-quest154-xp-expression-evidence-20261106.json`, SHA-256
 `391cf257f37130ea7ea4bd0a957e0b9c81a55906a7d0810856c73ee51f51c22e`.
+
+## Reward initialization timing and carried-XP ordering fix
+
+The eligible automatic panel path evaluates XP synchronously while handling
+the last542. Quest completion `1412006a0` dispatches listener+0x18;
+GpReward's matched-quest callback `1402c94c0` immediately calls `1402c9b50`.
+Its eligible branch invokes `1410708c0` → `141086870`, which sends widget
+creation event10 before returning. Reward initialization then reaches the
+XP expression through `14083279c` → `14082ec40` → `14082f4c0`.
+
+This is conditional: the selected quest/service gates must pass, an existing
+reward frame must be absent, and gameplay UI must allow opening. Quest154's
+inspected +0x30 flags are zero, so its automatic-claim/no-panel branch is not
+selected. A separate event0x4b retries opening. A deferred or recreated panel
+can therefore sample later XP. The inspected creation path installs quest
+callbacks, not an XP listener; those callbacks close/unsubscribe, while
+event65 performs fade/animation work. No continuous XP reward refresh was
+established by the bounded reference/consumer trace.
+
+The explicit current profile retains `GW2_XP_PER_KILL=2500`. Kill XP is sent
+before the final542, so the normal-mode tutorial display is already zero
+after a final kill. This fixture masks the missing positive quest-XP award;
+adding a fixed2000 would disagree with the client expression. No kill-XP
+coefficient, bonus or rounding policy was recovered from these consumers.
+
+The trace exposed a separate ordering defect in9326c08: a carried Pending
+stage5 quest replays all six542 before restoring191/188/187. Its183 creation
+does not supply extended XP, so the immediate panel can sample constructor
+XP0 instead of carried XP5000. Commit **a223a90f4e929a3469e93eac47503f818317abaa**,
+directly on9326c08, moves existing bag/XP/earned-stat restoration before the
+quest replay. It changes no values, payout policy, profile or durable schema.
+
+The real saved-character handoff regression now carries XP5000/level3 and
+checks literal decoded191/188/187 values before every replayed542. It fails
+before the fix and passes after. Claimed rewards still do not reopen or pay
+twice; XP and original character data remain preserved. Twenty-one distinct
+focused tests passed across22 executions, together with the isolated musl
+build and four unchanged-profile no-listener startup checks. An initial
+missing-XML compilation failure is retained separately as a setup failure,
+not counted as the failing regression.
+
+Root reviewed the complete production/test diff and independently checked
+the artifact hash. It submitted the commit to the existing sole publisher;
+the publisher's newer quest162 replay may need the same ordering invariant
+adapted during integration. This checkpoint is **ready/submitted, not live**.
+No new client execution is a release prerequisite under the standing mandate.
+
+Artifact:
+`/home/blizz/scratch/gw2-quest154-xp-restore-9326c08-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`,
+1800192 bytes, SHA-256
+`d1d09f9bf4c91c547ccfca37a61719dd0394d609b22fe662553b2fe4aef89a6e`.
+Private verification receipt:
+`quest154-xp-restore-9326c08-20261106-checks/receipt.json`, SHA-256
+`a0df8b3cd3072e468d7fe0315994dfec0f47f11a6dbef0c6f4a839facbc99958`.
+Source findings: `209026-quest154-xp-sampling-20261106.json`, SHA-256
+`7bee5d1b76263ba0389f52c313431f51bac4a970c795238ccaa76409a5275f22`.
+Complete24-capture REA bundle:
+`209026-quest154-xp-sampling-evidence-20261106.json`, SHA-256
+`d139329c138005175b1d656753e79b7d2c800e281b79c20e32dbdb37ed2e1d04`.
+
+A completion-time XP snapshot and atomic205 payment remain a separate
+proposal, not part of this fix. Matching the immediate panel would not by
+itself prove retail server payout timing or equivalence after delayed panel
+creation. Durable progression remains under its existing owner restriction.

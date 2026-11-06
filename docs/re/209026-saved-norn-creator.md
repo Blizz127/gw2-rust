@@ -293,6 +293,69 @@ The launch and reader retain unrelated inaccessible process probes; those
 processes were untouched. This run is distinct from the publisher's prepared
 `run228-vendor-drag`, which exercised a sale.
 
+## Run229: native control and targeting boundary
+
+The fresh `run229-saved-norn-hunt` retains the same9326c08-vendor build,
+profile, stage0, actor positions and unchanged synthetic144 record. It
+corrects run228's controller-delivery failure: full REA evidence is saved
+privately before compact output. Login starts after30 seconds, supported by
+the previous ready-login image; the35-second world-rendering cushion remains.
+The unsuccessful blind attack rounds are removed. The total405-second
+runtime ceiling is unchanged, with a110-second native-input cap and an
+earlier release target that reserves continuation time.
+
+The controller claimed the paused UI at08:32:44Z, sent11 native navigation,
+targeting or click actions, and released normally with14 helper seconds
+remaining. Sixteen complete evidence records and four admitted screenshots
+are retained. The binding capture omitted one duplicate rendered frame,
+while retaining all886 raw bytes,10 raw frames and every normalized frame.
+
+Gameplay still stops at step2. The only selected target is client227's
+agent45; the actual10170/slot5 request also targets45. The staged source
+maps45 to the sixth neutral ambient actor, species6045, matching the visible
+Juvenile Raven. Tab produces no new target message. The hostile-only damage
+guard therefore has no eligible target; this does not establish a combat
+implementation defect.
+
+Fourteen sparse movement samples show the character move approximately from
+`[-3200,-25600,-3742]` to `[-2213,-25313,-3759]`, then back to
+`[-2485,-25310,-3745]`. Requested D holds were150ms and500ms. The first view
+after movement does not establish the intended heading; continued forward
+input brought the view against the hillside. No yaw, effective keybinding,
+camera transform or per-key timestamped movement evidence proves whether D
+turned, strafed or was ignored. The exact current server `Moved` branch
+generates heart/POI effects rather than a rotation/position correction.
+No collision-query failure is inferred from the image alone.
+
+The next navigation attempt needs an isolated before/after direction check
+and a verified hostile227 selection before attacking. The original positions
+must remain intact; moving enemies closer would test a different route.
+No further run or resource grant was created by this finding.
+
+UI/wrapper exit13 records the incomplete sequence `[1]`. No reward claim,
+payout or map28 transfer occurred. Cleanup, privacy, unchanged frozen/working
+executable hashes and original synthetic record passed; window35 was returned
+**08:35:16.924249Z**. This is a successful controller handover and resource
+return, not a completed tutorial.
+
+Private evidence under `~/re/gw2/notes/`:
+
+| Receipt | Evidence |
+| --- | --- |
+| `209026-run229-window35-verification-20261106.json` | `ev_98d384a6456d9211107458094bc8a3f2b23045ddd86f7ebc0217e37254044330` |
+| `209026-run229-saved-norn-hunt-launch-20261106.json` | `ev_69eec34c55b725b6e1ed1d9bed16a9f14f0d210e4aa49f637b6ca4740f6134e3` |
+| `209026-run229-saved-norn-hunt-readback-20261106.json` | `ev_96dcdd1acde9b6fe6966e0ceeedcb1347905bbf28f87d4bbc75ecfb6e9584022` |
+| `209026-run229-window35-return-20261106.json` | `ev_2bbc09925769ff34a4775177bc536a637274ab8c4f70924ffad1dc16f20e63f5` |
+| `run229-navigation-evidence-20261106.json` | `ev_97ff494bd940748a609dc1894ef175cbca60b9509e763ae2f2ed9a01ca4b225e` |
+
+Controller receipt: `run229-native-controller-outcome-20261106.json`, SHA-256
+`18fa6e771b91d6303a7048a8b6182a7f8d2be431910b2a8b55e2858fcd4aef4c`.
+Navigation finding: `run229-navigation-findings-20261106.json`, SHA-256
+`80c5fe8080420466889c5a4b735225621427df07b066317fd7e30ea75a0dbbff`.
+No owner store, archive content, source fixture placement or live service
+was changed by the controller. Inaccessible unrelated process probes remain
+unverified and were untouched.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
