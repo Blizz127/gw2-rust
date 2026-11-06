@@ -1438,7 +1438,11 @@ impl MissionPhase {
                 AgentBehaviorOrderFrame209026 {
                     agent_index: start.agent_index,
                     remote_tick: start.remote_tick,
-                    command_flags: start.command_flags,
+                    // The native 0x29 request uses flags 3. As with the
+                    // SkillBegin echo, controlled empty slots require 0x10
+                    // to admit this incoming 0x78; preserve the other bits.
+                    // docs/re/209026-repeat-attack-admission.md
+                    command_flags: start.command_flags | 0x10,
                     behavior_value: start.behavior_value,
                     behavior_data: order.to_behavior_data().to_vec(),
                     word: 1000, // placeholder duration (m_durationMs)
@@ -2609,6 +2613,42 @@ pub(crate) mod tests {
         assert!(phase.respond(&skill_at(3)).unwrap().is_none());
         let reply = phase.respond(&repeat_start()).unwrap().unwrap();
         assert!(contains(&reply, &order_for(3)), "then the last SkillBegin target");
+    }
+
+    #[test]
+    fn auto_attack_admits_a_controlled_order_and_preserves_the_request_header() {
+        let mut phase = populated_phase()
+            .with_hostile_npc(100, [5.0, 0.0, 0.0])
+            .unwrap()
+            .with_autoattack_skill(10170);
+        phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap();
+        phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap();
+        // The native repeat producer sends 3. Also cover an already-admitted
+        // byte and unrelated high/track bits; none may be lost in the reply.
+        for (request_flags, expected_flags) in [(3, 0x13), (0, 0x10), (0x13, 0x13), (0xe3, 0xf3)] {
+            let request = AgentBehaviorFrame209026 {
+                agent_index: 1,
+                remote_tick: 0x1234_5678,
+                command_flags: request_flags,
+                behavior_value: 0x8000_4321,
+                behavior_data: vec![0x29, 5],
+            };
+            let mut incoming = BytesMut::new();
+            request.encode_client_frame(&mut incoming).unwrap();
+            let seen = phase.push(&incoming);
+            assert!(matches!(seen.as_slice(), [Seen::RepeatStart(_)]));
+            let reply = phase.respond(&seen[0]).unwrap().unwrap();
+            let mut cursor = &reply[..];
+            let frame = AgentBehaviorOrderFrame209026::decode_frame(&mut cursor).unwrap();
+            assert!(cursor.is_empty(), "no damage or other fixture effect was enabled");
+            assert_eq!((frame.agent_index, frame.remote_tick, frame.command_flags, frame.behavior_value),
+                       (1, 0x1234_5678, expected_flags, 0x8000_4321));
+            assert_eq!(frame.word, 1000, "existing diagnostic duration remains explicit in the fixture");
+            assert_eq!(frame.behavior_data, SkillOrder209026 {
+                order_flags: 0, skill_key: 10170, slot: 5, raw_7: 0, agent: 3, byte_12: 0,
+            }.to_behavior_data());
+            assert_eq!(health_of(&phase, 3), LEVEL1_NPC_HEALTH);
+        }
     }
 
     #[test]
