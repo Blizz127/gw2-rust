@@ -1496,6 +1496,27 @@ another click. No interaction, dialogue or quest step occurred; UI/launcher13
 remains incomplete. These observations do not yet explain the target mismatch.
 Historical pixels are not a recipe for a future run.
 
+A bounded retained REA audit confirms pointer `[443,630]` before and
+`[645,378]` after the action, with stable owned identity in both double
+snapshots. The earlier coordinate matches the roster script's final pointer
+command. The controller executes `xdotool mousemove X Y click 1`; its explicit
+two-second settle is after the click. The314.01131ms host duration includes
+command and cleanup and does not measure native event timing. No observation
+shows the client's hit-test state between motion and ButtonPress. Cached hover
+is one possible explanation, alongside picking geometry or event timing;
+none is established. The proposed fresh diagnostic adds one pointer move,
+a reviewed Thora hover image and matching numeric pointer, then one click
+without another move. It retains target21/Greet before F and all existing
+ownership, freshness, no-retry and cleanup limits.
+
+Private audit `209026-run270-selection-order-retained-audit-20261106.json`,
+SHA256 `4a4822b387ec7331ec692c8d2e350eb57175028bb82ad0ed484658e0ccdb9014`,
+Evidence`ev_aad3ec4bb663b59508eea4d9cd741c7fa1a4dcfa833de31b2e22bebd78fbc31a`,
+exits0, untruncated with owned cleanup. Root verified11 retained pins and
+reviewed the actual command and pointer paths. Finding/proposal
+`run270-selection-order-findings-20261106.json`, SHA256
+`de830805aa99dc98853708336fc44593e364d0ae7dfbdc2677194bb7427e4353`.
+
 Window60 returned **2026-11-06 19:25:23Z**. Each return verified container
 absence,79 immutable non-prefix inputs, original synthetic record, unchanged
 frozen/working PE hashes and console privacy. No live deployment, owner store

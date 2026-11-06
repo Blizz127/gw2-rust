@@ -93,8 +93,11 @@ because root prematurely created its reserved GO file; no controller input
 occurred. Run270 corrected that orchestration error, but its single candidate
 click selected45/Juvenile Raven. Root released without F; UI13 and no step1
 remain failure evidence. Windows59/60 returned19:18:42Z/19:25:23Z with cleanup
-verified. The next work is a retained pointer/input audit, not a blind click
-retry. [Evidence](re/209026-saved-norn-creator.md#runs269270-stationary-thora-check-remains-incomplete).
+verified. The retained audit confirms pointer443,630→645,378 and one combined
+move/click command, without a client observation between them. Cause remains
+unproved. Draft271 separates pointer placement and a reviewed hover image
+from selection; it has no runtime or resource grant yet.
+[Evidence](re/209026-saved-norn-creator.md#runs269270-stationary-thora-check-remains-incomplete).
 The [Thora source audit](re/209026-quest154-objective-ui-boundary.md#retained-thora-opening-audit)
 also distinguishes objective text34078 from an unproven spoken opener and
 the reconstructed opening-to-step1 rule. No authentic dialogue replacement
