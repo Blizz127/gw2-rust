@@ -534,3 +534,37 @@ REA `ev_f4f56181c1c7d3aee54dfc713bc3af01154566705cd205e7f0ad602a0a23d2bb`.
 The capture exited0 without truncation and verified owned cleanup.
 This readback does not establish client reward interaction, full retail
 economy, restart persistence or any launcher audience change.
+
+## Verified live release b2d6d24-poi
+
+The sole publisher deployed the profile/data/supervisor increment at
+**2026-11-06T07:25:26Z**, kit `/home/blizz/gw2-rust-b2d6d24-poi`, rollback
+`/home/blizz/gw2-rust-b2d6d24`. The game binary remains the exact7b8fa261 hash
+above. Supervisorf26865e forwards the configured map28 POI file; wallet stays
+enabled and vendor stays disabled. Discovery radius/threshold policy remains
+inferred, so this does not prove full retail discovery rules.
+
+Independent readback at **07:28:02Z** passed full current/rollback manifest
+sums, four owned listeners, zero humans/bots, saved-norn/one0700 record,
+unchanged activation backup and the earlier attribute/combat/world/skills
+settings. Exact configured POI file SHA-256:
+`16ab02c8cb0aafe63c9865cf34090959adbd9c0b00211195318c7f85f13e485c`.
+New manifest SHA-256:
+`e2aee95ea30a2b6665d1ed92b853759402c005cb41a771bb3908b9004e27caf6`.
+Effective profile SHA-256:
+`ab67b28beccb0eee389c9b26dc64b63f6d12a8158b69e92e86e04e8d501bc61b`.
+
+The bounded readback of `run224-discovery-move` observes one map28 transfer,
+two MapLoaded/BeginPlaying cycles and one Hero's Moot waypoint371 discovery
+with1140/1143. The script moves and opens the map; it does not click a
+waypoint. No client208 or waypoint1065 rejoin is present. Waypoint travel
+therefore retains offline-test coverage only. Run logs record completed
+cleanup, unchanged PE hashes and console privacy pass. Absence of assertion
+text is a bounded log result, not a general gameplay correctness proof.
+
+Receipt: `209026-live-b2d6d24-poi-and-run224-readback-20261106.json`, SHA-256
+`2b8e4ee40db9c3f80c216afefcc49d1e6ae1c178447a3352ba6418b1843b4ab6`.
+Live REA: `ev_c5867ecd65863879dc027c84d9d3f72cd98e0390bafd06cadbd0e82b37dddb3a`.
+Run224 REA: `ev_92cff1c4debbfc5d0dc4dc64f07f654ec633e4b84fafb4939a8e619b9818fc43`.
+Both read-only captures exited0 with owned cleanup. Unrelated processes whose
+environment could not be read remain unverified and were untouched.

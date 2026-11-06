@@ -30,15 +30,17 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**b2d6d24 is now live**, deployed07:17:51Z at
-`/home/blizz/gw2-rust-b2d6d24`. Independent readback verified all current and
+**b2d6d24-poi is now live**, deployed07:25:26Z at
+`/home/blizz/gw2-rust-b2d6d24-poi`. Independent readback verified all current and
 rollback hashes, effective settings, saved mode/one record, unchanged backup
-and four owned listeners at07:23:22Z; zero humans/bots. It includes98bae4f's
+and four owned listeners at07:28:02Z; zero humans/bots. It includes98bae4f's
 interleaved-character transfer fix and enables the publisher's wallet support.
-Vendor and POI discovery code is compiled but disabled. The earlier earned
-attribute increment remains active. Rollback is0763c47. Effective-level/health
+Map28 POI discovery is now enabled; run224 observes waypoint371 discovery.
+Waypoint travel is offline-tested but not exercised by a client click.
+Vendor remains disabled. The earlier earned attribute increment remains active.
+Rollback isb2d6d24. Effective-level/health
 scaling, healing, quest154 payout and durable progression remain incomplete.
-[Release evidence](re/209026-saved-norn-live-activation.md#verified-live-release-b2d6d24).
+[Release evidence](re/209026-saved-norn-live-activation.md#verified-live-release-b2d6d24-poi).
 
 Run223's source-corrected Ether Feast observer accepted the owned10176
 request, typed0x78 start and completion callback. The callback did not request
