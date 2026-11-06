@@ -12,8 +12,10 @@ profession), and +0x98 to `0x14129ec30` (context +0x8a4 bit 0).
 When the builder's input flags contain bit 2, it supplies zero for the
 level argument instead of calling +0x50. Other mode arguments remain unnamed.
 
-The selector has mode-specific branches using embedded GUIDs and requiring
-content type **139 (0x8b)**. The branch at `0x1411c443e` instead obtains the
+The selector has two mode-specific branches using embedded GUIDs. The first
+requires content type **139 (0x8b)** directly; the second requires
+**150 (0x96)** and passes record+0x30 to `0x1412e38c0`. The branch at
+`0x1411c443e` instead obtains the
 race/sex type-137 definition and walks its pointer array at **+0x58**, count
 **+0x60**. It matches pointed-record **+0x2c to profession** and **+0x28
 to the requested level**. The inspected nested loop decrements a loop
@@ -149,3 +151,63 @@ Private evidence bundle:
 | REA evidence | Observation |
 | --- | --- |
 | `ev_9910aac9354013b47173b01c7936f46a9b3434c5915e26a450336a2011a5bd12` | Optimized Rust reader checks all four explicit Human/Norn Mesmer template paths, ordered item/slot pairs and source digests; exit 0. |
+
+## Norn level-1 and level-80 template distinction (2026-11-06)
+
+A bounded follow-up reconfirms that both Norn type-137 records (male
+`1282852:113352`, UID4; female `1282852:143984`, UID8) reference template
+UID 210 at `1282832:250800` through their **+0x58** arrays, index 3 of 18.
+The template declares level 1/profession 7 and retains the ordered item/slot
+pairs `(6465,2), (6467,6), (6464,3), (33355,29)` used by the starter fixture.
+
+Their separate **+0x88** arrays, index 4 of 9, instead reference UID 251 at
+`1282837:186032`, level 80/profession 7. It contains 15 equipment entries and
+different items, including primary-slot29 item39742. All nine +0x88 targets
+are type139 level 80 templates, one per profession. This does not establish
+the named mode or runtime selection policy for that array.
+
+UID210 and UID 251 have identical type65 references at
+`+0x90/+0x98/+0xa0/+0xa8/+0xb0`: palettes366/357/358/386/4845. Equality of
+these authored references does not establish their active skill-bar slots,
+availability grants or initial server selection. It does not justify
+substituting the level 80 equipment for the level 1 starter loadout.
+
+This investigation recovered no Norn opening-cinematic key. Neither the
+nine template headers nor their examined direct references supply a type7
+or41 link. The separately traced +0x68 resource collection is consumed as
+appearance option groups. A concrete creation/race/biography-to-cinematic
+selector remains unbound; this bounded result is not proof of global absence.
+
+The exact comparison is REA
+`ev_af133eee0d4164532232f9b3ce61cfdd162143ebc508bfa60cde4b54e4f9a3c0`;
+the nine-target classification is
+`ev_49eb88c5a503e97926dcce23281ca032cf3a9c731dda443b5ac64ee7cef088ef`.
+Complete private follow-up bundle:
+`~/re/gw2/notes/209026-norn-opening-plus88-followup-20261106.json`, SHA256
+`4528ca231ecd9246890636d37cbb6d424da831bafaa919afaee4c3990b702b51`.
+Findings/coverage receipt:
+`~/re/gw2/notes/209026-norn-opening-selector-boundary-20261106-findings.json`,
+SHA256 `84653705c866e7ed8f8727953d142aae1d94ce283439c683b0556fd52322de4d`.
+The newly decoded file1282837 has SHA256
+`efabc1cd94ec8cbb72da0f2c35c5e569b29d9414c93974de9adbc710f48ae6fd`.
+The authorized single-file frozen-archive read verified unchanged archive
+identity and decoder hash before/after; other comparison inputs were cached.
+
+A subsequent bounded PE read completed the missing selector branch from
+`0x1411c4153` through the ordinary-path join at`0x1411c4446`. It corrects the
+earlier description that all mode-specific branches directly require type139:
+the second branch requires type150 at`0x1411c4428`, then invokes the helper
+above. The retained caller binds its gate to creation virtual+0x98 and its
+GUID-pair choice to`0x1410f3bb0`; their mode names and current runtime values
+remain unknown. The joined selector contains no direct +0x88 read, although
+a GUID lookup might resolve a record also listed there. No equality or
+normal-creation behavior change is established, and the cinematic mapping
+remains open.
+
+REA`ev_288ecb789bee6b0c40ad8dc7c1802003ec41268668ea94a5ffb8f8e046d31484`
+retains the complete read with unchanged frozen PE hash, exit0, untruncated
+output and verified cleanup. Private bundle:
+`209026-norn-template-selector-middle-evidence-20261106.json`, SHA-256
+`3b13ac75815caf97ae55f268fe4c816c5290bebc59cba36f81a4437d6708a6c2`;
+joined findings:`209026-norn-template-selector-middle-findings-20261106.json`,
+SHA-256`cdfb078a7d9a605033761fc5eda9ffea9973327a287cf75fefd372252241c42c`.

@@ -612,6 +612,48 @@ Return: `209026-run237-window40-return-20261106.json`, SHA-256
 `e573c9e4f0348c08b0e208a9e23593e267623df18943f59a845ce5bd02446186`,
 REA `ev_bb91922b18ed850d14154520074373fe88a56b4e5cac262ea63ef02c320f0547`.
 
+## Run238: native map overview observed, route still unresolved
+
+Run238 uses exact e624c8b, the unchanged original synthetic 144 record, normal
+stage 0 and existing placements. Fresh window 41 authorizes one stationary map
+observation. There is no Thora interaction or movement after roster bootstrap.
+The sole controller opens M, uses two wheel-down ticks at an observed map
+canvas coordinate, then closes M. The first close image is still transitioning;
+one passive follow-up confirms the native world returned. Controller release
+at 11:06:28.717Z meets the 75-second target; all six controller captures retain
+complete, untruncated Evidence before five hash-admitted images.
+
+Root independently viewed map-open, map-wide and close-followup. A player
+marker and broad painted terrain/water are visible. The wider view includes
+the neighboring label “Hoelbrak (Lodge Level)”; that text does not establish
+the current map's identity. No readable hall footprint, road connection,
+hostile marker, numeric scale or verified north direction was obtained.
+The overview therefore supplies no usable route around the hall. The first
+and final world images differ in loaded scenery; map toggling is not proven
+to cause that change.
+
+Launch/UI 0 means this observation sequence completed. Strict readback records
+no quest steps, targeting, SkillBegin, NPC damage, story interaction or transfer.
+Container absence, privacy, frozen/working PE hashes and the original synthetic
+record are verified. Window41 returned at 11:07:01.604977Z. This is no full-hunt
+pass or new release, and no further use of that window is authorized.
+
+Private root outcome:`run238-map379-overview-outcome-20261106.json`, SHA-256
+`e19ed10f6bed4de4833e9a98089f7665762e8860badd05ad4990ad91bfcce12b`.
+Controller:`run238-map379-controller-outcome-20261106.json`, SHA-256
+`bd0b2ad8b48cd6382f05ef2c1393ad508534c2031e6f8f65624400642a9edf5c`.
+Launch:`209026-run238-map379-overview-launch-20261106.json`, SHA-256
+`20ce08a7041ada797b815def728bc29db44cb2152bea2b0c2ceadcd688934b83`,
+REA`ev_a657f0aacb91c18fafad8e395c92f77834da326aaf74ee16bdb8704fd79453c5`.
+Readback:`209026-run238-map379-overview-readback-20261106.json`, SHA-256
+`eafbd1d5fe2c51c979470119676635c9e1e9ebe8c022a9e69e7e1fdc371a5366`,
+REA`ev_0538ea02ef640d421438d10a1c814f9ac2f9ce176dc02c6d50c0ab1dee904a9a`.
+Return:`209026-run238-window 41-return-20261106.json`, SHA-256
+`fa1777a0ef98372527f6bee4da42fce9ebd210b288f2b6a7847fd184dc60c920`,
+REA`ev_87201eb14a7d077e8aa7aa8650a4086e66dc819de7b507c89fb5ddb032b9dd22`.
+Those three captures are untruncated and have verified owned cleanup; unrelated
+inaccessible process environments remain untouched.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

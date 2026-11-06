@@ -88,3 +88,73 @@ groups. Unrelated inaccessible `/proc` entries were left untouched. Static
 captures asserted the frozen executable hash; the archive capture records
 the selected decoded asset hash and reader identity. No game client or game
 server was started by this investigation.
+
+## Existing hunt placements: measured surfaces, grounding unresolved
+
+On 2026-11-06 at 10:52:21Z, the same unchanged probe queried the five existing
+hunt actor XY positions against frozen 187611. This reads the configured
+positions; it does not recover retail placements. Every configured Z is -3800.
+With server Z = -32 × physics Z, their configured origins are mathematically
+above the selected terrain by the following amounts:
+
+| Species | Configured XY | Selected terrain map Z | Origin above selected terrain, map units |
+| ---: | --- | ---: | ---: |
+| 1544 | [-300,-26800] | -3522.4514 | 277.5486 |
+| 4079 | [-200,-26300] | -3734.9336 | 65.0664 |
+| 8013 | [-800,-26750] | -3540.0080 | 259.9920 |
+| 7200 | [-700,-26200] | -3792.3060 | 7.6940 |
+| 4083 | [-600,-27300] | -3358.4644 | 441.5356 |
+
+All five queries use physics Z interval [-1000,1000] and find no selected prop
+or zone triangle at their XY. Coverage is 1,032,192 terrain,1,498,209 prop and
+29,798 zone triangles, with 23 empty and 3 missing prop selections. These are
+selected static surfaces, not walkability, line-of-sight or model-foot tests.
+The model origin, body offset and client grounding behavior remain unresolved;
+the numbers alone do not establish visibly floating actors or justify changing
+their heights. The nearest diagnostic hostile, species 7200, is only 7.694 units
+above the selected terrain, so this comparison alone does not explain the
+failed run237 route.
+
+The retained collision audit narrows this uncertainty: the current NPC fixture's
+creation flags`[0,1,0]` select the full collider. Its ordinary capsule is
+bottom-relative, while its entered-scene position getter applies an 8-map-unit
+body/agent offset for the fixture dimensions. That offset does not establish
+terrain correction or model-foot alignment. The demonstrated ground-query
+helper belongs to the simple collider and cannot establish automatic snapping
+for these full-collider NPCs. See the existing
+[creation flags](209026-agent-creation-flags.md),
+[dimension offsets](209026-agent-dimension-offsets.md) and
+[position update](209026-agent-position-update.md) evidence. The bounded audit
+is`norn-hostile-origin-grounding-findings-20261106.json`, SHA-256
+`b8cc4e6779d35316f33e05a7787565e9917e4fe46e2093393f3456b8f529dfd6`;
+its 13 complete retained REA records are in
+`209026-norn-hostile-origin-retained-evidence-20261106.json`, SHA-256
+`b47d170753561e030fe4bd19155ca2ec2807d65e634b3c0ded428a6e61408eff`.
+
+The subsequent complete source read of`1410a4c30(this,1,1)` shows requested
+point synchronization followed by a rigid-body update to resolved position
+plus the height-origin offset. Its immediate helper`1410a4930` normalizes a
+vector. Neither body directly queries terrain. This closes the immediate
+setter question, while later physics advancement and actual model-foot
+alignment remain unknown. No height, flag or position change follows from
+this slice. Complete-source evidence:
+`ev_4459e7ae09d037c6d6e36245cbb62c0a039f95d82489c1b99591ec85ce432a7b`
+and`ev_6761c56a2e796cc81ff511116f4cd0669c942cc9737744c41bceb737cf253c0d`.
+Private source bundle:`209026-full-collider-grounding-source-20261106.json`,
+SHA-256`a7b14ce88a4466a0edfa33029e9d0ed0dff1fde0ed6b83b5f0cdb1fa1e2a402e`;
+findings:`full-collider-grounding-findings-20261106.json`, SHA-256
+`eeb989de47833efa54699fb7398db0ea3568ef85dd9f01b61d71245eee7a33c6`.
+The helper capture omits one rendered-state frame; all raw and normalized
+source text is retained. All captures exit0 with verified owned cleanup.
+
+Frozen archive identity and decoder/probe hashes were checked before and after;
+decoded187611 retains the hash above. No working archive, game runtime, owner
+record or actor placement was changed by this survey. The private result is
+`norn-hostile-surfaces-20261106.json`, SHA-256
+`b39e57dc238d1f0fcaa411a29a533e1a17af29071e46f5a8e5d8f5d7141df6e5`.
+Complete REA bundle:`209026-norn-hostile-surfaces-20261106.json`, SHA-256
+`ded15f0e2442bd3386f5bbce1f64df1cf4e6793b2ff1746e0d444a983a34ad43`,
+evidence`ev_e1b517994577fb9dfa4b2f40fe61965ca0e1205fef56f35c6c2ba0fff7bd2b46`.
+Exit0 and owned cleanup are verified. One rendered terminal frame is truncated;
+all 9,314 raw bytes and normalized frames, plus the complete result JSON, are
+retained. Seven unrelated inaccessible process environments were left untouched.

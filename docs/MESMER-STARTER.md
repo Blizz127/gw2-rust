@@ -67,6 +67,17 @@ the target; strict cleanup, privacy, PE and original-record checks pass.
 Window40 returned10:37:33Z. A route overview remains missing.
 [Result and limits](re/209026-saved-norn-creator.md#run237-exterior-route-reaches-a-narrow-strip-hunt-still-fails).
 
+Run238 now observes native M map opening, one wider zoom and return to the world
+on exact e624c8b. Root reviewed the hash-bound images: player marker and broad
+terrain are visible, but no readable hall/road connection establishes a route.
+The neighboring “Hoelbrak (Lodge Level)” label is not a current-map identity
+claim. No gameplay events occur; launch/UI0, privacy, cleanup and unchanged
+PE/synthetic-record checks pass. Window41 returned11:07:01Z.
+[Map result](re/209026-saved-norn-creator.md#run238-native-map-overview-observed-route-still-unresolved).
+The [static hostile surface comparison](re/209026-norn-terrain-v14.md#existing-hunt-placements-measured-surfaces-grounding-unresolved)
+does not establish model-foot placement or automatic grounding; no actor
+coordinate change is justified by those measurements alone.
+
 Run236 observes E/Q turning on exact7c26f45, but the normal-stage0 route enters
 the camp hall. Only Thora/step1 completes; no hostile selection, attack, kill,
 reward or transfer occurs. UI/launch exit13 records the failed full-hunt
