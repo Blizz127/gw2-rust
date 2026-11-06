@@ -176,6 +176,9 @@ impl TalkNpc {
 #[derive(Clone)]
 pub struct PopulationFixture {
     plan: PopulationPlan,
+    // Selected character identity from the validated auth-17 record. Keep it
+    // separate from the synthetic portal identity and out of ordinary logs.
+    character_guid: Guid,
     map_key: u16,
     quest: Option<QuestFixture>,
     equipment: Option<super::equipment::EquipmentFixture>,
@@ -238,6 +241,10 @@ impl PopulationFixture {
     ) -> io::Result<Self> {
         let invalid = |message: &str| io::Error::new(ErrorKind::InvalidInput, message.to_owned());
         let (name, summary) = super::auth::character_parts(record)?;
+        // character_parts validates the full record, including its first Guid.
+        // SavedPopulation resolves this same GUID from preamble bytes48..64;
+        // see docs/re/209026-creation-mission-binding.md.
+        let character_guid = Guid(record[..16].try_into().expect("validated character GUID"));
         let summary = SummaryV11::parse(&summary)?;
         if summary.profession() != profession.profession_id() {
             return Err(invalid("population profession state must match character summary"));
@@ -261,6 +268,7 @@ impl PopulationFixture {
         population::population_stream(&plan)?;
         Ok(Self {
             plan,
+            character_guid,
             map_key: summary.map_definition_key(),
             quest: None,
             equipment: None,
@@ -604,14 +612,30 @@ fn rally_on_kill(attack: &mut Option<NpcAttack>, character_index: u32, out: &mut
 }
 
 /// Progress carried from one game connection to the next by a waypoint
-/// rejoin (research; one player per observer process).
-#[derive(Clone, Copy, Debug)]
+/// rejoin (research; one pending handoff per observer process). An unrelated
+/// character/map join leaves the handoff pending for its intended character.
+#[derive(Clone, Copy)]
 struct CarryOver {
+    character_guid: Guid,
+    map_key: u16,
     spawn: [f32; 3],
     xp: Option<(u32, u8)>,
     loot_drops: Option<u32>,
     /// Progress, completion, and whether the one-time reward was issued.
     heart: Option<(u32, bool, bool)>,
+}
+
+impl std::fmt::Debug for CarryOver {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Existing lifecycle logs may print progress, never character GUIDs.
+        f.debug_struct("CarryOver")
+            .field("map_key", &self.map_key)
+            .field("spawn", &self.spawn)
+            .field("xp", &self.xp)
+            .field("loot_drops", &self.loot_drops)
+            .field("heart", &self.heart)
+            .finish_non_exhaustive()
+    }
 }
 
 static CARRY: std::sync::Mutex<Option<CarryOver>> = std::sync::Mutex::new(None);
@@ -1264,11 +1288,18 @@ impl MissionPhase {
         if self.rejoin_route.is_some()
             && !self.populated
             && matches!(seen, Seen::Map(ClientMapEvent::MapLoaded))
-            && let Some(carry) = CARRY.lock().ok().and_then(|mut c| c.take())
+            && let Some(fixture) = self.population.as_mut()
+            && let Some(carry) = CARRY.lock().ok().and_then(|mut slot| {
+                if slot.as_ref().is_some_and(|carry|
+                    carry.character_guid == fixture.character_guid && carry.map_key == fixture.map_key
+                ) {
+                    slot.take()
+                } else {
+                    None
+                }
+            })
         {
-            if let Some(fixture) = self.population.as_mut() {
-                fixture.plan.position = carry.spawn;
-            }
+            fixture.plan.position = carry.spawn;
             if let (Some((_, total, level)), Some((t, l))) = (self.xp.as_mut(), carry.xp) {
                 (*total, *level) = (t, l);
                 self.restore_xp = Some((t, l));
@@ -1448,6 +1479,8 @@ impl MissionPhase {
                     // as the creator's creation -> world redirect). Fields:
                     // destination, unused, join scalar 0, map Word, 0, unused.
                     let carry = CarryOver {
+                        character_guid: fixture.character_guid,
+                        map_key: fixture.map_key,
                         spawn: point,
                         xp: self.xp.map(|(_, total, level)| (total, level)),
                         loot_drops: self.kill_loot,
@@ -2898,6 +2931,108 @@ pub(crate) mod tests {
         phase.hostiles[1].health = LEVEL1_NPC_HEALTH;
         assert!(phase.respond(&skill_at(4)).unwrap().is_none());
         assert_eq!(health_of(&phase, 4), LEVEL1_NPC_HEALTH);
+    }
+
+    #[test]
+    fn waypoint_carry_requires_selected_character_and_map() {
+        // Isolate the process-global slot from the other mission/TCP tests.
+        const CHILD: &str = "GW2_TEST_WAYPOINT_CARRY_IDENTITY_CHILD";
+        if std::env::var_os(CHILD).is_none() {
+            let output = std::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", "mission::tests::waypoint_carry_requires_selected_character_and_map", "--nocapture"])
+                .env(CHILD, "1")
+                .output()
+                .unwrap();
+            assert!(output.status.success(), "isolated waypoint identity lifecycle failed:\n{}\n{}",
+                String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+            return;
+        }
+        assert!(CARRY.lock().unwrap().is_none());
+        let scenario = crate::saved_population::tests::SavedScenario::new();
+        const MAP: u16 = 379;
+        const OTHER_MAP: u16 = 28;
+        const WAYPOINT: [f32; 3] = [1.0, 2.0, 3.0];
+        let fresh = |selected, map| {
+            // Exercise the real disk record -> selected mission GUID ->
+            // auth record -> PopulationFixture path for both saved characters.
+            let mut fixture = scenario.profile.for_join(&scenario.preamble(selected)).unwrap();
+            assert_eq!(fixture.character_guid, scenario.characters[selected].guid());
+            // Only this test's map differs; the selected identity is untouched.
+            fixture.map_key = map;
+            MissionPhase::new(u32::from(map)).unwrap().with_population(fixture).unwrap()
+                .with_xp_per_kill(50)
+                .with_starter_bag(959)
+                .with_kill_loot()
+                .with_heart(56, 2).unwrap()
+                .with_npc_attack(10.0, 100.0)
+                .with_respawn_point(WAYPOINT)
+                .with_rejoin_route("127.1.0.4:6112".parse().unwrap())
+        };
+        let enter = |phase: &mut MissionPhase| {
+            let population = phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
+            phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().unwrap();
+            population
+        };
+
+        let mut original = fresh(0, MAP);
+        enter(&mut original);
+        // Seed already-earned progress; the existing reward lifecycle test
+        // separately exercises earning/rewarding it through actual kill replies.
+        original.xp = Some((50, 2500, 2));
+        original.kill_loot = Some(2);
+        let heart = original.heart.as_mut().unwrap();
+        (heart.progress, heart.done, heart.rewarded) = (2, true, true);
+        original.npc_attack.as_mut().unwrap().defeated = true;
+        let redirect = original.respond(&Seen::Other(210)).unwrap().unwrap();
+        assert_eq!(&redirect[..2], &1065u16.to_le_bytes());
+        {
+            let pending = CARRY.lock().unwrap();
+            let carry = pending.as_ref().unwrap();
+            assert_eq!((carry.character_guid, carry.map_key), (scenario.characters[0].guid(), MAP));
+            // Debug is the representation used by both ordinary carry logs.
+            // Its entire shape is pinned so identity cannot silently be added.
+            assert_eq!(format!("{carry:?}"),
+                "CarryOver { map_key: 379, spawn: [1.0, 2.0, 3.0], xp: Some((2500, 2)), loot_drops: Some(2), heart: Some((2, true, true)), .. }");
+        }
+
+        // B must not steal A's handoff. Nor may A receive it on another map.
+        // A connection without a population must not consume it either.
+        let mut no_population = MissionPhase::new(u32::from(MAP)).unwrap()
+            .with_rejoin_route("127.1.0.4:6112".parse().unwrap());
+        assert!(no_population.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().is_none());
+        assert!(CARRY.lock().unwrap().is_some());
+        for (selected, map) in [(1, MAP), (0, OTHER_MAP)] {
+            let mut other = fresh(selected, map);
+            let expected = other.population.as_ref().unwrap().population_stream().unwrap();
+            assert_eq!(enter(&mut other), expected, "unmatched join must keep its own population/spawn");
+            assert_eq!(other.xp, Some((50, 0, 1)));
+            assert_eq!(other.kill_loot, Some(0));
+            assert_eq!(other.restore_xp, None);
+            assert_eq!(other.restore_loot, 0);
+            assert!(other.heart.is_some_and(|h| h.progress == 0 && !h.done && !h.rewarded));
+            assert!(CARRY.lock().unwrap().is_some(), "unmatched join preserves the pending handoff");
+        }
+
+        let mut returned = fresh(0, MAP);
+        let mut expected = returned.population.as_ref().unwrap().clone();
+        expected.plan.position = WAYPOINT;
+        assert_eq!(enter(&mut returned), expected.population_stream().unwrap());
+        assert_eq!(returned.xp, Some((50, 2500, 2)));
+        assert_eq!(returned.kill_loot, Some(2));
+        assert_eq!(returned.restore_xp, Some((2500, 2)));
+        assert_eq!(returned.restore_loot, 2);
+        assert!(returned.heart.is_some_and(|h| h.progress == 2 && h.done && h.rewarded));
+        assert!(CARRY.lock().unwrap().is_none(), "matching join consumes exactly once");
+        assert!(returned.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().is_none());
+
+        let mut later = fresh(0, MAP);
+        let expected = later.population.as_ref().unwrap().population_stream().unwrap();
+        assert_eq!(enter(&mut later), expected);
+        assert_eq!(later.xp, Some((50, 0, 1)));
+        assert_eq!(later.kill_loot, Some(0));
+        assert!(later.restore_xp.is_none());
+        assert!(later.heart.is_some_and(|h| h.progress == 0 && !h.done && !h.rewarded));
+        assert!(CARRY.lock().unwrap().is_none());
     }
 
     #[test]
