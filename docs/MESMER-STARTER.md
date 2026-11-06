@@ -38,8 +38,13 @@ This adds optional movement-log cadence1..1000 for short route observations;
 the live profile, supervisor and data are unchanged and default20 remains active.
 Four focused tests,15 binary CLI/startup checks and the musl build pass. It changes
 no gameplay or client hooks. The native sword/heal observations below remain
-their exact earlier artifacts; no403 native traversal is claimed yet.
+their exact earlier artifacts. Run242 renders normal saved spawn on403 but sends
+no movement: its controller required a position sample before the first input,
+and none arrived while stationary. Launch/UI13 is incomplete; cleanup and
+window44 return pass. A fresh fixture will admit one bounded initial calibration
+before requiring actual samples. No403 traversal is claimed yet.
 [Release readback](re/209026-saved-norn-live-activation.md#verified-movement-diagnostic-release-403ac37).
+[Run242 evidence](re/209026-saved-norn-creator.md#run242-normal-spawn-observed-initial-position-sample-missing).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274

@@ -654,6 +654,44 @@ REA`ev_87201eb14a7d077e8aa7aa8650a4086e66dc819de7b507c89fb5ddb032b9dd22`.
 Those three captures are untruncated and have verified owned cleanup; unrelated
 inaccessible process environments remain untouched.
 
+## Run242: normal spawn observed; initial position sample missing
+
+Run242 uses exact live `403ac37` with diagnostic movement logging every report,
+the unchanged original154-byte synthetic144 record, fresh145 prefix and normal
+stage0. Root reviewed the admitted first and passive-follow-up images: the
+character is visible beside the hall, with health388 and no selected target.
+Neither image supplies a measured position or camera bearing.
+
+No movement report arrived while stationary. The controller's required initial
+position anchor therefore prevented its first calibration. It claimed at
+12:12:58.475026Z and released incomplete at12:13:22.794203Z, after24.319s,
+without movement, turn, targeting, skill, interaction or story input. Launch/UI
+exit13 is incomplete observation; this supplies no evidence of an obstructed
+route or a movement failure. Source geometry still does not prove walkability.
+
+Root returned window44 at12:14:15.810309Z after verifying container absence,
+unchanged frozen/working executable hashes, original synthetic record and
+console privacy. Full launch, readback and return captures have verified owned
+cleanup; unrelated inaccessible process observations were retained and untouched.
+The next fresh fixture will allow one explicitly authorized movement of at most
+100ms after visual review of clear normal spawn. Its configured spawn will be
+labelled an inferred reference; further movement must await a fresh actual
+position sample. No active242 helper or returned lease was reused.
+
+Private evidence under `~/re/gw2/notes/`:
+
+- `209026-run242-norn-upper-route-launch-20261106.json`, SHA-256
+  `3d77fa344af8445c1ae07cea7eddbb48274ff439364be4a5fb07267454222e48`,
+  REA `ev_30bfeafd9290ee2304e8921075ff761446d29c6d9cb0efb79d623e85d086d701`.
+- `209026-run242-norn-upper-route-readback-20261106.json`, SHA-256
+  `54eb18fed07f4151b37cfe932d39d83da57a51fb4e91e56d58ab04d123622d80`,
+  REA `ev_415c7e037d21f774be4cdd9186c2f79a20adc934d65d96edb1b6f4683af1bf04`.
+- `209026-run242-norn-upper-route-return-20261106.json`, SHA-256
+  `456142b99e22728ff5bed47cf70c105e199177bb825ed8c2f767915f5d783836`,
+  REA `ev_74a32b620c5ff42c9728042ce31652112520b26c0df21eac00a043e3f65d976f`.
+- Root outcome `run242-norn-upper-route-outcome-20261106.json`, SHA-256
+  `87403e5899b8064d124247989e041259a9169c528f2bafbc49c44ed8a257248b`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

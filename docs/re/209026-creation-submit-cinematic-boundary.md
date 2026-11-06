@@ -84,3 +84,52 @@ It retains complete 415 builder and forwarding wrapper in
 `ev_c75d51559fef4bf5861dcb774eac0092348e70f04e89bea6dd021ea6c4350311`
 and exact result leaf in
 `ev_72d8d84f5fa8e6ba93107630dd6ac3b793a959de5f5c08b5602bad81a4c804ca`.
+
+## Filename-only playback route; Norn selection still unbound
+
+A bounded follow-up establishes that a type-7 key is not required for every
+playback route. The installed cinematic-context table `0x142181398` binds
+**+0x30 to `0x1412b03f0`**. Its complete body through `0x1412b043b` forwards
+the caller's filename in RDX and flags in R8D to common start `0x1412b0440`,
+with an explicitly **null CinematicDef**. Two float arguments and three raw
+Dwords are preserved. The wrapper does not select a race, sex, biography,
+filename or content key; its caller-supplied values are not defaults.
+
+The exact common-start reference query found three validated direct calls:
+`0x1412b0319` from the server-722 record wrapper, `0x1412b03bb` from the type-7
+wrapper, and `0x1412b0432` from this filename wrapper. The filename wrapper's
+own query found only the table pointer at `0x1421813c8`, with no direct code
+reference in the checked encodings. Coverage is E8/E9, REX.W RIP-relative
+LEA and aligned absolute Qword references in readable non-code sections;
+this does not exclude indirect callers or other encodings.
+
+The remaining prerequisite is a **demonstrated creation-owned typed caller
+of context +0x30**, including its filename/argument provenance, or an
+authentic server-720/722 selection for that creation state. Neither route
+is identified as the Norn male intro here. The existing
+[partial type-7 catalog](209026-cinematic-biography-cache-boundary.md) cannot
+choose this filename input, and another catalog sweep would not establish
+the missing selection relationship. No guessed cinematic or playback flags
+were installed.
+
+The complete wrapper/table was already retained in
+`ev_bd73b257c3384f2fdbe197a5d70da4a23ba9b5bf556edd82bfdad29c68ef1b1d`,
+private bundle `~/re/gw2/notes/209026-cinematic-start-contract-20261106.json`,
+SHA-256 `4af50720fb9e5f4db245c20a90468ce1243bb6a990456770de3945eb1fef82d6`.
+New exact-reference evidence:
+
+- `ev_64fa0543b42051e71fc315ffad7b3a13ca3a17ca590e25ecbea3fb9be34c12c1`:
+  common-start callers.
+- `ev_9fdcfae2a4aa1bca09014abdc0f1af835166c57e19a001540056c3f269fca90c`:
+  filename-wrapper references.
+
+Both complete records are in
+`~/re/gw2/notes/209026-creation-cinematic-filename-route-20261106.json`,
+43688 bytes, SHA-256
+`f1d6ef1c67791f068e87cf975d56ad553d7e9554ca4679a76465948eec38f0c9`.
+Consolidated private findings:
+`~/re/gw2/notes/creation-cinematic-filename-route-findings-20261106.md`,
+SHA-256 `1df3291f5a3123cfc87c5ccd547a63f0971dc4a7432990e1b13ed20c51de040a`.
+Both captures exited 0, retained untruncated output and verified owned-helper
+cleanup. Frozen PE identity was checked; no archive, runtime, shared target,
+gameplay or publisher state changed.

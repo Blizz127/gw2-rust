@@ -1233,3 +1233,71 @@ The pool agent (`post-load-pool.md`) found that the creator lane's source-pool c
 covers composite models; the post-load wolf takes the plain model route. Run 195 tests a
 post-load wolf while a load-time wolf of the same species is alive, to tell a
 cold-file/dependency stall from a per-view one.
+
+### Heart 56: authored identity, mail and remaining task boundary (2026-11-06)
+
+The retained frozen-209026 audit distinguishes authored content from the kill,
+reward and NPC reconstruction above. Heart **56** is **type 72**, at
+`1282835:6239832` (120-byte record), with level 2 and title text ID `45566`.
+Its type-287 area at `1282852:4224016` has 16 polygon vertices. These identify
+the task and area; they do not establish that generic kills inside it earn credit.
+Server 657 binds the type-72 key to a runtime objective ID; 1090 supplies
+target/current, 1089 updates current, and 655/656 update inside-state. The inspected
+records and typed consumers do not bind the actual egg, roost, skelk or nest
+actions/species to credit weights or a completion threshold. Text locator `84428`
+has no proven typed reference to this heart and is not an action-rule mapping.
+
+The complete native consumer `0x1411e1a80..0x1411e1b6f` resolves its EDX key as
+type 72, stores the definition at character `+0x228`, and checks task state and
+`FLAG_RENOWN_NPC_SUBREGION_ACTIVATED` before marker handling. It associates an
+already selected character with a heart; it does not recover that heart's authored
+NPC species, appearance or spawn. Configured NPCs placed at the heart centre, or
+named from the mail sender, remain reconstruction choices.
+
+The authored completion letter is **type 43/key 95**, at `1282844:3868224`:
+definition `+0x70/+0x74/+0x78` holds **body `30728`, sender `30730`, subject
+`26289`**. Server 1001 is the content-backed delivery path: six Dwords
+`parcelId, type43Key, coins, raw3, flags, raw5`; handler `0x1413eb660` reaches
+`0x1413ea250..0x1413ea32c`, resolves the definition through content virtual
+`+0x198`, appends the parcel and notifies listeners. Body/sender/subject accessors
+are `0x1413ebc00`, `0x1413ebef0`, and `0x1413ebfb0`. This path needs no 997/999
+attachment setup and creates no attachments. It does not prove automatic delivery
+on heart completion: parcel identity, unresolved raw fields/flags, and delivery
+and rejoin policy still need an explicit implementation. No native inbox receipt
+was established by this audit.
+
+Likewise, complete reward constructor `0x141203410..0x14120373a` copies received
+currency keys/amounts; it does not calculate them from the heart level. In the
+inspected `7cfe9c4` source snapshot, completion already credits wallet 204 and XP
+in addition to reward 556: coin 30, karma 50 and XP 5147 are reconstruction values.
+The earlier run-184 generic 70-percent calculation does not establish an authored
+heart-56 award. Neither these values nor the configured inside-area kill rule is
+made retail-faithful by the recovered title, polygon or completion letter.
+
+Private retained findings:
+`/home/blizz/re/gw2/notes/209026-heart56-authored-binding-findings-20261106.json`
+(8403 bytes, SHA-256
+`63de9fa3e0f426d3df722adba63edbc3fa1a4ec04fce101005c8d4a59feca752`).
+The complete 17-record REA bundle is
+`/home/blizz/re/gw2/notes/209026-heart56-authored-binding-evidence-20261106.json`
+(759585 bytes, SHA-256
+`61e35d9d5a990843ecca3f873bf2ac1f7ea6d68ad944fdcfdd6b5c0eb7f486e6`).
+Key records are `ev_e532e4b9431c350e427953fc37a2ee3b2f05ebaab2769aa8a795e4ccb56fd933`
+(cached task/area),
+`ev_f0011cdda54f7e12e9260fd4f89c55c123a7177b2b8c4f713c4accd8dce27d92`
+(complete mail consumer), and
+`ev_42be5024968212212a1f667705f72a932a98768cbde098033942e4dba87eb997`
+(complete character-heart and reward consumers). This addendum reuses that
+retained evidence; it adds no source query, runtime observation or implementation.
+
+A bounded parcel-method follow-up identifies flag `0x40` as
+`PARCEL_FLAG_NO_RETURN`. Raw3 at parcel `+0x84` is cleared by server 1004;
+raw5 at `+0x8c` is returned unchanged through virtual `+0x98`. Their UI/action
+meanings and complete initial flags remain unresolved. Constructor zeroes do
+not establish authored delivery defaults. The existing `Heart.rewarded` guard
+and matching process-local carry can suppress repeated enqueue, but cannot
+establish inbox delivery or restart persistence. No letter was added.
+Private findings `~/re/gw2/notes/209026-mail95-delivery-prerequisites-findings-20261106.json`
+have SHA-256 `5d90ef5d0243e679f605afafa67884a5c4c5dfb26abaaefe090a7243fbb6b71f`;
+the complete evidence bundle `209026-mail95-delivery-prerequisites-evidence-20261106.json`
+has SHA-256 `f57faef4827785a6ae7edffef28483fc23067b6df2ca2a7c7bb81ce756c1c250`.
