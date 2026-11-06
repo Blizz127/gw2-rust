@@ -1,9 +1,9 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, most recently verified on **d0288e1-pups** at
-`/home/blizz/gw2-rust-d0288e1-pups`, at **2026-11-06 16:25:06Z**.
-The [latest verified increment](#verified-integrated-story-release-d0288e1-pups)
-enables quest162 and includes the earlier raw buff-instance codecs. It retains
+Saved character creation is live, most recently verified on **d0288e1-powder** at
+`/home/blizz/gw2-rust-d0288e1-powder`, at **2026-11-06 16:41:52Z**.
+The [latest verified increment](#verified-powder-and-regrown-assets-d0288e1-powder)
+adds map assets and preserves quest162 and the raw buff-instance codecs. It retains
 skill admission, no-clone Ether Feast, sword-chain behavior and guarded
 same-process health/cooldown carry with original-roster relog routing.
 Saved mode was first
@@ -12,6 +12,46 @@ The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
 Root independently verified the configuration, live hashes and service at
 **03:43:51Z**. The earlier unanswered roster prompt is historical.
+
+## Verified Powder and Regrown assets d0288e1-powder
+
+The sole publisher deployed `/home/blizz/gw2-rust-d0288e1-powder` at
+**2026-11-06T16:37:15Z**, retaining `/home/blizz/gw2-rust-d0288e1-pups` for rollback.
+Independent readback at **16:41:52.045946Z** verifies every current/rollback
+manifest entry, selected/running binaries, four owned healthy listeners and
+zero humans/bots. Saved mode, one private record, unchanged activation backup,
+all15 story arguments, startup skills and disabled sword2 diagnostics are preserved.
+
+This is data-only: BUILD and `data/latest.txt` change, four CDN files are added,
+and nothing is removed. Every binary, profile, supervisor and prior asset byte
+matches rollback. New root2130706950 is508 bytes with eight rows, retaining
+the exact five prior rows and adding MapAlpinePowder→2130706955,
+MapRegrownRange→2130706956 and RegionRegrown→2130706958. Each new leaf is112
+bytes, identical to the existing AlpineHall leaf, with one explicit
+8192/8192/3444/flags0 record; they are not empty manifests. Actual served latest,
+new root, all three new leaves and AlpineHall match the pinned kit bytes.
+The unchanged dependency8192 availability qualification remains separate.
+
+The publisher reports a saved-mode startup/CDN smoke and lane-B laneb07
+handover to Snowden31, with420 MapLoaded1.3seconds after1060, followed by412
+and1036. Diessa32 is not client load-tested. Root's independent check verifies
+the served bytes and service; it does not repeat or expand that native smoke.
+Gameplay/source lineage remains integratedd0288e1, and future releases must
+preserve these current950 assets as well as its game features.
+
+Kit manifest SHA256:
+`b511b864757c10bccd195e2014c5ddf7e5ac3245f47d22038ae1d3a5b9c49670`.
+Root SHA256:
+`10fb2479c34c3a2e623214457b225aad78b2246001fc52ef2e50ad61ee002537`.
+Game/profile/supervisor hashes are exactly those of the verifiedpups release below.
+Private receipt `d0288e1-powder-release-verification-20261106.json`, SHA256
+`f5b46450039e5e06bbc2f690226db4b708a4b38c7760f62ee716723e5319e305`.
+Full `209026-d0288e1-powder-release-readback-20261106.json`, SHA256
+`1a474bb7a950531242f0b129346c3b9062d3fdbb6bf414d383c650f144749eaf`,
+REA `ev_5afee2ba7a1353d4b8a7994b8cfaaad9f1754d7b3390de2ab37e2094201ee2f1`.
+Capture exits0 without truncation and verifies owned cleanup. No client,
+archive, owner-record contents, live configuration or launcher feed changes
+are part of this readback.
 
 ## Verified integrated story release d0288e1-pups
 

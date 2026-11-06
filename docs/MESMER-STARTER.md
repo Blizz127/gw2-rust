@@ -30,7 +30,17 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**d0288e1-pups is verified live as of 2026-11-06 16:25:06Z**, publisher
+**d0288e1-powder is verified live as of 2026-11-06 16:41:52Z**, publisher
+deployment16:37:15Z to `/home/blizz/gw2-rust-d0288e1-powder`, rollback
+`d0288e1-pups`. This asset-only update preserves the game, profile and supervisor
+below. Root950/508 adds MapAlpinePowder, MapRegrownRange and RegionRegrown.
+Independent readback passes all current/rollback sums, four owned healthy
+listeners, saved mode/one private record, unchanged backup, all15 story arguments,
+all prior asset bytes/rows and the actual new root/three leaf responses.
+The publisher reports Snowden31 loading; Diessa32 remains untested in client.
+[Latest asset release](re/209026-saved-norn-live-activation.md#verified-powder-and-regrown-assets-d0288e1-powder).
+
+Earlier **d0288e1-pups was independently verified at16:25:06Z**, publisher
 deployment16:18:56Z to `/home/blizz/gw2-rust-d0288e1-pups`, rollback `a9399dc`.
 This integrated release contains a9399dc and quest162 "A Pup's Illness".
 Independent readback passes exact game/profile/supervisor hashes, every
@@ -44,7 +54,7 @@ and the saved-character story sequence remain unproven; progress is process-loca
 
 Future production artifacts must include deployed commit
 `d0288e1bba483486f48cbae9268b1bc4e9f95e2a`, or be handed as commits to the sole
-publisher for merge/build/test. Run264 uses older403 only as an isolated
+publisher for merge/build/test, preserving the current950 assets. Run264 uses older403 only as an isolated
 diagnostic comparison. It is now staged and root-reviewed:9 controller tests,
 8 reader tests, exact-name/syntax checks and two startup checks pass. Root
 verifies48 metadata pins and all1839 manifest rows. Run264 now stops incomplete:

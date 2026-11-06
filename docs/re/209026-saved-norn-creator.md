@@ -1,7 +1,7 @@
 # Build 209026 saved Norn Mesmer creator experiment
 
 Saved Norn character creation is **enabled live** since **2026-11-06T03:29:33Z**,
-most recently verified on `/home/blizz/gw2-rust-d0288e1-pups` at16:25:06Z.
+most recently verified on `/home/blizz/gw2-rust-d0288e1-powder` at16:41:52Z.
 The owner chose activation in the native publisher session at03:29:03Z;
 root independently verified configuration, backup, kit hashes and health.
 See the [activation and release receipts](209026-saved-norn-live-activation.md).
@@ -1182,6 +1182,20 @@ privacy and named-container absence. Capture cleanup covers its owned process
 group; unrelated unverified host processes remain untouched. No lease or next
 runtime is active. Retained comparison should precede another movement proposal;
 neither a full route nor local clearance is established.
+
+The finite retained262 comparison finds the same requested S750/A750/W750
+and matching input/focus/screenshot method ASTs and game/profile/skill hashes,
+but different actual poses. Before W,262 is[-3250,-25485,-3745] and264 is
+[-3305,-25506,-3745], separated by58.872744 XY units. W yields22 new reports
+and+235X in262, versus zero in264. Root views both pinned pre-W images:262
+already shows the lodge/tables, while264 is partly drawn there; those objects
+appear by264's later view. This is not a same-pose comparison or causal proof.
+Client consumption of W and its movement/contact decision remain unobserved.
+A future diagnostic needs a fully visible immediate scene and fresh actual
+anchor; longer blind holds or replaying262 are not justified. Comparison
+`run264-run262-prefix-comparison-20261106.json`, SHA256
+`50c761a06c34c73c4348e2fc19e935ea16b40c6c39f1f89d6b93e80186c9cf3a`;
+root verifies27 referenced files. No additional runtime is launched.
 
 Private evidence under `~/re/gw2/notes/`:
 
