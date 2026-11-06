@@ -209,6 +209,16 @@ evaluation and command completion are separate source contracts; deriving
 a displayed value does not establish a server execution time.
 No gameplay implementation or packet defaults were changed in this pass.
 
+The later story-map compatibility check also resolves maps392 and792 to
+recharge context1, with the same authored20000 base. Both exact cached map
+definitions have type4, flags0x100 with bit13 clear, and null reference+0x100;
+the established selector returns1. Locale0 and second-level/attribute inputs
+remain separate character state. This supports retaining the same cooldown
+through those story maps without claiming their server gameplay is complete.
+Private bundle `209026-ether-feast-story-map-contexts-20261106.json`, SHA-256
+`ed01cbd18b2e6068591452141303cf98b57f3166c5d925654e2176c28d5c79b7`,
+contains the two bounded captures; no runtime or archive access was added.
+
 ## Accepted-order start and step do not supply the missing effect policy
 
 A further bounded source slice followed the two previously unbound start
