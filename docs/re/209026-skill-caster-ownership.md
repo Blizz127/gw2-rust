@@ -43,7 +43,13 @@ The receipt is
 `~/re/gw2/notes/caster-ownership-existing-publisher-handoff-20261106.json`;
 `creator-lane-peer-handoff.json#/root_caster_live_base_ready_20261106`
 records that distinction. The coordinator status reply is queued.
-Keep the existing saved store/mode, metadata900, player checks and rollback.
+At04:38:54Z, source inspection confirmed the publisher's commit
+`e788d586a5bd6d3828d2cedf49cf6022ffd17fff` contains exactly the same119
+inserted guard/test lines. This establishes source integration, not deployment;
+the private receipt is `caster-ownership-publisher-source-integration-20261106.json`.
+Keep the current c2cb6fd-amb profile, saved store/mode, metadata900, player
+checks and rollback; do not overwrite its added ambient population with
+the earlier staged profile.
 The guard covers `Seen::Skill` only; the legacy `RepeatStart` and other
 action classes remain outside its scope. This preserves the current fixture
 while the upstream sword investigation continues; it does not establish
@@ -124,7 +130,7 @@ the evidence. The successful native submission above instead identifies
 exclude that skill from generic attack damage/retaliation; neither restores
 health or implements recharge. A publisher summary saying it “heals instead”
 was corrected in the handoff. Latest independently verified live is
-c2cb6fd, with [saved mode enabled](209026-saved-norn-live-activation.md).
+c2cb6fd-amb, with [saved mode enabled](209026-saved-norn-live-activation.md).
 This cumulative artifact remains **withheld and not deployed**.
 
 The publisher's subsequent run203 smoke used5516cb4. Its retained logs

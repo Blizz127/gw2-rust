@@ -1,13 +1,16 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, currently on **c2cb6fd** at
-`/home/blizz/gw2-rust-c2cb6fd`. It was first activated on 82d8d04-cdn900.
+Saved character creation is live, currently on **c2cb6fd-amb** at
+`/home/blizz/gw2-rust-c2cb6fd-amb`, independently verified04:36:02Z.
+The [ambient increment](#spawn-area-ambient-increment-c2cb6fd-amb) adds
+four neutral creatures and retains the c2cb6fd binary. Saved mode was first
+activated on82d8d04-cdn900.
 The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
 Root independently verified the configuration, live hashes and service at
 **03:43:51Z**. The earlier unanswered roster prompt is historical.
 
-## Current release: c2cb6fd
+## Binary baseline release: c2cb6fd
 
 The sole publisher deployed **c2cb6fd at 2026-11-06T03:56:12Z**. This
 cherry-picks the Ether Feast damage-exclusion guard onto the previous live
