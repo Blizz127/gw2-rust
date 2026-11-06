@@ -378,3 +378,49 @@ Artifact:
 Private complete checks:
 `~/re/gw2/notes/observe-mesmer-sword2-403ac377-20261106-checks/receipt.json`,
 SHA-256 `4c1527b6e01d4d6d1b07faf117a4baf62bd09dbc26263ce5b64fa6673d76c1b9`.
+
+### Run250: earned grant and native sword2 selection
+
+Fresh prepared250 uses exactf926ce0 with the explicit diagnostic enabled,
+the original224-byte prepared Norn Mesmer record, pristine145 prefix and
+unchanged near-wolf241 fixture/production GDB. Fifteen reader tests, three
+synthetic UI branching tests, two no-listener checks and1829 immutable input
+pins pass. This is separate from the live profile, where the option stays off.
+
+Four normal key1 inputs produce owned agent1/slot5/target4 requests
+10170→10171→10172→10170 and four matching fixture hits118→88→58→28→0.
+The log then records NPC4 death,2500 XP, earned188 level2 and exactly one
+diagnostic60510334→612366/slot0/locale0 rebuild. These are source-correlated
+server encoding decisions, not a decoded outbound packet capture. After the
+same NPC respawns at118 health and a fresh227 selects target4, one key2 input
+produces the native request **agent1,10334,slot6,target4,flags3**, serial
+2147483691. The five request serials advance by5,5,5,7; no extra request or
+10334 hit is observed. The unchanged chain gate still rejects its execution.
+
+Root reviewed three hash-admitted images: slot2 is locked before the first
+attack, has a colored skill icon before key2, and remains unlocked afterward.
+The final selected wolf displays100% health. No tooltip/name, visible earned-level
+number, accepted action, evasion, strike count, recharge or timing is established.
+Player-health increases after the kill are ordinary logged regeneration
+255→293.8→332.59998→371.39996, not healing from10334.
+
+Launch/UI0, observation marker and strict sequence pass. Window48 returns
+**13:20:38.700682Z** with container absence, all60 immutable nonprefix inputs,
+prepared record, PE hashes and privacy verified. No owner store was accessed.
+All8555 raw/normalized readback bytes and all normalized frames are retained;
+one duplicate rendered frame is absent. The source grant/selection dependency
+is now observed. Accepted lifecycle/effects and retail progression remain open.
+
+Private records under `~/re/gw2/notes/`:
+
+- `209026-run250-mesmer-sword2-observation-launch-20261106.json`, SHA-256
+  `f5b4021c81af7abebd9b6a7ea82b0c5f855d3ffd7796bc53188efe3567087155`,
+  REA `ev_085053a7de26f0a6584bd92478ca6f90e606492eb2f1013ebb357d31195bdb37`.
+- `209026-run250-mesmer-sword2-observation-readback-20261106.json`, SHA-256
+  `ec361cb93991b887c612ead4091af4de97a002ffa72b24b9b2c1c0872dd8bb96`,
+  REA `ev_3bc39d23b1595f18d8601da4f55a8f87e35da49a12e6806e15e20a0a2ce8f705`.
+- `209026-run250-mesmer-sword2-observation-return-20261106.json`, SHA-256
+  `ca8d2182a277175575ab790aa640266f48048eefe5771007a6e0d5e734b5bf91`,
+  REA `ev_91b84229acde3e3141efb05b1668d6f5f064330f53e570ee4686ef4d6442f967`.
+- Root outcome `run250-mesmer-sword2-observation-outcome-20261106.json`, SHA-256
+  `a3cff7bba7722df9a948751c66500f185027bba4ea8bf26dd64dc15074111633`.

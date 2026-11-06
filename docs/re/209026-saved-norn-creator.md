@@ -831,6 +831,21 @@ Private records under `~/re/gw2/notes/`:
 - Root outcome `run248-norn-input-delivery-outcome-20261106.json`, SHA-256
   `3e79060ad5e383174a5d75752e88c5ebb1657a1c6335f46ae1f06046c75669ff`.
 
+A retained236/237 audit corrects the next route plan: pure E turns have no
+position/ordinal before translation; later Q turns can retain the old ordinal.
+Sparse20 logging limits the later-turn conclusion, and generic message13 cannot
+be attributed to a turn without temporal baselines. Current Rust retains rounded
+XYZ but no typed heading scalar. Consequently an unresolved translation blocks
+all further holds, while an admitted pure turn requires a fresh image and
+invalidates translation calibration; it need not manufacture a new position
+report. The next clear-ground translation must yield fresh actual samples.
+No new route fixture has been staged. Private audit
+`209026-retained236237-turn-audit-20261106.json`, SHA-256
+`92906734b6d026d8426ed796bde81358aa719bae67271230bfbf388db4d46172`,
+REA `ev_59e7fefee222b6818f4024193b37a62d5fd9067d8a27a9ced221572ab0aad1c2`.
+Corrected plan `run252-norn-upper-route-corrected-plan-20261106.json`, SHA-256
+`b40356994eef8c9bafb8d4b39fc55acbcef2acaa0136d412813cc433d385e974`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

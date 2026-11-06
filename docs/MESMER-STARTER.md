@@ -104,8 +104,11 @@ does not establish server strike count or timing.
 Verified live incrementf926ce0 adds a default-off post-earned188 availability
 grant for observation while retaining chain rejection and all existing live
 defaults. Twelve focused tests, musl build and two startup checks pass;
-native10334 observation remains pending.
+prepared run250 now observes the earned2 grant, unlocked second weapon icon
+and a native10334/slot6 request after the target respawns. Launch/UI0 and
+window48 cleanup pass. Accepted10334 execution/effects remain unimplemented.
 [Implementation limits](re/209026-mesmer-starter-skill-requirements.md#earned-level-observation-increment-f926ce0-verified-live-disabled).
+[Native selection evidence](re/209026-mesmer-starter-skill-requirements.md#run250-earned-grant-and-native-sword2-selection).
 Private implementation receipt:
 `~/re/gw2/notes/mesmer-sword-chain-e624-20261106-checks/receipt.json`, SHA-256
 `1c709e3dfb679731737306ca432751808910296c1fc5300e101a441180dfe012`.
