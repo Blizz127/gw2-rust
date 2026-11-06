@@ -29,6 +29,7 @@ pub mod skill_fact_content;
 pub mod skill_damage_fact_content;
 pub mod skill_palette_content;
 pub mod skill_recharge_content;
+pub mod skill_buff_fact_content;
 pub mod setting_content;
 pub mod scene_bounds;
 pub mod terrain;
