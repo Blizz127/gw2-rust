@@ -1,10 +1,43 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is **live on 82d8d04-cdn900** at
-`/home/blizz/gw2-rust-82d8d04-cdn900`. The sole publisher records the owner's
+Saved character creation is live, currently on **c2cb6fd** at
+`/home/blizz/gw2-rust-c2cb6fd`. It was first activated on 82d8d04-cdn900.
+The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
 Root independently verified the configuration, live hashes and service at
 **03:43:51Z**. The earlier unanswered roster prompt is historical.
+
+## Current release: c2cb6fd
+
+The sole publisher deployed **c2cb6fd at 2026-11-06T03:56:12Z**. This
+cherry-picks the Ether Feast damage-exclusion guard onto the previous live
+source, preserving the working diagnostic attack setting. It does not
+implement healing or recharge. The publisher's release record reports
+run204's attack/kill/XP/loot/heart smoke passed and the cycle ran with zero
+players. Rollback is `/home/blizz/gw2-rust-82d8d04-cdn900`.
+
+Root independently verified the following at **04:01:16Z**:
+
+- Current link selects `/home/blizz/gw2-rust-c2cb6fd` and all kit hashes pass.
+- Game SHA-256:
+  `1da9300828542334c8407cbd758cef65ab850a58cb26562e6da8e03012cf5e1b`.
+- Manifest SHA-256:
+  `d795c56b487d9b5dc5d9c9430a18b86e7b67192b7186a03818b8687d9bc02e17`.
+- Ready/running, four owned listeners, zero humans and bots.
+- Saved mode remains enabled; the private store now has one `.char` record.
+  No character contents were read. The original activation backup still
+  matches its recorded hash.
+- Metadata900 and b128 feed hashes remain unchanged from the receipts below.
+
+Evidence: `~/re/gw2/notes/209026-live-c2cb6fd-readback-20261106.json`,
+SHA-256 `dba1a309674ae5afe1669d10e25c0212cd9f3801115927da28b21d988f107004`,
+REA `ev_8884999c8b201612e3e4d1a511c82661f64a9d860f2966ee73ecbfae2b847bba`.
+The helper exited0 without truncation and verified owned cleanup. The
+shared `latest_live_release.sha256sums_sha256` still contained the old
+manifest hash at the first post-release inspection; the independent hash
+above and publisher's release note agree on the new manifest.
+
+## Activation behavior
 
 The next login presents the saved roster, initially empty at readback, so
 the owner can create a Norn Mesmer. The prepared Banshee Mesmer is hidden.
@@ -60,7 +93,11 @@ The publisher's existing window23 had been granted at03:29:03Z; because
 run145 had not launched, root returned it **unused at03:42:49Z** as requested
 for publisher priority run203. The shared cleanup record is written. No
 client was stopped, no running test was changed, and root needs a fresh
-window24 before launching run145. The later log inspection below establishes
+window24 before launching run145. The publisher subsequently granted
+window24 at03:56:36Z for one bounded creator run and cleanup, with a
+45-minute limit. This is a resource grant, not a run result. Existing run145
+inputs remain unchanged; a separate upstream sword observation is being
+prepared. The later log inspection below establishes
 that run203 ran and reported cleanup, but does not establish a combat pass.
 
 The later [caster-ownership candidate45c0731](209026-skill-caster-ownership.md)
@@ -82,9 +119,11 @@ establish successful combat or an error-free client.
 Run203 therefore does **not establish the required combat smoke pass**.
 The input/admission cause is unresolved; these observations alone do not
 prove a particular client or server defect. Both 5516cb4 and the cumulative
-45c0731 candidate remain undeployed in the available release records.
+45c0731 candidate remain undeployed in the available release records. The
+independent Ether Feast guard was released separately as c2cb6fd above.
 The slot-input corrections must not be replaced with guessed damage merely
-to make the smoke appear to pass. Run145 still requires a fresh resource grant.
+to make the smoke appear to pass. Any new observation must stay within
+the subsequently granted window24 and its cleanup boundary.
 
 The retained [activation contract](209026-skill-input-action-lifecycle.md#activation0x2a-validation-then-explicit0x23)
 narrows the next observation upstream of accepted-order timing. Given a

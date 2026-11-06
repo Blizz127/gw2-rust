@@ -6,11 +6,13 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **82d8d04-cdn900** remains at
-`/home/blizz/gw2-rust-82d8d04-cdn900`, with **saved-norn mode enabled since
-2026-11-06T03:29:33Z** after the owner's native choice. Root independently
-verified mode/store, empty0700 store, backup hash, all44 kit entries,
-metadata900, four listeners and zero humans at **03:43:51Z**. See the
+tracks the remaining scope. Live kit **c2cb6fd** is at
+`/home/blizz/gw2-rust-c2cb6fd`, deployed **2026-11-06T03:56:12Z**. It adds
+the Ether Feast damage-exclusion guard while preserving working diagnostic
+combat. Saved-norn mode remains enabled after the owner's03:29 choice.
+Root independently verified mode/store, one saved record, backup hash,
+all kit hashes, metadata900, four listeners and zero humans at **04:01:16Z**.
+The guard does not implement healing. Rollback is82d8d04-cdn900. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
 The owner can create a Norn Mesmer through the saved roster; the prepared
@@ -21,7 +23,14 @@ and live metadata900. This remains an incomplete diagnostic starter fixture.
 The latest feed readback at03:43:52Z offers b128; its runner pin was not
 inspected by that query. The earlier native roster prompt is resolved.
 
-Latest checked cumulative server candidate: **45c0731**,
+Independent release candidate **9451cf0** applies the seven-line caster
+guard directly to current live c2cb6fd, preserving its combat settings and
+Ether Feast exclusion. Eight focused tests, offline musl build and four
+no-listener checks passed at04:03:38Z. The artifact and hashes are handed to
+the sole publisher, **not claimed deployed**. See the
+[independent candidate receipt](re/209026-skill-caster-ownership.md#independent-release-candidate-on-the-current-live-source).
+
+The separate cumulative server candidate **45c0731**,
 [caster ownership guard](re/209026-skill-caster-ownership.md), checked
 **03:45:50Z**. Foreign SkillBegin agent indices cannot mutate target/combat
 or reward state or trigger order responses. Nine focused tests, an isolated
@@ -36,9 +45,10 @@ The only typed SkillBegin was Ether Feast10176 with target0. This does not
 establish a combat pass for5516cb4 or the cumulative45c0731 candidate; the
 input/admission cause remains unresolved. See the
 [smoke readback](re/209026-saved-norn-live-activation.md#subsequent-combat-smoke-readback).
-Root returned window23 unused at03:42:49Z for its run203 priority. Run145
-has not launched and needs a fresh window24. No running test inputs were
-changed, and no competing publish/restart was dispatched.
+Root returned window23 unused at03:42:49Z for its run203 priority. The
+publisher granted window24 at03:56:36Z for a bounded creator run and cleanup.
+Run145 remains unlaunched and unchanged; a separate upstream sword
+observation is being prepared. No competing publish/restart was dispatched.
 
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).
@@ -132,7 +142,7 @@ and [finish-listener](re/209026-typed78-finish-listeners.md) evidence does not
 establish automatic repetition or chain-advance timing. The story follow-up
 joins story9 to starting quest358; the story2→9→10 links remain unnamed.
 These are offline code/source increments. Saved mode is now live on the
-existing82d8d04-cdn900 binary; run145 inputs remain unchanged and unlaunched.
+current c2cb6fd binary; run145 inputs remain unchanged and unlaunched.
 
 The same [sword fact module](re/209026-mesmer-sword-damage-facts.md#type-13-reader-and-numeric-evaluator)
 now decodes type-13 facts and evaluates their numeric tooltip with explicit

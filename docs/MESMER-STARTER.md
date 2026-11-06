@@ -30,7 +30,14 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-Latest checked server candidate: **45c0731**,
+Independent release candidate: **9451cf0**, the seven-line caster guard
+directly on live c2cb6fd. Eight focused tests, offline musl build and four
+no-listener checks passed at04:03:38Z; current combat settings and Ether Feast
+exclusion are preserved. The sole publisher has the checked artifact and
+hashes; it is **not claimed deployed**. See the
+[receipt](re/209026-skill-caster-ownership.md#independent-release-candidate-on-the-current-live-source).
+
+The separate cumulative candidate **45c0731** contains the
 [caster ownership guard](re/209026-skill-caster-ownership.md). Nine focused
 tests passed, including two regressions that failed before the fix. Its
 isolated static release binary passed four no-listener configurations at
@@ -64,11 +71,12 @@ a cinematic. This narrows the remaining intro dependency to authentic
 Norn playback inputs/sequence; the generic UI/view wiring does not select
 them. This source slice emits no Norn cinematic and changes no gameplay.
 
-Latest independently verified live kit: **82d8d04-cdn900**, now in
-**saved-norn mode since2026-11-06T03:29:33Z**. The owner chose activation in
-the native publisher session at03:29:03Z. At03:43:51Z root independently
-verified both mode/store settings, empty0700 store, backup hash, all44 kit
-manifest entries, metadata900, four owned listeners and zero humans.
+Latest independently verified live kit: **c2cb6fd**, deployed03:56:12Z with
+the independent Ether Feast damage-exclusion guard and existing diagnostic
+attack behavior. Saved-norn mode has been on since03:29:33Z, following the
+owner's03:29:03 native choice. At04:01:16Z root independently verified
+mode/store, one private saved record, activation backup hash, all kit hashes,
+metadata900, four owned listeners and zero humans.
 [Activation/readback evidence](re/209026-saved-norn-live-activation.md).
 The prepared Banshee Mesmer is hidden. New creation records persist; XP,
 loot and heart progress still reset at a server restart.
@@ -83,8 +91,10 @@ and unanswered-roster observations are historical, not current blockers.
 
 The same publisher session was alive/status shell at03:41:35Z and reported
 preparing5516cb4's combat smoke. Root returned unused window23 at03:42:49Z
-for publisher priority run203. Run145 remains unlaunched and requires a
-fresh window24. No root client launch, competing deployment, native prompt
+for publisher priority run203. Window24 was subsequently granted03:56:36Z
+for one bounded creator run and cleanup. Run145 remains unlaunched and its
+inputs unchanged; a separate upstream sword observation is being prepared.
+No root client launch, competing deployment, native prompt
 answer or restart occurred. The full Norn-first goal remains open.
 
 An earlier offline increment adds a bounded
