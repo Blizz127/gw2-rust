@@ -91,6 +91,40 @@ fresh harness staging and a new publisher resource window remain necessary.
 
 ## Bounded observation and cleanup
 
+### Run209: equipment and palette are present
+
+Run209 used fresh pinned pre-client inputs and the five-site observer under
+the publisher's window25. Two complete owned slot5 lookups observed active
+weapon set4, a present primary item33355 with kind24, and native palette90.
+Both returned a null SkillDef with the cache still null. Both paired
+attempts have no observer errors. There were11 callbacks, one rejected
+callback, and a terminal inferior-exited record with no open attempt.
+The rejection does not invalidate the two complete records, nor identify
+the state of an unqualified call.
+
+This rules out absent equipment or palette for those two lookups. It does
+not establish which profession/category row was returned, whether10170
+was evaluated, or which eligibility predicate rejected a candidate. The
+[exact base-sword map](209026-mesmer-starter-skill-requirements.md#exact-base-sword-eligibility-boundary)
+defines the next bounded observation. No skill input, grant or gameplay
+change was made; a null resolver result before remapping/cache write is
+not a combat result.
+
+UI and outer run exited0, world initialization was recorded, no assert text
+was found, the credential-safe console and frozen/working executable hashes
+passed, and container absence was independently verified. Window25 was
+returned complete at **2026-11-06T04:52:21.503066Z**; it authorizes no further
+root runtime after that return. Existing runs remain unchanged.
+
+- Launch Evidence: `ev_8913c172cdd705c924db92d0ed251098f65badbda69fafed8035a35cc7e29ce3`.
+- Readback: `~/re/gw2/notes/209026-run209-slot5-readback-20261106.json`,
+  REA `ev_a5f28e677232aa2446d57a3d84e9aa626f92c1b1e49a7b3970e38a23e44c8383`.
+- Cleanup/return: `ev_023a2037714edb73d14312d0a20a7ea82e456b73f9e862f285d13d158be9ed40`.
+- Input manifest SHA-256:
+  `b846bece584d5c5fc5abb997767da00f7534dc2adabfc7be34d8f5f3053645df`.
+
+### Earlier activation observations
+
 The private helper observes seven source-guarded entry, return and call sites.
 It retains thread/stack identities and scalar results, not heap pointers,
 and does not call target methods or change gameplay fields. Debugger

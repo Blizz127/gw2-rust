@@ -142,6 +142,37 @@ observed in this source investigation. Category4 contains10334;
 category5 retains its ordered conditional entries ending in10173.
 No automatic availability messages are inferred from this content list.
 
+## Exact base-sword eligibility boundary
+
+For the archived palette90/profession7/category3 entry10170, normal slot5
+selection with the resolver's bypass flag clear reduces to four Boolean
+requirements. The complete retained predicate and exact content entry
+eliminate its other optional restrictions:
+
+| Requirement | Native result boundary | Reject condition |
+| --- | --- | --- |
+| Slot predicate, adapter virtual+0x38 | `0x14121310f` | Zero result |
+| Entry minimum level, adapter virtual+0x50 | `0x141213120` | Unsigned result below1 |
+| Availability, adapter virtual+0x128 | `0x141213185` | Zero result |
+| Skill locale predicate `0x1411be3c0` | `0x1412131a2` | Zero result;10170 flags permit locale0/3, reject1/2 |
+
+This is a conditional source reduction, not an observed runtime result.
+A palette90 pointer alone does not prove the resolver selected profession7,
+category3 or visited10170. Row selection can return null; otherwise the
+first passing candidate in45230/10172/10171/10170 order wins. A null overall
+result therefore cannot yet be attributed specifically to availability.
+Unconditional component getters also retain their lifetime prerequisites.
+
+The retained map is
+`~/re/gw2/notes/209026-slot5-10170-eligibility-map-20261106.json`, SHA-256
+`3244ed6e190ddbcf99f0b96ac135152e819c40f7bd1f89ec9f7d3850ddbc0d14`.
+Its exact entry evidence is
+`ev_a06197aa4d3398ac0c2c71fa017e2c3f577b9ce615a8fc41d4d814db35fd4df6`;
+the complete predicate is
+`ev_bba6ac6e72f39d5b4dea317d73ffa82c94e75928fa789237a298e86d1acfbb56`.
+It also records the row loop, adapter and locale Evidence. No new runtime,
+grant, palette replacement or gameplay behavior follows from this reduction.
+
 ## Explicit observer input
 
 `gw2-game-observe --mission-skills FILE` accepts a bounded binary batch

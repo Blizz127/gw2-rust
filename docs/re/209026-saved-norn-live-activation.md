@@ -1,9 +1,9 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, currently on **c2cb6fd-amb** at
-`/home/blizz/gw2-rust-c2cb6fd-amb`, independently verified04:36:02Z.
-The [ambient increment](#spawn-area-ambient-increment-c2cb6fd-amb) adds
-four neutral creatures and retains the c2cb6fd binary. Saved mode was first
+Saved character creation is live, currently on **4b3c4c2** at
+`/home/blizz/gw2-rust-4b3c4c2`, independently verified04:53:03Z.
+The [latest increment](#caster-guard-and-eir-appearance-4b3c4c2) ships the
+caster guard and Eir's composite appearance. Saved mode was first
 activated on82d8d04-cdn900.
 The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
@@ -205,3 +205,44 @@ were not reverified. No root deployment or launcher publication occurred.
 Private receipt: `~/re/gw2/notes/209026-live-c2cb6fd-amb-readback-20261106.json`,
 REA `ev_bdbc1fe42c4f02fad060caa78cf5928a8ffdd0ef51bcbb12fc5544b6dd3e4c65`.
 Readback exited0 without truncation; owned-helper cleanup was verified.
+
+## Caster guard and Eir appearance: 4b3c4c2
+
+The sole publisher records **2026-11-06T04:46:24Z** deployment of
+`/home/blizz/gw2-rust-4b3c4c2`, with rollback at
+`/home/blizz/gw2-rust-c2cb6fd-amb`. It includes the independent9451cf0 caster
+guard as e788d58, quest542/544 codecs and server377 composite NPC support.
+The research steps-on-kill option is off. Eir Stegalkin uses her species3172
+composite appearance near the diagnostic spawn; her position is manually
+chosen, she is neutral, and dialogue is absent. This is not proof of the
+authored Great Hunt encounter.
+
+The publisher's release note records112 observer tests, the377 codec test,
+saved-mode checks and a zero-human watched cycle. Run208 rendered Eir and
+exercised autoattack/kill after the coded-name correction; run207's earlier
+TextParser assertion is retained as a failed attempt. Run206 artificially
+advanced quest154 through542 and displayed a completion/reward panel.
+The retained screenshots show blank title/objective text; the first forced
+step changes the icon to a checkmark. The final panel shows a weapon icon
+and72 copper. The harness explicitly supplies step order1,2,3,6,4,5, so this
+does not establish authentic conditions, reward acceptance or inventory
+delivery. Retained screenshot admission Evidence:
+`ev_7ba42da8069ef30491be7abccc08173c3dade989eff6bfac3772fb91142935aa`.
+Root did not rerun these publisher smokes.
+
+Root's independent **04:53:03Z** readback verifies all kit hashes, four
+healthy owned listeners, zero humans/bots, saved-norn mode, one unchanged
+store record count and0700 permissions, the original activation backup
+hash, and metadata900 root/main hashes. No saved record contents were read.
+
+- Game SHA-256:
+  `8b75cceecc196e39872d5ca85d31c543fcfaacfcbbc78e2d55858cefeb2ee979`.
+- Manifest SHA-256:
+  `e429d37155ddadf06287f8bbec24263af5c01cc757aae27ace5d32de0166432b`.
+- Receipt: `~/re/gw2/notes/209026-live-4b3c4c2-readback-20261106.json`.
+- REA: `ev_2660994d1fd6a86819ecd754b0cc4f3d21532df495f14f602bab3b2d1cff6ab5`.
+
+The helper exited0 without truncation and verified owned cleanup; unrelated
+processes with inaccessible ownership metadata were left untouched. Feed
+metadata remains b128 at04:53:04Z. Runner pin and audience were not
+reverified; root made no server or launcher publication.

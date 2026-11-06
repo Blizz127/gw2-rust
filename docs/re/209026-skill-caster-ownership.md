@@ -1,6 +1,6 @@
 # Build 209026 fixture: validate the requesting skill caster
 
-## Independent release candidate on the current live source
+## Independent fix released through the sole publisher
 
 **9451cf084cd1896824bac165b3ebf9adc7b20291** applies the same seven-line
 SkillBegin ownership guard directly to live source **c2cb6fd**. It preserves
@@ -37,19 +37,24 @@ supervisor match. No shared client, container or archive was accessed.
 The corrected candidate handoff was submitted through the existing native
 peer helper at **2026-11-06T04:33:23Z** to sole publisher session
 `6f90f24c-c2e0-4d00-803a-853401bd55ce`, under its existing task
-`f45083e2793a`. Native submission succeeded; publisher acknowledgement and
-deployment remain unverified. No new task, runtime or publisher was started.
+`f45083e2793a`. Native submission succeeded without a new task or publisher.
 The receipt is
 `~/re/gw2/notes/caster-ownership-existing-publisher-handoff-20261106.json`;
 `creator-lane-peer-handoff.json#/root_caster_live_base_ready_20261106`
 records that distinction. The coordinator status reply is queued.
 At04:38:54Z, source inspection confirmed the publisher's commit
 `e788d586a5bd6d3828d2cedf49cf6022ffd17fff` contains exactly the same119
-inserted guard/test lines. This establishes source integration, not deployment;
+inserted guard/test lines. That inspection established source integration;
 the private receipt is `caster-ownership-publisher-source-integration-20261106.json`.
 Keep the current c2cb6fd-amb profile, saved store/mode, metadata900, player
 checks and rollback; do not overwrite its added ambient population with
 the earlier staged profile.
+The publisher subsequently recorded the integrated fix live in **4b3c4c2**
+at **04:46:24Z**. Root independently verified its binary/manifest hashes,
+health and saved mode at **04:53:03Z**. The candidate's original standalone
+binary was not published unchanged; the released binary includes the
+publisher's other tested changes. See the
+[live release receipt](209026-saved-norn-live-activation.md#caster-guard-and-eir-appearance-4b3c4c2).
 The guard covers `Seen::Skill` only; the legacy `RepeatStart` and other
 action classes remain outside its scope. This preserves the current fixture
 while the upstream sword investigation continues; it does not establish
@@ -130,7 +135,7 @@ the evidence. The successful native submission above instead identifies
 exclude that skill from generic attack damage/retaliation; neither restores
 health or implements recharge. A publisher summary saying it “heals instead”
 was corrected in the handoff. Latest independently verified live is
-c2cb6fd-amb, with [saved mode enabled](209026-saved-norn-live-activation.md).
+4b3c4c2, with [saved mode enabled](209026-saved-norn-live-activation.md).
 This cumulative artifact remains **withheld and not deployed**.
 
 The publisher's subsequent run203 smoke used5516cb4. Its retained logs

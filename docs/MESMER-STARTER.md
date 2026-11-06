@@ -24,19 +24,20 @@ API/wiki names may locate content but do not replace client verification.
 | All starting-map hearts, events and discovery objectives | Heart56 progresses/rewards in a diagnostic fixture, with coordinate and reward-once fixes; this is not authored Great Hunt content or whole-map coverage. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
 | Relevant starting story, scenes and audio | Playback missing; client cinematic start/stop contract recovered, Norn selection unresolved | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
-| Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state is process-local only. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards. |
+| Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state is process-local only. The existing store has no progression fields or update API; restart progression requires a separately authorized storage-format change. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards; preserve original creation data and rollback compatibility. |
 | Human Mesmer opening and Queensdale, after Norn | Incomplete | Equivalent creation/tutorial (138)/area (15) coverage, including source-backed identification of the remembered circus/town sequence. |
 | Final completion audit | Not reached | Every required item above proven with current source and runtime evidence; no placeholder counted as retail accurate. |
 
 ## Current checkpoint
 
-Independent release candidate: **9451cf0**, the seven-line caster guard
+Released independent fix: **9451cf0**, the seven-line caster guard
 directly on live c2cb6fd. Eight focused tests, offline musl build and four
 no-listener checks passed at04:03:38Z; current combat settings and Ether Feast
 exclusion are preserved. The corrected artifact handoff was submitted to
 the existing sole publisher's native inbox at04:33:23Z under taskf45083e2793a.
-Acknowledgement and deployment remain unverified. See the
-[receipt](re/209026-skill-caster-ownership.md#independent-release-candidate-on-the-current-live-source).
+The publisher integrated it as e788d58 and deployed it in4b3c4c2 at04:46:24Z;
+root independently verified live hashes/health at04:53:03Z. See the
+[receipt](re/209026-skill-caster-ownership.md#independent-fix-released-through-the-sole-publisher).
 
 The separate cumulative candidate **45c0731** contains the
 [caster ownership guard](re/209026-skill-caster-ownership.md). Nine focused
@@ -75,12 +76,14 @@ a cinematic. This narrows the remaining intro dependency to authentic
 Norn playback inputs/sequence; the generic UI/view wiring does not select
 them. This source slice emits no Norn cinematic and changes no gameplay.
 
-Latest independently verified live kit: **c2cb6fd-amb**, deployed04:30:49Z.
-It adds four neutral spawn-area creatures (boar, wolf, two ravens) as
-placeholders, not authored Great Hunt population. The c2cb6fd binary,
-Ether Feast damage exclusion and diagnostic attack behavior are unchanged.
+Latest independently verified live kit: **4b3c4c2**, deployed04:46:24Z.
+It includes the caster guard and an Eir Stegalkin composite appearance near
+spawn, manually placed and neutral with no dialogue. Existing wildlife also
+remains placeholder population. Quest542/544 codecs are included; the
+research steps-on-kill option is off. Ether Feast damage exclusion and
+diagnostic attack behavior remain enabled.
 Saved-norn mode has been on since03:29:33Z, following the owner's03:29:03
-native choice. At04:36:02Z root independently verified
+native choice. At04:53:03Z root independently verified
 mode/store, one private saved record, activation backup hash, all kit hashes,
 metadata900, four owned listeners and zero humans.
 [Activation/readback evidence](re/209026-saved-norn-live-activation.md).

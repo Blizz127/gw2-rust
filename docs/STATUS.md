@@ -6,14 +6,15 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **c2cb6fd-amb** is at
-`/home/blizz/gw2-rust-c2cb6fd-amb`, deployed **2026-11-06T04:30:49Z**. It
-adds a neutral boar, wolf and two ravens near spawn; these are placeholders,
-not authored Great Hunt population. The c2cb6fd binary and its Ether Feast
-damage exclusion are unchanged. Saved-norn mode remains enabled after the
-owner's03:29 choice. Root independently verified mode/store, one saved
-record, backup hash, all kit hashes, metadata900, four listeners and zero
-humans at **04:36:02Z**. Healing remains unimplemented. Rollback is c2cb6fd. See the
+tracks the remaining scope. Live kit **4b3c4c2** is at
+`/home/blizz/gw2-rust-4b3c4c2`, deployed **2026-11-06T04:46:24Z**. It
+includes the caster-ownership guard and an Eir Stegalkin composite appearance
+near spawn. She is manually placed and neutral, with no dialogue; the
+existing wildlife is also placeholder population. Quest542/544 codecs are
+included, while the research steps-on-kill option is off. Saved-norn mode
+remains enabled. Root independently verified one saved record, backup hash,
+all kit hashes, metadata900, four healthy listeners and zero humans/bots at
+**04:53:03Z**. Healing remains unimplemented. Rollback is c2cb6fd-amb. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
 The owner can create a Norn Mesmer through the saved roster; the prepared
@@ -21,16 +22,18 @@ Banshee Mesmer is hidden. Initial creation persists, while XP/loot/heart
 progress resets at restart. [Run144](re/209026-saved-norn-creator.md) is the
 prior private creator/save/world/defeat/waypoint acceptance with runner0e6ac30
 and live metadata900. This remains an incomplete diagnostic starter fixture.
-The latest feed readback at04:36:03Z offers b128; its runner pin was not
+The latest feed readback at04:53:04Z offers b128; its runner pin was not
 inspected by that query. The earlier native roster prompt is resolved.
 
-Independent release candidate **9451cf0** applies the seven-line caster
+Independent fix **9451cf0** applies the seven-line caster
 guard directly to current live c2cb6fd, preserving its combat settings and
 Ether Feast exclusion. Eight focused tests, offline musl build and four
 no-listener checks passed at04:03:38Z. The corrected artifact handoff was
 submitted to the existing sole publisher's native inbox at04:33:23Z under
-taskf45083e2793a. Acknowledgement and deployment are unverified. See the
-[independent candidate receipt](re/209026-skill-caster-ownership.md#independent-release-candidate-on-the-current-live-source).
+taskf45083e2793a. The publisher integrated it as e788d58 and deployed it in
+4b3c4c2; the new live binary and manifest hashes are independently verified.
+See the
+[independent fix receipt](re/209026-skill-caster-ownership.md#independent-fix-released-through-the-sole-publisher).
 
 The separate cumulative server candidate **45c0731**,
 [caster ownership guard](re/209026-skill-caster-ownership.md), checked
@@ -58,7 +61,12 @@ The heal control emitted10176 normally. The run and cleanup passed; this
 diagnostic result is not a combat pass. The upstream slot/palette startup
 input remains unresolved. Window24 was returned complete04:25:32Z. Run145
 remains unlaunched and unchanged; no new runtime grant or competing publish
-was established.
+was established by that run. The subsequent run209 received a separate
+window25 and captured two complete owned slot5 lookups with set4,
+item33355/kind24 and palette90 present, but a null resolver result. UI and
+cleanup passed, with no in-attempt observer errors. Window25 was returned
+complete at04:52:21Z. Actual row/candidate selection and its eligibility
+results are the next observation; no grant or packet change is yet justified.
 
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).
