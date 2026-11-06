@@ -322,6 +322,53 @@ verified owned-process cleanup. One duplicate rendered frame was omitted;
 some unrelated process environments were unreadable. No host-wide cleanup,
 runtime observation, archive access or release change is claimed.
 
+## Target-defense boundary for replacing flat30
+
+The complete known starter inputs remain coefficient **1.0**, fact base1
+and multiplier1, equipped33355's conditional static strength **105–117**,
+effective attribute1 **37**, and second level **1**. The exact tooltip
+reference denominator128+10 and setting1.0 produce **30**. Replacing the
+flat30 fixture with this evaluator alone would therefore add no present
+combat fidelity. Neither that denominator nor NPC health118 proves actual
+target armor138; earned187/188 must not substitute for effective state.
+
+A new exact-address query for monster-defense accessor `0x1412df560`
+found one validated direct caller, `0x140893e11` in the known tooltip
+formatter, and no aligned function-pointer references in its searched
+encodings. This is not an exhaustive inlining or indirect-use census.
+The separate complete NPC attribute adapter `0x14088ee70..0x14088f11a`
+is identified by `Ui/Widgets/SkillDescription/SdInt.cpp`. It either reads
+the character's received effective attributes under its explicit species
+flags, or calculates display attributes from `monsterAttribute[level]`
+and two multiplier blocks. It does not compute total target armor or
+apply a damage transaction.
+
+For exact species1544 at1282845:7268648, the first block at7269232 has
+factors **[1,1,1,1]** and three zero level terms. The secondary reference
+is species +0x48 → **1282849:5745488**, then record +0x28; the direct
+leaf `0x1402e1010` establishes that reference load, not the earlier
+tentative name “rank.” Container1282849's decoded cache was absent.
+The reader stopped at that dependency with archive fallback disabled.
+Even resolving it would close an attribute-display input, not the missing
+target-armor/strike-policy contract.
+
+The meaningful implementation boundary remains actual target defense plus
+accepted strike arithmetic/outcome and effect scheduling. Current hostile
+state tracks species/health but supplies no armor. Base recharge0 and628's
+predecessor/count selection supply neither attack cadence nor chain-advance
+timing. No new evaluator, armor default or gameplay policy was added.
+
+Private findings/receipt: `mind-slash-target-defense-boundary-findings-20261106.json`,
+SHA-256 `0ca7b4e1175340afbd56d1055f192ad6b2b61768df589dc3088914570f50ca2e`.
+Full seven-record bundle: `209026-mind-slash-target-defense-boundary-evidence-20261106.json`,
+SHA-256 `161c757b8b5c19ce680a6f266299a57e72c28205eee4ca7a5292ec04b412ccef`.
+The decisive records are `ev_f6f735080e735351a3663f3a028d9edd8fa5f74ba6eeeaa0b124a41325441198`
+(accessor callers), `ev_244f42b9b49183b5c505c506c16a68b15f3bf9fd4715905a18d0127ce6c8a0e7`
+(complete adapter/leaf) and `ev_2fdbf922cc7d5ed658965932a4f3e708cc14cbc113391a2134f9c331212a507a`
+(cached species and missing secondary cache). The bundle preserves two
+failed bounded attempts and their corrected captures; no runtime or archive
+extraction occurred.
+
 ## Evidence
 
 Complete private source/check export:
