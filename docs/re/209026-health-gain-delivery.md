@@ -209,6 +209,51 @@ evaluation and command completion are separate source contracts; deriving
 a displayed value does not establish a server execution time.
 No gameplay implementation or packet defaults were changed in this pass.
 
+## Accepted-order start and step do not supply the missing effect policy
+
+A further bounded source slice followed the two previously unbound start
+notifications from the complete typed78 start body `0x141285740..0x1412858dc`.
+This is distinct from the already traced execute-event and finish listeners:
+
+| Notification | Exact listener dispatch | Constructor-established skillbar entry | Installed ordinary-view entry |
+| --- | --- | --- | --- |
+| Initial `0x1411db4b0` | Thunk `0x1411d3f70`, virtual +0x350 | `0x140163990`, `ret 0` | `0x14110bad0` |
+| Per-step `0x1411db5f0` | Thunk `0x1411d4000`, virtual +0x3b0 | `0x140163990`, `ret 0` | `0x14110bd80` |
+
+Both wrappers dispatch through character +0x1e0. The skillbar entries belong
+to table `0x142165158` at skillbar +0x20; as in the
+[finish-listener trace](209026-typed78-finish-listeners.md), its subscription
+to that character collection is not established. Their no-op bodies remain
+no-ops if subscribed. The ordinary-view table `0x142141558` has an independently
+established subscription, and both concrete callbacks check their owner.
+
+The initial view callback stores a supplied Dword at listener +0xb40 and
+calls `0x141130dc0` on whole-view +0x2b8. That complete helper enters the
+known AvCharEffect row selector `0x141134030` with mask **0x180000**. The
+per-step callback stores the skill key and supplied step at listener
++0xb44/+0xb48, updates a retained reference, and calls the view helpers
+`0x141144020` and, when present, `0x14113dcd0`. The former is explicitly
+named `AvCharMachine.cpp` and consumes animation data. These exact callbacks
+do not install a recharge record or apply a health delta. Their deeper
+virtual calls and other dynamic subscribers are not exhaustively traced.
+
+This closes a concrete possible local recharge-start edge without proving a
+global absence of client behavior. It supplies no binding from primary
+execute1067, action1350 or segment2067 to an authoritative heal or630 send.
+The [timed-event consumers](209026-skill10176-animation-event-consumers.md)
+already establish local timing-scale/force behavior; the retained run226
+proves only the explicit1000ms command and2000ms finish diagnostic's lifecycle.
+Neither yields the retail successful-effect timestamp or recharge-start,
+cancel/refund policy. Recovering those policies would require an authoritative
+execution specification or correlated reference behavior. This is not a
+requirement for another client callback or an approval gate: a narrowly
+labelled implementation can use the authored values and explicitly choose
+its server scheduling policy. For example, the primary1067ms execute event
+can be its effect deadline,1350ms its chosen order envelope, and authored
+20000ms its unmodified cooldown. Starting that cooldown on successful effect,
+the cancellation/refund rule and raw delivery fields remain implementation
+choices; they must not be described as recovered retail behavior.
+
 ## Evidence and coverage
 
 Private complete bundle:
@@ -247,3 +292,20 @@ as data. No new runtime, archive or gameplay change occurred.
 | `ev_6687d9e7887ad601ff4f935339e93c5f571a242613c36501ec67a53a3088b38e` | Exact custom-event table and type/magnitude setter tail. |
 | `ev_1fef712420a135596d5f912d4a028695ef05a178764f52e56770fd9693790e38` | Exact type-13 decimal digit case and common exit. |
 | `ev_0c7e0ed2056f05275519ed810cfd9e5257ec5ed3e2ddeef00a39c5f13e4e7e8d` | Exact type-13 display-resource, animation, digit and exit targets. |
+
+Start/step follow-up bundle:
+`~/re/gw2/notes/209026-ether-feast-start-step-listeners-20261106.json`, SHA-256
+`7e750ab8e26dc2937f83523514de8154f20531cab385fbad5d9ebe8b545d7aa9`.
+All seven source readers exited zero with complete raw/normalized output and
+verified owned-process cleanup. One capture omitted duplicate rendered frames.
+Initial pdata fragments are retained; subsequent logical continuations close
+the claimed view-helper bodies. The per-step collection dispatcher captures
+its callback and subsequent list bookkeeping but cuts its final epilogue;
+no completeness claim depends on that epilogue or adjacent table bytes.
+
+| REA evidence | Start/step contract |
+| --- | --- |
+| `ev_4f3af42a3a3648364cda4f254477143ccaeffad3d889159bebc1e598d4f30611` | Complete notification wrappers. |
+| `ev_fa7b3ca10b21525091f1e557ca6cd2ad8fdd35c24651d358d4d90ebd7f955eaa` | Exact dispatch thunks and both concrete table entries. |
+| `ev_c841f09ffd1bf2b62a1bd5b1107b36ddb5d8080b941650a9d6ab72fdf503c5e4` | Complete installed view callbacks and owner checks. |
+| `ev_e5e53469dc690ffbdcd27b925d6bc87e68ff231899bd4337079ab32d4eee1cdf`, `ev_995b34b6a08881397d056e958c6a157f74fab60155e9125d96b2d15235c7b164` | Effect-selection bridge, named animation consumer, logical continuations and exact no-op. |
