@@ -135,7 +135,7 @@ unchanged. Onward clearance and the full hunt remain unproven.
 [Run258 route prefix](re/209026-saved-norn-creator.md#run258-b5-route-prefix-observed).
 
 Run262 repeats the bounded approach using fresh feedback, reaches B5 proximity
-with 229 reports, and captures one terminal E250 ms view. The image exposes the
+with 229 reports, and captures one terminal 250 ms E-key view. The image exposes the
 hall end beside steep rock; a continuous onward passage remains unproven.
 Launch/UI 0 and cleanup pass; window 54 returned 15:42:22Z. No onward translation,
 combat, story or live change results from this probe.

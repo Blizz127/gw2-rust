@@ -1007,10 +1007,10 @@ Private evidence under `~/re/gw2/notes/`:
 
 ## Run262: corner view observed; onward clearance unresolved
 
-Fresh262 keeps the exact 403 comparison with movement-log cadence 1, original 154-byte
+Run 262 keeps the exact 403 comparison with movement-log cadence 1, original 154-byte
 record, pristine 145 prefix, stage 0 placements and production client hooks.
 The controller approaches B5 using fresh images and position feedback, then
-performs one terminal E250 ms view and releases. Root checks 46 preparation pins
+performs one terminal 250 ms E-key view and releases. Root checks 46 preparation pins
 and 1839 manifest entries. Four focused endpoint/UI cases, exact run-name
 binding, syntax and two startup checks pass. An actual UI fixture catches and
 corrects the host/container image-path alias before staging is frozen; unchanged
@@ -1018,7 +1018,7 @@ controller, reader, focus and timing checks are reused.
 
 Ten translation holds produce 229 sequential movement reports. Nine request 750 ms
 and the final W hold 600 ms. The first actual sample is [-3204,-25600,-3742]; final
-actual [-2120,-25147,-3760] is 38.587563 XY units from B5. The terminal E250 ms has
+actual [-2120,-25147,-3760] is 38.587563 XY units from B5. The terminal turn has
 zero new position reports. Every completed action admits the same owned focus
 identity. No further hold, targeting, combat, interaction, story or transfer
 occurs. These are observed actions, not instructions for blind replay.
@@ -1050,7 +1050,7 @@ Private evidence under `~/re/gw2/notes/`:
 - Readback `209026-run262-norn-corner-view-readback-20261106.json`, SHA256
   `958adaebc6c7c28029b1d4bec6fbd3ccf14e7443803fa31acc3d4858bebbf1aa`,
   REA `ev_5d2aa0c0ff0d46d88884864eab098b180a12aa9be4a522bea288aab9de3bb7f7`.
-- Return `209026-run262-return-window 54-20261106.json`, SHA256
+- Return `209026-run262-return-window54-20261106.json`, SHA256
   `f13adf171bc29ab2d2717b40e96eca825348f1c41a1fd117fb3ab1ab9e4eb1de`,
   REA `ev_a01e1d3722674d4450ef9af7b358bc3121bd88d1ad03953eb0410b99ac018a56`.
 - Controller receipt `run262-controller-outcome-receipt-20261106.json`, SHA256
