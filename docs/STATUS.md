@@ -49,6 +49,20 @@ the earlier explicit earned-attribute curve and skill-input corrections.
 The artifact is recorded for the sole publisher, **not deployed**. The
 native roster prompt, last verified live kit, rollback and held run145 remain.
 
+Read-only publisher verification at **2026-11-06T03:17:57Z** found the same
+native session waiting/input needed. At **03:18:34Z**, its PID was alive
+and the same roster choice appeared in its native pane. No input or duplicate dispatch was
+sent. The private receipts are linked in the completion ledger; this is
+availability evidence, not a release receipt or resource reservation.
+
+New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
+and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).
+Norn cinematic selection/trigger and actual tutorial shrine locations remain
+unproved. [Result listeners](re/209026-typed78-result-listeners.md) provide
+no heal/cooldown trigger. A misleading endurance comment is corrected with
+no value change. This slice adds no new gameplay build; 5516cb4 remains the
+latest checked candidate and 82d8d04-cdn900 the last verified live kit.
+
 New source notes bound [second-level scaling](re/209026-second-core-level.md),
 [command queue ordering](re/209026-agent-command-queue-order.md), and the
 [Norn goal-marker filter](re/209026-norn-map-goal-marker-filter.md). They do

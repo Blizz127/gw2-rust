@@ -23,7 +23,7 @@ API/wiki names may locate content but do not replace client verification.
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | Heart56 progresses/rewards in a diagnostic fixture, with coordinate and reward-once fixes; this is not authored Great Hunt content or whole-map coverage. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
-| Relevant starting story, scenes and audio | Missing | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
+| Relevant starting story, scenes and audio | Playback missing; client cinematic start/stop contract recovered, Norn selection unresolved | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
 | Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state is process-local only. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards. |
 | Human Mesmer opening and Queensdale, after Norn | Incomplete | Equivalent creation/tutorial (138)/area (15) coverage, including source-backed identification of the remembered circus/town sequence. |
 | Final completion audit | Not reached | Every required item above proven with current source and runtime evidence; no placeholder counted as retail accurate. |
@@ -37,6 +37,16 @@ passed four no-listener startup configurations at **2026-11-06T03:12:49Z**.
 It prevents cross-character/map progress transfer and includes the explicit
 earned-attribute curve. This is a prepared artifact for the existing
 publisher, not a deployment or durable world-progression implementation.
+
+New static findings bind the [cinematic start/stop contract](re/209026-cinematic-start-contract.md)
+and [server-delivered shrine locations](re/209026-norn-shrine-location-delivery.md).
+They identify concrete missing inputs: the Norn cinematic selection/trigger
+and authentic locations/auxiliary state for tutorial POIs 970/971. The
+[result-listener check](re/209026-typed78-result-listeners.md) supplies no
+heal/cooldown trigger. The [endurance follow-up](re/209026-endurance-deficit.md#bounded-exact-caller-follow-up-2026-11-06)
+also corrects a fixture comment: maximum 100 / divisor 2 produces quotient 50,
+not two segments; no values changed. These are source/documentation changes,
+not a new playable artifact or a reason to rebuild 5516cb4.
 
 Latest independently verified live kit: **82d8d04-cdn900**, prepared mode,
 deployed 2026-11-05 23:56:31 UTC; kit/metadata hashes and four listeners
@@ -64,6 +74,15 @@ roster, or retain the prepared character. Character creation persists in saved
 mode, while XP/heart progress resets at restart. The choice was surfaced to
 the owner; no answer has arrived. The native prompt must not be auto-answered
 or bypassed. Normal owner character creation must not be advertised as live.
+
+At **2026-11-06T03:17:57Z**, a fresh read-only project listing still selected
+native publisher session `6f90f24c-c2e0-4d00-803a-853401bd55ce` as
+waiting/input needed. At **03:18:34Z**, its PID was alive and a read-only
+capture of its native pane displayed the same roster question. No input was sent.
+Private receipts are `publisher-native-availability-20261106-0319.json`
+and `publisher-native-prompt-20261106-0319.json` under `~/re/gw2/notes/`.
+This verifies availability and the prompt, not release activity, an owner
+answer, a resource lease or a newer deployment.
 
 Next work preserves the release workflow and unanswered native owner prompt
 while independent source-backed tutorial/skill behavior advances. The full goal

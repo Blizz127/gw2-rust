@@ -246,8 +246,9 @@ const HEALTH_STATE_ALIVE: u8 = 0;
 
 /// Endurance for 217: points, maximum, effective maximum, segment divisor
 /// (`docs/re/209026-character-health-endurance.md`: points <= effective maximum
-/// is asserted by the setter; divisor 0 reads as 1). placeholder: 100 points in
-/// two segments is the familiar default, not established from content.
+/// is asserted by the setter; a zero divisor makes the quotient getter
+/// return 1). These are unproved fixture values: 100 / divisor 2 yields 50
+/// from that getter, not two segments. No retail starter tuple is established.
 const ENDURANCE: u32 = 100;
 const ENDURANCE_SEGMENTS: u32 = 2;
 

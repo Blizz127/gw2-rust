@@ -102,3 +102,40 @@ Private bundle: `~/re/gw2/notes/209026-endurance-deficit-1.json`.
 | `ev_f8f55a9f1052013931e71b02dfc8155e1766a45261397aa03436540b24bb73bf` | Getter and complete generic direct-record/setting lookup. |
 | `ev_e7525b7c5f801d9d0230f1c54c126d58ac1f6781870ce20891ea82d1cd2623d5` | Descriptor initialization and variant pointer reader. |
 | `ev_78c70bfcdf3d36b230792695636b1626d81143bcc63c4365f6d42ea7d949927b` | All-32-container GUID resolution to the unique type-64 record. |
+
+## Bounded exact caller follow-up, 2026-11-06
+
+An independent hash-checked PE pass searched the two exact function addresses,
+not every occurrence of their virtual offsets. Neither has an E8 direct call,
+E9 direct jump or REX.W RIP-relative LEA reference in executable sections.
+Each has exactly one aligned absolute Qword reference in readable,
+non-executable raw sections:
+
+| Function | Sole pointer reference | Offset from established endurance vtable `0x14216adc8` |
+| --- | --- | --- |
+| Consume `0x1412230c0` | `0x14216ae30` | +0x68 |
+| Effective-maximum/divisor quotient `0x141222d80` | `0x14216adf8` | +0x30 |
+
+This corroborates their virtual bindings but identifies no typed input/action
+or UI consumer. Indirect callers, inlining, other reference encodings and
+unaligned pointers are outside this exact search. No initial divisor selector
+was recovered. In particular, the known quotient arithmetic does not establish
+a retail starting tuple or justify changing the current research divisor to 50.
+The next dependency is a typed endurance receiver at an action/UI consumer;
+an unbound virtual-offset census would not establish it.
+
+Both captures exited 0 without output truncation. REA verified cleanup of the
+owned process group; the second record also reports permission-denied checks
+for process environments whose ownership could not be verified. This is a
+limitation rather than a claim of complete process observation. No client,
+archive or live server was
+accessed, and no gameplay values changed.
+
+- Consume references: `ev_be1a955e268c420da0e89442182bf2f13376003db7bfbdf292010f60cd072821`.
+- Quotient getter references: `ev_cf4c9ec673701a8d4e052bdf5a9fe2172340bdfba39d8cce58f476485cf1db04`.
+- Complete private bundle: `~/re/gw2/notes/209026-endurance-exact-consume-segment-20261106.json`,
+  SHA-256 `82ca00fac1d8e2c545d1559c41b31f57bdc5ac8ec7ee83e847eeee81c5265ba1`.
+- Private exact-reference helper: `~/re/gw2/notes/endurance-exact-consume-segment-xrefs-20261106.py`,
+  SHA-256 `f025520397da15262d866bcd51ae00c5d05b45dd48f812d49dc0806e308d05b2`.
+  It requires executable SHA-256
+  `99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621` before inspection.
