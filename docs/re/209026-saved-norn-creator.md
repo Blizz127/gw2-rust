@@ -1,67 +1,35 @@
 # Build 209026 saved Norn Mesmer creator experiment
 
-The observer has opt-in, single-account persistence and a creation scene.
-Support first deployed in owner release `56242d1`. The integrator's latest
-receipt is `82d8d04-cdn900` at `/home/blizz/gw2-rust-82d8d04-cdn900`, live at
-2026-11-05 23:56:31 UTC in prepared mode, with rollback
-`/home/blizz/gw2-rust-82d8d04`; saved mode is not enabled in the host config.
-The profile retains the Hero's Moot respawn point from `9961b56-hm`;
-the [release receipt](209026-combat-release-3cf2483.md) records hashes and checks.
-Run126 observed actual UI creation, durable save and transfer to a playable
-world connection. Run127 passed process-restart relog using the same record,
-and its final screenshot shows the visible player model. Run125
-resolved the test harness's missing navigation controls. Run134, using
-the tested empty-composite runner fix, now shows the newly created avatar
-on direct world entry and after saved-GUID waypoint rejoin. Run135 showed a
-partially rendered preview. **Run142 subsequently rendered the complete male
-Norn Mesmer preview**, with native graphics/animation readiness, no invalid
-textures and no new assertion, after restoring the complete compatible
-historical texture-remap metadata set. See the
-[tested metadata increment](209026-texture-remapall-private-candidate.md).
-The sole publisher deployed it after run202 verified prepared-profile
-character selection, world entry, combat, loot and heart progress with the
-currently offered runner0e6ac30. Root independently verified live metadata,
-all kit hashes and four owned listeners at 23:56:53 UTC. **Run144 then passed
-the full creation/save/world/defeat/waypoint flow with the actual offered
-runner0e6ac30 and that metadata**, without the runner63 composite repair.
-This removes the demonstrated need for runner63 in this tested flow; it does
-not activate saved mode. The result was handed to the sole server publisher.
-Runner63bc59a owner objects are published and verified,
-but the last launcher-feed readback at 23:56 UTC still advertised b126 with
-the old runner pin. At00:14:31 UTC the publisher explicitly marked the renderer
-dependency resolved, then requested an owner choice about replacing the
-prepared roster with an initially empty saved roster and process-local world
-progress. The coordinator now confirms that native Claude publisher session
-6f90f24c is waiting at that owner question: enable saved characters, hiding
-the prepared Banshee Mesmer behind an empty roster, or keep the prepared
-character. Initial character creation persists; XP/heart progress resets at
-server restart. The coordinator surfaced the exact choice and has received
-no owner answer. The native prompt must not be auto-answered or bypassed.
-The previously accepted native agreement is separate from this unanswered
-roster decision. Preserve the sole publisher's baton; delivered fix handoffs
-remain separate, with no newer release receipt or resource lease established.
+Saved Norn character creation is **enabled live** on
+`/home/blizz/gw2-rust-82d8d04-cdn900` since **2026-11-06T03:29:33Z**.
+The owner chose activation in the native publisher session at03:29:03Z;
+root independently verified the live configuration, backup, kit hashes and
+health at03:43:51Z. See the [activation receipt](209026-saved-norn-live-activation.md).
+The saved roster was empty at readback and hides the prepared Banshee Mesmer.
+Initial creation is durable; world XP, loot and heart progress remain
+process-local and reset on restart. The retail starter goal is incomplete.
 
-The live integrator held activation under the owner's exclusion of known
-broken builds: the creator preview and direct-entry avatar must render.
-Run144 satisfies those rendering checks on the currently offered runner;
-it is private acceptance evidence, not an owner-mode deployment receipt.
-The concrete private activation plan uses `GW2_CHARACTER_MODE=saved-norn` and
-`GW2_CHARACTER_STORE=/home/blizz/gw2-rust-state/characters-norn-owner`, an
-initially empty private owner store, stopped-service backup and rollback that
-preserves later-created records. No synthetic character is imported. Plan:
-`/home/blizz/re/gw2/notes/saved-norn-activation-handoff-v3-20261106.json`
-(SHA-256 `6b7567c330463dfc85a7d7ed4dd512d5d4c14c90b15a9601e982d3d5d5c098bf`),
-reviewed against current `82d8d04-cdn900`; v2 and the original remain preserved.
-All44 local kit files matched the manifest. The plan preserves the complete
-current profile, including revised hostile positions and ambient ravens, and
-incorporates run144's acceptance within its exact fixture scope. A mode-only
-rollback keeps CDN900 and restores prepared mode while retaining every saved
-record; it does not assume a tested client metadata downgrade. This is a
-prepared plan, not permission to answer the native prompt. Activation awaits
-the owner's saved-mode choice, then revalidation of the then-current kit,
-host mode and player state through the sole publisher.
-The separate heart preflight/combination-coverage fix `d175bd5` shipped in
-`018cb96`; it did not by itself clear the then-existing rendering hold.
+The [tested metadata increment](209026-texture-remapall-private-candidate.md)
+resolved the previously demonstrated rendering blockers. Run142 rendered
+complete male Norn Mesmer preview with no new assertion. Run144 then passed
+real UI creation, durable save, visible direct world entry, combat/heart,
+defeat and same-GUID waypoint return with the then-offered runner0e6ac30
+and metadata900, without requiring runner63. Earlier runs126/127 established
+initial save and restart relog; run134 established same-GUID progress carry.
+These private checks are the activation's acceptance basis, not proof of
+all retail encounter/skill behavior.
+
+The sole publisher applied the existing v3 mode/store plan after the owner
+answered its native roster question. The previous unresolved-choice hold
+is historical. The mode-only rollback restores prepared mode while keeping
+later-created records and metadata900; the existing kit rollback is
+`/home/blizz/gw2-rust-82d8d04`. Plan
+`~/re/gw2/notes/saved-norn-activation-handoff-v3-20261106.json`, SHA-256
+`6b7567c330463dfc85a7d7ed4dd512d5d4c14c90b15a9601e982d3d5d5c098bf`,
+remains preserved alongside the actual backup/readback receipt. Root did not
+answer the native prompt or change host configuration. The separate earlier
+heart preflight fixd175bd5 shipped in018cb96; it did not itself clear the
+then-existing renderer hold.
 
 The later respawn rejoin carries XP/level, configured loot drops, heart
 progress and waypoint position through one process-local slot. This is separate

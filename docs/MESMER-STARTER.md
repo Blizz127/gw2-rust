@@ -15,7 +15,7 @@ API/wiki names may locate content but do not replace client verification.
 
 | Requirement | Current state | Evidence needed for completion |
 | --- | --- | --- |
-| Norn Mesmer creation/selection and correct appearance | Private UI creation/save, restart relog and visible world entry pass; run144 passes the combined full creator/save/world/waypoint flow with the current offered runner and deployed metadata. Live saved-mode activation remains held. | Owner-mode activation with existing prerequisites and preservation of biography/appearance/equipment. |
+| Norn Mesmer creation/selection and correct appearance | Private creation/save/world/waypoint flow passes in run144; restart relog passes in run127. Saved mode enabled live03:29:33Z and independently verified03:43:51Z. | Creation/rendering and activation evidence available; preserve biography/appearance/equipment through the remaining full gameplay experience. |
 | Correct Mesmer components and startup skills/equipment | Partial: explicit Mesmer component and source-backed item delivery; runs115/116 render armor, weapon and weapon/healing icons | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Isolated map entry and local movement pass at diagnostic position; gameplay missing | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Shared terrain loaded through Great Hunt; open map 28 not played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
@@ -30,13 +30,20 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-Latest checked server candidate: **5516cb4**,
-[waypoint carry identity](re/209026-waypoint-carry-identity.md), with 4 waypoint,
-42 mission and 7 saved-population tests passed. Its static release binary
-passed four no-listener startup configurations at **2026-11-06T03:12:49Z**.
-It prevents cross-character/map progress transfer and includes the explicit
-earned-attribute curve. This is a prepared artifact for the existing
-publisher, not a deployment or durable world-progression implementation.
+Latest checked server candidate: **45c0731**,
+[caster ownership guard](re/209026-skill-caster-ownership.md). Nine focused
+tests passed, including two regressions that failed before the fix. Its
+isolated static release binary passed four no-listener configurations at
+**2026-11-06T03:45:50Z**. It includes5516cb4's waypoint identity correction,
+earned-attribute curve and earlier skill-input corrections. It adds no
+profile setting or schema and is handed to the sole publisher, **not deployed**.
+The publisher's run203 on the earlier5516cb4 candidate reached the world and
+cleaned up, but its03:52 readback contains no sword SkillBegin or combat
+response. A combat pass is not established for either cumulative candidate;
+the admission/input cause remains unresolved. See the
+[readback](re/209026-saved-norn-live-activation.md#subsequent-combat-smoke-readback).
+Ether Feast is excluded from generic attack damage; healing/recharge remain
+unimplemented and must not be advertised as part of this candidate.
 
 New static findings bind the [cinematic start/stop contract](re/209026-cinematic-start-contract.md)
 and [server-delivered shrine locations](re/209026-norn-shrine-location-delivery.md).
@@ -55,47 +62,30 @@ their name-based join continuation. The
 client415 and its known submission-control event without directly choosing
 a cinematic. This narrows the remaining intro dependency to authentic
 Norn playback inputs/sequence; the generic UI/view wiring does not select
-them. No Norn cinematic is emitted and no further gameplay build was made.
+them. This source slice emits no Norn cinematic and changes no gameplay.
 
-Latest independently verified live kit: **82d8d04-cdn900**, prepared mode,
-deployed 2026-11-05 23:56:31 UTC; kit/metadata hashes and four listeners
-reverified at 2026-11-06 00:54:19 UTC. The read-only check found the same
-kit and b126 launcher feed; all hashes and four owned listeners passed,
-with0 human connections. Receipt:
-`~/re/gw2/notes/209026-live-cdn900-independent-readback-20261106.json`,
-REA `ev_5b73e33ac58e8437dbe33ce42a687c1168c6036a207f12924e36320efbb5c34c`.
-The [saved creator record](re/209026-saved-norn-creator.md) covers real UI
-creation, durable initial save, restart relog, visible direct world entry and
-same-GUID waypoint rejoin. [Run142](re/209026-texture-remapall-private-candidate.md)
-passes complete male Norn Mesmer preview rendering with no new assertion.
-The sole publisher deployed that tested metadata after a successful
-prepared-profile smoke with the current launcher runner; the release receipt
-is linked from the run142 note. Run144 then passed the combined full flow
-with the actual offered runner0e6ac30, without the runner63 repair: visible
-creator and returned-world avatar, unchanged initial record and no new
-crash-log bytes. It carries XP/loot/heart state only within the server process.
-Runner63 owner objects are uploaded, but the last
-launcher readback still selected b126/0e6ac30. At00:14:31 UTC the publisher
-marked rendering resolved and requested a roster choice. The coordinator
-subsequently confirmed the publisher is waiting at this native owner question:
-enable saved characters, hiding the prepared Banshee Mesmer behind an empty
-roster, or retain the prepared character. Character creation persists in saved
-mode, while XP/heart progress resets at restart. The choice was surfaced to
-the owner; no answer has arrived. The native prompt must not be auto-answered
-or bypassed. Normal owner character creation must not be advertised as live.
+Latest independently verified live kit: **82d8d04-cdn900**, now in
+**saved-norn mode since2026-11-06T03:29:33Z**. The owner chose activation in
+the native publisher session at03:29:03Z. At03:43:51Z root independently
+verified both mode/store settings, empty0700 store, backup hash, all44 kit
+manifest entries, metadata900, four owned listeners and zero humans.
+[Activation/readback evidence](re/209026-saved-norn-live-activation.md).
+The prepared Banshee Mesmer is hidden. New creation records persist; XP,
+loot and heart progress still reset at a server restart.
 
-At **2026-11-06T03:17:57Z**, a fresh read-only project listing still selected
-native publisher session `6f90f24c-c2e0-4d00-803a-853401bd55ce` as
-waiting/input needed. At **03:18:34Z**, its PID was alive and a read-only
-capture of its native pane displayed the same roster question. No input was sent.
-Private receipts are `publisher-native-availability-20261106-0319.json`
-and `publisher-native-prompt-20261106-0319.json` under `~/re/gw2/notes/`.
-This verifies availability and the prompt, not release activity, an owner
-answer, a resource lease or a newer deployment.
+[Run142](re/209026-texture-remapall-private-candidate.md) established the
+complete male Norn Mesmer preview; [run144](re/209026-saved-norn-creator.md)
+then passed the creator/save/world/defeat/waypoint flow with runner0e6ac30
+and metadata900. The later mode change uses that prior acceptance and does
+not establish full retail encounter behavior. The03:43:52Z feed readback
+now offers b128; that query did not inspect its runner pin. Earlier b126
+and unanswered-roster observations are historical, not current blockers.
 
-Next work preserves the release workflow and unanswered native owner prompt
-while independent source-backed tutorial/skill behavior advances. The full goal
-remains open; diagnostic fixture results are not retail encounter completion.
+The same publisher session was alive/status shell at03:41:35Z and reported
+preparing5516cb4's combat smoke. Root returned unused window23 at03:42:49Z
+for publisher priority run203. Run145 remains unlaunched and requires a
+fresh window24. No root client launch, competing deployment, native prompt
+answer or restart occurred. The full Norn-first goal remains open.
 
 An earlier offline increment adds a bounded
 [named ability-value resolver and sword damage-fact evidence](re/209026-mesmer-sword-damage-facts.md).
@@ -117,13 +107,11 @@ It connects named coefficients to the exact tooltip calculation while keeping
 weapon, attribute and level inputs explicit. Combat damage, hit timing and
 the final attack-chain policy remain outside that implemented scope.
 
-The coordinator's00:42 UTC project-state check identified the native Claude
-publisher as waiting/input needed, initially without a known cause or task-ledger
-receipt for5169b98. The later concrete report identifies the native roster-choice
-prompt as the cause. No newer receipt or resource lease is established.
-The5169b98 andcac0e9a handoffs remain delivered and separate from that decision;
-no duplicate dispatch, restart or publisher takeover is authorized.
-The00:54 UTC live readback remains the latest deployment verification.
+The coordinator's00:42 UTC waiting/input-needed observation and root's
+03:18 native-prompt capture were superseded by the owner's03:29 choice and
+the03:43 independent saved-mode readback. Delivered server fix handoffs
+remain distinct from deployment receipts. Preserve the sole publisher and
+active-player/backup/rollback checks.
 
 The tested server guard `5169b98` excludes Ether Feast10176 from generic
 attack damage and implicit attack-target changes. All32 mission tests, build
@@ -193,8 +181,9 @@ profiles remain bootable with an explicit retirement notice. Three new
 regressions and affected mission/shared-configuration checks pass. The
 [replacement static binary and paired supervisor](re/209026-skill-slot-release-correction.md#replacement-artifact-not-deployed)
 passed no-listener auth/mission preflights and retirement checks at02:21:24 UTC.
-It is ready under the existing publisher/native-prompt holds, not deployed.
-Run145 remains unchanged. Actual accepted-order animation/lifecycle and
+It is included in45c0731 under the sole publisher/resource constraints,
+not deployed. The native roster prompt is resolved. Run145 remains unchanged
+and unlaunched. Actual accepted-order animation/lifecycle and
 automatic repetition remain unfinished.
 
 The [sword-chain trace/codec](re/209026-mesmer-sword-chain.md), commitf382933,

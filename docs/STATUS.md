@@ -6,62 +6,46 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. The latest independently verified live server is
-**82d8d04-cdn900**, `/home/blizz/gw2-rust-82d8d04-cdn900`, deployed
-2026-11-05 23:56:31 UTC. At 2026-11-06 00:54:19 UTC all kit hashes, selected metadata
-and four owned listeners passed; it remains in
-prepared mode and includes walking, heart-coordinate/reward fixes and three
-ambient ravens. This is a diagnostic starter fixture, not the complete
-retail Great Hunt sequence.
+tracks the remaining scope. Live kit **82d8d04-cdn900** remains at
+`/home/blizz/gw2-rust-82d8d04-cdn900`, with **saved-norn mode enabled since
+2026-11-06T03:29:33Z** after the owner's native choice. Root independently
+verified mode/store, empty0700 store, backup hash, all44 kit entries,
+metadata900, four listeners and zero humans at **03:43:51Z**. See the
+[live activation receipt](re/209026-saved-norn-live-activation.md).
 
-[Saved-character runs](re/209026-saved-norn-creator.md) have verified real UI
-creation, durable initial records, restart relog, visible direct world entry,
-and same-GUID waypoint rejoin with process-local XP/loot/heart state. World
-progress is not durable across server restarts. **Run142 now passes the
-complete male Norn Mesmer creator-preview smoke** with no new assertion:
-[metadata fix and evidence](re/209026-texture-remapall-private-candidate.md).
-The compatible historical texture-remap set is now deployed in that kit,
-after a successful prepared-profile smoke with the current launcher runner.
-**Run144 then passed the combined creator/save/world/defeat/waypoint flow
-using the actual offered runner0e6ac30 and the new metadata**, without the
-runner63 repair. The full creator and returned-world avatar are visible;
-the sole saved record is unchanged, with no new crash-log bytes. This evidence
-was returned to the sole publisher for activation reassessment. The latest
-launcher readback still advertises b126/0e6ac30; runner63bc59a's owner objects
-are separately uploaded and verified. At00:14:31 UTC the publisher marked
-rendering resolved and requested a choice about replacing the prepared roster
-with an empty saved roster. The coordinator now confirms that the publisher
-is stopped at that native owner question. Enabling saved characters hides
-the prepared Banshee Mesmer and presents an empty roster; newly created
-characters persist, but XP/heart progress resets at server restart. The
-alternative retains the prepared character. The coordinator surfaced this
-choice to the owner and has received no answer. Preserve the native prompt;
-do not auto-answer or bypass it. The prepared live character is not normal
-character creation.
+The owner can create a Norn Mesmer through the saved roster; the prepared
+Banshee Mesmer is hidden. Initial creation persists, while XP/loot/heart
+progress resets at restart. [Run144](re/209026-saved-norn-creator.md) is the
+prior private creator/save/world/defeat/waypoint acceptance with runner0e6ac30
+and live metadata900. This remains an incomplete diagnostic starter fixture.
+The latest feed readback at03:43:52Z offers b128; its runner pin was not
+inspected by that query. The earlier native roster prompt is resolved.
 
-Latest checked cumulative server candidate: **5516cb4**,
-[waypoint identity correction](re/209026-waypoint-carry-identity.md), checked
-**2026-11-06T03:12:49Z**. Pending waypoint spawn/XP/loot/heart progress now
-belongs to its selected character and map; another join cannot consume it.
-Four waypoint, 42 mission and seven saved-population tests pass, with an
-isolated static build and four no-listener configuration checks. It includes
-the earlier explicit earned-attribute curve and skill-input corrections.
-The artifact is recorded for the sole publisher, **not deployed**. The
-native roster prompt, last verified live kit, rollback and held run145 remain.
+Latest checked cumulative server candidate: **45c0731**,
+[caster ownership guard](re/209026-skill-caster-ownership.md), checked
+**03:45:50Z**. Foreign SkillBegin agent indices cannot mutate target/combat
+or reward state or trigger order responses. Nine focused tests, an isolated
+static build and four no-listener startup configurations pass. The artifact
+includes5516cb4 and is handed to the sole publisher, **not deployed**.
+Ether Feast healing/recharge remain unimplemented; the earlier guard only
+prevents generic attack damage and retaliation.
 
-Read-only publisher verification at **2026-11-06T03:17:57Z** found the same
-native session waiting/input needed. At **03:18:34Z**, its PID was alive
-and the same roster choice appeared in its native pane. No input or duplicate dispatch was
-sent. The private receipts are linked in the completion ledger; this is
-availability evidence, not a release receipt or resource reservation.
+The publisher is active again. A read-only REA check of run203 at 03:52:25Z
+found world startup and cleanup, but no sword SkillBegin or combat response.
+The only typed SkillBegin was Ether Feast10176 with target0. This does not
+establish a combat pass for5516cb4 or the cumulative45c0731 candidate; the
+input/admission cause remains unresolved. See the
+[smoke readback](re/209026-saved-norn-live-activation.md#subsequent-combat-smoke-readback).
+Root returned window23 unused at03:42:49Z for its run203 priority. Run145
+has not launched and needs a fresh window24. No running test inputs were
+changed, and no competing publish/restart was dispatched.
 
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).
 Norn cinematic selection/trigger and actual tutorial shrine locations remain
 unproved. [Result listeners](re/209026-typed78-result-listeners.md) provide
 no heal/cooldown trigger. A misleading endurance comment is corrected with
-no value change. This slice adds no new gameplay build; 5516cb4 remains the
-latest checked candidate and 82d8d04-cdn900 the last verified live kit.
+no value change. These source notes themselves add no gameplay behavior.
 
 The [creation-cinema view bridge](re/209026-creation-cinematic-view-bridge.md)
 also binds concrete playback callbacks to loading/playback states and the
@@ -75,12 +59,14 @@ New source notes bound [second-level scaling](re/209026-second-core-level.md),
 not supply retail skill timing, map scaling or the Great Hunt encounter rule.
 
 The [launcher publisher's reconciliation](re/209026-empty-composite-runner.md#publisher-reconciliation-2026-11-06)
-identifies the separate b127 blocker: the existing updater channel is public
+records the earlier separate b127 blocker: the existing updater channel is public
 and unauthenticated, while this request is owner-only with no audience
 widening. No compatible authorized owner-only update feed is verified;
 manual preview archives are not such a feed. This is not an HTTP/access
 denial. Runner objects and rollback are verified, with no duplicate upload
-or launcher release. Independent server fixes remain handed off to the sole publisher.
+or launcher release by this lane. The later b128 metadata readback above
+does not establish a changed audience or resolve that historical constraint.
+Independent server fixes remain handed off to the sole publisher.
 
 Tested commit5169b98 prevents Ether Feast from causing generic attack damage,
 target changes or retaliation; the sole publisher has the ready handoff,
@@ -93,15 +79,10 @@ Its static binary is staged privately and handed to the publisher, with no
 default profile activation or new live claim. See the
 [completion ledger](MESMER-STARTER.md#current-checkpoint) for the exact boundary.
 
-The coordinator's **00:42 UTC publisher-state check** first established
-waiting/input needed without a known cause. Its later concrete availability
-report confirms the native saved-character question above as the reason.
-No owner answer, newer release receipt or shared-resource lease is established.
-The delivered5169b98 andcac0e9a handoffs remain separate from that decision;
-they are not deployment receipts or proof of release work running. No duplicate
-dispatch, restart or publishing takeover is authorized. Preserve the sole
-publisher, native prompt and safe rollout. The00:54 UTC live readback above
-remains the deployment evidence.
+The earlier00:42 waiting/input-needed and03:18 unanswered-prompt checks
+are historical. The owner's03:29 choice and independent03:43 saved-mode
+readback supersede them. Prepared artifacts and queued coordinator messages
+still do not establish a newer binary deployment.
 
 Independent source work adds bounded
 [recharge content selection](re/209026-skill-recharge-content.md) and raw
@@ -119,7 +100,7 @@ three focused tests and independent cached-pack verification pass. New
 identifies visual notifications and view state, without deriving server
 healing/success timing. [Mesmer resource consumers](re/209026-mesmer-resource-consumers.md)
 establish displayed capacity/current count, not a live clone census or
-retail default. These remain offline changes under the same publisher hold.
+retail default. These remain offline changes awaiting publication through the active publisher.
 
 The earlier [repeat-attack artifact](re/209026-repeat-attack-admission.md),
 c862325 / SHA834c723f…, is **superseded**. The complete
@@ -130,8 +111,9 @@ Three new regressions and the affected mission/shared-configuration checks
 pass. The isolated static binary, SHA **a31f6a21…**, and required paired
 supervisor, SHA **673a6cea…**, pass auth/mission no-listener checks at
 **02:21:24 UTC**, including legacy-profile compatibility. Full paths/hashes
-are in the correction note. It is ready for the sole publisher under the
-unchanged native prompt/holds; it is not deployed or staged into run145.
+are in the correction note. This earlier candidate is included in45c0731;
+the sole publisher and resource constraints remain. It is not deployed or
+staged into run145, and run203 has not established a combat pass.
 The separately tested
 [server628 chain codec](re/209026-mesmer-sword-chain.md), commitf382933,
 provides exact predecessor/count state delivery, with three tests passed;
@@ -149,8 +131,8 @@ server combat damage. New [input-producer](re/209026-skill-input-29-2a.md)
 and [finish-listener](re/209026-typed78-finish-listeners.md) evidence does not
 establish automatic repetition or chain-advance timing. The story follow-up
 joins story9 to starting quest358; the story2→9→10 links remain unnamed.
-These are offline code/source increments. The native publisher prompt,
-prepared live build and held run145 inputs remain unchanged.
+These are offline code/source increments. Saved mode is now live on the
+existing82d8d04-cdn900 binary; run145 inputs remain unchanged and unlaunched.
 
 The same [sword fact module](re/209026-mesmer-sword-damage-facts.md#type-13-reader-and-numeric-evaluator)
 now decodes type-13 facts and evaluates their numeric tooltip with explicit
