@@ -71,3 +71,44 @@ Private bundle: `~/re/gw2/notes/209026-character-buff-context-1.json`
 | `ev_bd79dd3232ec0015dc58365e2e2412cb24c2be3c5d05c8a47162a78f0ee14338` | Constructor tail, owner subscription and complete membership predicate. |
 | `ev_6ce5c95869f0133ff087bb555ee91e6911a2c5b1d0096d6cb997afb2ce1bac53` | Buff primary +0x58 entry. |
 | `ev_0842e54381587b6f057b823da9b0e1c2d188ab428eee62419ccb0410b62b728d` | Embedded buff source diagnostics. |
+
+## Bounded service and owner-listener follow-up
+
+The exact service-table lead was inspected on 2026-11-06 with target-free
+REA/Rizin reads of the same pinned executable. No client execution or cold
+analysis import was needed. Service +8 (`1412c0680..1412c0714`) resolves
+the supplied agent's existing context: type0 uses the character interface's
+virtual +108, and type10 uses the alternate interface's +50. Service +10
+(`1412c07f0..1412c080d`) is only a null/type0-or10 predicate. Neither method
+populates the buff collection.
+
+The constructor-installed buff+8 listener table `142184220` has two
+nontrivial callbacks among its thirteen inspected entries. Callback
+`1412c4980..1412c4aaf` records a raw state and walks occupied entries only
+when a transition involves state1. For a tag1 SkillDef with body+4 bit40,
+it calls stored-owner virtual +140 on entering state1, or +128 on leaving
+it. The body does not insert or remove buff instances. Neither the state
+nor that flag has an established gameplay name in this trace.
+
+Callback `1412c4ab0..1412c4b5f` verifies the owner, unsubscribes and clears
+the stored owner. It is a lifetime callback, with no demonstrated network
+removal input. Primary virtual0 (`1412c3110..1412c3132`) separately reports
+unsupported client spawn scaling and returns zero; this does not classify
+the remaining primary methods.
+
+This closes the service/listener lead without establishing a buff packet,
+instance insertion or targeted removal. A typed network handler reaching
+those mutations is still needed. The separately retained Ether Feast
+“Conditions Removed” display fact does not supply classification,
+selection, delivery or an authoritative removal policy.
+
+Private findings: `209026-buff-delivery-typed-boundary-findings-20261106.json`,
+SHA-256 `3301d3d6fb811080c2ab3dea120f825210a244dd37c39c91ed0347838bee671c`.
+Complete evidence: `209026-buff-delivery-typed-boundary-evidence-20261106.json`,
+SHA-256 `15ea84ba0d4254552393935ee30a4430ed958cbe899070e6f2cb08802db84611`.
+The four captures are `ev_c43247ae07e0942853d1903a5f1efdbee470e4d7ddb4e783771c56f6324a876b`,
+`ev_9d6b90c2e808e35a6dd1cd96b9cf66f5411d4f04fdd9274bc98718a823beb394`,
+`ev_e5e98c1b9399d0d593c85706ce2b606a686aa576f09c5831c97b9d8df89a7bd5`
+and `ev_21ec3066c92871ccebe121a061f5e72af9fc90cc19771552c403e54bf31821b1`.
+All exited0 with complete output and unchanged executable hashes; bounded
+adjacent code and Rizin's string-region warnings remain in the raw evidence.
