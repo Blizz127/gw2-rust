@@ -39,6 +39,21 @@ choice to the owner and has received no answer. Preserve the native prompt;
 do not auto-answer or bypass it. The prepared live character is not normal
 character creation.
 
+Latest checked cumulative server candidate: **5516cb4**,
+[waypoint identity correction](re/209026-waypoint-carry-identity.md), checked
+**2026-11-06T03:12:49Z**. Pending waypoint spawn/XP/loot/heart progress now
+belongs to its selected character and map; another join cannot consume it.
+Four waypoint, 42 mission and seven saved-population tests pass, with an
+isolated static build and four no-listener configuration checks. It includes
+the earlier explicit earned-attribute curve and skill-input corrections.
+The artifact is recorded for the sole publisher, **not deployed**. The
+native roster prompt, last verified live kit, rollback and held run145 remain.
+
+New source notes bound [second-level scaling](re/209026-second-core-level.md),
+[command queue ordering](re/209026-agent-command-queue-order.md), and the
+[Norn goal-marker filter](re/209026-norn-map-goal-marker-filter.md). They do
+not supply retail skill timing, map scaling or the Great Hunt encounter rule.
+
 The [launcher publisher's reconciliation](re/209026-empty-composite-runner.md#publisher-reconciliation-2026-11-06)
 identifies the separate b127 blocker: the existing updater channel is public
 and unauthenticated, while this request is owner-only with no audience
@@ -104,7 +119,7 @@ it is not yet wired into attacks. The [authored story link](re/209026-quest154-a
 confirms story2's starting quest154 and its goal1/map379 relationship,
 without supplying actors or objective triggers.
 
-The new [named ability-value resolver](re/209026-mesmer-sword-damage-facts.md)
+The earlier [named ability-value resolver](re/209026-mesmer-sword-damage-facts.md)
 passes nine focused tests and a compiled comparison of 16 named sword values
 plus eight literal values against frozen content. It preserves first-group
 precedence, explicit context and checked string/reference bounds. The same

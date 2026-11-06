@@ -30,6 +30,14 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+Latest checked server candidate: **5516cb4**,
+[waypoint carry identity](re/209026-waypoint-carry-identity.md), with 4 waypoint,
+42 mission and 7 saved-population tests passed. Its static release binary
+passed four no-listener startup configurations at **2026-11-06T03:12:49Z**.
+It prevents cross-character/map progress transfer and includes the explicit
+earned-attribute curve. This is a prepared artifact for the existing
+publisher, not a deployment or durable world-progression implementation.
+
 Latest independently verified live kit: **82d8d04-cdn900**, prepared mode,
 deployed 2026-11-05 23:56:31 UTC; kit/metadata hashes and four listeners
 reverified at 2026-11-06 00:54:19 UTC. The read-only check found the same
@@ -61,7 +69,7 @@ Next work preserves the release workflow and unanswered native owner prompt
 while independent source-backed tutorial/skill behavior advances. The full goal
 remains open; diagnostic fixture results are not retail encounter completion.
 
-The latest offline increment adds a bounded
+An earlier offline increment adds a bounded
 [named ability-value resolver and sword damage-fact evidence](re/209026-mesmer-sword-damage-facts.md).
 Nine focused tests pass; the compiled reader matches all 16 named cases and
 eight literal cases against independently parsed frozen records. It provides
