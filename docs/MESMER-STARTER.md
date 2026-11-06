@@ -16,7 +16,7 @@ API/wiki names may locate content but do not replace client verification.
 | Requirement | Current state | Evidence needed for completion |
 | --- | --- | --- |
 | Norn Mesmer creation/selection and correct appearance | Private creation/save/world/waypoint flow passes in run144; restart relog passes in run127. Saved mode enabled live03:29:33Z and independently verified03:43:51Z. | Creation/rendering and activation evidence available; preserve biography/appearance/equipment through the remaining full gameplay experience. |
-| Correct Mesmer components and startup skills/equipment | Partial: explicit Mesmer component and source-backed item delivery; runs115/116 render armor, weapon and weapon/healing icons | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
+| Correct Mesmer components and startup skills/equipment | Partial: run209 confirms set4/item33355/palette90. Run211 confirms row7/3 and base10170 visitation: slot and level pass, availability fails. A base-skill availability correction is being prepared; positive selection/cast is not yet verified. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Isolated map entry and local movement pass at diagnostic position; gameplay missing | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Shared terrain loaded through Great Hunt; open map 28 not played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
 | Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work; retail skill effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
@@ -30,14 +30,34 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+Run211 identifies the current empty sword slot's observed cause: base10170
+passes slot and level checks but fails native availability. Two complete
+owned palette90/profession7/category3 lookups agree. The locale predicate
+is not reached. Window26 was returned complete at05:15:07Z. A private
+17-byte skill batch adds only605(10170) before the unchanged612 rebuild;
+typed/schema/parser/startup checks pass. The next smoke uses exact live4b3c4c2
+with legacy autoattack omitted, because real SkillBegin plus the old29
+release fallback can produce duplicate damage. No grant/profile change
+is live yet, and no full retail unlock/effect policy is claimed. See the
+[runtime evidence](re/209026-sword-slot-selection-runtime.md#run211-base-sword-availability-rejects-selection).
+
 Released independent fix: **9451cf0**, the seven-line caster guard
-directly on live c2cb6fd. Eight focused tests, offline musl build and four
+directly on then-live c2cb6fd. Eight focused tests, offline musl build and four
 no-listener checks passed at04:03:38Z; current combat settings and Ether Feast
 exclusion are preserved. The corrected artifact handoff was submitted to
 the existing sole publisher's native inbox at04:33:23Z under taskf45083e2793a.
 The publisher integrated it as e788d58 and deployed it in4b3c4c2 at04:46:24Z;
 root independently verified live hashes/health at04:53:03Z. See the
 [receipt](re/209026-skill-caster-ownership.md#independent-fix-released-through-the-sole-publisher).
+
+Progression storage remains under the owner's no-schema-change restriction.
+The private proposal `~/re/gw2/notes/saved-character-progression-proposal-v1-20261106.json`
+keeps original GW2CHR01 records intact and specifies a separate transactional
+progression database. Root asked the owner directly through asynchronous
+input whether to authorize that exception; the question is pending, and no
+approval, schema change or reset is assumed. Activation must preserve
+existing progress. Do not repeat the question; consult the root-owned
+shared persistence-boundary record for any later answer.
 
 The separate cumulative candidate **45c0731** contains the
 [caster ownership guard](re/209026-skill-caster-ownership.md). Nine focused

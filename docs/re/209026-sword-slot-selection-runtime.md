@@ -123,6 +123,62 @@ root runtime after that return. Existing runs remain unchanged.
 - Input manifest SHA-256:
   `b846bece584d5c5fc5abb997767da00f7534dc2adabfc7be34d8f5f3053645df`.
 
+### Run211: base-sword availability rejects selection
+
+The nine-site observer followed two owned slot5 lookups through actual
+palette-row selection and every candidate. Both selected palette90 row16,
+profession7/category3 with four entries. Candidates45230,10172 and10171
+returned false; their detailed rejection predicates were outside this
+probe's scope. Base10170 was then evaluated with its availability bypass
+clear. Its slot predicate returned1, and its unsigned level returned1
+against minimum1. Its availability predicate returned0, immediately
+rejecting the candidate. The locale scalar was0, but the locale predicate
+was not reached. Both outer lookups and caches remained null.
+
+There were30 records and29 callbacks, with one rejected callback and no
+errors inside either complete attempt. The terminal record reports no
+open lookup or candidate. UI and outer run exited0; no assert text was
+found. Executable hashes, credential-safe console and container cleanup
+passed. Window26 was returned complete at **2026-11-06T05:15:07.388549Z**.
+This is a negative selection observation, not successful casting or proof
+of a full retail availability policy.
+
+The isolated correction candidate is
+`~/re/gw2/notes/skill10170-availability-candidate-20261106/skills-10170.bin`,
+17 bytes, SHA-256
+`4ceabe189b2b1fa26310a1339424b882cadfc03cd8480f26c7a55be0b2280678`.
+It preserves605(10176,player1) and612(palette366,slot0,locale0,player1),
+inserting only605(10170,player1). Typed encode/decode, independent literal
+and extracted-schema checks, SkillFixture ordering/identity checks and a
+no-listener configuration check pass. No live profile or saved data changed.
+
+The next smoke must omit `--mission-autoattack-skill`, not set it to0.
+Live4b3c4c2 otherwise responds both to real SkillBegin and to legacy29
+release input. Keeping both after the grant risks duplicate damage. With
+the option absent, real controlled10170 requests retain the existing
+damage-on-skill30 response and29 produces none. The old echo remains off;
+its Word0 and unmodified request flags do not establish accepted execution.
+This isolates the candidate from the cumulative45 changes while leaving
+actual cast lifecycle, chain progression and retail effects unresolved.
+
+Evidence under `~/re/gw2/notes/`:
+
+- Launch: `209026-run211-slot5-launch-20261106.json`,
+  `ev_da26361418f29d9906bfb920ab4957b0caee53cfdaee0ce6fdb20dfeb80b661f`.
+- Full readback: `209026-run211-slot5-readback-20261106.json`,
+  `ev_b4237b14fccd74f8df3111192fbc1d35c4bfaea94b31dfb4b7119ef88fb421de`.
+  Its complete29402-byte raw/normalized output is retained, but three
+  rendered frames are missing. This is recorded as partial rendering.
+- Compact readback: `209026-run211-slot5-compact-readback-20261106.json`,
+  `ev_e90ad18a50cd17e92cd4754aafe69be513d22592fa4742e0c7383946c36ea16d`.
+  It rechecks identical input-log hashes and exits0 without truncation.
+- Return/cleanup: `209026-run211-window-return-20261106.json`,
+  `ev_020ebabdaaacc72c331e9e36455df952594f8f15dee324c06c8030ff05b4af1b`.
+- Client log SHA-256:
+  `58aced651204f63d64c882d0d7809cc643ed06f636eab3a695f2836e35005949`.
+- Mission log SHA-256:
+  `1cc158c7528e0a5138f7752b540dc40faa875c1d646a8695470b20a1f34343b1`.
+
 ### Earlier activation observations
 
 The private helper observes seven source-guarded entry, return and call sites.

@@ -66,7 +66,13 @@ window25 and captured two complete owned slot5 lookups with set4,
 item33355/kind24 and palette90 present, but a null resolver result. UI and
 cleanup passed, with no in-attempt observer errors. Window25 was returned
 complete at04:52:21Z. Actual row/candidate selection and its eligibility
-results are the next observation; no grant or packet change is yet justified.
+results were the next observation. Run211 subsequently proved that row7/3
+is selected and base10170's slot and level checks pass, but availability
+returns0. Two complete attempts agree; locale evaluation is not reached.
+Window26 was returned complete05:15:07Z. A private single-skill availability
+candidate is prepared for a fresh smoke on live4b3c4c2 with legacy autoattack
+disabled to avoid duplicate release-triggered hits. This correction is not
+yet live; retail skill lifecycle/effects remain incomplete.
 
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).

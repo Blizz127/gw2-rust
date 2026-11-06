@@ -3,7 +3,7 @@
 ## Independent fix released through the sole publisher
 
 **9451cf084cd1896824bac165b3ebf9adc7b20291** applies the same seven-line
-SkillBegin ownership guard directly to live source **c2cb6fd**. It preserves
+SkillBegin ownership guard directly to then-live source **c2cb6fd**. It preserves
 the existing diagnostic autoattack, profile, supervisor and Ether Feast
 damage exclusion. It avoids the cumulative candidate's unresolved sword
 activation regression. Only `mission.rs` differs from c2cb6fd; removing the
@@ -46,9 +46,9 @@ At04:38:54Z, source inspection confirmed the publisher's commit
 `e788d586a5bd6d3828d2cedf49cf6022ffd17fff` contains exactly the same119
 inserted guard/test lines. That inspection established source integration;
 the private receipt is `caster-ownership-publisher-source-integration-20261106.json`.
-Keep the current c2cb6fd-amb profile, saved store/mode, metadata900, player
-checks and rollback; do not overwrite its added ambient population with
-the earlier staged profile.
+Keep the publisher's current profile, saved store/mode, metadata900, player
+checks and rollback; do not overwrite later NPC additions with the earlier
+staged profile.
 The publisher subsequently recorded the integrated fix live in **4b3c4c2**
 at **04:46:24Z**. Root independently verified its binary/manifest hashes,
 health and saved mode at **04:53:03Z**. The candidate's original standalone
