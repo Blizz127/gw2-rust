@@ -351,3 +351,50 @@ Both exited0 with nontruncated output and verified owned-process cleanup.
 The private bounded candidate helper is
 `recharge-context-local-writers-20261106.py`, SHA256
 `4b2f34cfdee89607221e15f7f40db26748d868de266f03616d57dec794a9606c`.
+
+## Exact setter-caller boundary
+
+A further bounded follow-up approached the unresolved context from the
+typed setter's callers rather than repeating the field-writer search.
+An exact E8/E9 query for `0x141214030` found two instruction-validated
+calls, both already within the established recharge ownership chain:
+
+| Call site | Concrete receiver and source of arguments |
+| --- | --- |
+| `0x1411fb498` | Complete skillbar wrapper `0x1411fb470..0x1411fb4a1` loads receiver from skillbar +`0x150`, copies the caller's skill reference, and forwards the category, remaining, total and raw value. It does not select a value from skill content or install context. |
+| `0x141213cc9` | The recharge object's own scheduled callback reloads the current list head's skill +`0x18`, category +`0x24`, remaining +`0x10`, total +`0x20`, and stored value +`0x28`, then invokes the setter with the same receiver. This path preserves an existing value; it does not introduce an initial category0 value. |
+
+The second call is in the positive-remaining, paused-head branch of the
+already retained complete callback. Its presence must not be mistaken for
+an independent authored recharge producer. The query also reconfirmed the
+two known constructor calls, from the skillbar and shared-owner constructors;
+it found no additional construction path in these encodings. An exact
+Qword-pointer query for the setter found no matches. These searches cover
+only the stated direct branch encodings and literal pointers, not all
+indirect control flow, inlining or context writes elsewhere.
+
+This leaves the same precise boundary: a concrete assignment to recharge
++`0x28`, or a separately authorized observation of a nonnull context followed
+by its typed binding, is still needed to identify the notification receiver.
+Neither the wrapper nor the scheduled self-call establishes a category0
+Word default. The [cast-tooltip](209026-mesmer-cast-tooltip.md) and
+[animation-event](209026-skill10176-animation-event-consumers.md) contracts
+were also checked before considering authored timing: execute1067,
+type-0/action1350 and segment2067 are distinct quantities with established
+client consumers, not newly recovered server34 durations. No timing or
+recharge value was substituted into gameplay.
+
+New setter-reference evidence is
+`ev_ba2b390686bd734b7c5e8fc979d063a2973418a9ecc6a489f0b545fb339a61e1`;
+complete wrapper and literal-pointer query are
+`ev_5f2829ac12ce57a3d2663451c9b7c62fefb2b155af87dfc55037f5c60bb4e0b9`.
+The scheduled callback reuses
+`ev_b4410f67a5842898a61e5f67cd3d2fae71c4d8b00b5f3b046b28a08807449879`
+from the original bundle. The new private receipt, including one bounded
+animation-accessor exploration that does not establish server duration, is
+`/home/blizz/re/gw2/notes/209026-recharge-setter-caller-boundary-20261106.json`,
+SHA256 `803841259e644e927afa309c67a406499e267fb3655f1600c87283490d9908b5`.
+All three new captures exited0 with complete raw output and verified owned
+process-group cleanup. Only frozen executable source and retained notes
+were read; no runtime, archive extraction, application code, packet or
+publisher state was changed.

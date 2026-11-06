@@ -89,7 +89,9 @@ code `0x141415630` reads the literal **AgentAbsorbClampMs** at
 `0x1422dd9b0` and forwards it through `0x141024420`/`0x14102ffa0`.
 Timer setup `0x1410239e0` stores a target capped at 0x7fffffff and a
 locally incremented ordering value. That ordering value is separate
-from the packet timestamp.
+from the packet timestamp. The later [queue-order trace](209026-agent-command-queue-order.md)
+follows insertion and dispatch: equal deadlines use the unsigned ordering
+word, with explicit limits around counter boundaries and admission.
 
 Server 37 has command mask 0x80 set and therefore invokes its execution
 method immediately **after** this timer bookkeeping. The 120 ms baseline

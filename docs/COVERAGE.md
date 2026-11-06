@@ -1,7 +1,7 @@
 # GW2 player-experience coverage record
 
 Devbox task a314b17e43a8 (owner: "it needs to include everything the human sees").
-Updated 2026-11-05 for frozen build 209026. Current owner scope is the Norn
+Updated 2026-11-06 for frozen build 209026. Current owner scope is the Norn
 Mesmer starting experience first, Human afterward, using the client as the
 source of truth. Working protocol fixtures are not proof of retail fidelity.
 
@@ -37,7 +37,7 @@ holds are recorded in [AGENTS.md](../AGENTS.md).
 | Flow | Status | Evidence | Gap |
 | --- | --- | --- | --- |
 | Character select list | PARTIAL (client) | Saved-character auth/relog in runs126/127; [creator record](re/209026-saved-norn-creator.md) | Full visual list behavior, multiple-character management and retail account semantics remain unverified |
-| Character creation (UI, cinematics, answers) | FAIL for complete appearance | Runs125/126/134 exercise navigation, answers, naming, save and world transfer; runs135/136 show a severely incomplete preview; [pipeline](re/209026-creation-model-pipeline.md) | Complete preview and cutscenes remain unfinished; normal saved-norn activation is held |
+| Character creation (UI, cinematics, answers) | PARTIAL (client); complete preview passes | Run142 passes male Norn Mesmer preview; run144 passes combined creator/save/world/waypoint with the offered runner and corrected metadata; [creator record](re/209026-saved-norn-creator.md) | Authored cutscenes remain unverified; live saved-mode activation awaits the existing native owner roster choice |
 | Play → route → game join | PASS (client) for fixture | Run134 actual415/1048 save,430/1065 transfer and visible first world entry; [pipeline](re/209026-creation-model-pipeline.md) | Synthetic identity and supported Norn/Mesmer profile only |
 | Map load / loading screen | PASS (client) for map379 fixture | Run134 reaches420/412/1036 on both initial entry and waypoint rejoin | Other maps, retail loading transitions and complete authored population remain unverified |
 | Spawn, camera and control return | PARTIAL (client) | Run134 visible player on direct entry and waypoint rejoin; [release record](re/209026-combat-release-3cf2483.md) | Real tutorial entry position, camera/intro sequence and complete population remain unproven |
@@ -51,10 +51,11 @@ holds are recorded in [AGENTS.md](../AGENTS.md).
 
 ## Next coverage increment
 
-1. Fix the incomplete Norn appearance and verify it with the existing save,
-   direct-entry and waypoint flow. The tested runner repairs empty-job
-   bookkeeping, but its [publication record](re/209026-empty-composite-runner.md)
-   distinguishes uploaded owner objects from an actual launcher update offer.
+1. Preserve the verified creator/save/direct-entry/waypoint flow from run144.
+   Normal owner creation is still held at the sole publisher's native roster
+   choice. The separate [launcher publication record](re/209026-empty-composite-runner.md)
+   distinguishes uploaded runner objects from an actual update offer; run144
+   succeeded with the already offered runner0e6ac30 and corrected metadata.
 2. Establish authored Great Hunt NPC identities/models, placements, encounter
    triggers and entry position. Map379/quest154 links and bounded search limits
    are in [the Great Hunt audit](re/209026-great-hunt-species-link-audit.md).

@@ -77,8 +77,13 @@ trait. It also checks character/runtime state. Thus matching a key and
 tier is necessary in this path but is not a complete eligibility test.
 
 Specialization assignment predicate `0x141224f00` checks character state,
-effective-level/slot eligibility through `0x1411ce820`, and whether the
-specialization is already present. Content flag +0x38 bit 0 restricts the
+level/slot eligibility through `0x1411ce820`, and whether the
+specialization is already present. Its level argument comes from
+`0x141207f20`: the earned field at coreStats +0xac, or 80 under that
+getter's conditional override. It does **not** read the second level at
++0xe0. The earlier effective-level wording was unsupported; the
+[exact follow-up](209026-second-core-level.md) records the source correction.
+Content flag +0x38 bit 0 restricts the
 specialization to slot 2. It obtains the owned coreStats profession, resolves
 the profession definition through character-context virtual 0, and searches
 that definition's +0xb8 pointer array, count +0xc0, for membership. This
