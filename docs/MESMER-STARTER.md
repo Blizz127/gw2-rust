@@ -15,7 +15,7 @@ API/wiki names may locate content but do not replace client verification.
 
 | Requirement | Current state | Evidence needed for completion |
 | --- | --- | --- |
-| Norn Mesmer creation/selection and correct appearance | Private UI creation/save, restart relog and visible world entry pass; run142 now renders the complete creator preview. Live saved-mode activation remains held. | Complete combined flow on the deployed supported client, preservation of biography/appearance/equipment, and existing activation prerequisites. |
+| Norn Mesmer creation/selection and correct appearance | Private UI creation/save, restart relog and visible world entry pass; run144 passes the combined full creator/save/world/waypoint flow with the current offered runner and deployed metadata. Live saved-mode activation remains held. | Owner-mode activation with existing prerequisites and preservation of biography/appearance/equipment. |
 | Correct Mesmer components and startup skills/equipment | Partial: explicit Mesmer component and source-backed item delivery; runs115/116 render armor, weapon and weapon/healing icons | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Isolated map entry and local movement pass at diagnostic position; gameplay missing | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Shared terrain loaded through Great Hunt; open map 28 not played | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
@@ -39,13 +39,17 @@ same-GUID waypoint rejoin. [Run142](re/209026-texture-remapall-private-candidate
 passes complete male Norn Mesmer preview rendering with no new assertion.
 The sole publisher deployed that tested metadata after a successful
 prepared-profile smoke with the current launcher runner; the release receipt
-is linked from the run142 note. Runner63 owner objects are uploaded, but the last
-launcher readback still selected b126/old runner. Existing saved-mode and
+is linked from the run142 note. Run144 then passed the combined full flow
+with the actual offered runner0e6ac30, without the runner63 repair: visible
+creator and returned-world avatar, unchanged initial record and no new
+crash-log bytes. It carries XP/loot/heart state only within the server process.
+Runner63 owner objects are uploaded, but the last
+launcher readback still selected b126/0e6ac30. Existing saved-mode and
 owner-choice restrictions remain in effect. Normal owner character creation
 must not be advertised as available from these private tests alone.
 
-Next work preserves the release workflow while checking the combined creator
-flow and implementing source-backed tutorial/skill behavior. The full goal
+Next work preserves the release workflow while the sole publisher reassesses
+activation dependencies and source-backed tutorial/skill behavior advances. The full goal
 remains open; diagnostic fixture results are not retail encounter completion.
 
 ## Earlier source checkpoints

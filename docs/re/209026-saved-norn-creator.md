@@ -21,13 +21,21 @@ historical texture-remap metadata set. See the
 The sole publisher deployed it after run202 verified prepared-profile
 character selection, world entry, combat, loot and heart progress with the
 currently offered runner0e6ac30. Root independently verified live metadata,
-all kit hashes and four owned listeners at 23:56:53 UTC. Runner63bc59a owner objects are published and verified,
+all kit hashes and four owned listeners at 23:56:53 UTC. **Run144 then passed
+the full creation/save/world/defeat/waypoint flow with the actual offered
+runner0e6ac30 and that metadata**, without the runner63 composite repair.
+This removes the demonstrated need for runner63 in this tested flow; it does
+not clear the separate native agreement/owner-choice restrictions or activate
+saved mode. The result was handed to the sole server publisher.
+Runner63bc59a owner objects are published and verified,
 but the last launcher-feed readback at 23:56 UTC still advertised b126 with
-the old runner pin. Matching live metadata/runner availability and existing
-owner-choice restrictions remain prerequisites for saved-mode activation.
+the old runner pin. Existing owner-choice restrictions and the publisher's
+activation plan remain in effect.
 
-The live integrator holds activation under the owner's exclusion of known
+The live integrator held activation under the owner's exclusion of known
 broken builds: the creator preview and direct-entry avatar must render.
+Run144 satisfies those rendering checks on the currently offered runner;
+it is private acceptance evidence, not an owner-mode deployment receipt.
 The concrete private activation plan uses `GW2_CHARACTER_MODE=saved-norn` and
 `GW2_CHARACTER_STORE=/home/blizz/gw2-rust-state/characters-norn-owner`, an
 initially empty private owner store, stopped-service backup and rollback that
@@ -59,6 +67,53 @@ The focused regression reproduced the duplicate on `bc997f0` and passed with
 `1e4e3e1`, cherry-picked by the integrator as `d7252a8`. Startup smoke, zero-human
 deployment, 3.4-second readiness and local/remote hashes are in the release
 receipt. This fix changes only volatile carry state; it adds no durable progress.
+
+## Run144: combined flow with the current launcher runner
+
+On 2026-11-06, `run144-norn-creator-remapall-live-runner-full-flow`
+completed in 373.22 seconds with wrapper and UI exit zero. It used the exact
+offered runner0e6ac30 plus the unchanged passive observer407, server cd4c3b6,
+the full compatible remap metadata rooted at2130706900, a copied completed
+run137 prefix and a fresh private character store. No runner63 repair was
+present. The prepared live server configuration was not changed.
+
+The real UI displayed the complete male Norn Mesmer on appearance page4/10,
+submitted one124-byte client415, received1048 and continued through430/1065
+to map379. Two420/412/1036 sequences bracketed combat, defeat and actual
+client210 waypoint use. Kill, loot and heart-progress events each occurred
+once; the rejoin carried XP2500/level2, one loot drop and heart progress1,
+with heart done/rewarded both false. The final screenshot shows the visible
+returned character and health388. This is the diagnostic fixture, not an
+authored Great Hunt completion.
+
+The sole154-byte character record remained unchanged, SHA-256
+`267d4be2786a0ddd1b1e3a253e299359dfd0403aac3b01d36bb95c9990558e76`.
+Its envelope and filename/GUID consistency passed. Both successful joins
+resolve that sole saved GUID by the pinned server's required lookup from
+preamble bytes48..64. This is a source-backed identity inference: no-capture
+mode discards the preambles, so a direct comparison of two retained join
+GUIDs is unavailable. World progress carry remains process-local.
+
+The passive observer recorded19 valid records with no observer errors;
+the completed appearance owner reached scene3/state7 with finalized model
+and zero scratch state, followed by scene9. The crash log remained exactly
+the staged baseline, SHA-256
+`5b599267cc9c73e1c07167152f98d44250f13080e2a6852e69655bdf583f91ee`:
+zero new bytes. Cleanup verified the shared container absent, both executable
+hashes unchanged and the archive index at1,124,232 entries. Window22 was
+returned at2026-11-06T00:13:51.618582Z.
+
+- Runtime: `ev_21ebc75ec9cf556588812ee7c372190c02e07f1c7bc26b0aba84975e4be5707c`.
+- Final safe audit: `ev_bcede89a23a79a525d76cd014f02252e73a1490a055404b53e4a5dbc69a045a4`.
+- Independent cleanup/image admission: `ev_ad1c32f271bda1574f8b1c08cf97f93684effedb3409fbb4d878b320c2ad9acd`.
+- Creator image, root viewed:988475 bytes, SHA-256
+  `a27ff082e1e440d8357ff5b7c4aa26a1ae8839efc20949bd61e053bfb48b001d`.
+- Returned-world image, root viewed:1250725 bytes, SHA-256
+  `225ee9a3b8b955d81f314e73c5cdfd91f92ef6d773d4ff39b56e7101ba3acb2b`.
+- Private controller bundle:
+  `/home/blizz/re/gw2/notes/209026-norn-creator-run144-live-runner-full-flow-20261106.json`,
+  5451060 bytes, SHA-256
+  `2b90d0df1c8325bbd181d825c9cf9beba07e012e0280a24bafbb8e060057d155`.
 
 ## Implemented local behavior
 

@@ -2,7 +2,7 @@
 
 Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboot. The previous Codex lead was thread 01a19513, and the owner handoff was 9acee8ca7cde4358bbdf0fb61fdc2310. Updated 2026-11-01.
 
-## Active Mesmer starting-area work (2026-11-05)
+## Active Mesmer starting-area work (2026-11-06)
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
@@ -22,11 +22,15 @@ complete male Norn Mesmer creator-preview smoke** with no new assertion:
 [metadata fix and evidence](re/209026-texture-remapall-private-candidate.md).
 The compatible historical texture-remap set is now deployed in that kit,
 after a successful prepared-profile smoke with the current launcher runner.
-The latest
-launcher readback still advertises b126 with the old runner pin, although
-runner63bc59a's owner objects are uploaded and verified. Saved-mode activation
-and existing owner-choice restrictions remain in effect pending their actual
-dependencies; the prepared live character is not normal character creation.
+**Run144 then passed the combined creator/save/world/defeat/waypoint flow
+using the actual offered runner0e6ac30 and the new metadata**, without the
+runner63 repair. The full creator and returned-world avatar are visible;
+the sole saved record is unchanged, with no new crash-log bytes. This evidence
+was returned to the sole publisher for activation reassessment. The latest
+launcher readback still advertises b126/0e6ac30; runner63bc59a's owner objects
+are separately uploaded and verified. Saved-mode activation and existing
+native agreement/owner-choice restrictions remain in effect; the prepared
+live character is not normal character creation.
 
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
