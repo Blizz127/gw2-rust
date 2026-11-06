@@ -103,6 +103,31 @@ protocol/state checks, not a native UI drag observation or a deployment receipt.
 The startup receipt is `backpack-move-257b98b-preflight-20261106.json` in the
 same private notes root. Implementation commit: `257b98b`.
 
+## Published increment
+
+The sole publisher integrated257b98b and its source note on the quest168/169
+base as `c2ae0e8`. Kit `/home/blizz/gw2-rust-c2ae0e8-backpack` went live at
+2026-11-06 **20:11:16Z**. Root independently read it back at
+**20:14:38.978691Z**: all current/rollback manifest hashes matched, the four
+owned listeners were healthy, saved mode remained enabled, the85 story
+arguments matched the pinned profile, and CDN2130706950 readback matched.
+The record metadata check found the existing two private records; it did not
+read their contents. Rollback `/home/blizz/gw2-rust-e1348e3-chain` is retained.
+
+The1970192-byte deployed game binary SHA256 is
+`e6fdd1226de8d577b3affa68361415957639523f0a797fd2180de315a9908149`.
+Only the game binary and BUILD differ from that rollback. Effective auth and
+character-store source match464; the held53a8989 behavior remains reverted.
+The publisher reports combined85-argument startup and focused build checks;
+root's live readback does not convert the unobserved native drag into a pass.
+
+Private verification: `c2ae0e8-backpack-release-verification-20261106.json`;
+full REA capture: `209026-c2ae0e8-backpack-release-readback-20261106.json`,
+`ev_19be849ff0e7adc99ee4a009474512f6bee6a69423ef9239498d1d602496f354`.
+The capture exited0, was untruncated and verified owned-process cleanup.
+Normal quest placements and saved-character story traversal remain unproved;
+this release does not complete the full retail-fidelity goal.
+
 ## Private evidence
 
 Executable SHA256:
