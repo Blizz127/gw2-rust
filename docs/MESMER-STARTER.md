@@ -90,6 +90,12 @@ The [map gate](re/209026-skill-context-map-gate.md) independently resolves
 context1 once map379 is installed, selecting the base recharge content20000
 before display modifiers. Actual recharge execution remains unimplemented.
 
+The [duration-expiry trace](re/209026-skill-order-duration-expiry.md) closes
+the client-local path from a valid ordinary command's deadline to its
+character completion callback. A separate server84 is not required on that
+conditional path. Typed-order release, healing and recharge still need
+runtime evidence; this adds no server effect or retail timing default.
+
 ## Earlier source checkpoints
 
 - Historical baseline: Guardian entered Queensdale and walked (run110,
