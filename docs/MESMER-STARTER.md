@@ -30,8 +30,19 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**7c26f45 is verified live**, including 5a6337b, deployed by the sole publisher
-at 09:24:16Z. Current kit: `/home/blizz/gw2-rust-7c26f45`; rollback: a223a90.
+**e624c8b is verified live**, deployed by the sole publisher at10:35:43Z to
+`/home/blizz/gw2-rust-e624c8b`. Rollback:7c26f45. Root's10:41:12.080308Z
+readback verifies the exact tested artifact, all kit/rollback hashes, four
+owned healthy listeners, saved mode/one private record and unchanged backup.
+It fixes inconsistent admission of unavailable skills before retarget/damage;
+the failure-before regression,17 passing focused tests, static build and two
+saved-profile startup checks are retained. It changes no grants, chain policy,
+profile, store or schema. The full retail goal remains incomplete.
+[Verified release](re/209026-saved-norn-live-activation.md#verified-skill-admission-release-e624c8b);
+[admission fix](re/209026-skill-caster-ownership.md#explicit-skill-availability-e624c8b-verified-live).
+
+Earlier **7c26f45**, including5a6337b, was deployed by the sole publisher
+at09:24:16Z. Kit: `/home/blizz/gw2-rust-7c26f45`; its rollback was a223a90.
 Root's independent 09:27:43.186242Z readback verifies the exact artifact, current
 and rollback hashes, effective profile, four owned listeners, saved mode/one
 record/private 0700 store and unchanged activation backup. Zero humans/bots were
@@ -48,13 +59,13 @@ the full retail goal is incomplete.
 [Verified release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45);
 [implementation and limits](re/209026-ether-feast-reconstruction.md).
 
-Candidate **e624c8b**, based on7c26f45, fixes inconsistent admission of an
-unavailable skill: it could damage/retarget while leaving a pending heal active.
-The failure-before regression,17 passing focused tests, static build and two
-saved-profile startup checks are retained. The existing sole publisher received
-the tested artifact; deployment is not yet verified. This changes no grants,
-chain policy, profile or store.
-[Admission fix](re/209026-skill-caster-ownership.md#explicit-skill-availability-e624c8b-ready-for-the-publisher).
+Run237 follows the hall's right exterior to a narrow strip, but still reaches
+no hostile. The final camera/foliage obstruction and unchanged sparse movement
+sample do not identify a specific collision cause. Only step1 completes;
+launch/UI13 records the failed full-hunt predicate. Controller release meets
+the target; strict cleanup, privacy, PE and original-record checks pass.
+Window40 returned10:37:33Z. A route overview remains missing.
+[Result and limits](re/209026-saved-norn-creator.md#run237-exterior-route-reaches-a-narrow-strip-hunt-still-fails).
 
 Run236 observes E/Q turning on exact7c26f45, but the normal-stage0 route enters
 the camp hall. Only Thora/step1 completes; no hostile selection, attack, kill,

@@ -1,6 +1,6 @@
 # Build 209026 fixture: validate the requesting skill caster
 
-## Explicit skill availability: e624c8b ready for the publisher
+## Explicit skill availability: e624c8b verified live
 
 On7c26f45, an owned SkillBegin for an unavailable skill could retarget and
 damage a hostile, while the heal-interruption path rejected the same request.
@@ -35,11 +35,16 @@ Private receipt: `skill-admission-7c26-tested-receipt-20261106.json`, SHA-256
 Source branch: `codex/skill-admission-7c26-20261106` in
 `/home/blizz/scratch/gw2-skill-admission-7c26-20261106-src`.
 
-The existing native peer helper accepted the handoff to the sole publisher;
-the coordinator status reply is queued. The handoff requests prompt release
-while preserving newer publisher work, saved mode, active players and rollback.
-**This candidate is not yet verified live.** Shared record:
-`creator-lane-peer-handoff.json#/root_skill_admission_ready_20261106`.
+The sole publisher deployed this exact artifact at **2026-11-06T10:35:43Z**
+to `/home/blizz/gw2-rust-e624c8b`. Root independently verified it at
+**10:41:12.080308Z**: all current/rollback hashes pass, four owned listeners
+are healthy, saved mode and the private store remain enabled, and the activation
+backup is unchanged. One saved record remains; its contents were not read.
+Zero humans/bots were present at readback. Rollback is7c26f45. The separate
+40fef7a merge into the publisher's quest162 branch is not this published binary.
+No launcher/feed/audience, profile, client or schema change accompanies it.
+[Independent release readback](209026-saved-norn-live-activation.md#verified-skill-admission-release-e624c8b).
+Shared record: `creator-lane-peer-handoff.json#/root_skill_admission_ready_20261106`.
 
 ## Independent fix released through the sole publisher
 

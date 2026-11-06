@@ -6,9 +6,10 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **7c26f45** is at
-`/home/blizz/gw2-rust-7c26f45`, deployed **2026-11-06T09:24:16Z**.
-It enables the explicit no-clone Ether Feast self-heal and 20-second recharge,
+tracks the remaining scope. Live kit **e624c8b** is at
+`/home/blizz/gw2-rust-e624c8b`, deployed **2026-11-06T10:35:43Z**.
+It rejects skills absent from the explicit availability list before targeting
+or combat mutation. It retains7c26f45's no-clone Ether Feast self-heal and20-second recharge,
 with guarded same-process health/cooldown carry and original-roster relog
 redirect. It retains a223a90's carried XP/earned-stat ordering before quest
 reward-panel replay. The merchant profile remains unchanged.
@@ -27,14 +28,17 @@ Heart tasks, rewards, NPC looks and placement still include substitutions;
 this is not full retail encounter completion. Root independently verified
 saved-norn mode, one saved record/private 0700 store, unchanged activation
 backup, exact artifact/current and rollback hashes, metadata900, effective
-settings and four owned healthy listeners at **09:27:43.186242Z**. Zero
+settings and four owned healthy listeners at **10:41:12.080308Z**. Zero
 humans/bots were present then. Ether Feast is enabled and `story_branch` is
-`none`; verified rollback is **a223a90**. Focused tests, musl build and eight
-off/on startup checks passed. The separate run233 audit observes native cooldown,
+`none`; verified rollback is **7c26f45**. The admission regression failed before
+the fix;17 focused tests, the musl build and two saved-profile startup checks
+pass. The prior Ether Feast release also passed eight off/on startup checks.
+The separate run233 audit observes native cooldown,
 rejected retry and later recast. Regeneration restored full health before the first
 cast, so positive healing remains unobserved. Physical cancellation,
 clones/conditions, retail scaling and restart progression remain unsupported.
-See the [verified Ether Feast release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45).
+See the [verified admission release](re/209026-saved-norn-live-activation.md#verified-skill-admission-release-e624c8b)
+and [Ether Feast implementation](re/209026-ether-feast-reconstruction.md).
 Merchant appearance and placement remain fixture choices. Run224 observes Hero's Moot waypoint discovery; waypoint travel has
 offline checks but no client-click observation. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
@@ -56,14 +60,16 @@ within its target. Cleanup, privacy, client hashes and the original synthetic
 record pass; window39 returned at10:16:44Z. This is a navigation failure in the
 probe, not evidence of broken movement or globally unreachable hostiles.
 See the [run236 result](re/209026-saved-norn-creator.md#run236-turning-observed-full-hunt-route-fails).
+Run237 follows the right exterior route to a narrow wall-side strip, then stops
+without a hostile selection. It also fails the hunt at step2. The exact stop
+cause remains unknown; no combat/reward/transfer occurs. Release and cleanup
+pass; window40 returned10:37:33Z. Retained geometry or a map overview is the
+next route dependency, rather than repeating the movement sequence.
+[Run237 evidence](re/209026-saved-norn-creator.md#run237-exterior-route-reaches-a-narrow-strip-hunt-still-fails).
 
-New candidate **e624c8b** rejects unavailable skill requests before target or
-combat mutation when the damage-enabled fixture has an explicit skills list.
-The encoded-request regression failed before the fix;17 focused tests, a
-static musl build and two saved-profile startup checks pass. The tested artifact
-was handed to the existing sole publisher; it is **not yet verified live**.
-No profile, store, schema or sword-chain policy changed.
-[Admission fix receipt](re/209026-skill-caster-ownership.md#explicit-skill-availability-e624c8b-ready-for-the-publisher).
+The [admission fix receipt](re/209026-skill-caster-ownership.md#explicit-skill-availability-e624c8b-verified-live)
+records the exact failure-before regression and live artifact. No profile,
+store, schema or sword-chain policy changed.
 
 Independent fix **9451cf0** applies the seven-line caster
 guard directly to current live c2cb6fd, preserving its combat settings and

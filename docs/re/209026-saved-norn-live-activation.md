@@ -1,15 +1,46 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, currently on **7c26f45** at
-`/home/blizz/gw2-rust-7c26f45`, independently verified09:27:43Z.
-The [latest increment](#verified-ether-feast-release-7c26f45)
-adds no-clone Ether Feast healing/recharge and guarded same-process health/cooldown
-carry with original-roster relog routing. Saved mode was first
+Saved character creation is live, currently on **e624c8b** at
+`/home/blizz/gw2-rust-e624c8b`, independently verified10:41:12Z.
+The [latest increment](#verified-skill-admission-release-e624c8b)
+rejects skills absent from the explicit availability list before combat mutation.
+It retains no-clone Ether Feast healing/recharge and guarded same-process
+health/cooldown carry with original-roster relog routing. Saved mode was first
 activated on82d8d04-cdn900.
 The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
 Root independently verified the configuration, live hashes and service at
 **03:43:51Z**. The earlier unanswered roster prompt is historical.
+
+## Verified skill admission release: e624c8b
+
+The sole publisher deployed the exact tested **e624c8b** artifact at
+**2026-11-06T10:35:43Z** to `/home/blizz/gw2-rust-e624c8b`.
+Rollback is `/home/blizz/gw2-rust-7c26f45`. The
+[admission correction](209026-skill-caster-ownership.md#explicit-skill-availability-e624c8b-verified-live)
+has an executed failure-before regression,17 passing focused tests, a static
+musl build and two saved-profile no-listener startup checks. Profile, supervisor
+and data remain identical to7c26f45. The publisher's separate40fef7a merge into
+the quest162 branch is not included in this exact artifact.
+
+Root's independent readback at **10:41:12.080308Z** verifies all current and
+rollback kit hashes, selected/running executables and four owned healthy
+listeners. Saved-norn mode, one record in the private0700 store and the unchanged
+activation backup are verified without reading record contents. Zero humans
+and bots were present. Ether Feast, damage30, the17-byte skill fixture and
+existing world/vendor/heart/POI settings remain enabled; legacy autoattack/echo
+remain absent. `story_branch` is `none` and frozen metadata remains900.
+No launcher feed, audience, frozen client, owner store or schema was changed.
+
+Binary SHA-256: `723b9c36947df9a747010334fe999a0e98cfd4308d120015751aab2f36089453`.
+Manifest SHA-256: `689e5e4db2fb4c45090d9dd68a135b0b092f438e7b86d5e018bbff43c44f9269`.
+Private verification receipt: `e624c8b-release-verification-20261106.json`,
+SHA-256 `f89f806c43f7052fc8311c1de13efdf988f295c546ef0dcc3c54ae9c4b00a9fe`.
+Full readback: `209026-e624c8b-release-readback-20261106.json`, SHA-256
+`1f7f96952146d69c3f557dd884119ec672216e2a72eca192c37a3679f4c8fd2f`, REA
+`ev_7e3d18e854a7cfe1475a88ec89955cee540689bfdf5b8da1a1cf6ab3f4f1dd48`.
+Evidence is untruncated and owned cleanup is verified; one unrelated process
+environment permission failure remains recorded and untouched.
 
 ## Binary baseline release: c2cb6fd
 

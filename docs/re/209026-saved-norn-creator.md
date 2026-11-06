@@ -566,6 +566,52 @@ Return: `209026-run236-window39-return-20261106.json`, SHA-256
 `19da2ad1b40a0ef76ef6b9b8a7230cccdeebf08b998435e77a16232a5c7ae1d7`, REA
 `ev_eb1bbadab713ff74398483e46143f54f43897ad741da8e881f1a25e38249e14f`.
 
+## Run237: exterior route reaches a narrow strip, hunt still fails
+
+Run237 keeps exact7c26f45, normal stage0, actor positions, profile and the
+original154-byte synthetic record. The controller uses the right exterior
+route and bounded W/S holds up to3000ms, with other holds capped at1500ms.
+E750 leaves the hall on the left. Forward motion crosses the apron and then
+follows the outside wall; one approach obscures the camera in wall geometry,
+followed by backward/strafe corrections. The later images show a narrow
+leaf-covered strip beside the wall and trees/slope to the right. The final
+W750 produces nearly unchanged scenery and no new sparse movement sample.
+Root independently hash-admitted and viewed those four route checkpoints.
+
+The last logged position is `[-2408,-27319,-3629]`, ordinal321. Camera and
+foliage obscure the avatar, and movement is sampled every20 messages, so the
+specific cause of the stop and exact final pose remain unknown. This does not
+prove globally unreachable hostiles or a server movement defect. No hostile
+was identified or selected; no attack, heal, kill, payout or transfer occurred.
+Only step1 completed. Launch/UI exit13 retains the failed full-hunt predicate.
+
+The original binder invocation completed and saved its full Evidence after
+its execution handle was lost from compacted controller context. The controller
+recovered that receipt and admitted the first image before input; no binder or
+claim was repeated. Thirteen complete REA captures retain twelve admitted
+images and eleven bounded holds. Physical holds total14.9 seconds; action
+captures total52.55 seconds. Release completed at **10:36:03.229Z**,182.701
+seconds after the first image, with56 seconds left before the hard deadline.
+
+Strict readback, privacy, unchanged PE and synthetic-record checks pass. The
+sandbox is absent, and window40 returned **2026-11-06T10:37:33.515754Z**.
+Launch/readback/return Evidence is untruncated and owned cleanup is verified;
+46 launch and one readback process-environment permission failures remain
+recorded and untouched. The next investigation needs an overview or geometric
+route evidence; this run does not justify another blind movement sequence.
+
+Private root outcome: `run237-saved-norn-exterior-hunt-outcome-20261106.json`,
+SHA-256 `0c98e19e3bb2cac8516593b6a3980cee9a2f359afe158af7cb4c84864f188adf`.
+Controller: `run237-exterior-hunt-controller-outcome-20261106.json`, SHA-256
+`833faec2980dbf2b37b928561a8db2a3ef25750a36e9847de199d622f7170139`.
+Launch REA: `ev_d43ce632b5790b61c7e41aa6b6f4ce71a93a9099142edff312beae740adf3289`.
+Readback: `209026-run237-saved-norn-exterior-hunt-readback-20261106.json`,
+SHA-256 `f51ca145c7987accb99ed2e53a792357e310484c1a5b7f3b7597d70e9935eeeb`,
+REA `ev_2ab566c8a46e28b804e3d0836171f33d75fcf342f0788c37c48396c9ccb90fe1`.
+Return: `209026-run237-window40-return-20261106.json`, SHA-256
+`e573c9e4f0348c08b0e208a9e23593e267623df18943f59a845ce5bd02446186`,
+REA `ev_bb91922b18ed850d14154520074373fe88a56b4e5cac262ea63ef02c320f0547`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
