@@ -6,24 +6,19 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **4c46cad-sk** is at
-`/home/blizz/gw2-rust-4c46cad-sk`, deployed **2026-11-06T06:16:37Z**. It adds
-the tested10170 availability grant and explicitly disables legacy
-release-triggered autoattack, preserving damage30 and all other profile
-values. The binary is unchanged from4c46cad. Earlier released work includes
-Great Hunt story-action progression with talkable Thora/Ido/Eir, a stand-in
-wurm boss and placeholder out-of-combat regeneration. Publisher client
-smokes exercised Thora, a trophy kill and regeneration; later story steps
-remain unobserved in the client. Placements, dialogue and some appearances
-are reconstructed; this is not full retail encounter completion. Saved-norn
-mode remains enabled. The new increment carries Great Hunt stage through
-same-process waypoint rejoins; it adds no restart persistence or actual
-story reward delivery. Root independently verified one saved record, backup
-hash, all kit hashes, metadata900 and four healthy listeners at
-**06:19:28Z**. Effective skills/autoattack settings and rollback hashes also
-pass. Zero humans/bots were present then; this supersedes the earlier
-05:45 one-human observation. Recheck at rollout. Ether Feast healing remains unimplemented.
-Rollback is4c46cad. See the
+tracks the remaining scope. Live kit **76af245** is at
+`/home/blizz/gw2-rust-76af245`, deployed **2026-11-06T06:21:31Z**. It adds
+Great Hunt completion transfer to Wayfarer Foothills, character-bound
+same-process progress transfer, correct world arrival, and 14 heart NPCs.
+It retains the sword availability fix, damage30, and disabled legacy
+autoattack/echo. Prepared-character smokes establish transfer and NPC spawn;
+the combined saved-character transfer has not been observed in the client.
+Heart tasks, rewards, NPC looks and placement still include substitutions;
+this is not full retail encounter completion. Root independently verified
+saved-norn mode, one saved record, backup hash, all kit hashes, metadata900,
+effective settings and four healthy listeners at **06:25:42Z**. Zero
+humans/bots were present then; recheck at rollout. Ether Feast healing and
+recharge remain unimplemented. Verified rollback is **4c46cad-sk**. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
 The owner can create a Norn Mesmer through the saved roster; the prepared
@@ -31,8 +26,9 @@ Banshee Mesmer is hidden. Initial creation persists, while XP/loot/heart
 progress resets at restart. [Run144](re/209026-saved-norn-creator.md) is the
 prior private creator/save/world/defeat/waypoint acceptance with runner0e6ac30
 and live metadata900. This remains an incomplete diagnostic starter fixture.
-The latest feed readback at06:19:29Z offers b128; its runner pin was not
-inspected by that query. The earlier native roster prompt is resolved.
+The latest feed readback at06:25:42Z offers b128; its runner pin and audience
+were not inspected by that query. Existing audience restrictions remain.
+The earlier native roster prompt is resolved.
 
 Independent fix **9451cf0** applies the seven-line caster
 guard directly to current live c2cb6fd, preserving its combat settings and

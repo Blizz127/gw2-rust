@@ -30,6 +30,14 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+**76af245 is live**, deployed 2026-11-06T06:21:31Z at
+`/home/blizz/gw2-rust-76af245`. Root independently verified hashes, effective
+settings, saved mode, health and rollback at06:25:42Z. It includes the
+Wayfarer transfer, GUID/destination-bound carry and world arrival fixes,
+plus 14 heart NPCs. Prepared runs establish transfer and spawn; saved-mode
+combined transfer remains unobserved. Heart tasks/rewards and several NPC
+details remain fixtures. [Release and scope evidence](re/209026-saved-norn-live-activation.md#world-handover-release-76af245).
+
 Run216 passes the targeted sword smoke on exactcf13a3b: fresh hostile4
 selection, one owned10170/slot5 request to4, one server255 response118→88,
 and one release with no extra order or hit. The17-byte grant enables native
@@ -98,7 +106,8 @@ a cinematic. This narrows the remaining intro dependency to authentic
 Norn playback inputs/sequence; the generic UI/view wiring does not select
 them. This source slice emits no Norn cinematic and changes no gameplay.
 
-Latest independently verified live kit: **4c46cad-sk**, deployed06:16:37Z.
+Earlier independently verified live kit: **4c46cad-sk**, deployed06:16:37Z,
+now retained as rollback for76af245 above.
 It includes ordered Great Hunt story actions, talkable Thora/Ido/Eir, a stand-in
 wurm boss and placeholder out-of-combat regeneration. The publisher exercised
 Thora, a trophy kill and regeneration in the client; later story steps have

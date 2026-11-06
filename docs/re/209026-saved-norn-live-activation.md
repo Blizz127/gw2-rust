@@ -397,9 +397,8 @@ Accept click or actual reward-credit proof exists.
 Arrival uses configured Hero's Moot waypoint coordinates, with no proven
 authored tutorial-arrival selector. Source tests cover saved-GUID admission
 separately. The publisher integrated root's carry-identity guard as3135b29
-and the independent arrival regressions as76af245; integration is not a
-deployment receipt. All of this remains outside the independently verified
-4c46cad-sk kit described above.
+and the independent arrival regressions as76af245. These changes were
+outside4c46cad-sk; the subsequent deployment is independently verified below.
 
 Private corrected audit:
 `209026-run217-world-handover-audit-v2-20261106.json`, SHA-256
@@ -407,3 +406,44 @@ Private corrected audit:
 Complete retained evidence:
 `209026-run217-world-handover-evidence-20261106.json`, SHA-256
 `06e9259ac86f3f3cf6c232277674d59892f1603fbd93cadd4368fe4cba14ad8d`.
+
+## World-handover release 76af245
+
+The sole publisher deployed `/home/blizz/gw2-rust-76af245` at
+**2026-11-06T06:21:31Z**, retaining `/home/blizz/gw2-rust-4c46cad-sk` as
+rollback. Root's independent readback at **06:25:42Z** passed all kit sums,
+four owned listeners, saved-norn mode, one private saved record and the
+unchanged activation backup. Zero humans/bots were present. The actual
+process uses map28 arrival `(597.3,-30352.1,-1563.2)`, 14 heart NPCs,
+five world hostiles, four ambient NPCs, the 17-byte skills file and damage30.
+Legacy autoattack and order echo are absent.
+
+Game SHA-256:
+`acf59ef479b37a92230432eedd5e95ae14247a7476c726c4cfd946566d2babf8`.
+Manifest SHA-256:
+`2d519c188e05bb071b13c7ac5021571ecb9215024beec8f62d2fd7888dfc0832`.
+Rollback binary/manifest/skills hashes pass. CDN900 root/main hashes pass;
+b128 feed metadata is unchanged. Its runner and audience were not
+reverified, and this readback clears no launcher publication restriction.
+
+Receipt: `209026-live-76af245-readback-20261106.json`, REA
+`ev_1f17f3987e20ee61e5a9d35ac2bf9ca3cf18e5a2c5f853bc3552704ea45373a3`.
+The helper exited0; root did not deploy or modify the saved store.
+
+Retained run218 uses a prepared character at hunt stage4 and proves transfer
+plus 14 NPC/384 pairs; no NPC conversation was exercised. Run219 remains
+in the tutorial: four10170 SkillBegin requests and four30-point hits
+118→88→58→28→0. The release prose's255-hit claim does not describe these
+retained logs. These runs do not establish saved-mode runtime admission
+through the combined transfer.
+
+Current heart behavior credits each hostile kill to every unfinished heart
+containing the player, toward a configured target5. The authored titles,
+polygons and centres are recovered; action/species conditions are not.
+NPC names reuse mail-sender text, appearances are substitutes and placement
+uses area centres. Coins30, karma50 and uniform5147 XP remain placeholders.
+The exact Raven-heart56 completion text matches mail95, supplying a bounded
+next source target, not a proof of authentic progress conditions.
+
+Scope receipt: `209026-wayfarer-heart-scope-and-raven-mail-seed-20261106.json`,
+SHA-256 `6d5a811d17528e8ae84a05002d3541536f1737236880bdfaf6d6c41e98377861`.
