@@ -46,11 +46,15 @@ The concrete private activation plan uses `GW2_CHARACTER_MODE=saved-norn` and
 `GW2_CHARACTER_STORE=/home/blizz/gw2-rust-state/characters-norn-owner`, an
 initially empty private owner store, stopped-service backup and rollback that
 preserves later-created records. No synthetic character is imported. Plan:
-`/home/blizz/re/gw2/notes/saved-norn-activation-handoff-v2-20261105.json`
-(SHA-256 `dc59390740f5f9f6aaa9aea0bb233679672d6ffc0351e509e3f4253f121ef6c1`),
-reviewed against baseline `9961b56-hm`; the original handoff remains preserved.
-Activation must pin its then-current rendering-fixed candidate as the plan
-requires. Later reward-only server changes do not alter its mode/store settings.
+`/home/blizz/re/gw2/notes/saved-norn-activation-handoff-v3-20261106.json`
+(SHA-256 `6b7567c330463dfc85a7d7ed4dd512d5d4c14c90b15a9601e982d3d5d5c098bf`),
+reviewed against current `82d8d04-cdn900`; v2 and the original remain preserved.
+All44 local kit files matched the manifest. The plan preserves the complete
+current profile, including revised hostile positions and ambient ravens, and
+incorporates run144's acceptance within its exact fixture scope. A mode-only
+rollback keeps CDN900 and restores prepared mode while retaining every saved
+record; it does not assume a tested client metadata downgrade. Activation
+must still revalidate the then-current kit, host mode and player state.
 The separate heart preflight/combination-coverage fix `d175bd5` shipped in
 `018cb96`; it does not clear the rendering hold.
 
