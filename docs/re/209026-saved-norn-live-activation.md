@@ -683,8 +683,8 @@ Root independently verified at **08:05:25Z**:
 
 The merchant uses the Eir composite as a stand-in. Its appearance and
 placement are implementation choices, not recovered retail merchant data.
-The publisher reports its retained drag-sale smoke passed; this deployment
-readback does not itself replay or prove that interaction. No client feed,
+The retained drag-sale smoke is audited below; this deployment
+readback does not itself replay that interaction. No client feed,
 audience, access rule, schema or server configuration was changed by root.
 
 Game SHA-256:
@@ -699,3 +699,30 @@ Full REA: `209026-vendor-release-readback-corrected-20261106.json`, evidence
 `ev_d6a85c250e5f0d6c17ea6b07fee66f1ed5f43f046c408066472456620f27c218`.
 The helper exited0 with verified cleanup. An earlier invocation rejected a
 mistyped rollback digest locally, before SSH; its failed evidence is retained.
+
+### Retained merchant sale smoke
+
+The separate prepared-character `run228-vendor-drag` contains one decoded
+510 Sell request for item instance28432, count1 and expected total2. The
+server identifies item key19526, removes slot0, credits2 copper and logs
+295/204/1279(result1), followed by a successful24-byte write. No plaintext
+response capture exists; the response batch is supported by exact source,
+typed logs and successful write. Hash-admitted native screenshots show the
+inventory changing from1/20 with0 copper to0/20 with2 copper and a2-coin toast.
+
+The retained wrapper records cleanup, privacy and unchanged executable hash
+checks. It does not retain a numeric client exit code; its runner wait uses
+`|| true`. This audit made no fresh client, container, executable or archive
+query. There is no duplicate-sale, buy/buyback, saved-character transfer,
+relog or restart observation. The single item's expected price agrees with
+the server price; this does not establish every merchant price or catalog.
+
+Private receipt: `publisher-run228-vendor-drag-scope-20261106.json`, SHA-256
+`8797d6070307f9f74d2b82bf5d56c9daf6db4a9219e5ab1baf2f9ad678f960b3`.
+Complete six-capture REA bundle:
+`209026-publisher-run228-vendor-drag-audit-20261106.json`, SHA-256
+`32655685600c0e98a9f7278122cc4bda1a8171d88aa7ceaadedbb5e0502e79a6`.
+Primary log evidence:
+`ev_0e26eaaf63037474a58e9c2ed0ad5d1cebf2d32604940c004a317756ccd56b97`.
+All audit processes exited0 with complete normalized frames and verified
+owned cleanup. Raw evidence remains private.

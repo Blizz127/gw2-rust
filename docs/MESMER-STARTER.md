@@ -30,6 +30,12 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+Run228 on the current build observes normal saved-character entry and the
+Thora conversation from stage0. Its controller timed out before attempting
+the remaining route; no trophy kill, reward or map28 transfer occurred.
+It is a failed integration attempt, with cleanup verified and window34
+returned08:19:24Z. [Evidence and harness correction](re/209026-saved-norn-creator.md#run228-saved-stage0-entry-incomplete-tutorial-route).
+
 **9326c08-vendor is now live**, deployed07:55:30Z at
 `/home/blizz/gw2-rust-9326c08-vendor`. Independent readback verified all current and
 rollback hashes, effective settings, saved mode/one record, unchanged backup

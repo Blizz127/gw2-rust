@@ -244,6 +244,55 @@ Final `saved-relog-after-walk.png` SHA-256:
 `efc18d255e009181fe356fe196212851c3e54589e8f417809b6b1a978df9a3f1`.
 Private bundle: `/home/blizz/re/gw2/notes/209026-norn-saved-relog-run127-20261105.json`.
 
+## Run228: saved stage0 entry, incomplete tutorial route
+
+On 2026-11-06, `run228-saved-norn-hunt` used the exact9326c08-vendor
+binary/profile, the unchanged synthetic record created by run144, and normal
+hunt stage0. It preserved current actor positions and used no prepared
+character fallback, stage override, packet injection or owner record.
+The record remained154 bytes, SHA-256
+`267d4be2786a0ddd1b1e3a253e299359dfd0403aac3b01d36bb95c9990558e76`.
+
+The client entered map379 and interacted with Thora. The server logs one
+BeginPlaying, initial wallet0 and step1 completion. No trophy kill/step2,
+later story step, reward claim or map28 transfer was observed. The admitted
+first-unmet-step screenshot shows the character among nearby friendly NPCs,
+the Greet prompt and distant red labels; no selected hostile is visible.
+The image hash is
+`f733a62fd7c7bce9dfec5431fbb812803967dcb68dae7782f248d834d1f079f8`.
+
+The single designated native controller claimed the paused UI at08:17:05Z
+and captured an image. Its full evidence output caused a context compaction
+during the short control window. It issued no movement, attack, click or
+release after claiming. The UI and wrapper correctly exited12 on controller
+timeout. This is a failed test-harness handover, not a successful full route
+or proof of a gameplay defect. A subsequent attempt must retain full evidence
+privately and return only compact status during the active control window.
+No retry was performed under this grant.
+
+Cleanup, console privacy, unchanged frozen/working executable hashes and
+container absence were verified. Window34 was returned at
+**08:19:24.565915Z** with the failed UI outcome preserved. Cleanup status
+`complete` refers only to resource return. The final manifest remains
+`cd7dfcbf71f056a82959bd7f32839932134eab3e5d8c3a9ced56dc34017f74e3`.
+The return helper's no-signal check was corrected before use to accept REA's
+observed signal0 as well as null; the original helper was retained. No
+signal-terminated capture is accepted by that change.
+
+Private REA receipts under `~/re/gw2/notes/`:
+
+| Receipt | Evidence |
+| --- | --- |
+| `209026-run228-window34-verification-20261106.json` | `ev_5a7c44ebdeb3eb8f185223d5de7440619b114c67211488ee6b40dc1a2e13e922` |
+| `209026-run228-saved-norn-hunt-launch-20261106.json` | `ev_a83daf2a6b2695f52a37fe4cbe48feb7d51f88180bf759607a9491a2af2ef600` |
+| `209026-run228-saved-norn-hunt-readback-20261106.json` | `ev_20d24de545c1353977dcd171692582ee434c6ea07b4fe263ca9d5f66fd6cccbc` |
+| `run228-native-controller-bind-20261106-evidence.json` | `ev_544930014bee3e8cd0f08c9d55b57fd11cd98245dbad8cd24c185198bc2efe16` |
+| `209026-run228-window34-return-20261106.json` | `ev_5adc0312b7445129a50a82c908be045f7eefa23eba2b3f8844ca8353250ae628` |
+
+The launch and reader retain unrelated inaccessible process probes; those
+processes were untouched. This run is distinct from the publisher's prepared
+`run228-vendor-drag`, which exercised a sale.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
