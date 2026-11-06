@@ -17,8 +17,8 @@ mode remains enabled. The new increment carries Great Hunt stage through
 same-process waypoint rejoins; it adds no restart persistence or actual
 story reward delivery. Root independently verified one saved record, backup
 hash, all kit hashes, metadata900 and four healthy listeners at
-**05:45:12Z**. One human and zero bots were present; preserve that session
-for further rollout. Ether Feast healing remains unimplemented.
+**06:13:47Z**. Zero humans/bots were present then; this supersedes the earlier
+05:45 one-human observation. Recheck at rollout. Ether Feast healing remains unimplemented.
 Rollback iscf13a3b. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
@@ -27,7 +27,7 @@ Banshee Mesmer is hidden. Initial creation persists, while XP/loot/heart
 progress resets at restart. [Run144](re/209026-saved-norn-creator.md) is the
 prior private creator/save/world/defeat/waypoint acceptance with runner0e6ac30
 and live metadata900. This remains an incomplete diagnostic starter fixture.
-The latest feed readback at05:45:12Z offers b128; its runner pin was not
+The latest feed readback at06:13:47Z offers b128; its runner pin was not
 inspected by that query. The earlier native roster prompt is resolved.
 
 Independent fix **9451cf0** applies the seven-line caster
@@ -106,8 +106,9 @@ it is not a new live receipt. Isolated carry-binding fixe9d6558 reproduces
 wrong-character carry theft before the fix, then passes four focused tests
 and a debug build. It binds intended GUID/map without consuming unrelated
 carry, preserves original saved bytes, and applies cleanly after3bf7842.
-The helper submitted it directly to the verified sole publisher. Separate
-test-only37cb716 adds two passing independent arrival/wire regressions.
+The helper submitted it directly to the verified sole publisher, which
+integrated it as3135b29. Separate test-only37cb716 adds two passing independent
+arrival/wire regressions and was integrated as76af245.
 These handoffs do not change the verified live version above. No saved-format
 change or progress reset is authorized.
 

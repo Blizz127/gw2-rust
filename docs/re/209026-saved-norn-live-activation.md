@@ -324,3 +324,13 @@ to the publisher; no root restart or deployment occurred.
 
 Readback exited0 without truncation. Feed metadata remains b128; this query
 does not reverify the runner pin or clear the audience restriction.
+
+A fresh **06:13:47Z** readback after the successful root216 sword smoke
+still selects4c46cad with the same game/manifest hashes, healthy listeners,
+saved record and backup. It reports **zero humans and zero bots**,
+superseding the earlier active-player observation; rollout still requires
+its own current player check. The tested skills/profile increment was
+handed to the sole publisher for prompt small-release integration, with
+no deployment claim. Receipt
+`209026-live-4c46cad-post216-readback-20261106.json`, REA
+`ev_763119c1fac80f762329211b5635c7475099eaa5a99388c96c24e6c56026521f`.
