@@ -121,6 +121,13 @@ displayed capacity/current count, while live clone identity, maximum and
 initial values remain unresolved. These are offline implementation/source
 increments. No client run, publisher dispatch or deployment was performed.
 
+The [cancellation trace](re/209026-skill-cancel-request-correlation.md)
+proves the queued-replacement request uses a fresh behavior value, while
+aborting an existing client order requires its original behavior, track
+and kind. It does not yet identify the manual cancel-input path or a
+server interrupt response/policy. Existing raw client23 framing suffices
+to preserve the request; no speculative cancellation codec was added.
+
 The [duration-expiry trace](re/209026-skill-order-duration-expiry.md) closes
 the client-local path from a valid ordinary command's deadline to its
 character completion callback. A separate server84 is not required on that
