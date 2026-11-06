@@ -96,19 +96,21 @@ a cinematic. This narrows the remaining intro dependency to authentic
 Norn playback inputs/sequence; the generic UI/view wiring does not select
 them. This source slice emits no Norn cinematic and changes no gameplay.
 
-Latest independently verified live kit: **cf13a3b**, deployed05:32:09Z.
-It adds ordered Great Hunt story actions, talkable Thora/Ido/Eir, a stand-in
+Latest independently verified live kit: **4c46cad**, deployed05:43:40Z.
+It includes ordered Great Hunt story actions, talkable Thora/Ido/Eir, a stand-in
 wurm boss and placeholder out-of-combat regeneration. The publisher exercised
 Thora, a trophy kill and regeneration in the client; later story steps have
 unit coverage but no completed client smoke. Placement, dialogue and some
 appearances are reconstructed. Completion-panel display does not establish
-reward delivery or authentic action conditions. Hunt progress is currently
-connection-local and resets on login or waypoint rejoin. Ether Feast damage
+reward delivery or authentic action conditions. The latest increment carries
+hunt stage through same-process waypoint rejoins, with focused unit coverage;
+restart persistence remains missing. Ether Feast damage
 exclusion and diagnostic attack behavior remain enabled; healing is missing.
 Saved-norn mode has been on since03:29:33Z, following the owner's03:29:03
-native choice. At05:38:38Z root independently verified
+native choice. At05:45:12Z root independently verified
 mode/store, one private saved record, activation backup hash, all kit hashes,
-metadata900, four owned listeners and zero humans.
+metadata900 and four owned listeners. One human and zero bots were present;
+the publisher was notified to preserve the active session.
 [Activation/readback evidence](re/209026-saved-norn-live-activation.md).
 The prepared Banshee Mesmer is hidden. New creation records persist; XP,
 loot and heart progress still reset at a server restart.

@@ -6,17 +6,20 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **cf13a3b** is at
-`/home/blizz/gw2-rust-cf13a3b`, deployed **2026-11-06T05:32:09Z**. It adds
+tracks the remaining scope. Live kit **4c46cad** is at
+`/home/blizz/gw2-rust-4c46cad`, deployed **2026-11-06T05:43:40Z**. It includes
 Great Hunt story-action progression with talkable Thora/Ido/Eir, a stand-in
 wurm boss and placeholder out-of-combat regeneration. Publisher client
 smokes exercised Thora, a trophy kill and regeneration; later story steps
 remain unobserved in the client. Placements, dialogue and some appearances
 are reconstructed; this is not full retail encounter completion. Saved-norn
-mode remains enabled. Root independently verified one saved record, backup
-hash, all kit hashes, metadata900, four healthy listeners and zero
-humans/bots at **05:38:38Z**. Ether Feast healing remains unimplemented.
-Rollback is4b3c4c2. See the
+mode remains enabled. The new increment carries Great Hunt stage through
+same-process waypoint rejoins; it adds no restart persistence or actual
+story reward delivery. Root independently verified one saved record, backup
+hash, all kit hashes, metadata900 and four healthy listeners at
+**05:45:12Z**. One human and zero bots were present; preserve that session
+for further rollout. Ether Feast healing remains unimplemented.
+Rollback iscf13a3b. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
 The owner can create a Norn Mesmer through the saved roster; the prepared
@@ -24,7 +27,7 @@ Banshee Mesmer is hidden. Initial creation persists, while XP/loot/heart
 progress resets at restart. [Run144](re/209026-saved-norn-creator.md) is the
 prior private creator/save/world/defeat/waypoint acceptance with runner0e6ac30
 and live metadata900. This remains an incomplete diagnostic starter fixture.
-The latest feed readback at05:38:39Z offers b128; its runner pin was not
+The latest feed readback at05:45:12Z offers b128; its runner pin was not
 inspected by that query. The earlier native roster prompt is resolved.
 
 Independent fix **9451cf0** applies the seven-line caster

@@ -293,3 +293,34 @@ disagree on the boss position; neither establishes a verified retail spawn.
 Private audit: `209026-run214-great-hunt-ledger-audit-20261106.json`, SHA-256
 `626771245cb26a8040088206470cea617d5ed27fa384ed5af614c2546e83c6cc`,
 REA `ev_4f88606d925b60eb5392437873b19b40eff4e27a61467b5cbd6d2a356a85a1c6`.
+
+## Great Hunt waypoint carry: 4c46cad
+
+The sole publisher deployed **2026-11-06T05:43:40Z** to
+`/home/blizz/gw2-rust-4c46cad`, rollback
+`/home/blizz/gw2-rust-cf13a3b`. It carries Great Hunt stage through a
+same-process waypoint rejoin, recreates the quest and replays completed
+steps in order. A finished hunt is not recreated. This does not add durable
+restart storage or implement the displayed item/currency reward.
+
+The publisher records115 observer tests including the carry regression;
+its `run215-hunt-carry` exercised Thora, a trophy kill and regeneration
+without asserts. That reported client smoke does not itself document a
+completed waypoint round trip. The release cycle ran at zero humans and
+became ready in3.4s. Root did not rerun the publisher's tests.
+
+Independent readback at **05:45:12Z** confirms the selected kit, all manifest
+hashes, four healthy owned listeners, saved-norn mode with one0700 record
+store, unchanged activation backup and CDN900 root/main hashes. **One human
+and zero bots were present.** That later active-player observation was sent
+to the publisher; no root restart or deployment occurred.
+
+- Game SHA-256:
+  `229e0276e9fc84517d52b65d39c829fa418fea3a08e197f70d97da5fc3aa560a`.
+- Manifest SHA-256:
+  `180dd68505fd8e0ca64aff1767651384dd114ad21e4ee0d4872771a8feec99e9`.
+- Receipt: `~/re/gw2/notes/209026-live-4c46cad-readback-20261106.json`.
+- REA: `ev_6a2ceb040168d1399c230f1246ab54e1880e20a23e73e8c625d47c1918435d11`.
+
+Readback exited0 without truncation. Feed metadata remains b128; this query
+does not reverify the runner pin or clear the audience restriction.
