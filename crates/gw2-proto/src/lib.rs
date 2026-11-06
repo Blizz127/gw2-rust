@@ -48,6 +48,7 @@ pub mod schema;
 pub mod skill_availability;
 pub mod skill_palette;
 pub mod skill_order;
+pub mod skill_recharge;
 pub mod skillbar;
 pub mod specialization;
 pub mod wardrobe;

@@ -170,6 +170,16 @@ cannot substitute for initializing a per-skill record.628 is also not a
 recharge setter: it stores a skill pointer and byte at skillbar
 +0x1c8/+0x1c0 and rebuilds.
 
+The Rust protocol library now exposes raw630/631 frames through
+`skill_recharge::{SkillRechargeFrame209026, SkillRechargeOperation209026}`.
+It preserves all Dword values, the full category/pause bytes and the fixed
+little-endian raw Word; it does not clamp, choose gameplay values or schedule
+effects. Decode errors leave the input untouched. Four focused tests pass:
+independent literal wire bytes, the extracted client XML schema, full byte
+domains, consecutive boundaries, every truncation and malformed Dwords.
+No observer/runtime call site uses these frames yet. This is protocol support,
+not a live recharge or healing implementation.
+
 ## Numerical healing and remaining experiment boundary
 
 Existing [health updates](209026-character-health-endurance.md#existing-health-messages-257260)
