@@ -839,12 +839,48 @@ XYZ but no typed heading scalar. Consequently an unresolved translation blocks
 all further holds, while an admitted pure turn requires a fresh image and
 invalidates translation calibration; it need not manufacture a new position
 report. The next clear-ground translation must yield fresh actual samples.
-No new route fixture has been staged. Private audit
+This plan was later staged as run252 below. Private audit
 `209026-retained236237-turn-audit-20261106.json`, SHA-256
 `92906734b6d026d8426ed796bde81358aa719bae67271230bfbf388db4d46172`,
 REA `ev_59e7fefee222b6818f4024193b37a62d5fd9067d8a27a9ced221572ab0aad1c2`.
 Corrected plan `run252-norn-upper-route-corrected-plan-20261106.json`, SHA-256
 `b40356994eef8c9bafb8d4b39fc55acbcef2acaa0136d412813cc433d385e974`.
+
+## Run252: mismatched helper run name stops before movement
+
+Run252 used exact403ac377 with dense movement logging, the original154-byte
+synthetic saved record, a fresh145 prefix and unchanged stage0/spawn/actors.
+Launch and UI exit13: the owned-focus observer expected
+`run252-norn-input-delivery`, while the staged run was
+`run252-norn-upper-route`. It returned `owned_run_marker_mismatch` before
+the requested S750 command. No movement input or position report occurred;
+this is a test-helper naming defect, not evidence that movement failed.
+
+The controller claimed at13:45:10.320172Z and released incomplete at
+13:45:33.646748Z, after23.326576 seconds. There were no target, skill,
+interaction, story, hit or transfer events. Root returned window49 at
+13:46:34.042389Z after verifying container absence, all70 immutable non-prefix
+entries, the original record, executable hashes and console privacy. All three
+root captures have complete raw and normalized output. The failed run remains
+unchanged; a fresh254 fixture is being prepared with the full run-name binding
+and a focused check that rejects this exact252 mismatch. No later runtime or
+route pass is implied by that preparation.
+
+Private evidence under `~/re/gw2/notes/`:
+
+- `209026-run252-norn-upper-route-launch-20261106.json`, SHA-256
+  `eeb9cddf5e9f7ca4bad444a020d943518a1bda52b6177df150229b8c8f7c68da`,
+  REA `ev_fdc89377f727e4ce91a7f2e220350ad9e918e0d228dd7a9a74d00360a8f67107`.
+- `209026-run252-norn-upper-route-readback-20261106.json`, SHA-256
+  `3934d2390a9ac4cb0146486122131490c0b8008006e5de1e304076d88293b918`,
+  REA `ev_175b08547cb6a762f9371ee690809f19abc87bfe3df84ce3209dffa02c48c8e1`.
+- `209026-run252-norn-upper-route-return-20261106.json`, SHA-256
+  `7092781e52c4c2f99a64cc458b0867f3d31b18a52ff7b9f1b768fdbf48a4bdf0`,
+  REA `ev_548810e01e2099b44ed15c7ba931bb3afab12ffabfb5bcd6c542e9161b7f1609`.
+- Root outcome `run252-norn-upper-route-outcome-20261106.json`, SHA-256
+  `3f5bf2b47155bd82fff93b1a46e015325a9d71449da88a37f8cd43626670f5de`.
+- Controller outcome `run252-controller-outcome-receipt-20261106.json`, SHA-256
+  `83a84fb5c5e7bc24fe4517968103819d1e1522706f64dc55cddd5591a7a04ac8`.
 
 ## Retained REA evidence
 

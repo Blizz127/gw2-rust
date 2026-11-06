@@ -67,6 +67,12 @@ bounded input delivery, not a full403 route traversal.
 [Run246 evidence](re/209026-saved-norn-creator.md#run246-pointerroot-guard-stops-before-input).
 [Run248 evidence](re/209026-saved-norn-creator.md#run248-one-input-produces-fresh-movement-reports).
 
+Run252 stops before movement because its focus helper retained the wrong run-name
+suffix. Launch/UI13, no movement reports or gameplay events; window49 returned
+13:46:34Z with70 immutable inputs, original record and executable hashes intact.
+Fresh254 preparation corrects that binding; no route pass is claimed.
+[Failure and cleanup](re/209026-saved-norn-creator.md#run252-mismatched-helper-run-name-stops-before-movement).
+
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274
 before healing,255 at the first post-input capture,338 at the follow-up with
