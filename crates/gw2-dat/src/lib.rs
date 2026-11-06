@@ -25,6 +25,7 @@ pub mod pfwrite;
 pub mod profession_content;
 pub mod progress_content;
 pub mod skill_fact_content;
+pub mod skill_damage_fact_content;
 pub mod skill_palette_content;
 pub mod skill_recharge_content;
 pub mod setting_content;

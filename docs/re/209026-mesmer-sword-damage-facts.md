@@ -92,8 +92,9 @@ through `0x140894930`, then calls `0x140893c50..0x140893f4d` with the entry's
 +0x40 payload. The formatter resolves all three values through the helper
 above before accessing their integer/float representations.
 
-For flags bit 8 set, the formatter takes a separate flat calculation path.
-The three sword SkillDefs have that bit clear and use the ordinary path:
+For flags **mask 0x08** set, the formatter takes a separate flat calculation
+path. This is bit 3, not bit 8 (`0x100`). The three sword SkillDefs have
+mask 0x08 clear and use the ordinary path:
 
 1. Obtain level through tooltip context virtual +0x18, a weapon pair through
    `0x140895550`, and unsigned attribute 1 through context virtual +0x10.
@@ -168,6 +169,61 @@ Final REA evidence:
 `ev_8af75b912bfff31edc28c71ee04afabdd4251e57ba1b3a920bdad37c91962199`.
 The run exited zero with no truncation; no gameplay or archive access occurred.
 No server binary or held run145 input was changed by this reader increment.
+
+## Type-13 reader and numeric evaluator
+
+The follow-up `gw2-dat::skill_damage_fact_content::DamageFact209026` now
+connects the exact type-377/data-type-13 definition and payload to the named
+resolver. It reads the base, coefficient, multiplier, raw weapon selector and
+the SkillDef's **0x08 mask** selecting the flat formula. The supported resolved
+scalar tags are integer 434 / float 437 / integer 434, matching all four sword
+facts. Other tags, missing direct definitions and definition-key fallback are
+not silently substituted. Limits apply separately to each scalar lookup.
+
+`weapon_selector(caller_slot)` preserves the caller's slot for raw zero and
+unknown values. `evaluate` requires explicit weapon strength, attribute 1,
+both level-table values and base-damage multiplier for the ordinary path.
+The flat path ignores those inputs. Neither API supplies an implicit weapon,
+map mode, character level or target armor. Flat multiplication occurs before
+rounding; ordinary multiplication occurs afterward. The implementation uses
+the observed f32 add-0.5 conversion, not `f32::round()`.
+
+The evaluator rejects nonfinite values, zero/overflowing table sums, a weapon
+sum exceeding signed Dword, and conversion/multiplier overflow. These are
+bounded-reader policies; it does not emulate native wraparound or invalid
+conversion results. It implements the numerical tooltip, not combat damage.
+
+Seven focused tests pass:
+`cargo test -p gw2-dat --lib skill_damage_fact_content -- --test-threads=1`.
+They cover external definition offset zero, the actual definition discriminator,
+mask 0x08 versus 0x100, malformed ranges/tags, selector preservation, unsigned
+attribute conversion, separate multiplier/clamp ordering, an f32 half-boundary
+that differs from `round()`, and arithmetic rejection. Final module SHA-256:
+`18dd023a2c93fbec133bc18509fdd5b5c389f24ff6b2a16df5b414f863b454bd`.
+
+A private compiled checker read all four actual sword facts in all four mode
+pairs: **16 decoded cases**, **48 numerical cases** and **three non-type-13
+rejections**. Container slots 30 and 21 contain the exact skill/definition
+caches; all other slots are genuinely empty indexes. A separate Python parser
+and explicit f32-operation oracle match every field and result. They use the
+frozen level-1 table entries **128 and 10**, the verified setting 1.0, the
+conditional weapon pair 105/117, and explicitly chosen attribute samples
+0/100/1000. The samples are not observed live attributes or tooltip captures.
+
+For example, the base 10170/10171 facts give 1/81/812 for those three attribute
+samples. The 10172 “No Boons” fact gives 1/161/1609 and its other damage fact
+gives 1/121/1207. These are conditional numerical checks, not authoritative hit
+amounts or a recovered boon predicate. Input and module hashes remained
+unchanged during the check; no archive or game runtime was accessed.
+
+Exact table evidence:
+`ev_b944317be57897884cf8f363cbc564e3b4f7c1d46033ef826a422c1c7ebd246a`.
+Final compiled comparison:
+`ev_7e0b1b3a60ea234d91f213486ddb0f406331dc2ce816baff8a00b7234c5dbeb3`.
+Both captures exited zero without truncation. Private bundle:
+`~/re/gw2/notes/209026-damage-fact-reader-20261106.json`, 6807526 bytes,
+SHA-256 `1e169033afc0ff32faa52d1e15b76ac49d6bc51a36206b9054bf5ba7023c08a5`.
+The helper is `~/re/gw2/notes/check-damage-facts-20261106.py`.
 
 ## Evidence
 

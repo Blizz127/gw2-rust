@@ -112,6 +112,12 @@ joins story9 to starting quest358; the story2→9→10 links remain unnamed.
 These are offline code/source increments. The native publisher prompt,
 prepared live build and held run145 inputs remain unchanged.
 
+The same [sword fact module](re/209026-mesmer-sword-damage-facts.md#type-13-reader-and-numeric-evaluator)
+now decodes type-13 facts and evaluates their numeric tooltip with explicit
+inputs. Seven focused tests, 16 frozen fact/mode comparisons, 48 numerical
+comparisons and three wrong-type rejections pass. It preserves the distinct
+flat/weapon rounding order and supplies no server-damage policy or deployment.
+
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
 heart56 and reward behaviors are fixture-backed; the authored quest154

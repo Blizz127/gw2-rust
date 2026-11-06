@@ -74,6 +74,13 @@ repeat/chain timing. A single frozen-source extraction resolves story9's
 starting quest358, while story2→9→10 reference semantics remain unknown.
 No server or client deployment, run145 launch, or publisher takeover occurred.
 
+The follow-up [type-13 damage-fact reader/evaluator](re/209026-mesmer-sword-damage-facts.md#type-13-reader-and-numeric-evaluator)
+passes seven focused tests and an independent frozen-content comparison of
+16 fact/mode cases, 48 numerical cases and three wrong-type rejections.
+It connects named coefficients to the exact tooltip calculation while keeping
+weapon, attribute and level inputs explicit. Combat damage, hit timing and
+the final attack-chain policy remain outside that implemented scope.
+
 The coordinator's00:42 UTC project-state check identified the native Claude
 publisher as waiting/input needed, initially without a known cause or task-ledger
 receipt for5169b98. The later concrete report identifies the native roster-choice
