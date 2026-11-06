@@ -375,3 +375,85 @@ view of the far-side ground is needed before entering the obscured section;
 the final forest view does not authorize an inferred descent. Repeating the
 same obscured movement/turn sequence would add little evidence. No production
 change or deployment resulted from these diagnostics.
+
+## Run278: Camera bindings and lodge threshold (2026-11-06)
+
+The native Control Options list now supplies a concrete camera-input source.
+One pre-Thora inspection opened F11, selected the mouse-shaped Controls category,
+and scrolled down six times at three ticks each. The Camera section appears
+below User Interface and above Screenshot/Map. Its displayed assignments are:
+
+| Camera action | Primary binding | Secondary binding |
+| --- | --- | --- |
+| Free Camera | blank | blank |
+| Zoom In | Page Up | blank |
+| Zoom Out | Page Down | blank |
+| Look Behind | blank | blank |
+| Toggle Action Camera | blank | blank |
+| Disable Action Camera | blank | blank |
+
+These are displayed bindings, not observations of zoom behavior or distance.
+No camera action was executed. Menu input targeted only opening, category
+navigation, list scrolling and Escape; it targeted no binding or setting edit.
+The retained images do not prove persisted preference bytes unchanged. A fresh
+world image and explicit world-return attestation preceded story input.
+
+The new controller required this single inspection before Thora and preserved
+the original story-log baseline throughout it. Its strict comparator rejected
+observed XYZ changes and new target, interaction, combat or story events, while
+allowing benign regeneration/respawn and same-position/no position reports.
+Seven controller and six reader test groups used the actual controller writer
+with mocked native operations. Three permit-scope checks and two staged
+no-listener configuration checks also passed. All previous input deadlines,
+focus ownership, image freshness and cleanup guards remained in force.
+
+The approved sandbox used `633fff8` with 102 story arguments. The publisher
+deployed `cb8622a-q171` during preparation; its separate independent readback is
+recorded in the backpack document. This run is not a native test of that build.
+
+After the inspection, normal Thora selection and interaction produced step 1.
+Escape and a fresh dialogue-closed confirmation preceded one E250 turn and six
+measured movement holds. The initial image already contained the hall geometry.
+The route approached the broad lodge doorway, producing 111 position reports:
+
+| Hold | Final reported XYZ |
+| --- | --- |
+| W250 calibration | `[-3105,-25646,-3744]` |
+| D250 alignment | `[-3159,-25757,-3738]` |
+| W750 approach | `[-2906,-25883,-3729]` |
+| W750 threshold approach | `[-2738,-25965,-3745]` |
+| W500 toward interior | `[-2657,-26018,-3752]` |
+| W250 threshold step | `[-2659,-26024,-3752]` |
+
+The final hold added seven reports but only `[-2,-6,0]` net displacement. Paired
+images retain the character at the threshold with the lit interior floor and
+oven visible. They establish neither crossing nor an onward exit, and do not
+diagnose a collision. Root released incomplete with 282 input seconds remaining;
+no guard refused an action. There was no hostile selection, attack, death,
+step 2 or Ido/step 3. Requested hold durations are not native processing times.
+
+Strict readback validates all 22 actions, including ten menu actions, and remains
+incomplete. UI and outer capture exited 13. Window68 returned at
+**2026-11-06T23:00:29.441507Z** after container absence, 79 immutable inputs, the
+original 154-byte record, executable hashes and console privacy were verified.
+Owned cleanup passed; 60 unverified process observations were left untouched.
+Root reviewed the first image and all 22 post-action images, not all 50 retained
+images. Bind and readback each omitted one rendered frame of unknown size;
+their raw and normalized output remain complete. Launch and return are
+untruncated.
+
+Private evidence under `/home/blizz/re/gw2/notes`:
+
+- `run278-root-story-controls-observation-20261106.json`, SHA256
+  `eb65cb0c440a97b4f0a431ee797ca709e65bb20c6448eefbb8b8311399c76d4e`.
+- `run278-camera-controls-threshold-guide-20261106.json`, SHA256
+  `2eeeebe860ced94205adb97868531edaf2b415857aef7b9f6d5b4ac30c446e7f`.
+- Camera rows image SHA256
+  `cfc47cc5f9ee4334fc3a6fbb1c188eabbf5b194b408d39d04a887776089ff014`.
+- Full launch: `ev_a1cbaae14354afbaa4bdb6cea4e37e212750bb6a3b01721b93243495257f84f7`.
+- Readback: `ev_a1de93ad4b61638327d18e00019489fd377a0fde8c181e28bb85a72e3b5ccd63`.
+- Return: `ev_92c3aaec25cd274ec6b860e6cc1f47044fd6ad0386f0dd0504a42d10d2732d0f`.
+
+The next bounded observation can use the displayed Page Down binding to assess
+zoom response on a fresh run. Full trophy/Ido completion and retail accuracy
+remain unproved; this diagnostic produced no production change or deployment.

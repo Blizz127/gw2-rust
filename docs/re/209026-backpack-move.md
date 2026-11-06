@@ -183,6 +183,50 @@ attributed or touched. The existing undeployed standalone 8192 leaf dependency r
 asset-completeness limitation. No deployment, client run or store mutation was
 performed by this verification.
 
+### Quest 171 integration: independently verified `cb8622a`
+
+The publisher reports `/home/blizz/gw2-rust-cb8622a-q171` live since
+2026-11-06 **22:43:06Z**. Independent readback at **22:53:36.573457Z** verified
+that selected kit and rollback `/home/blizz/gw2-rust-633fff8-q170`, including
+all current and rollback manifest sums. The deployment timestamp itself
+remains publisher-reported. Exactly `BUILD`, `bin/gw2-game-observe`,
+`data/mission-profile.conf` and `deploy/gw2-server.sh` changed.
+
+| Current artifact | SHA256 |
+| --- | --- |
+| Game binary, 2,002,128 bytes | `de7cd57486f10b01ddf2e40b0d6b4b522401500882cbd05426b39666edff6cf3` |
+| `SHA256SUMS` | `fbaea53014f031472a1caf8b43a2f53f84dd3370cbda42ba94f52698397f001d` |
+| Mission profile | `bb82e99ce4c8eccc880409bbe535f811b471c00d1a634332f27e6f97d21aa2f1` |
+| Supervisor | `d79f03b5a7b9102c84d6a076faf42ee37a7a18cfb0471aa5e5c2f27eb0479f96` |
+
+All 126 effective story arguments matched: the prior 102 plus map 407,
+four NPC entries and nineteen hostile entries. Four owned listeners were
+healthy, with zero humans and zero bots. Saved mode remained ON; the 0700
+store, two 0600 record metadata entries and unchanged activation-backup hash
+passed without reading record contents or emitting names. The 27-byte skills,
+Ether Feast, sword chain and normal combat defaults were preserved; story
+seeds and diagnostic overrides remained absent. All asset bytes were unchanged;
+the served CDN950 root and checked small leaves matched. The launcher
+owner-only hold persists and was untouched.
+
+The publisher separately reports prepared, seeded quest171 fixture smokes
+in `laneb22`, `laneb27`, `laneb23`, `laneb24` and `laneb26`, with a binary
+byte-identical to this release. This readback did not inspect or replay those
+runs. Normal placements, the Valda starter on map28, handoff from170 and the
+saved-character quest171 path remain unproved; neither native quest171 success
+nor normal-path equivalence follows from the deployment checks.
+
+Private files under `/home/blizz/re/gw2/notes/`:
+`cb8622a-q171-release-verification-20261106.json`, SHA256
+`dd25bac5fa2a4971ced60853d0213e5a19f064a4c06e975d62c40d91727a76bb`;
+complete REA `209026-cb8622a-q171-release-readback-20261106.json`, SHA256
+`b083cf1d540185ebd5e4d831d38882c41aa75aee593d406665f1256181e97751`,
+Evidence `ev_bca100757c3799e0b8eff938fd068e7ee3a157ead02a12d05446b0c534fd6a62`.
+The capture exited0 without truncation and verified owned-process cleanup.
+Two unverified process-environment observations returned EACCES; the processes
+were not attributed or touched. The existing standalone8192 asset-dependency limitation remains.
+No client, sandbox, archive, deployment or store mutation occurred.
+
 ## Private evidence
 
 Executable SHA256:
