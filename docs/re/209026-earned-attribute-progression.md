@@ -120,3 +120,13 @@ native publisher inbox. This is not a deployment receipt. Evidence:
 `earned-attributes-76af245-20261106-checks/profile-preflight.json` and
 `earned-attributes-native-publisher-handoff-20261106.json` under private notes.
 There is no added client-run or routine approval gate.
+
+At06:48:23Z the existing publisher source includes e78b028 under0570b950.
+Its shared queue records the lane-B attribute smoke, while the latest release
+receipt remains76af245. Integration is not deployment. The bounded watch
+ended without invoking a live verifier or claiming a newer kit live.
+Aggregate verification receipt:
+`earned-attributes-76af245-20261106-checks/verification-receipt.json`, SHA-256
+`b87f43a0088bf37f7184e071bcc4da156624acfc9396d3b0c1e78759d8759e37`.
+Publication watch: `earned-attributes-release-watch-20261106.json`, SHA-256
+`4539fba7eeae5b2990091ce8d470b7ce3aa07493d9daded46e2d6829973a1b36`.
