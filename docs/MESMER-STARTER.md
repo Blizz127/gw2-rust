@@ -47,7 +47,7 @@ profile setting or schema and is handed to the sole publisher, **not deployed**.
 The publisher's run203 on the earlier5516cb4 candidate reached the world and
 cleaned up, but its03:52 readback contains no sword SkillBegin or combat
 response. A combat pass is not established for either cumulative candidate;
-the admission/input cause remains unresolved. See the
+the later source of the missing request is narrowed below. See the
 [readback](re/209026-saved-norn-live-activation.md#subsequent-combat-smoke-readback).
 Ether Feast is excluded from generic attack damage; healing/recharge remain
 unimplemented and must not be advertised as part of this candidate.
@@ -74,7 +74,7 @@ them. This source slice emits no Norn cinematic and changes no gameplay.
 Latest independently verified live kit: **c2cb6fd**, deployed03:56:12Z with
 the independent Ether Feast damage-exclusion guard and existing diagnostic
 attack behavior. Saved-norn mode has been on since03:29:33Z, following the
-owner's03:29:03 native choice. At04:01:16Z root independently verified
+owner's03:29:03 native choice. At04:27:55Z root independently verified
 mode/store, one private saved record, activation backup hash, all kit hashes,
 metadata900, four owned listeners and zero humans.
 [Activation/readback evidence](re/209026-saved-norn-live-activation.md).
@@ -93,9 +93,15 @@ The same publisher session was alive/status shell at03:41:35Z and reported
 preparing5516cb4's combat smoke. Root returned unused window23 at03:42:49Z
 for publisher priority run203. Window24 was subsequently granted03:56:36Z
 for one bounded creator run and cleanup. Run145 remains unlaunched and its
-inputs unchanged; a separate upstream sword observation is being prepared.
-No root client launch, competing deployment, native prompt
-answer or restart occurred. The full Norn-first goal remains open.
+inputs unchanged. [Run148](re/209026-sword-slot-selection-runtime.md) completed
+four controlled slot5 activations, each with a null selected SkillDef at
+wrapper/body entry and return, no ordinary request call and no observer
+errors. The heal control emitted10176. This is a successful bounded diagnostic,
+not successful sword combat. Correct slot/palette startup remains unresolved.
+Window24 was returned complete04:25:32Z; no further runtime grant exists.
+Root's bounded client observations are recorded above. No competing
+deployment, native prompt answer or live service restart occurred.
+The full Norn-first goal remains open.
 
 An earlier offline increment adds a bounded
 [named ability-value resolver and sword damage-fact evidence](re/209026-mesmer-sword-damage-facts.md).

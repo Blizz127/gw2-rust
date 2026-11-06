@@ -11,7 +11,7 @@ tracks the remaining scope. Live kit **c2cb6fd** is at
 the Ether Feast damage-exclusion guard while preserving working diagnostic
 combat. Saved-norn mode remains enabled after the owner's03:29 choice.
 Root independently verified mode/store, one saved record, backup hash,
-all kit hashes, metadata900, four listeners and zero humans at **04:01:16Z**.
+all kit hashes, metadata900, four listeners and zero humans at **04:27:55Z**.
 The guard does not implement healing. Rollback is82d8d04-cdn900. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
@@ -43,12 +43,17 @@ The publisher is active again. A read-only REA check of run203 at 03:52:25Z
 found world startup and cleanup, but no sword SkillBegin or combat response.
 The only typed SkillBegin was Ether Feast10176 with target0. This does not
 establish a combat pass for5516cb4 or the cumulative45c0731 candidate; the
-input/admission cause remains unresolved. See the
+upstream selection cause was narrowed by the later run148 below. See the
 [smoke readback](re/209026-saved-norn-live-activation.md#subsequent-combat-smoke-readback).
 Root returned window23 unused at03:42:49Z for its run203 priority. The
-publisher granted window24 at03:56:36Z for a bounded creator run and cleanup.
-Run145 remains unlaunched and unchanged; a separate upstream sword
-observation is being prepared. No competing publish/restart was dispatched.
+publisher granted window24 at03:56:36Z. [Run148](re/209026-sword-slot-selection-runtime.md)
+then observed four controlled sword activations with a null slot5 SkillDef
+at wrapper/body entry and return; no ordinary request call was reached.
+The heal control emitted10176 normally. The run and cleanup passed; this
+diagnostic result is not a combat pass. The upstream slot/palette startup
+input remains unresolved. Window24 was returned complete04:25:32Z. Run145
+remains unlaunched and unchanged; no new runtime grant or competing publish
+was established.
 
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).

@@ -4,7 +4,7 @@ Saved Norn character creation is **enabled live** since **2026-11-06T03:29:33Z**
 currently on `/home/blizz/gw2-rust-c2cb6fd` (deployed03:56:12Z).
 The owner chose activation in the native publisher session at03:29:03Z;
 root independently verified the latest configuration, backup, kit hashes and
-health at04:01:16Z. See the [activation receipt](209026-saved-norn-live-activation.md).
+health at04:27:55Z. See the [activation receipt](209026-saved-norn-live-activation.md).
 The store was empty at03:43 and had one saved record at04:01; contents were
 not read. Saved mode hides the prepared Banshee Mesmer.
 Initial creation is durable; world XP, loot and heart progress remain

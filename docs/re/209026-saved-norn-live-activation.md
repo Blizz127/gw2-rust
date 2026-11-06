@@ -37,6 +37,15 @@ shared `latest_live_release.sha256sums_sha256` still contained the old
 manifest hash at the first post-release inspection; the independent hash
 above and publisher's release note agree on the new manifest.
 
+After run148 cleanup, a fresh independent readback at **04:27:55Z** again
+verified c2cb6fd, every kit hash, metadata900, ready/running with four owned
+listeners and zero connections, saved mode and one private record, and the
+activation backup. The b128 feed was unchanged at04:27:56Z. Receipt:
+`~/re/gw2/notes/209026-live-c2cb6fd-post-run148-20261106.json`,
+REA `ev_5169156df88f4a24f6335e868a5418cebc99aca9154746f209d5c2b86e150072`.
+The read-only helper exited0 with complete output and verified owned cleanup;
+unrelated processes it could not inspect were left untouched.
+
 ## Activation behavior
 
 The next login presents the saved roster, initially empty at readback, so
@@ -95,9 +104,12 @@ for publisher priority run203. The shared cleanup record is written. No
 client was stopped, no running test was changed, and root needs a fresh
 window24 before launching run145. The publisher subsequently granted
 window24 at03:56:36Z for one bounded creator run and cleanup, with a
-45-minute limit. This is a resource grant, not a run result. Existing run145
-inputs remain unchanged; a separate upstream sword observation is being
-prepared. The later log inspection below establishes
+45-minute limit. [Run148](209026-sword-slot-selection-runtime.md) subsequently
+completed the bounded observation and cleanup; window24 was returned at
+04:25:32Z. Existing run145 inputs remain unchanged and unlaunched. Run148
+found a null selected SkillDef on all four controlled sword activations;
+it did not establish working sword combat or a replacement startup input.
+The earlier log inspection below establishes
 that run203 ran and reported cleanup, but does not establish a combat pass.
 
 The later [caster-ownership candidate45c0731](209026-skill-caster-ownership.md)
@@ -135,6 +147,9 @@ SkillDef and whether activation reaches `0x140316230 → 0x1411f51e0 →
 Missing slot resolution, an earlier gate and a different input path remain
 possible; target or range is not established as the cause. Run145's current
 downstream heal/request-producer hooks alone cannot distinguish this gap.
+The later run148 observed the previously missing boundary and proved its
+selected SkillDef was null; see the linked runtime note for the remaining
+cache-population dependency.
 
 Retained readback:
 `~/re/gw2/notes/209026-run203-status-readback-20261106.json`,
