@@ -356,6 +356,69 @@ No owner store, archive content, source fixture placement or live service
 was changed by the controller. Inaccessible unrelated process probes remain
 unverified and were untouched.
 
+## Run230: isolated input observation, no hostile attack
+
+`run230-saved-norn-heading` used source
+`a223a90f4e929a3469e93eac47503f818317abaa`, game SHA-256
+`d1d09f9bf4c91c547ccfca37a61719dd0394d609b22fe662553b2fe4aef89a6e`,
+and the unchanged vendor profile
+`d564afee8cacaf1a35aa2c92b91670ed4d173f69aed99d11738533e4ab018f0f`.
+The 1,836-input manifest is
+`8ec5c1115dbbc61570594c45e4f2630f9860196e39ec9634a224f2c6c12aa1ab`.
+Normal saved stage0, actor positions and the synthetic144 record were preserved;
+there was no owner-store access or actor relocation.
+
+The sole controller claimed at08:58:31Z. The initial view already had no open
+dialogue or selected target, so no unnecessary Escape or world click was sent.
+It captured the stationary view, held D for500ms, and captured the view again
+before any other input. The first sparse movement report was
+`[-3200,-25607,-3742]`, compared with configured spawn
+`[-3200,-25600,-3742]`; nearby actors shifted left in the view while the player
+had a lateral walking pose. This is consistent with lateral movement, not
+proof of an effective keybinding or a measured yaw. The seven-unit difference
+is the first sparse report, **not total displacement**. Trees and a large
+building continued appearing between images; asset streaming changes must
+not be attributed to the D input or camera rotation.
+
+One Tab input produced no client227 target. There was no visible selected
+hostile, and no attack was sent. Progress remained `[1]`, with step2 unmet.
+The controller released all inputs at08:59:22.860–23.379Z, with37 helper seconds
+remaining, before its80-second release target. No W/A/S/Q/E chain, packets,
+memory writes, server-state edits or resource controls were used. Seven
+complete REA records were saved privately before compact output. The binder
+retained all888 raw bytes,10 raw frames and every normalized frame; only one
+rendered frame was omitted.
+
+The image pair is retained privately as `controller-heading-before.png`
+(SHA-256 `c3a52e73cd209e09846bb5223777508c0b448448ae563b387bdf6ed08494f33e`)
+and `controller-heading-after-d.png`
+(`6a9ea2369097f0153639b296170ef0db603731b3ec4691869ba95001ed46322e`).
+Root separately checked those hashes and viewed both images.
+
+Wrapper/UI exit0 means the bounded diagnostic capture completed, **not a
+successful hostile attack or full tutorial**. Root verified container absence,
+console privacy, both client executable hashes unchanged
+(`99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`),
+and the original154-byte synthetic record unchanged
+(`267d4be2786a0ddd1b1e3a253e299359dfd0403aac3b01d36bb95c9990558e76`).
+Window36 was returned at **09:00:04.871304Z**. No payout or map28 transfer was
+attempted. Cleanup and resource return remain separate from gameplay coverage.
+
+Private receipts under `~/re/gw2/notes/`:
+
+| Receipt | Evidence |
+| --- | --- |
+| `209026-run230-window36-verification-20261106.json` | `ev_03df814212f6bc7993e7dbd08c932e30bd73591d4e75f60ca17f0849262446cc` |
+| `209026-run230-saved-norn-heading-launch-20261106.json` | `ev_e55304ccdc1284b2b0ceb21839485091b9e84e153a094ee3c1379cbf016fdc66` |
+| `209026-run230-saved-norn-heading-readback-20261106.json` | `ev_83de2d6c2034073fdbc1306d58d17684f68930cc743b1be1a46c71329734c086` |
+| `209026-run230-window36-return-20261106.json` | `ev_e2b04e21abe868b33c02b5b1bb965e03a2ee3d8b1e618c1dbce4577f90543eda` |
+
+`run230-native-controller-outcome-20261106.json` pins all controller captures
+and images, SHA-256
+`4c3f6def2cfbb625223394706c37f87c70496e1296a57193c2c80a4515d2065e`.
+The staging receipt is `run230-saved-norn-heading-staging-receipt-20261106.json`,
+SHA-256 `22bf2b0af1285fe7321cc5ca795b6fa17623e56efbccf8bff1f3e473b3e0fe45`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.

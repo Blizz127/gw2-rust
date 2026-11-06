@@ -30,6 +30,15 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+Run230 completes an isolated input diagnostic on exacta223a90. Paired
+before/after D500ms images are consistent with lateral movement; exact yaw,
+binding and total displacement remain unmeasured. Tab produces no target227,
+so no attack is sent. Story remains at step1. UI/capture0 means the bounded
+diagnostic completed, not the full hunt. Cleanup, privacy, unchanged executable
+hashes and the original synthetic record pass; window36 returned09:00:04Z.
+The next route must establish a supported turn/camera input before moving.
+[Evidence](re/209026-saved-norn-creator.md#run230-isolated-input-observation-no-hostile-attack).
+
 Run229 corrects the earlier controller failure and exercises native movement,
 but stops with only Thora/step1 completed. The only selected/attacked target
 is neutral raven45; Tab selects no new target. Navigation reaches the hillside
