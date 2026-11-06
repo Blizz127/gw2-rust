@@ -318,8 +318,12 @@ echo off, and all newer profile/content/saved-mode changes. Merely deleting
 the assignment could inherit host configuration;0 is not disabled. The
 then-current4c46cad batch matches the original12-byte baseline
 `bf7e83481d73b5acb4836a742072e5118f7001c8a065766273b64c16c5b9e55e`.
-The publisher must merge the grant if its newer batch differs. Root does
-not publish or claim the candidate live from this submission.
+The publisher must merge the grant if its newer batch differs. That native
+submission was followed by deployment of **4c46cad-sk at06:16:37Z**.
+Root independently verified the live skills hash, effective argv, all
+other profile values, health and rollback at06:19:28Z. The diagnostic wolf
+position was not deployed. See the
+[live receipt](209026-saved-norn-live-activation.md#real-sword-request-availability-4c46cad-sk).
 
 Private evidence:
 

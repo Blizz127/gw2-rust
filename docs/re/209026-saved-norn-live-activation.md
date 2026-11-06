@@ -334,3 +334,43 @@ handed to the sole publisher for prompt small-release integration, with
 no deployment claim. Receipt
 `209026-live-4c46cad-post216-readback-20261106.json`, REA
 `ev_763119c1fac80f762329211b5635c7475099eaa5a99388c96c24e6c56026521f`.
+
+## Real sword request availability: 4c46cad-sk
+
+The sole publisher deployed **2026-11-06T06:16:37Z** to
+`/home/blizz/gw2-rust-4c46cad-sk`, rollback
+`/home/blizz/gw2-rust-4c46cad`. This small increment adds605(10170,player1)
+to the skills batch and explicitly clears effective `GW2_AUTOATTACK_SKILL`.
+Damage30 remains enabled and diagnostic echo remains absent. All other
+profile values are unchanged, including NPC positions; the nearby wolf
+from root216 was not deployed. The binary is unchanged from4c46cad.
+
+The [root216 smoke](209026-sword-slot-selection-runtime.md#run216-targeted-ordinary-request-and-one-damage-response-pass)
+verified fresh hostile selection, a matching controlled10170 request, one
+30-point255 response and no extra order/hit on release. This is the evidence
+for the small correction, not full retail combat or authored NPC placement.
+The separate world-handover/carry-identity work is not included in this kit.
+
+Root independently verified at **06:19:28Z**:
+
+- All kit hashes and four owned healthy listeners; zero humans/bots.
+- Exactly17 skill bytes, SHA-256
+  `4ceabe189b2b1fa26310a1339424b882cadfc03cd8480f26c7a55be0b2280678`.
+- The running game process has no autoattack/echo option, uses the verified
+  skills file and retains damage30.
+- Saved-norn mode, one0700 record store and the unchanged activation backup.
+- Retained rollback binary, manifest and original12-byte skills hashes.
+- CDN900 root/main hashes and unchanged b128 feed metadata.
+
+Game SHA-256:
+`229e0276e9fc84517d52b65d39c829fa418fea3a08e197f70d97da5fc3aa560a`.
+Manifest SHA-256:
+`6530f73395ae9391a5275a4cd203c72c99600b937f56f476d38832ee38ffc2cb`.
+Receipt: `209026-live-4c46cad-sk-readback-v3-20261106.json`, REA
+`ev_096b6297087934b101279699a460e9600fcfb8de1df32bb0327435303fa12354`.
+The helper exited0 without truncation. Its initial version failed locally
+before SSH because of a quoting error; that failed receipt is retained.
+The final comparison proves only the autoattack **value** changed; raw
+profile text also has formatting/comment differences. No character contents
+were read and root made no deployment. Feed runner/audience constraints
+were not reverified or cleared.

@@ -6,8 +6,11 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **4c46cad** is at
-`/home/blizz/gw2-rust-4c46cad`, deployed **2026-11-06T05:43:40Z**. It includes
+tracks the remaining scope. Live kit **4c46cad-sk** is at
+`/home/blizz/gw2-rust-4c46cad-sk`, deployed **2026-11-06T06:16:37Z**. It adds
+the tested10170 availability grant and explicitly disables legacy
+release-triggered autoattack, preserving damage30 and all other profile
+values. The binary is unchanged from4c46cad. Earlier released work includes
 Great Hunt story-action progression with talkable Thora/Ido/Eir, a stand-in
 wurm boss and placeholder out-of-combat regeneration. Publisher client
 smokes exercised Thora, a trophy kill and regeneration; later story steps
@@ -17,9 +20,10 @@ mode remains enabled. The new increment carries Great Hunt stage through
 same-process waypoint rejoins; it adds no restart persistence or actual
 story reward delivery. Root independently verified one saved record, backup
 hash, all kit hashes, metadata900 and four healthy listeners at
-**06:13:47Z**. Zero humans/bots were present then; this supersedes the earlier
+**06:19:28Z**. Effective skills/autoattack settings and rollback hashes also
+pass. Zero humans/bots were present then; this supersedes the earlier
 05:45 one-human observation. Recheck at rollout. Ether Feast healing remains unimplemented.
-Rollback iscf13a3b. See the
+Rollback is4c46cad. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
 The owner can create a Norn Mesmer through the saved roster; the prepared
@@ -27,7 +31,7 @@ Banshee Mesmer is hidden. Initial creation persists, while XP/loot/heart
 progress resets at restart. [Run144](re/209026-saved-norn-creator.md) is the
 prior private creator/save/world/defeat/waypoint acceptance with runner0e6ac30
 and live metadata900. This remains an incomplete diagnostic starter fixture.
-The latest feed readback at06:13:47Z offers b128; its runner pin was not
+The latest feed readback at06:19:29Z offers b128; its runner pin was not
 inspected by that query. The earlier native roster prompt is resolved.
 
 Independent fix **9451cf0** applies the seven-line caster
@@ -94,7 +98,7 @@ fresh hostile4 selection, matching10170 request, exactly one118→88 hit and
 no extra release-triggered hit/order. It used the17-byte grant with legacy
 autoattack/echo absent and a nearby diagnostic wolf. UI/cleanup/hash checks
 pass; window29 returned06:10:56Z. The skills/profile change was submitted
-immediately to the sole publisher; no new live receipt is claimed. Its
+immediately and is now verified live in4c46cad-sk. Its
 diagnostic NPC placement is excluded. Full retail effects/timing remain open.
 
 A focused source check of the publisher's committedf0a45a4 handover found
