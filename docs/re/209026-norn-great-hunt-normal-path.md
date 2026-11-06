@@ -457,3 +457,70 @@ Private evidence under `/home/blizz/re/gw2/notes`:
 The next bounded observation can use the displayed Page Down binding to assess
 zoom response on a fresh run. Full trophy/Ido completion and retail accuracy
 remain unproved; this diagnostic produced no production change or deployment.
+
+## Run279: Page Down dispatch and partial apron route (2026-11-06)
+
+Run279 used current `cb8622a-q171` and its 126 story arguments, with only
+movement-log cadence changed for observation. The original 154-byte synthetic
+character, pristine run145 prefix and production runner were preserved. Two
+current-baseline and two staged configuration checks passed. Seven focused
+controller groups, five actual-writer reader groups and three permit cases
+covered the new bounded zoom action. Page Down uses the local X keysym `Next`;
+both names have value `0xff56` in the local headers. Run278's displayed binding
+is the client-side source for selecting that key.
+
+Normal Thora selection, interaction and dialogue dismissal produced step 1.
+Two zoom-out holds requested 250ms and 500ms. Both commands completed, but the
+three paired images show no clear change in framing or scale. Their intervals
+added no position report or typed parser event. This does not distinguish an
+unconsumed input, a zoom limit or a transient response between images, and it
+does not establish stationarity. Zoom counters advanced from zero to one to
+two, and subsequent measured movement cleared the required calibration.
+
+Four Q/E turns and seven successful movement holds traversed the apron to the
+outer carts, producing 135 consecutive position reports. The last successful
+W500 ended at `[-3083,-26855,-3722]`. After Q500, a D250 calibration added no
+report; the single permitted passive check also added none. The controller
+then stopped with `missing_translation_sample` and calibration still required.
+Root released incomplete with 229 input seconds remaining. The view showed
+near grass, carts and hall to the left, and foliage ahead-right; an onward
+connection was not established. No hostile selection, attack, death, step 2
+or Ido/step 3 occurred.
+
+The 19 actions comprise five story actions, two zooms, four turns and eight
+movement holds, including the final unresolved hold. Strict readback is valid
+and incomplete; UI and outer capture exited 13. Window69 returned at
+**2026-11-06T23:20:10.083166Z**, after container absence, 79 immutable inputs,
+the original record, executable hashes and console privacy were verified.
+Owned cleanup passed; 69 unverified process observations were left untouched.
+Root reviewed the first image, all 19 post-action images and the final passive
+image, not all 51 retained images. Bind/readback retain rendered-frame omissions;
+all raw and normalized data frames remain present, including the complete
+readback JSON. Launch and resource return are untruncated.
+
+Retained command timings do not establish a controller sequencing defect.
+The selected 250ms requests took 461–497ms including command and final key
+release overhead; the selected 500ms requests took 748–749ms. The controller's
+`native_input_sent` means command completion, not client consumption. Other
+250ms movement intervals succeeded. These facts establish neither a generally
+insufficient hold duration, low-frame-rate causation nor collision.
+
+Private evidence under `/home/blizz/re/gw2/notes`:
+
+- `run279-root-zoom-route-observation-20261106.json`, SHA256
+  `820da787e7abae4bf8214967b2bdabc40b289a470b503f7a2463bcd2845c2bc1`.
+- `run279-retained-input-terminal-audit-20261106.json`, SHA256
+  `732b69690e1ab7eaec832331de90d435eee2d62266275010832dfe3001185070`.
+- Three zoom images: `ev_13f6fc2613da6c3067a8e02e4fc3dff430c1ff7cf3b64c4cf3b142c8aba458e7`.
+- Full launch: `ev_829f9936abbbdd1c1602aa3162b1ccd8869b05c8ac382d0550d33842d1d328ce`.
+- Readback: `ev_1b5345299bb90794052a2d5626191aa2cf53c0cfce44fe34bb210650c737a964`.
+- Return: `ev_29854da719c7645b1209bd676de917912c54b5c359f6df394c9b20f6e85f21e9`.
+
+The next diagnostic dependency is sampled native input evidence. Run268's
+guarded three-site observer previously captured baseline/input/post movement
+vectors. Reusing it around one short calibration can test whether the sampled
+generic movement path changes while a key is requested. It cannot establish
+controlled-player identity, exact key-consumption time or collision. A new
+scope must preserve the existing no-report terminal and cleanup guards; no
+new observer was installed in run279. Full normal trophy/Ido completion and
+retail accuracy remain unproved. This diagnostic made no production change.
