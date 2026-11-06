@@ -128,6 +128,26 @@ and kind. It does not yet identify the manual cancel-input path or a
 server interrupt response/policy. Existing raw client23 framing suffices
 to preserve the request; no speculative cancellation codec was added.
 
+The existing [repeat-attack response](re/209026-repeat-attack-admission.md)
+had the same controlled-empty-slot admission omission as the earlier cast
+diagnostic. Commitc862325 corrects it, preserving the other header fields.
+Three focused attack tests pass, including a complete client23→mission→
+server34 regression. Its isolated static build passes both auth and mission
+no-listener startup checks at01:41:33 UTC; path and full SHA are in the note.
+It is ready for the sole publisher, with no duplicate dispatch, native-prompt
+answer, run145 replacement or deployment. The native roster choice remains
+unanswered.
+
+The [sword-chain trace/codec](re/209026-mesmer-sword-chain.md), commitf382933,
+identifies server628's predecessor/count pair:10170 with count≥1 permits
+10171;10171 with count≥1 permits10172, subject to the other palette checks.
+Three raw-codec tests pass. Advancement/reset timing and integration remain
+unfinished. The [story-start trace](re/209026-quest154-authored-start.md)
+proves story2→starting quest154→goal1→map379; the story9 link, encounter
+actors/placement and step triggers are still unresolved. A bounded manual
+cancel-input follow-up reaches an indirect-call boundary; its documented
+next observation needs the same currently unavailable runtime window.
+
 The [duration-expiry trace](re/209026-skill-order-duration-expiry.md) closes
 the client-local path from a valid ordinary command's deadline to its
 character completion callback. A separate server84 is not required on that

@@ -86,6 +86,19 @@ healing/success timing. [Mesmer resource consumers](re/209026-mesmer-resource-co
 establish displayed capacity/current count, not a live clone census or
 retail default. These remain offline changes under the same publisher hold.
 
+The [repeat-attack admission fix](re/209026-repeat-attack-admission.md)
+is committed as **c862325** and built as a private static observer artifact;
+three focused attack tests and auth/mission no-listener startup checks pass.
+It adds the same controlled-order admission bit already corrected in the
+cast diagnostic. Artifact SHA-256 begins834c723f; the full path/hash and
+01:41:33 UTC check receipt are in that note. It has not been deployed or
+substituted into the held run145 inputs. The separately tested
+[server628 chain codec](re/209026-mesmer-sword-chain.md), commitf382933,
+provides exact predecessor/count state delivery, with three tests passed;
+it is not yet wired into attacks. The [authored story link](re/209026-quest154-authored-start.md)
+confirms story2's starting quest154 and its goal1/map379 relationship,
+without supplying actors or objective triggers.
+
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
 heart56 and reward behaviors are fixture-backed; the authored quest154
