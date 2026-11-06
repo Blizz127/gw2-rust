@@ -343,22 +343,28 @@ Candidates for the next trace:
 - the executor's other completion guards for kind 2;
 - whether order +8's agent identifier uses the 37 index space (`0x141024060`);
 - packed order-flags gates (masks 0x10/0x4);
-- the client's own predicted order (kind 0x53) for the same value.
+- the client's own predicted order (kind 0x53); the later source correction below
+  establishes a separate behavior container from the skill request.
 
 `skill_order.rs` provides the codecs (SkillBegin parse, 0x78 builder, server 34).
 
-### Why run 126 did nothing: the controlled-character 0x78 gate (`0x14127ef80`)
+### Order-start gate correction (`0x14127ef80`)
+
+The original explanation here incorrectly called component +0x58 bit 0
+`m_isControlled` and attributed run 126's result to it. The
+[complete follow-up trace](209026-predicted-skill-order-lifecycle.md) identifies
+`m_isControlled` at **Dword +0x40**, while +0x58 bit 0 is a separate unnamed flag.
+The exact runtime cause of run 126's lack of visible casting remains unresolved.
 
 The order-start entry on the character's order component (+0x4b0) checks, in order:
 1. **Packed order flags.** Bit 0x10 rejects the order. An existing order in slot
    `(outer flags >> 5) & 1` is compared via `0x1412874a0` and kept or cancelled. Bit 0x4
    takes the alternate path.
-2. **Controlled character** (order component +0x58 bit 0, the local player): for a
-   packed **0x78**, the skill definition is resolved by the key at +2. The order is
-   **dropped unless skill definition +0x38 has 0x80000**. That is the same mask the
-   client's own request producer tests. Heal 10176 evidently lacks it, so the server-34
-   0x78 order for the player was discarded before creation. For skills without that
-   flag, the client keeps its **own predicted order (kind 0x53)**.
+2. **Separate component flag:** only when order component +0x58 bit 0 is set,
+   a packed **0x78** is dropped unless its skill definition +0x38 has `0x80000`.
+   Heal 10176 lacks that skill flag. However, the same component bit would also
+   suppress its outgoing request in `0x141283f90`; it is not implied by being the
+   controlled player. This source gate alone does not explain run 126.
 3. **Predicted-order replacement:** a packed **0x7a** order arriving for slot 1 (outer
    flag bit 5), while slot 0 holds a kind-0x53 order whose action lacks flag 0x8000,
    cancels and replaces that predicted order.
@@ -373,12 +379,13 @@ exactly **11 bytes**:
 
 Its gameplay role isn't established.
 
-**Consequence:** for the player's own predicted skills, the server answer is not a 0x78
-start. It is most likely the order notifications Codex traced (server 84 opcodes
-0x44/0x45/0x47, keyed by behavior value), which Codex found require an existing kind-0x78
-order. A 0x78 start for the player only applies to 0x80000-flag skills. For NPC (not
-controlled) casters, 0x78 via a bit-12 carrier such as server 34 remains the candidate
-for making enemies cast. Untested.
+**Corrected boundary:** a required player reply sequence is still unknown. The
+predicted `0x53` starts through its own locally constructed command and uses a
+different behavior container from the subsequent `SkillBegin`. The local command's
+literal 1000 ms duration does not establish a retail cast or recharge duration.
+Server-84 `0x44/0x45/0x47` require an existing `0x78`; they are not proven replies
+for `0x53`. A standalone `0x53` reaches the factory's unsupported-kind branch.
+No server response is recommended on the basis of the former controlled-flag claim.
 
 ### NPC casts via server 34 (runs 127–128)
 
