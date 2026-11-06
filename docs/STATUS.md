@@ -77,6 +77,15 @@ mapping and establishes positive-delta meter/UI delivery. These commits add
 offline readers/codecs and source corrections; they do not send heals,
 schedule cooldowns, activate saved mode or establish a new deployment.
 
+A checked [animation reader](re/209026-animation-sequence-reader.md) now
+retains the exact ordered events/segments for both10176 animation records;
+three focused tests and independent cached-pack verification pass. New
+[event-consumer evidence](re/209026-skill10176-animation-event-consumers.md)
+identifies visual notifications and view state, without deriving server
+healing/success timing. [Mesmer resource consumers](re/209026-mesmer-resource-consumers.md)
+establish displayed capacity/current count, not a live clone census or
+retail default. These remain offline changes under the same publisher hold.
+
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
 heart56 and reward behaviors are fixture-backed; the authored quest154

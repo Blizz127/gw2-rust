@@ -109,6 +109,18 @@ record has base20000, context2/3 overrides25000, and zero count maximum with
 no count overrides. This supplies content selection, not a server cooldown
 schedule or a default category-zero Word.
 
+The [animation-sequence reader](re/209026-animation-sequence-reader.md)
+passes three focused tests and an independent cached-pack comparison of
+both exact10176 token/variant pairs. It retains ordered raw events and
+segment values with explicit limits and checked signed pointers. The
+[event-consumer trace](re/209026-skill10176-animation-event-consumers.md)
+establishes visual effects and view-state changes in the selected ordinary
+listeners; it supplies no authoritative healing/success time. The
+[Mesmer resource consumers](re/209026-mesmer-resource-consumers.md) establish
+displayed capacity/current count, while live clone identity, maximum and
+initial values remain unresolved. These are offline implementation/source
+increments. No client run, publisher dispatch or deployment was performed.
+
 The [duration-expiry trace](re/209026-skill-order-duration-expiry.md) closes
 the client-local path from a valid ordinary command's deadline to its
 character completion callback. A separate server84 is not required on that
