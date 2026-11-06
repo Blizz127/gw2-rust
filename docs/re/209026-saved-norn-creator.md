@@ -1060,6 +1060,32 @@ Private evidence under `~/re/gw2/notes/`:
 - Terminal image `controller-corner-view.png`, 1,105,801 bytes, SHA256
   `d47c400ffc94d56e1bec6efd1798de8099f262e046ab5fb2b64db431bdc1f40e`.
 
+### Retained geometry follow-up
+
+A bounded inventory clips the existing selected-triangle export to
+X[-2200,-1920], Y[-25400,-25080], up-height[3744,3792]. It finds 92 cropped rows,
+of which 40 intersect the height band: 29 terrain and 11 prop placement3491,
+geometry373. This is selected geometry coverage, not native clearance.
+
+The export also has 23 empty selections and three missing geometry583 selections
+(placements164,416,1676). Their cached gap records supply origins without usable
+geometry or fallback extents. All origins lie outside the crop; that cannot
+exclude overlap by their unknown extents. Animation/blocker references and
+runtime filters are also omitted. The finite slice stops without producing a
+clearance plot. Per-selection or fallback bounds are the next missing source
+input; the result does not prove the route blocked or require holding releases.
+
+REA `ev_598614a76a4b3f4dab2eaea537a91e891c69237730b69f3f127b8e78ec672d79`
+exits 0 with complete output and verified owned-process cleanup. Private files
+under `~/re/gw2/notes/run262-local-clearance-20261106/`:
+`inventory-evidence.json`, SHA256
+`cd03a02f7da7d9f280a26c5b195f4447f2c4199ec1edb0be69b014e0219ae518`, and
+`stopped-receipt.json`, SHA256
+`a4d6ead5f24710c3361bf3e60093a7d9bb21acc675370fee97d1a9e8e4bebfae`.
+Root checks the receipt, full inventory, evidence lifecycle and five source/script
+pins. This follow-up reads retained exports only; no client, archive or shared
+sandbox access occurs.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
