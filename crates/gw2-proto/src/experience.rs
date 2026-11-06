@@ -3,9 +3,11 @@
 //! `docs/re/209026-npc-talk-loop.md` ("XP").
 //!
 //! Server 191's handler `0x14124e2e0` calls coreStats setter `0x1412091e0`,
-//! which stores the experience Dword at coreStats +0xe4 capped at
-//! `EXPERIENCE_FOR_LEVEL[80]` (15 in some modes) and notifies listeners with
-//! the two trailing fields. Server 188 sets the earned level (`0x141208f50`).
+//! which stores the experience Dword at coreStats +0xe4. A conditional mode
+//! branch caps it at `EXPERIENCE_FOR_LEVEL[80]` (15 in another branch);
+//! otherwise the incoming Dword is stored directly. It notifies listeners
+//! with the two trailing fields. Server 188 sets the earned level
+//! (`0x141208f50`). See `docs/re/209026-quest154-content.md` for the cap boundary.
 
 use bytes::BytesMut;
 

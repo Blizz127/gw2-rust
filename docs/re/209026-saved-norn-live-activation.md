@@ -598,3 +598,36 @@ Private findings: `209026-raven-heart-task-conditions-20261106.json`, SHA-256
 Complete REA bundle:
 `209026-raven-heart-task-conditions-evidence-20261106.json`, SHA-256
 `d381abeb55b9b5806e24e135bf60dcae568651b21ff8273fcdcf38a301c62cc2`.
+
+## Verified live release 9326c08
+
+The sole publisher deployed **9326c08b19fdb375fa24e4ae97cbec1782bf0f4f** at
+**2026-11-06T07:45:14Z**, kit `/home/blizz/gw2-rust-9326c08`, rollback
+`/home/blizz/gw2-rust-b2d6d24-poi`. Source ancestry contains exact reward
+9914a835 and the publisher's wildlife-cap changebe1f777. This is not a
+reward-only binary. The profile now configures20 world hostiles and12 ambient
+actors; this does not authenticate their retail identities/placements.
+
+Independent REA readback at **07:46:42Z** verifies all current/rollback
+manifest sums, four owned listeners, zero humans/bots, saved-norn/one0700
+record and unchanged activation backup. Default-curve, damage30,17-byte
+skills, wallet, POIs and heart data remain effective. Legacy autoattack/echo
+and vendor remain absent. No character contents or configuration were changed.
+
+Game SHA-256:
+`48eb3ab86335a042f1efe196435f99d32c78527e4f87d552c0b5f43663a1bbbd`.
+Manifest SHA-256:
+`dea42c447de9e77843e378e62105ee4c14ccc3d12359488017dc2c17e5a2a6ca`.
+Profile SHA-256:
+`a22103983932fe53fce1c75abe2b128351eec1f8048aef539c1d6fc783f2825a`.
+Receipt: `reward-wildlife-9326c08-release-verification-20261106.json`, SHA-256
+`22a950bf47889a88dd3d55f4a46a0419a4d76a39bbf1bba7e169af3cde7a3e22`.
+Full REA receipt: `209026-reward-wildlife-release-readback-20261106.json`,
+SHA-256 `849da57bc66b05aadd270aee6c3828b336c7bd40f076b0ed863c68f812b0bd3e`,
+evidence `ev_bf047a5dd912cfa8ed0d15a49d7d740a49116d2b0c9e50c1e9d89234ea1d2f7a`.
+
+This verifies deployment/source/profile/health, not a replayed native reward
+click. The publisher's reported payout smoke is a separate evidence question.
+The [fixed-payout record](209026-quest154-content.md) preserves its focused
+tests, native-default item choices, unchanged XP and process-local limits.
+Original character files remain intact; gameplay restart persistence is absent.

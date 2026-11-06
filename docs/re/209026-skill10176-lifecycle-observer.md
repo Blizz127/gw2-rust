@@ -385,3 +385,38 @@ SHA-256 `4de9b663fddc5cb7f1083df42dd9292d12066a9d4ac30b3ecf087ad895e1bc11`.
 Source contract: `run223-lifecycle-and-finish-diagnostic-20261106.md`.
 REA source: `ev_cce27146fb2fd44ab9b1217dfd5cfbf941e29292adac818dcbc535c32959764a`.
 REA guards: `ev_830d286713c186d8960ad96a9bc916e5404246986075ba81241fcf95da525fa6`.
+
+## Run226: direct finish clears the native slot
+
+Root staged the1839-row manifest
+`144061e4b6e1b50147762a572a5b614d85fad18fb2c1c8c05d83fab87e27873c`,
+then verified fresh window33 at07:43:36Z and launched once. One owned10176/
+slot0 request produced one diagnostic1000ms echo and one explicitly delayed
+2000ms finish. Native events show receiver0x78 with empty slot0, typed start
+flags0x4900, completion-return false with flags0x5100, then **slot_cleared**
+at254420ms with flags0x5400 and origin`finish45_direct`. Current slot0 is
+null at the guarded pre-release-dispatch site. Five callbacks, zero rejects.
+
+This establishes the bounded direct45 slot-clear path. It does not observe
+post-dispatch deallocation, later pending-order activation, animation success,
+retail timing, healing or recharge. RCO opens after the request but has no
+query-return/630 samples or terminal; its earlier control-time context is
+null with second level1 and effective attribute6=0. Lifecycle terminal is
+inferior exit with partial coverage. Missing coverage remains explicit.
+
+Run/UI exit0, strict readback, privacy and frozen/working PE hashes pass.
+Root verifies shared-container absence and returns only window33.cleanup at
+**2026-11-06T07:49:15Z**. No root runtime lease remains. Unrelated processes
+whose environment was unreadable were not controlled. This experiment changes
+no live skill policy and introduces no healing/recharge response.
+
+Private REA receipts:
+
+- `209026-run226-window33-verification-20261106.json`,
+  `ev_ce261788398573e0a320adfd23d5989b11f49de4f9a4090738915cf3ec885024`.
+- `209026-run226-finish-launch-20261106.json`,
+  `ev_61f1c79a8afa84e6749f22785acfc3c7b339b6ca5e15f6b6932f0a0c1a984907`.
+- `209026-run226-finish-readback-20261106.json`,
+  `ev_04202c443e966f38f2e411cae82b23bb855cbf16020ef1970d72d94c3fd420ef`.
+- `209026-run226-window33-return-20261106.json`,
+  `ev_68dcdebd16acb9b8ee5b592c04fcbd4107838198986951764a75aa116442592c`.

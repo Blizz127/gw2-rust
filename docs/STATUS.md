@@ -6,9 +6,11 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **b2d6d24-poi** is at
-`/home/blizz/gw2-rust-b2d6d24-poi`, deployed **2026-11-06T07:25:26Z**. It includes
-the interleaved-character transfer fix, wallet support and map28 discovery. The
+tracks the remaining scope. Live kit **9326c08** is at
+`/home/blizz/gw2-rust-9326c08`, deployed **2026-11-06T07:45:14Z**. It adds
+the checked fixed Mesmer tutorial reward, exact item/coin/claim carry and
+transition timers, plus20 world hostiles/12 ambient actors. It retains the
+interleaved-character transfer fix, wallet support and map28 discovery. The
 explicit default primary-attribute baseline and earned-attribute increases
 remain active. Effective-level/health scaling remains incomplete.
 It retains Great Hunt completion transfer to Wayfarer Foothills, character-bound
@@ -19,9 +21,9 @@ the combined saved-character transfer has not been observed in the client.
 Heart tasks, rewards, NPC looks and placement still include substitutions;
 this is not full retail encounter completion. Root independently verified
 saved-norn mode, one saved record, backup hash, all kit hashes, metadata900,
-effective settings and four healthy listeners at **07:28:02Z**. Zero
+effective settings and four healthy listeners at **07:46:42Z**. Zero
 humans/bots were present then; recheck at rollout. Ether Feast healing and
-recharge remain unimplemented. Verified rollback is **b2d6d24**. Vendor is
+recharge remain unimplemented. Verified rollback is **b2d6d24-poi**. Vendor is
 disabled. Run224 observes Hero's Moot waypoint discovery; waypoint travel has
 offline checks but no client-click observation. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).

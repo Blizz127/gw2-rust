@@ -30,24 +30,26 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**b2d6d24-poi is now live**, deployed07:25:26Z at
-`/home/blizz/gw2-rust-b2d6d24-poi`. Independent readback verified all current and
+**9326c08 is now live**, deployed07:45:14Z at
+`/home/blizz/gw2-rust-9326c08`. Independent readback verified all current and
 rollback hashes, effective settings, saved mode/one record, unchanged backup
-and four owned listeners at07:28:02Z; zero humans/bots. It includes98bae4f's
-interleaved-character transfer fix and enables the publisher's wallet support.
-Map28 POI discovery is now enabled; run224 observes waypoint371 discovery.
+and four owned listeners at07:46:42Z; zero humans/bots. It adds the checked
+quest154 item32138/72-copper claim, exact payout carry and transition timer
+fixes, plus a configured20 hostiles/12 ambient actors in Wayfarer. It retains
+the interleaved-character transfer fix, wallet and map28 POI discovery;
+run224 observes waypoint371 discovery.
 Waypoint travel is offline-tested but not exercised by a client click.
 Vendor remains disabled. The earlier earned attribute increment remains active.
-Rollback is b2d6d24. Effective-level/health
-scaling, healing, quest154 payout and durable progression remain incomplete.
-[Release evidence](re/209026-saved-norn-live-activation.md#verified-live-release-b2d6d24-poi).
+Rollback is b2d6d24-poi. Full native reward interaction, retail item binding/XP
+policy, effective-level/health scaling, healing and durable progression remain
+incomplete. [Release evidence](re/209026-saved-norn-live-activation.md#verified-live-release-9326c08).
 
-Run223's source-corrected Ether Feast observer accepted the owned10176
-request, typed0x78 start and completion callback. The callback did not request
-normal order release; post-completion release remains unobserved. The1000ms
-duration is diagnostic, and no healing/recharge is claimed. UI, cleanup and
-executable checks passed; window32 was returned07:22:15Z.
-[Bounded result](re/209026-skill10176-lifecycle-observer.md#run223-typed-start-and-completion-callback-observed).
+Run226 accepts the owned Ether Feast10176 request, typed0x78 start/completion,
+then observes the native slot cleared through direct45 handling. The snapshot
+precedes release dispatch; deallocation is not observed. Echo1000ms and
+finish2000ms are diagnostic, with no healing/recharge claim. UI, cleanup and
+executable checks passed; window33 was returned07:49:15Z.
+[Bounded result](re/209026-skill10176-lifecycle-observer.md#run226-direct-finish-clears-the-native-slot).
 
 The independent earned-attribute increment **e78b028** on76af245 passed its
 isolated build,15 focused Rust tests,3 supervisor checks and4 no-listener

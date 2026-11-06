@@ -317,3 +317,50 @@ publisher path, recorded in `quest154-payout-native-handoff-20261106.json`.
 This checkpoint establishes build/offline checks and submission, not a
 deployment or native reward-click result. The continuous-release order adds
 no routine client-playtest or approval gate before the publisher's rollout.
+
+The publisher integrated exact9914a835 in9326c08 and deployed it at
+**2026-11-06T07:45:14Z**. Independent07:46:42Z readback verifies source ancestry,
+current/rollback hashes, health, saved mode and effective profile. See the
+[live release receipt](209026-saved-norn-live-activation.md#verified-live-release-9326c08).
+Root marked the handoff published; no duplicate release was started. Native
+claim interaction remains a separate observation from deployment verification.
+
+## Exact XP display expression, no new XP payout policy
+
+For quest154 and ordinary nonwrapping XP values, the native display computes:
+
+`ceil(max(2000 - current_total_XP, 0) * multiplier)`
+
+The threshold comes from quest+54=2 and the level table's row2=2000; the
+minimum at+58 is0. The raw implementation uses a wrapping Dword subtraction,
+signed-positive test, unsigned maximum, float32 conversion/multiplication and
+the native ceiling helper. The simplified expression is not asserted for
+arbitrary u32 values. For example,1500 current XP displays500/250/0 under
+the three modes, rather than awarding a fixed2000.
+
+The owning player's embedded+4b0 component supplies multiplier1,0.5 or0.
+Its constructor initializes mode0; that is a source default, not an observed
+runtime mode. Server122 (two Dwords and one Byte) updates timed state. With
+the relevant flag set, elapsed thresholds10800 and18000 seconds select modes
+1 and2. The server policy choosing those inputs is unknown; no account,
+region or policy name is assigned. The separate whole-panel suppression gate
+does not activate for quest154's referenced story2 because story+a0 bit0 is
+clear, conditional on that quest being the manager's current reference.
+
+Current XP is the already-stored coreStats+e4 value fed by server191 and the
+known extended-creation path. The setter's cap is **conditional** on two mode
+predicates; it otherwise stores the input Dword directly. The old unconditional
+cap wording in experience.rs is corrected without changing code behavior.
+Earned level188 and second level190 are not direct inputs to this calculation.
+
+The display function neither mutates XP nor establishes when the server
+samples XP/mode for an authoritative reward. Completion, panel opening and
+claim remain distinct possible sampling boundaries. This source result adds
+no XP credit and does not delay the independent item/coin release. The6003
+derived arithmetic cases check the float recipe, not native execution or
+server payout policy.
+
+Private findings: `209026-quest154-xp-expression-20261106.json`, SHA-256
+`c09faf2722f2e73621d7a11c6575eeabe272df8bc7b9139854692f64d00b948c`.
+Full REA bundle: `209026-quest154-xp-expression-evidence-20261106.json`, SHA-256
+`391cf257f37130ea7ea4bd0a957e0b9c81a55906a7d0810856c73ee51f51c22e`.
