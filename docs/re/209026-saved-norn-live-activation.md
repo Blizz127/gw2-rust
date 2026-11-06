@@ -1,9 +1,9 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, most recently verified on **a9399dc** at
-`/home/blizz/gw2-rust-a9399dc`, at **2026-11-06 16:13:00Z**.
-The [latest verified increment](#verified-buff-codec-release-a9399dc) adds raw
-buff-instance codecs without enabling new gameplay effects. It retains
+Saved character creation is live, most recently verified on **d0288e1-pups** at
+`/home/blizz/gw2-rust-d0288e1-pups`, at **2026-11-06 16:25:06Z**.
+The [latest verified increment](#verified-integrated-story-release-d0288e1-pups)
+enables quest162 and includes the earlier raw buff-instance codecs. It retains
 skill admission, no-clone Ether Feast, sword-chain behavior and guarded
 same-process health/cooldown carry with original-roster relog routing.
 Saved mode was first
@@ -12,6 +12,49 @@ The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
 Root independently verified the configuration, live hashes and service at
 **03:43:51Z**. The earlier unanswered roster prompt is historical.
+
+## Verified integrated story release d0288e1-pups
+
+The sole publisher deployed `/home/blizz/gw2-rust-d0288e1-pups` at
+**2026-11-06T16:18:56Z**, retaining `/home/blizz/gw2-rust-a9399dc` for rollback.
+Source is integrated release commit `d0288e1bba483486f48cbae9268b1bc4e9f95e2a`;
+its merge includes a9399dc. Future production increments must include this
+lineage or be merged/rebuilt/tested by the existing sole publisher.
+
+Independent readback at **16:25:06.617435Z** passes exact selected/running game,
+profile and supervisor pins, all current/rollback manifest entries, four owned
+healthy listeners and zero humans/bots. Saved mode remains enabled with one
+0600 record in its0700 store; contents are not read and the activation backup
+is unchanged. Exactly four files differ from rollback: BUILD, game binary,
+mission profile and supervisor. All15 effective story arguments match the
+published profile. Startup skills, all asset bytes, five root rows and actual
+served latest/root/AlpineHall responses are preserved. Both sword2 diagnostics
+remain disabled, with normal movement-log cadence20.
+
+The publisher reports211 game-observe,193 proto and9 supervisor tests, a musl
+build and saved-profile startup check. Its prepared-fixture lane-B smokes cover
+Gamli on28, transfer792, a one-time Ice Elemental kill, Winter Sage, transfer392,
+Valda's2641XP/50copper payout and return28. Laneb06 used precedingd870ac4;
+the live binary adds unused a939 codecs. This is not exact-live native smoke.
+The profile's normal placements and saved-character quest path remain
+unverified in client; placements/dialogue are reconstructed, item rewards
+are absent and progress remains process-local. Root's readback establishes
+the deployed settings and service health, not those unobserved gameplay claims.
+
+Game:1,893,472 bytes, SHA256
+`8f3afea670ec927f0abc699c44f573ac7ee14c925d037e7c0b331379a38d6564`.
+Manifest:`955740774614f2f110347166ea4e92fa55483dfc5df0ef300ea658da10e31ab5`.
+Profile:`ab278bb7aee7b06227b77dcf3b1ae9af7a107ef077f58d83bfbfd023cdc55fde`.
+Supervisor:`92789911ac2140b3f67cbc89321302dfc27bf3efb5aa0832df41ddcbb6e336ee`.
+Private receipt `d0288e1-pups-release-verification-20261106.json`, SHA256
+`796f4b8dc4fb2267ef0e2c5da31afbb7e110e58d9e49aaee2b20d4b8d72a5fab`.
+Full `209026-d0288e1-pups-release-readback-20261106.json`, SHA256
+`24510ea75ef3c02dc88696bd189f3dba0864714c1a21c0e309ed9ab4935a79db`,
+REA `ev_1ed5ceb626e5df9d4576dcf05d35f95ca0883dd74fcb3ef723f315fbc6cc693c`.
+Capture exits0 without truncation and verifies owned cleanup. One unrelated
+environment-permission failure remains untouched and unverified. No client,
+shared sandbox, working archive, owner-record contents or live mutation was
+involved in this readback. No launcher feed publication is claimed.
 
 ## Verified buff-codec release a9399dc
 

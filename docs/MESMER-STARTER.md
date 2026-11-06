@@ -23,14 +23,35 @@ API/wiki names may locate content but do not replace client verification.
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | All15 map28 heart areas and14 substitute NPCs are in76af245. Generic inside-area kill progress and placeholder rewards remain fixture rules. Authored tasks/events and full discovery are incomplete. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised. Verified live fccd1b0 adds a frozen normal-mode quest154 XP award paid once with item/coin; current2500-per-kill settings yield zero, and positive coverage is synthetic. Retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
-| Relevant starting story, scenes and audio | Playback missing; client cinematic start/stop contract recovered, Norn selection unresolved | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
+| Relevant starting story, scenes and audio | Quest162 is enabled in verified live d0288e1-pups. Publisher reports a prepared-fixture sequence through maps792/392 and return28; normal placements and saved-character story path remain unproven. Dialogue is reconstructed, item rewards and cinematic playback are missing. | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
 | Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state and the new guarded Ether Feast health/cooldown carry are process-local only. The existing store has no progression fields or update API; restart progression requires a separately authorized storage-format change. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards; preserve original creation data and rollback compatibility. |
 | Human Mesmer opening and Queensdale, after Norn | Incomplete | Equivalent creation/tutorial (138)/area (15) coverage, including source-backed identification of the remembered circus/town sequence. |
 | Final completion audit | Not reached | Every required item above proven with current source and runtime evidence; no placeholder counted as retail accurate. |
 
 ## Current checkpoint
 
-**a9399dc is verified live as of 2026-11-06 16:13:00Z**, publisher deployment
+**d0288e1-pups is verified live as of 2026-11-06 16:25:06Z**, publisher
+deployment16:18:56Z to `/home/blizz/gw2-rust-d0288e1-pups`, rollback `a9399dc`.
+This integrated release contains a9399dc and quest162 "A Pup's Illness".
+Independent readback passes exact game/profile/supervisor hashes, every
+current/rollback manifest entry, four owned healthy listeners, saved mode/one
+private record and unchanged backup/assets/feed. All15 story arguments match
+the published profile. The publisher reports focused tests, build/startup
+checks and prepared-fixture quest playback on precedingd870ac4; the live
+binary additionally contains the unused a939 codecs. Normal NPC placements
+and the saved-character story sequence remain unproven; progress is process-local.
+[Release and limitations](re/209026-saved-norn-live-activation.md#verified-integrated-story-release-d0288e1-pups).
+
+Future production artifacts must include deployed commit
+`d0288e1bba483486f48cbae9268b1bc4e9f95e2a`, or be handed as commits to the sole
+publisher for merge/build/test. Run264 uses older403 only as an isolated
+diagnostic comparison. It is now staged and root-reviewed:9 controller tests,
+8 reader tests, exact-name/syntax checks and two startup checks pass. Root
+verifies48 metadata pins and all1839 manifest rows. Fresh window55 was verified
+at16:28:51Z and the one bounded run started at16:29:22Z. Its result and resource
+return are pending at this checkpoint; no native movement success is assumed.
+
+Earlier **a9399dc was independently verified at16:13:00Z**, publisher deployment
 16:10:49Z to `/home/blizz/gw2-rust-a9399dc`, rollback `fccd1b0`. Independent
 readback verifies the exact tested artifact, all current/rollback sums, four
 healthy owned listeners, saved mode/one private record, unchanged backup,
@@ -43,11 +64,10 @@ and removal. Duration units, condition/boon classification and retail effect
 policy remain unresolved. [Source and codec](re/209026-buff-instance-lifecycle.md);
 [release readback](re/209026-saved-norn-live-activation.md#verified-buff-codec-release-a9399dc).
 
-The publisher has announced an upcoming integrated quest162 release. Future
-production artifacts must include its deployed lineage, or be handed over as
-commits for the sole publisher to merge, rebuild and test. That announcement
-alone is not a deployment receipt. Run264 preparation uses the older403 binary
-only as an isolated diagnostic comparison, never as a replacement live build.
+One subsequent bounded source trace names buff-body+0x18 value2 as the native
+`conditionCount` subset for tracked status keys; key94 bypasses that bookkeeping.
+The boon class, authored buff records and authoritative cleanse/effect policy
+remain unresolved. No gameplay effect follows from this classification alone.
 
 Earlier **fccd1b0**, retained as rollback, had publisher deployment15:30:21Z to
 `/home/blizz/gw2-rust-fccd1b0`, rollbackec69643-alpinehall. Independent15:35:13Z
@@ -165,8 +185,8 @@ source-defined initial fallback boxes miss the local crop. A partial selected
 terrain section from the observed endpoint through unwalked C1/C2 is joined
 without height jumps; it does not establish native clearance. The other92
 animation/blocker references, filters and actor swept shape remain outside
-the model. Fresh run264 is in offline preparation with at most four short
-feedback-driven local holds; no resource grant or runtime has started.
+the model. Fresh run264 is staged with at most four short feedback-driven local
+holds; no resource grant or runtime has started at this checkpoint.
 [Bounds, section and limits](re/209026-saved-norn-creator.md#resolved-fallback-bounds-and-partial-selected-section).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the

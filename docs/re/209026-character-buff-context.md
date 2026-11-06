@@ -139,8 +139,9 @@ descriptors terminate and agree with the extracted XML; the registration
 array itself is not claimed to have a null terminator.
 
 This closes the wire-population gap, not the gameplay rules. Duration units,
-raw byte 5 semantics, stacking policy, condition-versus-boon classification
-and authoritative removal selection remain unresolved. Raw byte 6 is stored
+raw byte 5 semantics, stacking policy, the remaining boon-class mapping and
+authoritative removal selection remain unresolved. The condition-count subset
+is bounded below. Raw byte 6 is stored
 without Boolean normalization in the instance field named `isActive` by a
 native assertion. The existing visibility/state bits and Ether Feast tooltip
 facts do not substitute for those missing rules. No buff sender or effect is
@@ -152,3 +153,28 @@ Findings: `209026-buff-lifecycle-source-findings-20261106.json`,
 SHA-256 `f30bada6103c458a1efda97c2d9a329845985c5090d73f07ed794a98048dc724`.
 The linked lifecycle note records exact fields, complete handler/mutation
 boundaries, descriptor evidence and the separate classifier limit.
+
+## Named condition-count subset
+
+The creation/removal callers pass the resolved tag-1 buff body to complete
+counter methods `1412c2c90..1412c2da9` and `1412c2db0..1412c2f5c`. Body Dword
++0x14 keys a separate 16-byte-row collection at context +0x80. Each row tracks
+total count and a subset incremented/decremented only when body Dword +0x18
+equals 2. The removal assertion at `1412c2f39` explicitly names the subset
+`buffStatusKey->conditionCount` (`CmbtCliBuff.cpp`, line 272). This supplies a
+named condition-count relation beyond the earlier UI styling predicate.
+
+Both methods skip status key 94; a zero total deletes the whole status row.
+This does not establish an all-status condition-instance total, the meaning
+of other +0x18 values, or any authoritative cleanse eligibility, priority,
+count or timing. In particular, neither a boon class nor Ether Feast's
+removal policy follows by elimination. The [lifecycle note](209026-buff-instance-lifecycle.md)
+records the exact counter fields and branches.
+
+Private findings: `~/re/gw2/notes/209026-buff-status-class-counter-findings-20261106.json`,
+SHA-256 `4ae0a219818b72890a000f2813147abbc2de4f9fdb78dd7bea6175598bc9ca03`.
+Complete raw capture: `~/re/gw2/notes/209026-buff-status-class-counter-edge-20261106.json`,
+SHA-256 `9ac171ae85a80c77ef2a87a8f05e8308e8f30cdefe50f9d1cb833848a3fc2fb5`;
+REA `ev_408381750df6698a3facd781a79bd951d305437f7a7306c6d915bdf6cda9c717`.
+The target-free capture exited 0 with complete, nontruncated output and the
+same frozen executable SHA-256; no client or archive access was used.

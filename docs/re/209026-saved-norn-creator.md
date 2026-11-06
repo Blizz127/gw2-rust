@@ -1,7 +1,7 @@
 # Build 209026 saved Norn Mesmer creator experiment
 
 Saved Norn character creation is **enabled live** since **2026-11-06T03:29:33Z**,
-most recently verified on `/home/blizz/gw2-rust-a9399dc` at16:13:00Z.
+most recently verified on `/home/blizz/gw2-rust-d0288e1-pups` at16:25:06Z.
 The owner chose activation in the native publisher session at03:29:03Z;
 root independently verified configuration, backup, kit hashes and health.
 See the [activation and release receipts](209026-saved-norn-live-activation.md).

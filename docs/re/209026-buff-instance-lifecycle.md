@@ -2,8 +2,9 @@
 
 Static REA binds the buff collection's actual insertion and removal methods to
 server messages 734–739. These operations supply a concrete delivery contract
-for future buff effects. They do not establish durations, stacking policy,
-condition/boon classes, or which effect a skill should produce or remove.
+for future buff effects. A subsequent typed counter trace names one condition
+subset, as bounded below. Durations, stacking policy, the boon class and which
+effect a skill should produce or remove remain unresolved.
 
 The frozen executable SHA256 is
 `99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`.
@@ -86,6 +87,29 @@ the source reference and frees the 120-byte instance.
 pairs. 741 carries two Dwords. These are not buff-instance creation/removal
 messages and are not included in this codec.
 
+## Named condition-count subset
+
+The complete insertion counter `1412c2c90..1412c2da9` and removal counter
+`1412c2db0..1412c2f5c` receive the already-resolved tag-1 buff body. Their
+direct callers are `1412c3c58` during creation and `1412c4372` during removal.
+They use body Dword +0x14 as a status key in the context's +0x80 collection.
+Its 16-byte rows contain the key at +0, total count at +4, condition count
+at +8 and occupancy/hash at +0x0c.
+
+Insertion increments the total count and increments the second count only
+when body Dword +0x18 equals 2 (`1412c2ce8..1412c2cee`). A new row initializes
+those counts to 1 and that same equality result. Removal decrements the total;
+if it remains nonzero, the same +0x18 comparison selects the second decrement.
+The assertion at `1412c2f39` names that field `buffStatusKey->conditionCount`,
+in `CmbtCliBuff.cpp` line 272. Thus value 2 is the source-named condition-count
+subset in this bookkeeping, rather than an inference from the icon style.
+
+Both methods bypass status key 94 (`0x5e`). When the total reaches zero,
+removal deletes the whole status row. These counters therefore do not prove
+a total condition-instance count covering every status key. The trace does
+not name the other +0x18 values as boons, inspect actual authored buff records,
+or establish cleanse eligibility, priority, count or timing.
+
 ## Implementation and checks
 
 `gw2_proto::buff::{BuffFrame209026, BuffOperation209026}` implements explicit
@@ -102,11 +126,11 @@ Dwords are preserved. The isolated musl game build and both unchanged-profile
 saved auth/world startup checks pass without opening listeners.
 
 This is a delivery foundation, not evidence of a native buff effect or retail
-condition removal. A classifier investigation identifies buff-body +0x18 as an
-`AsBuff.cpp` icon-style discriminator and +0x14 as a mapping input. Neither is
-yet named as boon/condition. Body +0x0c is explicitly stacking type; iterator
-bits 0x40/0x80 are owner/state filters. These must not be substituted for the
-missing classifier or for an Ether Feast removal policy.
+condition removal. The earlier `AsBuff.cpp` icon-style discriminator at body
++0x18 and mapping input at +0x14 are now supplemented by the named counter
+above; the UI mask alone still cannot name the remaining classes. Body +0x0c
+is explicitly stacking type; iterator bits 0x40/0x80 are owner/state filters.
+None of these supplies an Ether Feast removal policy.
 
 ## Evidence
 
@@ -132,5 +156,14 @@ No client, archive, active target import or shared runtime resource was used.
 Classifier findings `209026-buff-condition-boon-classifier-findings-20261106.json`,
 SHA256 `647aed8ca6a26af69af48e666cf51e848419060357c2a96d7e1056f70d1f7075`;
 full bundle SHA256 `4d9b89db9d4329dea6e38e7506c7537b3b6a0ac51a7857890c86e3cbe7507ff0`.
+The subsequent counter findings are
+`~/re/gw2/notes/209026-buff-status-class-counter-findings-20261106.json`, SHA256
+`4ae0a219818b72890a000f2813147abbc2de4f9fdb78dd7bea6175598bc9ca03`.
+Complete raw evidence is
+`~/re/gw2/notes/209026-buff-status-class-counter-edge-20261106.json`, SHA256
+`9ac171ae85a80c77ef2a87a8f05e8308e8f30cdefe50f9d1cb833848a3fc2fb5`,
+REA `ev_408381750df6698a3facd781a79bd951d305437f7a7306c6d915bdf6cda9c717`.
+That single target-free capture exited 0, was complete and nontruncated, and
+left the frozen executable hash unchanged; string-region warnings are retained.
 Implementation logs and fixture pins are under
 `~/re/gw2/notes/buff-lifecycle-codec-fccd-20261106-checks/`.
