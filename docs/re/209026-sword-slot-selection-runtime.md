@@ -75,6 +75,20 @@ absence does not establish a missing retail grant because other selection
 branches remain possible. Actual runtime item/palette and entry eligibility
 remain the required observations; no packet or grant was changed.
 
+The next observer is prepared offline in
+`~/re/gw2/notes/slot5-resolver-observer-20261106.py` (SHA-256
+`f703d89d7b5b3aba84444e8fe84f21530415f248c380490d8b52bc5a3cb94ddd`).
+Twenty focused synthetic checks and syntax checks pass. Its five paired
+sites observe the owned slot5 lookup, primary item, item definition, chosen
+palette and resolver result with thread/stack/ownership guards and bounded
+records/attempts. It requires no UI marker, allowing controlled startup
+rebuilds to be observed. The result precedes possible remapping and cache
+write, so it cannot by itself establish final selection or cast admission.
+Receipt `slot5-resolver-observer-20261106-receipt.json`, SHA-256
+`ad3bee0886e584eff5bc8fb0ac93734eefeb6def130a587962be309e810923eb`,
+retains source/guard Evidence and limits. No native observation was run;
+fresh harness staging and a new publisher resource window remain necessary.
+
 ## Bounded observation and cleanup
 
 The private helper observes seven source-guarded entry, return and call sites.
