@@ -48,6 +48,14 @@ the full retail goal is incomplete.
 [Verified release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45);
 [implementation and limits](re/209026-ether-feast-reconstruction.md).
 
+Candidate **e624c8b**, based on7c26f45, fixes inconsistent admission of an
+unavailable skill: it could damage/retarget while leaving a pending heal active.
+The failure-before regression,17 passing focused tests, static build and two
+saved-profile startup checks are retained. The existing sole publisher received
+the tested artifact; deployment is not yet verified. This changes no grants,
+chain policy, profile or store.
+[Admission fix](re/209026-skill-caster-ownership.md#explicit-skill-availability-e624c8b-ready-for-the-publisher).
+
 Run236 observes E/Q turning on exact7c26f45, but the normal-stage0 route enters
 the camp hall. Only Thora/step1 completes; no hostile selection, attack, kill,
 reward or transfer occurs. UI/launch exit13 records the failed full-hunt

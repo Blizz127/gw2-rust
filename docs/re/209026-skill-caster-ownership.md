@@ -1,5 +1,46 @@
 # Build 209026 fixture: validate the requesting skill caster
 
+## Explicit skill availability: e624c8b ready for the publisher
+
+On7c26f45, an owned SkillBegin for an unavailable skill could retarget and
+damage a hostile, while the heal-interruption path rejected the same request.
+An encoded10171 request reproduced target3→4 and hostile health118→88.
+The pending heal and combat paths therefore disagreed about admission.
+
+Isolated commit **e624c8bfcdb62ed51726383c5450a0868afd3c71** adds ten
+production lines after the existing caster guard. Once gameplay has begun,
+damage-enabled sessions with an explicit skill list reject keys absent from
+that list before target tracking or combat replies. Granted10170 still
+attacks and cancels a pending heal; rejected requests preserve that heal and
+its eventual effect. Granted10176 and the existing foreign-caster guard are
+preserved. Fixtures without a skill list and non-damage research modes retain
+their prior behavior. This does not implement universal retail admission,
+sword-chain state, new grants, strike timing or damage policy.
+
+The regression failed before the fix;17 focused tests pass afterward,
+including three new admission controls and existing heal/carry/relog/caster
+checks. The isolated static musl build and two saved-profile auth/world
+`--check-config` runs pass without binding listeners. Profile,17-byte skill
+input, damage30, Ether Feast, supervisor, store/schema and carry/lease ordering
+are unchanged. Root reviewed the complete diff and verified the source commit,
+artifact and retained test/build log hashes. No client runtime was needed for
+this encoded-request regression.
+
+The tested artifact is
+`/home/blizz/scratch/gw2-skill-admission-7c26-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`,
+1830360 bytes, SHA-256
+`723b9c36947df9a747010334fe999a0e98cfd4308d120015751aab2f36089453`.
+Private receipt: `skill-admission-7c26-tested-receipt-20261106.json`, SHA-256
+`def7e099725c323f1e865213ab525cc1901fd42d4ae04ea7aae289c8dbce1420`.
+Source branch: `codex/skill-admission-7c26-20261106` in
+`/home/blizz/scratch/gw2-skill-admission-7c26-20261106-src`.
+
+The existing native peer helper accepted the handoff to the sole publisher;
+the coordinator status reply is queued. The handoff requests prompt release
+while preserving newer publisher work, saved mode, active players and rollback.
+**This candidate is not yet verified live.** Shared record:
+`creator-lane-peer-handoff.json#/root_skill_admission_ready_20261106`.
+
 ## Independent fix released through the sole publisher
 
 **9451cf084cd1896824bac165b3ebf9adc7b20291** applies the same seven-line
@@ -134,8 +175,9 @@ the evidence. The successful native submission above instead identifies
 **Ether Feast healing remains unimplemented.** Both5516cb4 and this build
 exclude that skill from generic attack damage/retaliation; neither restores
 health or implements recharge. A publisher summary saying it “heals instead”
-was corrected in the handoff. Latest independently verified live is
-4b3c4c2, with [saved mode enabled](209026-saved-norn-live-activation.md).
+was corrected in the handoff. At that historical checkpoint, the latest
+independently verified live kit was4b3c4c2, with
+[saved mode enabled](209026-saved-norn-live-activation.md).
 This cumulative artifact remains **withheld and not deployed**.
 
 The publisher's subsequent run203 smoke used5516cb4. Its retained logs

@@ -57,6 +57,14 @@ record pass; window39 returned at10:16:44Z. This is a navigation failure in the
 probe, not evidence of broken movement or globally unreachable hostiles.
 See the [run236 result](re/209026-saved-norn-creator.md#run236-turning-observed-full-hunt-route-fails).
 
+New candidate **e624c8b** rejects unavailable skill requests before target or
+combat mutation when the damage-enabled fixture has an explicit skills list.
+The encoded-request regression failed before the fix;17 focused tests, a
+static musl build and two saved-profile startup checks pass. The tested artifact
+was handed to the existing sole publisher; it is **not yet verified live**.
+No profile, store, schema or sword-chain policy changed.
+[Admission fix receipt](re/209026-skill-caster-ownership.md#explicit-skill-availability-e624c8b-ready-for-the-publisher).
+
 Independent fix **9451cf0** applies the seven-line caster
 guard directly to current live c2cb6fd, preserving its combat settings and
 Ether Feast exclusion. Eight focused tests, offline musl build and four
