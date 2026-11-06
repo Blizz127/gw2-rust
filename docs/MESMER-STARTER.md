@@ -63,6 +63,9 @@ These findings add no authoritative condition application/expiry policy.
 The two actual rows now also pass their condition0 and flags0 collection
 predicates by complete bounded source paths; other collection context and
 the runtime tooltip remain unobserved.
+Exact numeric formatting for each selected1.0 row yields source-derived
+`+1% Incoming Damage` and `+1% Incoming Condition Damage`. These display
+strings still do not establish authoritative effect or stacking policy.
 Run266 closed incomplete under window56. One S750 produced22 movement reports;
 the remaining controller budget did not admit W, so no vector window or samples
 occurred. UI13 remains failure/incomplete evidence. Later observer exit cleanup,

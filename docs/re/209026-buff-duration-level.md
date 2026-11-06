@@ -205,8 +205,8 @@ values use71511. These templates explicitly supply a percent suffix.
 
 Both authored formula6 values remain1.0. Neither kind takes the special42/44
 subtraction branch. Both pass the absolute numeric value to general formatter
-`1403124e0`; its body was outside this bounded trace, so the exact rendered
-numeric string is not asserted. The label is preserved as Incoming Damage,
+`1403124e0`; its body was outside the first bounded trace. The follow-up below
+recovers its numeric result for the exact1.0 input. The label remains Incoming Damage,
 without renaming it to strike or physical damage. The UI suffix does not prove
 an authoritative damage formula, additive or multiplicative stacking, a cap,
 application timing, target eligibility, expiry or current filter selection.
@@ -269,3 +269,38 @@ Full captures:
 Both new captures retain all raw, normalized and rendered output, exit0 and
 verify owned cleanup and unchanged frozen-PE/helper hashes. The previously
 retained caller's rendered-output omissions remain as documented above.
+
+## Numeric formatting for the exact 1.0 values
+
+For one selected row on the retained literal-count1 description path, the
+source-derived English strings are **+1% Incoming Damage** and
+**+1% Incoming Condition Damage**. These are static formatting results; neither
+a live tooltip nor an authoritative server damage rule was observed.
+
+The complete268-byte contiguous unwind family of `1403124e0` scales the absolute
+input by the exact float4.0 at `14192de40`. Converter `1409bedf0` accepts4.0
+within its bounds[-0.5,4194303], adds12582912.0 and masks the resulting binary32
+bits with0x3fffff. The exact sum12582916.0 has bits0x4b400004, yielding4.
+Both arithmetic operations are exactly representable under all four standard
+SSE rounding modes for this input. Dividing4 into whole/remainder quarters
+gives1/0. Text49780 is `%num1%`; its numeric argument is1, and the fraction
+append is skipped. The previously pinned positive template supplies the percent
+suffix and corresponding label. Other inputs and instance counts are unclaimed.
+
+Private final finding `209026-buff738-numeric-display-final-20261106.json`,
+SHA256`37b5bb2c1b260643ff5dddb347d8d8933f1412056650564d99807211887e04f7`.
+Root verified its eight pins and reviewed the converter, constants, text rows
+and outer arithmetic/formatting path. The initial8-byte entry fragment remains
+retained as partial evidence; the later full268-byte family supersedes its
+coverage. New converter/input and three-literal captures are untruncated with
+verified owned cleanup and unchanged frozen-PE/helper/cache identities:
+
+- `209026-buff738-numeric-display-inputs-20261106.json`, SHA256
+  `29efdc07af79769b5e97e04c822734b5934c753f4f358b33ccfae4423a324450`,
+  Evidence`ev_0e782cecc8c64487c550ff640fa0a58052c3fc4f3050c9c3449ad6ed8218faf6`.
+- `209026-buff738-conversion-literals-20261106.json`, SHA256
+  `c759f8a8e69dcaae51c02caa606de3b96867525a511ed6d79d8493a343eaa7f0`,
+  Evidence`ev_97634f207ada0d1af49cd0e203e6ab0ac060efd4b704d0c825582209a718febd`.
+- Complete formatter `209026-buff738-numeric-formatter-family-window-20261106.json`,
+  SHA256`b94ff8a9bab59948eb870dadb83d8a145cdb424eda9e6e27ba9239acdad8a902`,
+  Evidence`ev_c0eb09530680faad968b7b22e0a15964502aa4797b055457fef3c6cac0d13a92`.
