@@ -1,9 +1,9 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, most recently verified on **d0288e1-powder** at
-`/home/blizz/gw2-rust-d0288e1-powder`, at **2026-11-06 16:41:52Z**.
-The [latest verified increment](#verified-powder-and-regrown-assets-d0288e1-powder)
-adds map assets and preserves quest162 and the raw buff-instance codecs. It retains
+Saved character creation is live, most recently verified on **11d2c56** at
+`/home/blizz/gw2-rust-11d2c56`, at **2026-11-06 16:59:09Z**.
+The [latest verified increment](#verified-buff-content-reader-11d2c56)
+adds a typed buff-content reader and preserves quest162 and the current map assets. It retains
 skill admission, no-clone Ether Feast, sword-chain behavior and guarded
 same-process health/cooldown carry with original-roster relog routing.
 Saved mode was first
@@ -12,6 +12,38 @@ The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
 Root independently verified the configuration, live hashes and service at
 **03:43:51Z**. The earlier unanswered roster prompt is historical.
+
+## Verified buff-content reader 11d2c56
+
+The sole publisher deployed `/home/blizz/gw2-rust-11d2c56` at
+**2026-11-06T16:57:41Z**, retaining `/home/blizz/gw2-rust-d0288e1-powder`
+for rollback. Independent **16:59:09.708535Z** readback verifies the exact
+tested game, every current/rollback manifest entry, four owned healthy listeners,
+zero humans/bots, saved mode and one0600 record in the0700 store. Record
+contents are not read; the activation backup is unchanged. All15 story
+arguments, profile, supervisor,27-byte skills and all prior asset bytes match.
+Actual CDN950 latest/root, AlpineHall and three Powder/Regrown leaves match.
+Only BUILD and the game binary differ from rollback; no files are added/removed.
+
+The new pure reader is described in [buff lifecycle](209026-buff-instance-lifecycle.md#implementation-and-checks).
+Eight focused tests, two actual retained fact paths, musl build and two saved
+auth/world no-listener checks pass. No new condition effect or native gameplay
+success is claimed. The source is11d2c56 on integratedd0288e1; the publisher's
+current integration head isf7674f1. Future artifacts must preserve that lineage
+and current950 assets, or arrive as commits for the sole publisher to merge.
+
+Game1893528 bytes, SHA256
+`0e66f19c08677df860ef52b9704f854b8a5801e7f8e72f506c1f85a3bdea2dfa`;
+kit manifest SHA256
+`a6870273b233de54a18f8ff575de701bf076c485ce471b7d27f3355451a1f8f7`.
+Private receipt `11d2c56-release-verification-20261106.json`, SHA256
+`816a652e25e0c2a36a5c8bd433d4547e6e85143ae076ed6bb47306651efaa888`.
+Full `209026-11d2c56-release-readback-20261106.json`, SHA256
+`f72b3835b270dff97789c67540c009f10556908d37f33accbcf9baf6867bc3b1`,
+REA `ev_ca96e093ca94550a306d61c67551243ffebd604d19904ba49780f817dd90766f`.
+The capture exits0 without truncation and verifies owned cleanup. The frozen
+publisher receipt retains stale readback prose naming the old game/root;
+the independent checks above establish the actual selected artifact and feed.
 
 ## Verified Powder and Regrown assets d0288e1-powder
 

@@ -30,13 +30,16 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-The next tested source increment is **11d2c56**, a pure bounded buff-body
-reader on integratedd0288e1. Eight focused tests, the actual retained10170/10171
-fact paths, musl build and two saved-profile startup checks pass. It preserves
-the current15 story arguments, saved mode, profile and CDN950 assets. The
-existing sole publisher received the exact commit/artifact through its native
-peer path; no newer deployment is claimed here. It adds no condition application
-or other gameplay policy. [Reader and evidence](re/209026-buff-instance-lifecycle.md#implementation-and-checks).
+**11d2c56 is verified live at16:59:09Z**, deployed16:57:41Z to
+`/home/blizz/gw2-rust-11d2c56`, rollbackd0288e1-powder. It adds a pure bounded
+buff-body reader on integratedd0288e1. Eight focused tests, actual retained
+10170/10171 fact paths, musl build and two saved-profile startup checks pass.
+Independent readback verifies exact artifact/current/rollback hashes, four
+owned healthy listeners, saved mode/one private record, unchanged backup,
+all15 story arguments, profile/supervisor and CDN950 bytes/responses. It adds
+no condition application or other gameplay policy.
+[Release](re/209026-saved-norn-live-activation.md#verified-buff-content-reader-11d2c56);
+[reader and evidence](re/209026-buff-instance-lifecycle.md#implementation-and-checks).
 
 **d0288e1-powder is verified live as of 2026-11-06 16:41:52Z**, publisher
 deployment16:37:15Z to `/home/blizz/gw2-rust-d0288e1-powder`, rollback
@@ -60,8 +63,8 @@ binary additionally contains the unused a939 codecs. Normal NPC placements
 and the saved-character story sequence remain unproven; progress is process-local.
 [Release and limitations](re/209026-saved-norn-live-activation.md#verified-integrated-story-release-d0288e1-pups).
 
-Future production artifacts must include deployed commit
-`d0288e1bba483486f48cbae9268b1bc4e9f95e2a`, or be handed as commits to the sole
+Future production artifacts must include the current integrated lineage
+`f7674f183ac7ce2e9f4d87459bde9f4106f383c0` (d0288e1 plus11d2c56), or be handed as commits to the sole
 publisher for merge/build/test, preserving the current950 assets. Run264 uses older403 only as an isolated
 diagnostic comparison. It is now staged and root-reviewed:9 controller tests,
 8 reader tests, exact-name/syntax checks and two startup checks pass. Root

@@ -158,8 +158,10 @@ build lacked the isolated worktree's four private protocol XML inputs; copying
 their verified existing bytes resolved that setup failure. No schema changed.
 The tested artifact is1893528 bytes, SHA256
 `0e66f19c08677df860ef52b9704f854b8a5801e7f8e72f506c1f85a3bdea2dfa`.
-It was handed to the existing sole publisher; this implementation receipt
-does not claim deployment or a new gameplay effect.
+The sole publisher deployed that exact artifact at16:57:41Z; independent
+16:59:09Z hash/health/feed readback passes with rollback and saved mode retained.
+See the [release receipt](209026-saved-norn-live-activation.md#verified-buff-content-reader-11d2c56).
+No new gameplay effect follows from this reader.
 
 Private check receipt `buff-content-d0288e1-20261106-checks/receipt.json`,
 SHA256 `f6cd95ce11146c1bdb17f10d582eecda71aa7dd9804a51a3a4943ef38e66aaa2`.

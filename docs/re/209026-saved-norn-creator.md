@@ -1,7 +1,7 @@
 # Build 209026 saved Norn Mesmer creator experiment
 
 Saved Norn character creation is **enabled live** since **2026-11-06T03:29:33Z**,
-most recently verified on `/home/blizz/gw2-rust-d0288e1-powder` at16:41:52Z.
+most recently verified on `/home/blizz/gw2-rust-11d2c56` at16:59:09Z.
 The owner chose activation in the native publisher session at03:29:03Z;
 root independently verified configuration, backup, kit hashes and health.
 See the [activation and release receipts](209026-saved-norn-live-activation.md).
@@ -1214,6 +1214,44 @@ Private evidence under `~/re/gw2/notes/`:
   REA `ev_6d808e00bb2d2e9fe2cd4c2660ca95be360a34e5b84f404b7ab56fb896661deb`.
 - Final passive image SHA256
   `97900e07cae3dd4f96547a4b2c3112380c89b9d2a736089b1df9eb7bb86c243d`.
+
+## Static movement-vector observation contract after run264
+
+A bounded source follow-up identifies a generic movement-vector observation
+path without launching another run. `14141c2b0` reads context Float3 at
++0x9c/+0xa0/+0xa4; its diagnostic argument order names this `inputMove`.
+The caller `14141a230` supplies output at callerRBP-0x11 and facing at
+callerRBP-0x21. Its return site `14141a428` exposes the first vector; a second
+call to `14141c5d0` produces the composed vector atRBP-0x31, visible at
+`14141a442`. Three ordered zero comparisons select `14141a47c`, whose two
+stores clear the original context vector. Nonzero or unordered values skip it.
+
+This supports comparing generic input, first-stage output and composed output
+within one matched invocation. It does not bind physical W to an action or
+identify a general collision result. The immediate second function has a
+conditional zeroing branch involving a source-named `duelAgent`, option0x28,
+distance and dot products; treating it as general contact would be unsupported.
+None of these branches is observed executing in264.
+
+A future observer must bind exact code/ASLR, current thread and caller frame,
+use bounded finite Float3 reads and enforce finite hit/time/output limits.
+The passive context getter follows Windows GS/TLS through `1409b1fb0`, then
+engine+0x1d0 via `14141dd10`; that debugger-side ownership check remains to be
+implemented and validated. The context identity alone is not a controlled
+character identity. No observer is staged and no new runtime lease is requested.
+The fully visible scene/fresh-anchor requirements above remain in force.
+
+Private findings `local-movement-observable-findings-20261106.json`, SHA256
+`1b30fca9bd491e4e967f4073358c267127e57c8b61b9b5aa353667e28330db47`;
+20-capture bundle `209026-local-movement-observable-source-20261106.json`,
+SHA256 `7fde48f46bb19da7788cc576e7f5cb4b2643afcacc713b5637449f14dc468ee2`.
+Root verifies26 referenced pins and inspects the selected field/caller/TLS
+instructions. Decisive complete captures include
+`ev_aa39951d6482c0869d8a1eb6bc80a8b6e0c787ffdea6ede6acee681eb6cc90aa`
+and `ev_e52963d09b21003f26937e5cf74d7aa590ccdac7589ab8be6ec92f20810b080f`.
+Those selected captures exit0 without truncation and verify owned cleanup.
+Discovery retains a32-caller display cap and two rendered-output truncations;
+neither supports exhaustive absence. Unverified unrelated processes are untouched.
 
 ## Retained REA evidence
 
