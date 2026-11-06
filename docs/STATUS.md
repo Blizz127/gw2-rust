@@ -99,6 +99,19 @@ it is not yet wired into attacks. The [authored story link](re/209026-quest154-a
 confirms story2's starting quest154 and its goal1/map379 relationship,
 without supplying actors or objective triggers.
 
+The new [named ability-value resolver](re/209026-mesmer-sword-damage-facts.md)
+passes nine focused tests and a compiled comparison of 16 named sword values
+plus eight literal values against frozen content. It preserves first-group
+precedence, explicit context and checked string/reference bounds. The same
+source work resolves the tooltip's multiplier setting to 1.0 and a conditional
+starter weapon strength of 105–117, without treating tooltip estimates as
+server combat damage. New [input-producer](re/209026-skill-input-29-2a.md)
+and [finish-listener](re/209026-typed78-finish-listeners.md) evidence does not
+establish automatic repetition or chain-advance timing. The story follow-up
+joins story9 to starting quest358; the story2→9→10 links remain unnamed.
+These are offline code/source increments. The native publisher prompt,
+prepared live build and held run145 inputs remain unchanged.
+
 Archived starter gear, biography masks/dyes, an explicit 388-health baseline,
 healing-slot selection and skill-command framing are implemented. Combat,
 heart56 and reward behaviors are fixture-backed; the authored quest154

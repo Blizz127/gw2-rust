@@ -2,8 +2,10 @@
 
 Static REA, 2026-11-06, against frozen executable SHA-256
 `99342078ef57ca5653046392c2cf8aa197f1badbbe2c68297ca97e0d925d8621`
-and an existing hash-verified extracted content container. No client runtime,
-shared runtime container, archive, publisher, or gameplay state was accessed.
+and an existing hash-verified extracted content container. The original pass
+accessed no archive. The separately authorized follow-up below extracted one
+entry from the immutable frozen archive. Neither pass accessed the working
+archive, client runtime, shared runtime container, publisher, or gameplay state.
 
 **Type-68 story definition 2 identifies quest 154 as its starting quest.**
 The native assertion names the field `storyDef->GetStartingQuest()` and
@@ -124,3 +126,75 @@ were omitted by their display budgets. No runtime validation is claimed.
 | `ev_dfa9375b8f3bedb1f1bcaa355ab2253e878a08438ebbc3b4016476c996b04205`, `ev_59dc2b330790cb2b3deee284282c4a4b6d939c26b16807a1912ffd878de2ad9f`, `ev_b8ef6b617446721f1717385e7f4741af19330ce991ccb8aec72edba677f71f00` | Constructor table installation and concrete +0xb0 UI identifier method. |
 | `ev_3d7781ca515c875fe17c53759ce0737ab6ef7afd3903a030195000ad2957c7c3`, `ev_b0f8d7bb3cbd1f5fe4c8e3c68cd1df11b9bca406101428b477bc889ec3cd2c1e` | Cached story fields, exact bidirectional story/quest link, source hash and retained catalog counts. |
 | `ev_540d1aa21c74168bc8f871ea0b0d8c39314824b007dca6ba804a30ae8b9a86fe`, `ev_76251c43f061258c87559b658402fe4863bd479b35cbeb8b7a2c4ea835c3aa5f` | Bounded +0x80 candidates and concrete examples with distinct receivers. |
+
+## Frozen-container follow-up: story 9
+
+The cache-location limitation above was resolved on 2026-11-06 by an explicitly
+authorized, read-only extraction of **1282835 only**. The resource-rule audit
+distinguished the native publisher's unanswered mode-selection prompt and the
+shared-runtime/working-archive lease from independent frozen-source research.
+The retained window grants cover working-archive and shared-container access;
+the run145 launcher checks `explicit_working_archive_access` and
+`explicit_shared_container_access` before reading `client-work-209026/Gw2.dat`.
+Those restrictions do not establish a blanket frozen-archive hold. The earlier
+cached-only constraint applied to that source slice. This distinction does not
+clear the publisher prompt or authorize a client launch, working-archive access,
+or any release change.
+
+The extraction used `gw2-dat-cat`, SHA-256
+**ecff83ff81bcff68d418698f98363688c665401a4b0a4307658b07ce86dc812b**,
+whose archive source uses read-only `File::open`. It admitted only the canonical
+frozen path `/home/blizz/gw2-client/build-209026/Gw2.dat`, device **2065**,
+inode **293163139**, link count **1**, size **89165623112**, mode **0555**,
+and modification time **1793470205585736518 ns**. The path was not a symlink;
+its identity and the extractor hash were unchanged afterward. The historical
+working-archive identity is distinct; this follow-up did not stat or open it.
+No full archive hash or archive-wide content scan was performed.
+
+The **10918668-byte** decoded container matched the retained source SHA-256
+**104851d945a1f51206c6fdd42c1b13209a5663b84922266401c1ad8645d04531**
+before it was written with exclusive creation and mode 0600 to
+`~/re/gw2/notes/content-type-68-file-1282835.pf`. The subsequent content reader
+disabled all archive fallback and admitted only cached containers 1282830 and
+1282835. It checked indexed record bounds and declared relocation membership.
+
+| Source record | Field | Exact target | Established meaning |
+| --- | --- | --- | --- |
+| Story 2, 1282830:4127192 | +0x80 | Story 9, 1282835:4241824 | Unnamed story reference |
+| Story 9, 1282835:4241824 | +0x58 | Quest 358, 1282836:4323152 | Starting quest, using the typed field consumer above |
+| Story 9, 1282835:4241824 | +0x80 | Story 10, 1282835:4241544 | Unnamed story reference |
+
+Story 9 has a 304-byte indexed extent, and story 10 has a 280-byte extent.
+Only story 9's fixed 208-byte span was enumerated; story 10's identity was
+checked without expanding its fields. Quest 358's identity and backlink to
+story 9 came from the existing hash-verified quest catalog, not another archive
+extraction. The catalog SHA-256 remains
+**e958830f6c23178c299f86f5b5632cd8c75f38c6d16b474b448e1b076dfd9ba9**.
+
+An exact frozen-PE string query for `NextStory`, `nextStory`, `NextEpisode`,
+`nextEpisode`, `StoryDef`, and `storyDef` recovered only the already known
+`storyDef->GetStartingQuest()` assertion. Combined with the prior bounded
+QuestDataManager receiver audit, this supplies no new typed +0x80 consumer.
+It is not a whole-client absence proof. The 2 → 9 → 10 links therefore remain
+unnamed; their existence does not establish progression order, prerequisites,
+or a server transition. This slice closes the cache limitation and adds an
+exact authored record join, while leaving the actual encounter boundary intact.
+
+The private extraction helper is
+`~/re/gw2/notes/extract-frozen1282835-20261106.py`.
+Complete extraction, content and string-query Evidence is retained in
+`~/re/gw2/notes/209026-story9-frozen-followup-20261106.json`, **61278 bytes**,
+SHA-256 **954bd61a06ef9762694c5eef4c23832fbbb6329bd427f88d9ee8aafe9cc7ece2**.
+The separate exact catalog pin is
+`~/re/gw2/notes/209026-story9-catalog-pin-20261106.json`, **11284 bytes**,
+SHA-256 **e3235faefc50235c218414f3a230594b2fe2da2d84ab841bff5ef79b1336d4f7**.
+All four captures exited zero with complete raw output. REA verified cleanup of
+its owned helper process group; unrelated processes whose ownership could not
+be established were left untouched. No client process was launched or attached.
+
+| REA evidence | Observation |
+| --- | --- |
+| `ev_4d1fddc945989041480c313f5966d3d9e1695b556b421fcf4eac5775457cd3aa` | Exact frozen extraction, source identity, reader pin and decoded hash. |
+| `ev_cb7be37cf63a4f6de17f54e4a976f8ca4bdf574725ef289a02121ea2e9aad621` | Bounded cached story 2/story 9 records and relocation targets. |
+| `ev_95105feadf731842cfaf07d637fd89315d443c55150910cae2c9abac167fa6c1` | Exact typed-name seeds and retained quest target projection. |
+| `ev_25abc5ad2c566f4ca37040a1785ffa4dc5df2dff74e31beb52b4bb1ac8e8dbe9` | Independent catalog hash check and exact quest 358 row. |

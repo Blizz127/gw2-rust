@@ -61,6 +61,19 @@ Next work preserves the release workflow and unanswered native owner prompt
 while independent source-backed tutorial/skill behavior advances. The full goal
 remains open; diagnostic fixture results are not retail encounter completion.
 
+The latest offline increment adds a bounded
+[named ability-value resolver and sword damage-fact evidence](re/209026-mesmer-sword-damage-facts.md).
+Nine focused tests pass; the compiled reader matches all 16 named cases and
+eight literal cases against independently parsed frozen records. It provides
+content lookup, not damage execution. The exact tooltip multiplier is 1.0;
+the inspected starter-item branch gives strength 105–117. Incoming display-slot
+selection and alternate player state remain explicit qualifications.
+The [0x29/0x2a producer audit](re/209026-skill-input-29-2a.md) and
+[finish-listener audit](re/209026-typed78-finish-listeners.md) supply no retail
+repeat/chain timing. A single frozen-source extraction resolves story9's
+starting quest358, while story2→9→10 reference semantics remain unknown.
+No server or client deployment, run145 launch, or publisher takeover occurred.
+
 The coordinator's00:42 UTC project-state check identified the native Claude
 publisher as waiting/input needed, initially without a known cause or task-ledger
 receipt for5169b98. The later concrete report identifies the native roster-choice
