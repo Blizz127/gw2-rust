@@ -178,3 +178,43 @@ refer to these specific records.
 | `ev_0a6424e2d6b5d96b9dd49e366ae1b448a68e8a661be30b9c909b9d65fad1b7dc` | Complete 747 clear handler through return at `0x1410e77ac`. |
 | `ev_bf6289c771c5c84774a0c8f84871e4f8b0f15230eced3bb8995cc904b168a339` | Five direct callers of the local setter. |
 | `ev_1f2db8d13f1de9ee9f007d4da6069115cfd771dcda42b1057c2eb4918f1e4703` | NUL placeholder bytes and caller inputs; no recovered quest key. |
+
+## Completion reward and fixed claim request
+
+The exact quest154 record has nine40-byte reward rows at+68/count+70.
+Reward.cpp obtains the character's coreStats profession through virtual28
+and filters row+10 against it. The Mesmer7 row selects one fixed item,
+type35 key32138 at1282847:2575512. Existing retained localization names it
+Wooden Rod; this follow-up reverified its reference/type/key, without a new
+text decode. Row kind0 populates fixed-item child4. All nine rows are kind0;
+none creates choice child5. Optional row filters are null. This applies to
+the inspected normal panel path; separate player/quest-manager mode gates
+remain explicit.
+
+Quest+5c=72 reaches the native coin display unchanged, including its
+100/10000 denomination split and retained Coins label. This supports72
+copper displayed alongside the item. It does not credit a wallet. The XP
+path uses quest+54=2 and+58=0 with current experience, level-table difference,
+mode-specific multiplier and a rounding helper; no fixed XP award is derived.
+
+For a fresh fixed-only panel, ReRewards140854ab0 obtains no choice child and
+forwards selected item key0 through its listener to Reward callback1408313f0.
+That callback calls quest virtual68,1411fe150, which asserts quest completion
+and forwards to sender141263be0. The sender constructs **client205**, one
+Dword optional selected-item key, descriptor1425ce300. Its zero form encodes
+as `cd0000` under the established framing. Neither quest154 nor fixed
+item32138 should be substituted into that field. Nonzero input is not fully
+validated by this client path; server validation is still required.
+
+The local submitted bit suppresses repeated UI clicks, not server replays.
+Current reviewed0570b950 displays completion but has no claim205 handler or
+item/wallet credit. Inventory capacity, successful-credit acknowledgement,
+duplicate claims, transfer state and XP policy remain implementation work.
+No gameplay, store or runtime was changed by this source investigation.
+
+Private findings: `209026-quest154-reward-claim-20261106.json`, SHA-256
+`fd9b92886ad279c65f3739d4a420f50012c534bc46ae7ee6a62ac36b70df7dea`.
+Complete REA bundle: `209026-quest154-reward-claim-evidence-20261106.json`,
+SHA-256 `c75053c36d78cec2aa5cd9ac573960d74bc2df21721552fe78cc33f68fec830e`.
+One exploratory widget-prefix capture omitted unrelated dispatch bytes and
+is not complete-body proof; the selected typed paths are retained separately.
