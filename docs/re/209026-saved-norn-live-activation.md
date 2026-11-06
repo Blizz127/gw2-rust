@@ -447,3 +447,34 @@ next source target, not a proof of authentic progress conditions.
 
 Scope receipt: `209026-wayfarer-heart-scope-and-raven-mail-seed-20261106.json`,
 SHA-256 `6d5a811d17528e8ae84a05002d3541536f1737236880bdfaf6d6c41e98377861`.
+
+### Raven-heart completion letter: recovered delivery contract
+
+Server1001 provides a direct type43 content route for mail95. Handler
+0x1413eb660 resolves the second Dword through content virtual198, stores the
+definition on the parcel, appends/notifies the inbox and clears incoming
+staging. Its six Dwords are parcel ID, type43 key, coins, unnamed parcel+84,
+parcel flags, and unnamed parcel+8c. The definition supplies body30728,
+sender30730 and subject26289. Body/subject formatting also requires the
+local player, character and coreStats. No delivery has been attempted.
+
+Ordinary content text requires `(parcel_flags & 0x0e) == 0`, which does not
+establish the full flags value. Mail95's definition flag4 is separate:
+copying it into parcel flags selects a gem-store branch. Both unnamed
+fields initialize to zero, but this is not proof of their retail delivery
+values. Server1004 clears+84; virtual98 exposes+8c without establishing a
+timestamp meaning. A fresh parcel is item-empty; server996 can independently
+add attachments, so absence of authored attachments is not established.
+
+The literal alternative stages997 body **before**999 final header, with
+the same parcel ID and no interleaved parcel. Exact reward amounts,
+attachments, completion trigger, replay and persistence remain unresolved.
+No defaults or gameplay sends were introduced.
+
+Private contracts: `209026-raven-heart-mail-contract-20261106.json`, SHA-256
+`ce9283a2dcf37e5c30576fc81adf294a89542981abfce35a71b8985ca62184be`, and
+`209026-raven-mail-fields-followup-20261106.json`, SHA-256
+`b2fc5d10a8fbb824c3d5e53ef2d506ba04c140b76b75a0c42c35803dc0963230`.
+The complete REA contract evidence is retained privately as
+`209026-raven-heart-mail-contract-evidence-20261106.json`, SHA-256
+`ca11692b025566be020ec299f419fda993f56db882138703c6f4663d4e3b4b03`.

@@ -159,3 +159,28 @@ Corrected input preparation: REA
 Both captures exited zero with complete raw output and no runtime/archive
 access. Strict scalar readers retain incomplete coverage when terminal records
 are missing; preparation is not a successful native cast observation.
+
+## Fresh run220 staged; not yet launched
+
+`/home/blizz/gw2-sandbox/runs/run220-skill10176-lifecycle` copies the pinned
+never-launched145 inputs without modifying them. Corrected cac0e9a server,
+passive SLO/RCO helpers and composed GDB script retain the hashes above.
+The UI has no Escape key, allows125 seconds for cold models and presses6
+once with a fresh marker. It introduces no healing/recharge/damage response.
+The1000ms duration remains an explicit diagnostic value.
+
+Two no-listener preflights, five shell syntax checks, exact production-script
+inverse/composition and executable-mode checks pass. Ten focused reader
+checks pass, including rejecting a previously armed observer that has already
+terminated. The unchanged observers' earlier mock results are reused rather
+than reported as rerun. The1836-row input manifest includes file modes,
+SHA-256 `4550b49c7843e8afeb4e0c2962c327cf3c4713d55b78c2fc53ac1a86fa61ae47`.
+
+Staging receipt: `run220-skill10176-lifecycle-staging-receipt-20261106.json`,
+SHA-256 `508c4282de475aa49518f1388046b66bfa02efb496a59b6056dce8a9ca180d92`.
+Root reviewed the harness and sent one native window request to the existing
+publisher. No grant is implied by submission. The launcher requires a fresh
+exact active lease, completed publisher working-copy operation and removal
+of the preparation sentinel. It checks the copy gate before and after
+archive preflight. Preflight45s, run345s and kill-grace15s bound execution.
+No client, archive access or shared container operation has occurred for220.
