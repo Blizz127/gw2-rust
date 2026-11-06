@@ -241,3 +241,40 @@ REA `ev_23bb78c21d8fdef3d01e577f39d0be7f631487f6b96775df38d192dfecea2913`;
 complete bundle `209026-run220-slo-rejection-audit-20261106.json`, SHA-256
 `8eb07a0b6720613e4bc2e76bbdd49c5bf6046c0a3ce600a75a0712efa19fa558`.
 No observer change or new runtime occurred during this audit.
+
+## Run222: exact rejection is the SkillDef alignment check
+
+The separate SLO145R revision adds at most four distinct first-failed-guard
+records at the existing producer site, preserving every guard and access
+order.37 observer,5 standalone-reader and11 compact-reader tests passed,
+including differential register/memory traces. Fresh222 uses pristine145
+inputs, the same diagnostic1000ms server and validated220 UI/timing.
+Original runs/helpers remain unchanged. Its1838-row manifest SHA-256 is
+`087b907f7bd5adc222ae61fb715c8b1cbc9bfe9bf71249b6157b72bd8d8115c4`.
+Staging receipt: `run222-skill10176-rejection-staging-receipt-20261106.json`,
+SHA-256 `4f8b2f7a1533b41b19f8e3498183f62f0ec76f8bf2da4ec50f06ae8972eac7c9`.
+
+Window31 was granted06:57:40Z and verified06:58:43Z. The single run exited0,
+with one10176/slot0 request and diagnostic reply. At263784ms the new event
+reports `skill_definition_alignment` with a fresh marker. Earlier ownership
+and control guards passed; the non-null value read from R9's reference failed
+the observer's8-byte check before key/flags sampling. No pointer or low-bit
+pattern was emitted. This does not prove an encoded reference or authorize
+masking bits; compare the native dereference contract next.
+
+The lifecycle window never opened. RCO sampled only control-time context
+nullness and fixture level/attribute inputs; no queries/630 events occurred.
+Native typed execution, healing/recharge and retail timing remain unconfirmed.
+UI/cleanup/privacy and PE hashes passed. Window31 returned complete at
+**07:05:08Z**; no root runtime lease remains.
+
+Private REA receipts:
+
+- `209026-run222-window31-verification-20261106.json`,
+  `ev_18a8abf9f6bacb411a2c1044e5d216601ed5e6ee09c18c5101954fd1f6381e1d`.
+- `209026-run222-rejection-launch-20261106.json`,
+  `ev_3c5a00f8da3c78f47f4baa8b343cdd58793299ddc93b766357d8af9eeec44eed`.
+- `209026-run222-rejection-readback-20261106.json`,
+  `ev_bd45b31afe5d6bdff4199e36e12da809e6451be207b87e0da35673c698d59e8b`.
+- `209026-run222-window31-return-20261106.json`,
+  `ev_e044e59426ab7f100604b18a2c725e3d104f6cb5bd443121174c1b681a44204d`.

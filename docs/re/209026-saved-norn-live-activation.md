@@ -478,3 +478,29 @@ Private contracts: `209026-raven-heart-mail-contract-20261106.json`, SHA-256
 The complete REA contract evidence is retained privately as
 `209026-raven-heart-mail-contract-evidence-20261106.json`, SHA-256
 `ca11692b025566be020ec299f419fda993f56db882138703c6f4663d4e3b4b03`.
+
+## Independent pending fix: interleaved character transfers
+
+Commit **98bae4f7539beda97703778b69578328b9dd06af**, based on live0763c47,
+fixes a second in-memory carry loss. The single global pending slot let a
+newer A transfer erase B's pending state. The regression reproduces B losing
+7000 XP/level4 before the fix. The replacement retains the newest pending
+state for each character, checking destination and consuming only a matching
+entry once. Unrelated/wrong-destination joins preserve pending state.
+
+Eight focused tests, isolated musl build and four unchanged-profile
+no-listener configurations passed. Only mission.rs changes; original415/
+record bytes and the profile remain unchanged. No restart persistence or
+disk format is added. Binary SHA-256:
+`a99d389615ed94c5169c30cb7f6bd139de2e65bf4195834d6c50b00ae626c3d1`.
+Verification receipt:
+`interleaved-carry-0763c47-20261106-checks/verification-receipt.json`, SHA-256
+`f5d91b1fb200ee1862d44bed53d201b449b5fc9f328065b7f03fb444ca1e59d0`.
+
+The delegated lane submitted this artifact once to the verified native
+publisher. At07:06:01Z integration/publication remained unconfirmed. The
+unpublished discovery branch's third waypoint producer must use the new
+queue helper during integration; this is documented in the handoff and is
+not a dependency of the live-base fix. Submission receipt:
+`interleaved-carry-native-publisher-handoff-20261106.json`, SHA-256
+`f32724d4e62aa8141aaed086e38c009d5fd89a89832f768b0ea4cc0277e8d251`.
