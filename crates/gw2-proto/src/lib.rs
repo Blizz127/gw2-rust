@@ -46,6 +46,7 @@ pub mod renown;
 pub mod reward_track;
 pub mod schema;
 pub mod skill_availability;
+pub mod skill_chain;
 pub mod skill_palette;
 pub mod skill_order;
 pub mod skill_order_update;
