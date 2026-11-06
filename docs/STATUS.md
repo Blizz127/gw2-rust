@@ -89,6 +89,21 @@ no cast and exited9; cleanup/hash checks passed and window28 was returned
 stalled at a wagon. A nearby diagnostic target is being prepared; this does
 not change the live population or establish authored retail placement.
 
+The fresh `run216-skill10170-near-target-smoke` is staged with exactcf13a3b,
+the same availability grant, one nearby diagnostic wolf and125s settling
+time. Eleven reader checks and two no-listener configurations pass. It is
+**not launched**: window29 is reserved pending the publisher's separate
+`run217-world-handover` cleanup and explicit activation. No lease is inferred
+from that reservation or from elapsed time.
+
+A focused source check of the publisher's committedf0a45a4 handover found
+two concrete data/arrival issues: its process-global carry lacks character
+GUID/destination-map binding, and a map28 join without carry retains the
+tutorial's initial spawn. Root reported both through the existing native
+peer and is preparing isolated narrow fixes with focused regressions. These
+findings do not change the verified live version above. No saved-format
+change or progress reset is authorized by this work.
+
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).
 Norn cinematic selection/trigger and actual tutorial shrine locations remain
