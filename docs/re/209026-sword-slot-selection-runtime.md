@@ -196,6 +196,14 @@ followed, with no legacy order, echo or extra hit. **No damage occurred;
 this is not a combat smoke pass or a release-ready profile change.**
 The next correction is to the bounded UI targeting step.
 
+The retained before/after screenshots show that the harness's unconditional
+Escape opens the menu. There is no client227 target selection in this run.
+The final observer error is an `identity_or_pair_guard` at `lookup_result`;
+it must not be recast as a null selection after the candidate passed.
+The next harness removes Escape and requires a fresh hostile227 selection
+before its one key1 press, then checks the request's matching target and
+damage. Passive final-cache coverage remains a separate observation.
+
 UI and outer run exited0; no assert text was found. Console and executable
 hash checks passed, and container absence was independently verified before
 returning window27 complete at **2026-11-06T05:37:58.599062Z**. Cleanup does
@@ -208,6 +216,12 @@ The legacy-enabled positive control reproduces the extra order/hit. Its
 receipt is `4b3c4c2-autoattack-omission-regression-20261106.json`, SHA-256
 `fe63bc7b7558e60e57ab5117d1181666f462f0e8c5feefd14fd442537365bfdb`.
 This synthetic regression does not supply the missing targeted client smoke.
+The same focused regression subsequently passed on currentcf13a3b
+(one test,117 filtered out). Its attack handlers and option handling are
+byte-identical across the two releases; surrounding additions include
+lethal-hit story callbacks and timed regeneration. Private receipt:
+`cf13a3b-autoattack-omission-regression-20261106.json`, SHA-256
+`6bf895687af1fa007c5688bdfc597a3ffcd7c6c9cf5a35ec497cdf6e04644e9a`.
 
 Private evidence:
 

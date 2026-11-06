@@ -279,3 +279,17 @@ Readback exited0 without truncation. Feed metadata remains b128 at05:38:39Z;
 runner pin and audience were not reverified. The availability correction
 from root's separate run214 is **not live**: its request had target0 and
 did not demonstrate damage. No competing publication occurred.
+
+The bounded retained audit of `run214-great-hunt-4` observes completed step
+IDs1 and2, seven Thora/agent21 conversations and no Ido/Eir conversations.
+The final screenshot shows defeat, not quest completion. In released code,
+opening the relevant conversation advances a stage; dialogue completion,
+a trophy item and trophy turn-in are not checked. The authored definitions
+establish IDs, text references and sectors, not these reconstructed action
+conditions or their sequence. Release prose must not treat that mapping as
+proof of retail encounter rules. The run wrapper and release prose also
+disagree on the boss position; neither establishes a verified retail spawn.
+
+Private audit: `209026-run214-great-hunt-ledger-audit-20261106.json`, SHA-256
+`626771245cb26a8040088206470cea617d5ed27fa384ed5af614c2546e83c6cc`,
+REA `ev_4f88606d925b60eb5392437873b19b40eff4e27a61467b5cbd6d2a356a85a1c6`.
