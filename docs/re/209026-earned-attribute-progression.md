@@ -93,3 +93,30 @@ tested artifacts remain intact; this candidate is cumulative. Last verified
 live remains **82d8d04-cdn900**, deployed **2026-11-05T23:56:31Z** at
 `/home/blizz/gw2-rust-82d8d04-cdn900`, with rollback retained. No release,
 resource-lease acquisition or native prompt answer occurred here.
+
+## Independent port onto live world-handover source
+
+Commit **e78b02857d519a740862ef93aec1311479388dd9** ports only the baseline
+and earned-curve increment onto76af245. It preserves multi-heart/story work,
+GUID/destination carry and map28 arrival. Fifteen focused Rust tests and
+three supervisor tests passed, including multi-heart level gains and
+character-bound carry with earned-attribute restoration. The isolated musl
+release and four prepared/saved auth/world preflights passed; the latter
+kept the target listen addresses occupied to prove no listener was created.
+
+Artifact:
+`/home/blizz/scratch/gw2-earned-attributes-76af245-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`,
+1732176 bytes, SHA-256
+`3233c1d1e3e488fb338dfceb4154cbcb487e672b8c65239b291a5cfcab2fb0db`.
+The only profile delta is `GW2_BASE_ATTRIBUTES=default-curve`; retain all
+latest publisher values, including explicitly empty legacy autoattack,
+17-byte skills, damage30, echo disabled and saved mode. Do not substitute
+the earlier whole profile recorded above. The paired supervisor is in the
+commit. Effective-level/health scaling and restart persistence remain absent.
+
+Root reviewed the production diff, checked the commit/artifact and preflight
+receipts, and submitted the concrete ready handoff through the existing
+native publisher inbox. This is not a deployment receipt. Evidence:
+`earned-attributes-76af245-20261106-checks/profile-preflight.json` and
+`earned-attributes-native-publisher-handoff-20261106.json` under private notes.
+There is no added client-run or routine approval gate.
