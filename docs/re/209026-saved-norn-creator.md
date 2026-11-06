@@ -1587,3 +1587,15 @@ Root visual record `run271-root-late-dialogue-observation-20261106.json`,
 SHA256 `dc8ebf22c1b9b0aea97b486a256e59292869f4b57e7591b9b91b60118556c22f`,
 pins both immediate and late images. The final image is1,331,806 bytes,
 SHA256 `81dcb2f4b4991f68a982912bc4e6f524e9fe786426454c5f4a8214f5ce2fb649`.
+
+The retained ordering audit binds the immediate capture-return timestamp
+19:44:53.840Z and final PNG last-write19:45:12.235Z. Their18.395-second
+difference is a host evidence interval, not measured native render latency.
+Root verified18 retained pins. Private finding
+`run271-late-dialogue-order-findings-20261106.json`, SHA256
+`5ff5afbde20e154b6e0304fa61122d93d3b03fb06888a0b5ef581b693f43d37c`,
+pins complete audit `209026-run271-late-dialogue-order-retained-audit-20261106.json`,
+SHA256 `2e687bce1550c5a7f7acf4fb6f6f963e7885904c687e7f7c63532ec6a6c984f1`,
+Evidence`ev_99a1b3bf665423caa8561c4e5986eba446bf277f9062b2be7472ac92dd8e0a0e`.
+The audit exited0, untruncated with owned cleanup; it did not replay the client
+or change the frozen outcome.
