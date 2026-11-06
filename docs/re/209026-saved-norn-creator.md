@@ -1,10 +1,10 @@
 # Build 209026 saved Norn Mesmer creator experiment
 
 Saved Norn character creation is **enabled live** since **2026-11-06T03:29:33Z**,
-currently on `/home/blizz/gw2-rust-c2cb6fd` (deployed03:56:12Z).
+most recently verified on `/home/blizz/gw2-rust-a9399dc` at16:13:00Z.
 The owner chose activation in the native publisher session at03:29:03Z;
-root independently verified the latest configuration, backup, kit hashes and
-health at04:27:55Z. See the [activation receipt](209026-saved-norn-live-activation.md).
+root independently verified configuration, backup, kit hashes and health.
+See the [activation and release receipts](209026-saved-norn-live-activation.md).
 The store was empty at03:43 and had one saved record at04:01; contents were
 not read. Saved mode hides the prepared Banshee Mesmer.
 Initial creation is durable; world XP, loot and heart progress remain
@@ -1085,6 +1085,69 @@ under `~/re/gw2/notes/run262-local-clearance-20261106/`:
 Root checks the receipt, full inventory, evidence lifecycle and five source/script
 pins. This follow-up reads retained exports only; no client, archive or shared
 sandbox access occurs.
+
+### Resolved fallback bounds and partial selected section
+
+The subsequent exact26 audit closes the initial fallback-extent gap above.
+It matches all23 empty selections and the three missing geometry583 selections
+against retained raw map records and the source-defined
+[prop fallback](209026-prop-fallback.md). The23 empty selections have no selected
+blocker references; the three missing selections have no selected animation.
+The initial box uses half extent0.0353553406894207 and convex radius
+0.05000000074505806 in collision units, without model scale. Its preserved
+rotation/origin fits inside a conservative ±4-map-unit cube. All26 cubes miss
+X[-2200,-1920], Y[-25400,-25080]; the nearest is over4362 map units away.
+This conclusion covers those26 initial fallbacks only. The export's other92
+selected-animation/blocker references remain a separate omitted layer.
+
+The retained selected-triangle section follows observed P[-2120,-25147]
+through unwalked C1[-2046.153846,-25206.153846] and
+C2[-2019.230769,-25219.230769]. Its total reference length is124.548179 map
+units. Six terrain segments across five source rows join without gaps or height
+jumps, with up-height3756.755707..3758.693203 and maximum face slope3.382690°.
+No selected nonterrain triangle intersects that vertical section in the
+3744..3792 height band. Eighteen thin offset/height probes find no selected
+nonterrain hits; they exclude parallel/coplanar overlaps and are not a swept
+actor test. The nearest cropped selected prop section at terrain+8 is111.762593
+map units away atC2; this is a selected-surface distance, not native clearance.
+
+Root verifies17 distinct pinned input/output files, both complete successful
+REA captures and the rendered plot. The plot's red reference line is not an
+observed road. Native filters, margins, dynamic state, omitted blocker
+references, actor footprint/support and camera/world yaw remain unresolved.
+This supports a bounded next observation, not a full passage or hunt claim.
+Run264 is in offline preparation with the same403 diagnostic binary, original
+record and fresh145 fixture. It permits at most four short local W/D holds
+after fresh B5 feedback and visible-ground checks; wrong-way movement,
+overshoot, bounds violations or missing follow-up samples terminate input.
+No resource lease or runtime is established by this preparation.
+
+Private evidence under `~/re/gw2/notes/`:
+
+- `run262-gap-bounds-20261106/bounds-receipt.json`, SHA256
+  `a425b8e70e9804d6548b459df58414424d61f798b96ca6f73377128ce46e5eaa`;
+  calculation REA `ev_3ec52052f8527eef097099cbaf4520493f729bc4095919ff65fb8a2251ac3ea6`.
+- `run262-selected-sections-20261106/findings.json`, SHA256
+  `6b63e3ab86b8246f64e99c9c66a6d8175e32ccdbf92202c7d76333b931bdfb69`;
+  `receipt.json`, SHA256
+  `bf20a6313380d8b68aa9660ee71db08e2cfc6c5129cef23cff8ed17bc12218f2`.
+- `sections-evidence.json`, SHA256
+  `4aa7cf30deb0d682d5e429dd9688bb6a14a06e160fce60d5d24a9cf7cf3c8667`,
+  REA `ev_f1f6106a829dd688ca82741df51b481abdbfde3b14b3234d006d76629099d50c`;
+  `findings-evidence.json`, SHA256
+  `7c9ce279525a23d97ae3be9c51341c9b132f47730311d6e0a5465248cb06012e`,
+  REA `ev_90e7ae399a1de8f69abc6ac05de0440b97f39d0c22f06dab14aff79fa6da609a`.
+- `selected-sections.png`, SHA256
+  `2d037fb60af7dc2f0d3e5485b84a12f387615020e15668b7e83c8f7720756a0c`.
+- Plan `run262-retained-c1-c2-native-observation-plan-20261106.json`, SHA256
+  `b567b05cf8f3c6a46b836409b67c85a6f514576f84dbbe3f6040b27c5c63318a`.
+
+The first orchestration wrapper failed after fsync while computing a display
+offset. The complete saved evidence was recovered without rerunning its
+producer. Captures exit0 without truncation and verify owned cleanup;
+unrelated environment-permission failures remain recorded and untouched.
+All geometry work uses retained files, with no client, archive or shared
+sandbox access.
 
 ## Retained REA evidence
 

@@ -1,16 +1,57 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, currently on **e624c8b** at
-`/home/blizz/gw2-rust-e624c8b`, independently verified10:41:12Z.
-The [latest increment](#verified-skill-admission-release-e624c8b)
-rejects skills absent from the explicit availability list before combat mutation.
-It retains no-clone Ether Feast healing/recharge and guarded same-process
-health/cooldown carry with original-roster relog routing. Saved mode was first
+Saved character creation is live, most recently verified on **a9399dc** at
+`/home/blizz/gw2-rust-a9399dc`, at **2026-11-06 16:13:00Z**.
+The [latest verified increment](#verified-buff-codec-release-a9399dc) adds raw
+buff-instance codecs without enabling new gameplay effects. It retains
+skill admission, no-clone Ether Feast, sword-chain behavior and guarded
+same-process health/cooldown carry with original-roster relog routing.
+Saved mode was first
 activated on82d8d04-cdn900.
 The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
 Root independently verified the configuration, live hashes and service at
 **03:43:51Z**. The earlier unanswered roster prompt is historical.
+
+## Verified buff-codec release a9399dc
+
+The sole publisher deployed **a9399dc at 2026-11-06T16:10:49Z** to
+`/home/blizz/gw2-rust-a9399dc`, retaining `/home/blizz/gw2-rust-fccd1b0`
+for rollback. Independent readback at **16:13:00.263009Z** verifies the exact
+1,855,528-byte artifact from `a9399dccd19c0c6d64a6f33618b55873bbf759a6`.
+Only BUILD and `bin/gw2-game-observe` differ from rollback. All current and
+rollback manifest entries pass; running executables, four owned healthy
+listeners, zero humans/bots, saved mode and one private record are verified.
+The activation backup, profile, supervisor, 27-byte startup skills, all asset
+bytes and five root rows are unchanged. Actual served latest/root/AlpineHall
+responses match the selected kit. Both sword2 diagnostics remain disabled.
+Record contents were not read, and verification changed no live configuration.
+
+The [raw734–739 codecs](209026-buff-instance-lifecycle.md) add complete field
+encoding and transactional decoding. Four focused tests cover source-bound
+literal frames, framing/append behavior, malformed/truncated inputs and all256
+active-byte values. The musl build and two saved-profile no-listener startup
+checks pass. No packet sender, buff effect, duration assumption or gameplay
+default is added. Message740/741 value arrays remain a separate source path.
+This is service and artifact verification, not a native buff gameplay smoke.
+
+Game SHA256:
+`ed266f3802076288cc483c6ae8ca045ac7bd69b3ab349a6916dd1c840ec6b4c1`.
+Kit manifest SHA256:
+`fc4e4ac1a991c9184db00ddf88121994687d8171b1291ce1b951769cd40e802c`.
+Private verification receipt `a9399dc-release-verification-20261106.json`,
+SHA256 `6f8ac6dc63336b0eff444faed5c1e7d84b8406e648c50c512b95a38b242972ee`.
+Full `209026-a9399dc-release-readback-20261106.json`, SHA256
+`8c77de4bff7d509a022f0e12db2ad8ed74b045dfa4202de83b5d2c003544a471`,
+REA `ev_94219049c7d57335ffadac493f157fc6026d9de4b77b2d63a39c656282fdb230`.
+Readback exits0 without truncation and owned cleanup is verified. Four unrelated
+processes denied environment inspection and were left untouched; their ownership
+remains unverified. No client/sandbox access or launcher publication occurred.
+
+The publisher subsequently announced an integrated quest162 base change,
+pending its own smoke. Future production increments must include that posted
+deployed lineage, or be merged/rebuilt/tested by the existing sole publisher.
+The announcement is not itself a newer deployment receipt.
 
 ## Verified skill admission release: e624c8b
 

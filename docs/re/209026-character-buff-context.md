@@ -51,9 +51,10 @@ server messages.
 
 The [endurance lookup](209026-endurance-deficit.md) requests the frozen
 skill data key 783, UID 69789. Thus its exemption gate is a buff-context
-membership test for that exact record. The record's human name and the
-wire operations that populate this collection remain open. No buff
-creation/update frames or default gameplay values are introduced here.
+membership test for that exact record. The record's human name remains
+unresolved. The later [instance lifecycle trace](209026-buff-instance-lifecycle.md)
+binds population and removal to registered messages 734–739; it supplies no
+default gameplay values or policy for applying this particular buff.
 
 ## Evidence
 
@@ -96,9 +97,9 @@ removal input. Primary virtual0 (`1412c3110..1412c3132`) separately reports
 unsupported client spawn scaling and returns zero; this does not classify
 the remaining primary methods.
 
-This closes the service/listener lead without establishing a buff packet,
-instance insertion or targeted removal. A typed network handler reaching
-those mutations is still needed. The separately retained Ether Feast
+That service/listener slice closed without establishing a buff packet,
+instance insertion or targeted removal. The primary-method follow-up below
+subsequently recovered the typed message-to-mutation path. The separately retained Ether Feast
 “Conditions Removed” display fact does not supply classification,
 selection, delivery or an authoritative removal policy.
 
@@ -112,3 +113,42 @@ The four captures are `ev_c43247ae07e0942853d1903a5f1efdbee470e4d7ddb4e783771c56
 and `ev_21ec3066c92871ccebe121a061f5e72af9fc90cc19771552c403e54bf31821b1`.
 All exited0 with complete output and unchanged executable hashes; bounded
 adjacent code and Rizin's string-region warnings remain in the raw evidence.
+
+## Registered instance producers
+
+The subsequent [lifecycle trace](209026-buff-instance-lifecycle.md) follows
+direct `CmbtCliMsg` handlers from registration group `1421840e0` into the
+same constructor-owned context. These mutations are not insertion slots on
+the inspected primary query/iteration vtable. Message field 0 resolves the
+combatant through `1412c0720`; combatant virtual +0x40 supplies the context.
+
+735 resolves a type-64 SkillDef with a nonnull tag-1 buff body, constructs a
+120-byte instance through `1412c23a0`, and inserts its buff ID, pointer and
+occupancy into the 24-byte collection at `1412c3a60`. It asserts that the buff
+ID is absent. 734 activates an existing instance, 736 deactivates it, and 737
+updates its raw value. 738 removes all instances matching a skill key; 739
+removes one buff ID. Their shared removal `1412c4250..1412c4810` clears the
+occupied entry, updates the indexes and notifications, releases the source
+reference and frees the instance. The source agent/skill key/buff ID and
+remaining raw fields are distinct; repeated creation is not an established
+idempotent update.
+
+740/741 belong to the same registration group but insert/remove a separate
+12-byte value array, not these buff instances. All eight individual packet
+descriptors terminate and agree with the extracted XML; the registration
+array itself is not claimed to have a null terminator.
+
+This closes the wire-population gap, not the gameplay rules. Duration units,
+raw byte 5 semantics, stacking policy, condition-versus-boon classification
+and authoritative removal selection remain unresolved. Raw byte 6 is stored
+without Boolean normalization in the instance field named `isActive` by a
+native assertion. The existing visibility/state bits and Ether Feast tooltip
+facts do not substitute for those missing rules. No buff sender or effect is
+enabled by the raw 734–739 codec.
+
+Complete evidence: `209026-buff-lifecycle-source-evidence-20261106.json`,
+SHA-256 `38c9fceeecd9348345e8c8b45f6c654491197a58ab0acbd677dc8357aac5bb5d`.
+Findings: `209026-buff-lifecycle-source-findings-20261106.json`,
+SHA-256 `f30bada6103c458a1efda97c2d9a329845985c5090d73f07ed794a98048dc724`.
+The linked lifecycle note records exact fields, complete handler/mutation
+boundaries, descriptor evidence and the separate classifier limit.

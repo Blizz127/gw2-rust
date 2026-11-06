@@ -30,7 +30,26 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
-**fccd1b0 is verified live**, publisher deployment15:30:21Z to
+**a9399dc is verified live as of 2026-11-06 16:13:00Z**, publisher deployment
+16:10:49Z to `/home/blizz/gw2-rust-a9399dc`, rollback `fccd1b0`. Independent
+readback verifies the exact tested artifact, all current/rollback sums, four
+healthy owned listeners, saved mode/one private record, unchanged backup,
+profile, supervisor and served AlpineHall940 assets. Only BUILD and the game
+binary changed. Four focused codec tests, the musl build and two saved-profile
+startup checks passed. The new raw734–739 codecs preserve every field and
+decode transactionally; they add no sender, buff effect or gameplay default.
+The source now identifies buff creation, activation, deactivation, value update
+and removal. Duration units, condition/boon classification and retail effect
+policy remain unresolved. [Source and codec](re/209026-buff-instance-lifecycle.md);
+[release readback](re/209026-saved-norn-live-activation.md#verified-buff-codec-release-a9399dc).
+
+The publisher has announced an upcoming integrated quest162 release. Future
+production artifacts must include its deployed lineage, or be handed over as
+commits for the sole publisher to merge, rebuild and test. That announcement
+alone is not a deployment receipt. Run264 preparation uses the older403 binary
+only as an isolated diagnostic comparison, never as a replacement live build.
+
+Earlier **fccd1b0**, retained as rollback, had publisher deployment15:30:21Z to
 `/home/blizz/gw2-rust-fccd1b0`, rollbackec69643-alpinehall. Independent15:35:13Z
 readback verifies the exact tested game, current/rollback sums, four healthy
 owned listeners, saved mode/one private record, unchanged backup and served
@@ -44,7 +63,7 @@ native payout observation. No profile, durable schema or live skill change.
 [Implementation](re/209026-quest154-xp-award.md);
 [release readback](re/209026-saved-norn-live-activation.md#verified-quest154-xp-release-fccd1b0).
 
-Earlier **ec69643-alpinehall**, now the rollback, had publisher deployment14:46:19Z to
+Earlier **ec69643-alpinehall** had publisher deployment14:46:19Z to
 `/home/blizz/gw2-rust-ec69643-alpinehall`, rollbackec69643. Independent15:03:34Z
 readback verifies current/rollback hashes, four healthy owned listeners,
 saved mode/one private record, unchanged backup and the served asset feed.
@@ -53,7 +72,7 @@ remain unchanged. Publisher reports Hoelbrak rendering; this readback verifies
 the feed and service health. Both sword diagnostics remain disabled live.
 [Asset-release readback](re/209026-saved-norn-live-activation.md#verified-alpine-hall-asset-release-ec69643-alpinehall).
 
-Earlier **ec69643**, now the rollback, was deployed at13:52:31Z to
+Earlier **ec69643** was deployed at13:52:31Z to
 `/home/blizz/gw2-rust-ec69643`, rollbackf926ce0. Root's13:55:55Z readback
 verifies the exact tested artifact, current/rollback hashes, four healthy owned
 listeners, saved mode/one private record and unchanged backup. It adds an
@@ -140,6 +159,15 @@ hall end beside steep rock; a continuous onward passage remains unproven.
 Launch/UI 0 and cleanup pass; window 54 returned 15:42:22Z. No onward translation,
 combat, story or live change results from this probe.
 [Run262 corner view](re/209026-saved-norn-creator.md#run262-corner-view-observed-onward-clearance-unresolved).
+
+The retained follow-up resolves the26 missing/empty selection bounds: all
+source-defined initial fallback boxes miss the local crop. A partial selected
+terrain section from the observed endpoint through unwalked C1/C2 is joined
+without height jumps; it does not establish native clearance. The other92
+animation/blocker references, filters and actor swept shape remain outside
+the model. Fresh run264 is in offline preparation with at most four short
+feedback-driven local holds; no resource grant or runtime has started.
+[Bounds, section and limits](re/209026-saved-norn-creator.md#resolved-fallback-bounds-and-partial-selected-section).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274
