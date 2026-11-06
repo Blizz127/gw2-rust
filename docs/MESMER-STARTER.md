@@ -102,6 +102,13 @@ The [map gate](re/209026-skill-context-map-gate.md) independently resolves
 context1 once map379 is installed, selecting the base recharge content20000
 before display modifiers. Actual recharge execution remains unimplemented.
 
+The [recharge content reader](re/209026-skill-recharge-content.md) now resolves
+the actual ability and ordered context overrides, with four focused tests,
+a library build and an independent frozen-record check. The exact10176
+record has base20000, context2/3 overrides25000, and zero count maximum with
+no count overrides. This supplies content selection, not a server cooldown
+schedule or a default category-zero Word.
+
 The [duration-expiry trace](re/209026-skill-order-duration-expiry.md) closes
 the client-local path from a valid ordinary command's deadline to its
 character completion callback. A separate server84 is not required on that

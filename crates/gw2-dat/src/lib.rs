@@ -24,6 +24,7 @@ pub mod profession_content;
 pub mod progress_content;
 pub mod skill_fact_content;
 pub mod skill_palette_content;
+pub mod skill_recharge_content;
 pub mod setting_content;
 pub mod scene_bounds;
 pub mod terrain;
