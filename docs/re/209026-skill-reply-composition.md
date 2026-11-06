@@ -75,7 +75,9 @@ Private receipts and reproducible wrapper:
 - `~/re/gw2/notes/skill-reply-composition-build-checks-20261106.json`.
 - `~/re/gw2/notes/check-skill-reply-composition-build-20261106.py`.
 
-This is the latest checked cumulative replacement. The previous00599af
+This checked candidate is now included in the newer
+[d9d0bfe starter-attribute build](209026-starter-base-attributes.md#checked-cumulative-artifact-not-deployed).
+The previous00599af
 artifact remains intact as a tested earlier candidate; c862325 remains
 withdrawn because it manufactured a cast from slot release. The last verified
 live kit remains **82d8d04-cdn900**, with its existing rollback retained.

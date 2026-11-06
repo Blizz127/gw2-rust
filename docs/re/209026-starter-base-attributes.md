@@ -85,6 +85,42 @@ progression. The startup correction does not resolve that larger requirement,
 skill execution, localization keys or the authored Great Hunt encounter.
 The sole publisher's unanswered roster prompt and runtime hold are preserved.
 
+## Checked cumulative artifact, not deployed
+
+Source **d9d0bfe** includes the earlier slot-release and explicit skill-order
+composition fixes. Its offline `x86_64-unknown-linux-musl` release build passed
+in the isolated source tree below, using a separate target directory.
+
+- Binary: `/home/blizz/scratch/gw2-base-attributes-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`.
+- Size: **1582544 bytes**, static PIE.
+- SHA256: **76a40bae68b3448c2d446358accfd71ed05fb010e4f950090a1cc620e72d6984**.
+- Required supervisor: `/home/blizz/scratch/gw2-base-attributes-20261106-src/deploy/gw2-server.sh`.
+- Supervisor SHA256: **c006b89524e011039a9b5bdb4df913d2505e82a9f44f7e69a31cd02b8735b6ad**.
+
+At **2026-11-06T02:49:19.544962Z**, this exact binary passed prepared auth,
+prepared Norn mission and saved Norn mission `--no-capture --check-config`.
+All exited successfully without starting a listener. The saved check used a
+private empty temporary store; the owner store and roster selection were not
+accessed. Mission checks supplied the explicit baseline37, plus the previous
+synthetic hostile/damage and1000ms diagnostic echo. Those diagnostic values
+remain test inputs, not new deployment defaults.
+
+The retired autoattack CLI rejection, two legacy-setting compatibility checks
+and supervisor shell syntax also passed. Eight pinned fixture inputs and the
+run145 manifest remained unchanged. All four ignored schema inputs match the
+build-input receipt. Reproducible private records:
+
+- `~/re/gw2/notes/base-attributes-build-inputs-20261106.json`.
+- `~/re/gw2/notes/base-attributes-build-checks-20261106.json`.
+- `~/re/gw2/notes/check-base-attributes-build-20261106.py`.
+
+Pair this binary and supervisor with the candidate profile described above.
+If the publisher's profile has changed since the recorded baseline, apply only
+the two specified setting changes to that profile and preserve its other work.
+This handoff does not select saved or prepared mode. Prior checked artifacts
+remain intact. The last verified live kit remains **82d8d04-cdn900**; no new
+deployment or client runtime observation is claimed.
+
 ## Source evidence
 
 Frozen PE SHA256:

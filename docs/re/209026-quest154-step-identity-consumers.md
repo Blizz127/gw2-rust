@@ -8,6 +8,11 @@ consumer seed; it does not itself explain what action completes a step.
 No gameplay code, archive, client runtime, working container, publisher state
 or resource hold changed.
 
+The later [typed-caller follow-up](#typed-caller-follow-up-fixed-map-navigation-rows)
+binds this membership query to fixed map-navigation rows. That exact table
+contains neither map379 rows nor any of quest154's six step keys, so it does
+not provide the missing Great Hunt actor/action rule.
+
 ## Selected gap and bounded result
 
 The [step content note](209026-quest154-content.md) leaves definition +0x28
@@ -136,3 +141,111 @@ Private bundle:
 | `ev_191713e0274c1b820ad5bdac077ead4e7c5833c060d1b2eaaadf1b6b0217b47b` | Constructor table installation, exact table-entry pointer and complete membership query. |
 | `ev_5c5067155b5acf17231ec684470b3750ae341e0b28e8167e6645ee96fa7208b5` | Complete 16-byte hashing and four-Dword equality path. |
 | `ev_255f6a7c651218e3bc396212ef1ccc8cfef14b21778ba735d40d0b6075b1592c` | Hash-verified cached quest154/goal1 step identities, numeric IDs, flags and raw17 values. |
+
+## Typed-caller follow-up: fixed map-navigation rows
+
+Static REA, 2026-11-06. The membership consumer is now bound through a
+second player getter. Player primary table **0x14215e9d8**, virtual
+**+0x350**, points to **0x1411bb350..0x1411bb38b**. Like +0x358's
+`0x1411bb310`, it checks `IsQuestMgrReported()` through player virtual+0x168
+and returns **player+0x9820**. Consequently its returned primary manager
+uses the already-established table **0x142166030**; this is not a generic
+same-offset virtual-call inference.
+
+In `ChCliContentDirection.cpp`, the loop at
+**0x141269515..0x141269603** consumes 48-byte rows, with RBX equal to
+row+0x20. It tests **row byte+5 mask2**. When that bit is set, it obtains
+the player quest manager through +0x350 and calls its exact membership
+virtual+0x68 at **0x141269557**, passing **row+8** as the 16-byte key.
+A false result skips the row. With the bit clear, the loop bypasses this
+membership test. Passing rows undergo a numeric content lookup from their
+Word+2; when the corresponding local map-info entry exists, the loop
+converts signed Dwords at **row+0x18/+0x1c/+0x20** to floats and appends
+them to that entry's coordinate collection. No spawn or action-completion
+semantics were recovered from this loop.
+
+The complete predicate **0x14126efb0..0x14126f017** implements the same
+flag/key decision. Its receiver's +8 supplies the player; its RDX argument
+is the row. For mask2 it tail-calls manager+0x68 with row+8, otherwise it
+returns 1. The exact pointer at **0x142172a28** is this predicate. The
+containing content-direction method builds a local callback object with
+that table and the player at **0x1412694ce..0x1412694d9**, then passes its
+address as the fifth argument to **0x141411bb0** at
+**0x14126974f..0x14126975b**. The routing helper's internals were not
+expanded in this slice.
+
+### Exact row source and Norn result
+
+The enclosing method starts at **0x141268ef0**, established through the
+chained unwind entry for `0x1412694e5`. At
+**0x141268f8e..0x141268fc0** it obtains the current map definition from
+**0x141411100** (global context+0x1c8, then mission+0x1e8), asserts
+`localMap`, and retains its numeric **Dword+0x28**. At
+**0x1412694dd..0x1412694e5** that map key is passed to
+**0x1412e0d00**, with an output row-count pointer.
+
+The complete selector **0x1412e0d00..0x1412e0dee** searches the fixed
+executable array **[0x1421f2310, 0x14220c110)**. It contains exactly
+**2,208 rows × 0x30 bytes**. Selection compares the input map key with
+each row's **Word+0**, returns the first matching row plus the matching
+count, or null/count0. This source is executable-resident `ConstMap`
+data, not a relocated content-container array.
+
+The exact bounded table audit found:
+
+| Check | Result |
+| --- | --- |
+| Word+0 equals tutorial map379 | **0 rows** |
+| Word+0 equals open map28 | **29 rows**, indices626–654 |
+| Key16 in those 29 rows | All zero; byte+5 mask2 clear |
+| Any of quest154's six exact step keys anywhere in this table | **0 matches** |
+
+This is a concrete navigation eligibility consumer of the authored-key
+collection, but **not a recovered Great Hunt actor, placement or action-to-step
+rule**. In particular the map28 coordinates are not tutorial379 spawn
+evidence. The negative result covers this exact fixed table, not all
+indirect manager callers or all client content. The separate definition
+**+0x28 value17 remains unnamed**. Authentic actor/condition-to-step rules
+and any required runtime objective state are still missing; this result
+does not prove they are exclusively server-side.
+
+### Follow-up evidence and limits
+
+The frozen PE hash above was asserted on every capture. Initial caller
+discovery around player +0x358 produced unrelated or active-quest +0x68
+calls; those were rejected by receiver tracking. An `InsCliEntrance.cpp`
+cache at object+0x88 was also established, but the inspected class-local
+uses only registered/unregistered its manager listener and obtained the
+active quest. No membership or actor binding is claimed for those candidates.
+
+Private full Evidence bundle:
+`~/re/gw2/notes/209026-quest154-step-membership-callers-20261106.json`,
+**745456 bytes**, SHA-256
+**b85b04d21b8f26ba618328fc3b83c7e8adbfd1e3df2ef20d58c60c5362a2fd8c**.
+It preserves **19 captures**, including one deliberately failed output-bound
+assertion. An early MOV/getter candidate capture had incomplete raw output;
+it is not used for an exhaustive caller claim. All final typed getter,
+predicate, row-source and exact-table results have complete raw output;
+some cumulative rendered-terminal frames were omitted. REA verified owned
+helper-process cleanup. Neighboring disassembly outside the specified
+interpreted windows remains uninterpreted. No archive, runtime or publisher
+operation was performed, and no hold changed.
+
+| REA evidence | Established scope |
+| --- | --- |
+| `ev_84beb173689c3c350763c7c864c9ae3f29a9762910e759c91d948be71195552d` | Exact player +0x350/+0x358 and manager+0x68 table pointers. |
+| `ev_0440a2323e77d4917bfc708b84ffb5d7a956356f102675384433652d424d03cf` | Complete +0x350 getter and typed row membership/coordinate loop. |
+| `ev_694d7dba1ef758a13736fd09c9b6908b14810b8ae9d16daca0ab3cfd0c3fc086` | Chained unwind to enclosing method; localMap key source. |
+| `ev_29ffe682ed7b9db8482bdebc0ba29389b8ca5a1a673ba9dcd0baaa1265bde6c6` | Exact row-selector call, callback-object construction and downstream argument. |
+| `ev_e1cb1cac11910c90f62ff31d0a954b5075c182ec3d3578ce5776508584b00bdc` | Complete fixed-table selector and source bounds. |
+| `ev_db3854055bc79bdd62e78e923b44a304572f4e42ff2701917839cf0553007ab3` | Exact map28/map379 rows and all six quest154 key comparisons within the fixed table. |
+| `ev_5c3a764fffec9a3aef5aeefc91e417391016acfa800ce89951c667e6f9a1fc0c` | Exact callback-table pointer, complete predicate and localMap/mapInfo assertions. |
+
+A separate exact-six-key query covered the raw spans of every mapped frozen
+PE section and found no literal16-byte occurrence of any quest154 step key.
+This closes that specific embedded-key lead; transformed keys, runtime state,
+other files and other content references are outside its coverage. Evidence
+`ev_8b8d06eee735418dfba416c0d71c0fa27194a0ac793021ceba9250c7e4f19ef5`
+is retained in the private starter-base-attributes bundle linked from
+[that note](209026-starter-base-attributes.md). The capture exited0 with
+complete raw output and verified owned cleanup; no actor rule follows.
