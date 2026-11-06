@@ -278,3 +278,34 @@ Private REA receipts:
   `ev_bd45b31afe5d6bdff4199e36e12da809e6451be207b87e0da35673c698d59e8b`.
 - `209026-run222-window31-return-20261106.json`,
   `ev_e044e59426ab7f100604b18a2c725e3d104f6cb5bd443121174c1b681a44204d`.
+
+### Native contract corrects the observer's alignment assumption
+
+The complete producer loads `RAX=[R9]` at141283fa4, checks nullness, then
+reads flags at`[RAX+38]` directly. Its ordinary packet path reloads the same
+reference and reads key`[RAX+28]` at141284212. Complete14129a4d0 directly
+reads discriminator+58/body+60; complete14127de10 copies the raw reference
+into the predicted order and reads flags+38. None of these paths masks,
+shifts, decodes or tests alignment. The8-byte requirement was introduced by
+the observer and contradicts the observed accepted native-reference form.
+No four-byte assumption or pointer-bit masking replaces it.
+
+The new separate SLO145N revision removes only that SkillDef alignment test,
+preserving nullness, bounded reads, exact skill identity and all ownership,
+source/RIP/inferior/marker/lifetime guards.42 observer tests pass, including
+all seven nonzero mod8 residues with exact read-address checks and negative
+controls. Five standalone and eleven compact-reader checks also pass.
+Fresh run223 is staged from pristine145 with the same diagnostic1000ms
+fixture. No source change to the game or new runtime is implied by staging.
+
+Contract note: `skill10176-native-reference-contract-20261106.md`, SHA-256
+`93012ab8c9a934215e4a11f5bb0d926064b56fdc6ebaac5bf845716ed9afc28f`.
+New source bundle: `209026-skill10176-native-reference-source-20261106.json`,
+SHA-256 `bcefe4a8d49f709ebe0a9a43296c065461eb8fc06dd8e6bbfc97ec2ec199aafd`.
+Run223 staging receipt:
+`run223-skill10176-native-reference-staging-receipt-20261106.json`, SHA-256
+`5c6f55a4c84202addbaa609f888255cbce75d27dbd245ea62546b1a2d8b0af09`.
+Manifest SHA-256:
+`93a41ae9a5527c125c8242b809dcc74dadd76b51bb398d021de1b9570eacfb53`.
+A fresh window request was submitted to the sole publisher. Previous inputs
+remain unchanged and no grant is inferred from that submission.
