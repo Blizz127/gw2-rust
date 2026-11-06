@@ -19,25 +19,32 @@ API/wiki names may locate content but do not replace client verification.
 | Correct Mesmer components and startup skills/equipment | Partial: set4/item33355/palette90 are observed. Run216's605 grant passes availability and produces a real targeted10170 request with one30-point response and no release hit. Correction is live in4c46cad-sk and independently verified. Final-cache instrumentation is partial; full unlock/stat/effect policy remains open. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Reconstructed story actions/NPCs and a stand-in boss are live; Thora/trophy-kill progression is client-smoked. Publisher226 starts at stage4 and exercises fixed item/coin claim and map28 transfer. The full saved-character sequence, authentic conditions and retail XP/binding policy remain open. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Transfer/arrival is live in76af245. Prepared217 transfers379→28, renders the character and opens the map UI. Post-transfer movement/combat and combined saved-character runtime admission remain unobserved. | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
-| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work; retail skill effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
+| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast healing/recharge is verified live in 7c26f45; its new gameplay path has no native client acceptance yet. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | All15 map28 heart areas and14 substitute NPCs are in76af245. Generic inside-area kill progress and placeholder rewards remain fixture rules. Authored tasks/events and full discovery are incomplete. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
 | Relevant starting story, scenes and audio | Playback missing; client cinematic start/stop contract recovered, Norn selection unresolved | Correct sequence, dialogue/choices/cinematics/audio and branch completion observed in client. |
-| Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state is process-local only. The existing store has no progression fields or update API; restart progression requires a separately authorized storage-format change. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards; preserve original creation data and rollback compatibility. |
+| Persistence and interruption recovery | Initial character records are durable and restart relog passes; world XP/loot/heart/rejoin state and the new guarded Ether Feast health/cooldown carry are process-local only. The existing store has no progression fields or update API; restart progression requires a separately authorized storage-format change. | Save/relog and disconnect/restart preserve character, items, position and progress without duplicate rewards; preserve original creation data and rollback compatibility. |
 | Human Mesmer opening and Queensdale, after Norn | Incomplete | Equivalent creation/tutorial (138)/area (15) coverage, including source-backed identification of the remembered circus/town sequence. |
 | Final completion audit | Not reached | Every required item above proven with current source and runtime evidence; no placeholder counted as retail accurate. |
 
 ## Current checkpoint
 
-**7c26f45 is tested and submitted**, including5a6337b, to the existing sole
-publisher at09:21:27Z. It adds an explicit no-clone Ether Feast self-heal and
-20-second recharge, with guarded same-process health/cooldown carry. Root caught
-and corrected an original-roster379 versus pending-map28 login rejection; the
-actual TCP regression failed before and now follows1065 to restored state.
-Focused tests, musl build and eight off/on startup checks pass. Publication is
-unverified. Manual cancellation, clones/conditions and restart progression remain
-unsupported. [Implementation and limits](re/209026-ether-feast-reconstruction.md).
+**7c26f45 is verified live**, including 5a6337b, deployed by the sole publisher
+at 09:24:16Z. Current kit: `/home/blizz/gw2-rust-7c26f45`; rollback: a223a90.
+Root's independent 09:27:43.186242Z readback verifies the exact artifact, current
+and rollback hashes, effective profile, four owned listeners, saved mode/one
+record/private 0700 store and unchanged activation backup. Zero humans/bots were
+present at that check. Ether Feast is enabled; `story_branch` remains `none`.
+It adds an explicit no-clone self-heal and 20-second recharge, with guarded
+same-process health/cooldown carry. The original-roster 379 versus pending-map 28
+login rejection was corrected; the actual TCP regression failed before and now
+follows 1065 to restored state. Focused tests, musl build and eight off/on startup
+checks pass. This readback establishes deployment, not native acceptance of the
+new heal/cooldown gameplay. Manual cancellation, clones/conditions and restart
+progression remain unsupported; the full retail goal is incomplete.
+[Verified release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45);
+[implementation and limits](re/209026-ether-feast-reconstruction.md).
 
 Run230 completes an isolated input diagnostic on exacta223a90. Paired
 before/after D500ms images are consistent with lateral movement; exact yaw,
@@ -55,8 +62,8 @@ and does not acquire a hostile, so this is no full hunt or combat-code pass.
 Cleanup passes and window35 was returned08:35:16Z.
 [Retained attempts](re/209026-saved-norn-creator.md#run229-native-control-and-targeting-boundary).
 
-**a223a90 is live**, deployed08:41:57Z through the sole publisher. It restores
-carried XP/earned stats before quest-completion replay initializes the
+Earlier **a223a90**, deployed08:41:57Z through the sole publisher, is now the
+verified rollback. It restores carried XP/earned stats before quest-completion replay initializes the
 reward panel, fixing a constructor-XP0 sampling defect. A failure-before
 regression,21 distinct focused tests, musl build and four startup checks
 pass. Independent08:43:03Z readback verifies the exact reviewed artifact,
@@ -64,7 +71,7 @@ all current/rollback hashes, four owned listeners, saved mode and backup.
 It adds no XP payout policy or schema.
 [Fix and source binding](re/209026-quest154-content.md#reward-initialization-timing-and-carried-xp-ordering-fix).
 
-Current kit: `/home/blizz/gw2-rust-a223a90`. Independent readback verified all current and
+Earlier kit: `/home/blizz/gw2-rust-a223a90`. Its independent readback verified all then-current and
 rollback hashes, effective settings, saved mode/one record, unchanged backup
 and four owned listeners at08:43:03Z; zero humans/bots. The unchanged profile enables
 the tutorial merchant; its appearance and placement remain fixture choices.
@@ -75,10 +82,10 @@ the interleaved-character transfer fix, wallet and map28 POI discovery;
 run224 observes waypoint371 discovery.
 Waypoint travel is offline-tested but not exercised by a client click.
 The earlier earned attribute increment remains active.
-Rollback is9326c08-vendor. Prepared publisher226 shows a reward claim, weapon icon
+Its rollback was9326c08-vendor. Prepared publisher226 shows a reward claim, weapon icon
 and72 copper, followed by logged map28 restoration. The full saved-character
-flow, retail item binding/XP policy, effective-level/health scaling, healing and durable progression remain
-incomplete. [Release evidence](re/209026-saved-norn-live-activation.md#verified-carried-xp-order-release-a223a90).
+flow, retail item binding/XP policy, effective-level/health scaling and durable progression remain
+incomplete; that earlier artifact had no healing implementation. [Release evidence](re/209026-saved-norn-live-activation.md#verified-carried-xp-order-release-a223a90).
 
 Run226 accepts the owned Ether Feast10176 request, typed0x78 start/completion,
 then observes the native slot cleared through direct45 handling. The snapshot

@@ -1,9 +1,13 @@
 # Opt-in no-clone Ether Feast reconstruction
 
-Corrected commit **7c26f45** (including5a6337b) was submitted to the existing
-sole native publisher at **2026-11-06T09:21:27Z**. Root reviewed the production
-changes and independently verified the final artifact, profile and supervisor
-hashes. This checkpoint is **tested and submitted; publication is unverified**.
+Corrected commit **7c26f45** (including5a6337b) is **live**, deployed by the
+existing sole publisher at **2026-11-06T09:24:16Z** to
+`/home/blizz/gw2-rust-7c26f45`. Root independently verified the exact reviewed
+artifact, all current/rollback hashes, published profile, effective option,
+saved mode and service health at **09:27:43Z**. Rollback isa223a90.
+The published profile differs from the tested profile only in comments and blank
+lines; comparison and corrected exact-hash readback are retained in the
+[release record](209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45).
 
 This increment is based on a223a90f4e929a3469e93eac47503f818317abaa.
 It implements one ordinary owned10176 self-heal; it does not recover the whole
@@ -12,9 +16,9 @@ retail server. Enable explicitly with `--mission-ether-feast`, forwarded by
 
 ## Integration into newer story work
 
-If the live kit is stilla223a90, the exact checked standalone increment can
-be published while newer story work remains on its own branch. If newer story
-work is already live, integrate this increment without reverting that release. Every added quest162/story
+The exact checked standalone increment was published overa223a90 while newer
+story work remained on its own branch. Integrating newer story work must preserve
+this increment. Every added quest162/story
 transfer producer must preserve the enriched carry, retire the source's pending
 cast, enqueue carry **before** releasing its active-character lease, and release
 before returning1065. The three a223 transfer producers are covered here. Maps
@@ -111,7 +115,8 @@ Focused checks passed:11 healing/guard and actual TCP relog tests,16 compatibili
 build and8 exact-profile no-listener checks (option off/on, prepared/saved,
 auth/world). The saved regression covers two characters, duplicate live joins,
 wrong destination, interrupted join, transfer, retired-source rejection and
-unchanged original415/auth record bytes. No client run or deployment is claimed.
+unchanged original415/auth record bytes. These checks do not claim a native client
+run; deployment is separately established by the release readback above.
 
 ## Original-roster relog and configured destination resume
 

@@ -1,9 +1,10 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, currently on **a223a90** at
-`/home/blizz/gw2-rust-a223a90`, independently verified08:43:03Z.
-The [latest increment](#verified-carried-xp-order-release-a223a90)
-restores carried XP before rebuilding the completed quest's reward panel. Saved mode was first
+Saved character creation is live, currently on **7c26f45** at
+`/home/blizz/gw2-rust-7c26f45`, independently verified09:27:43Z.
+The [latest increment](#verified-ether-feast-release-7c26f45)
+adds no-clone Ether Feast healing/recharge and guarded same-process health/cooldown
+carry with original-roster relog routing. Saved mode was first
 activated on82d8d04-cdn900.
 The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
@@ -764,3 +765,53 @@ Full REA: `209026-a223a90-release-readback-20261106.json`, SHA-256
 `d28601b6dc1edec3281135ba2d754148774180772cda047b627eaaf7cd18d6b4`,
 evidence `ev_9728d30a086bee2365a644f295adbad80a94a8b31e5d95ea9fe8b32428a00d97`.
 The read-only verifier exited0 with verified owned cleanup and complete output.
+
+## Verified Ether Feast release: 7c26f45
+
+The sole publisher deployed the exact root-reviewed artifact as
+`/home/blizz/gw2-rust-7c26f45` at **2026-11-06T09:24:16Z**. Rollback is
+`/home/blizz/gw2-rust-a223a90`. This enables an owned no-clone Ether Feast
+self-heal and20-second recharge, guarded health/cooldown carry, and a corrected
+original-roster login redirect to the configured carried destination.
+The [implementation record](209026-ether-feast-reconstruction.md) preserves
+the chosen scheduling policy, focused tests, actual TCP failure-before/pass-after
+relog regression, musl build and eight off/on startup checks.
+
+Root independently verified at **09:27:43.186242Z** that the current link,
+exact executable, current and rollback manifests and all listed files match.
+All four listeners belong to the selected kit's processes; health is ready
+and running, with zero humans/bots at readback. Saved-norn mode, one private
+record, directory mode0700 and the original activation backup remain verified.
+Character contents were not read and the verifier changed no live state.
+The effective Ether Feast option, paired supervisor and unchanged17-byte skills
+fixture match. Vendor, wallet, damage30, default-curve attributes, map28 POIs
+and14 heart NPCs/20 hostiles/12 ambient actors remain configured; legacy
+autoattack and skill-order echo remain absent.
+
+The first readback exited1 at `exact_profile`: the publisher changed comments
+and blank lines in the tested profile. Root then established that every other
+line was byte-identical and in the same order, retained that comparison, and
+reran with the exact published profile hash. The corrected readback exited0
+with complete output and verified owned cleanup. The earlier failed check is
+retained as a failed expectation check, not relabeled as a pass.
+
+Game SHA-256:
+`89d68f855ba34a42eebe963578a25aac3191f8f53d668f2d190da08b06347088`.
+Manifest SHA-256:
+`b392b579d0f1c466cd342653bbd3e4c6b3c65b78539daf7fa530b79c1d63a0b3`.
+Published profile SHA-256:
+`4dd3519314b77ff7abbd117ab71cc6198da27df614161e04c2d95b0a2193c180`.
+Private verification receipt: `7c26f45-release-verification-20261106.json`,
+SHA-256 `925766c70246eebc3d200858a04f5220f6593c2909b5e3196f9a5285b45a8f29`.
+Full REA: `209026-7c26f45-release-readback-corrected-profile-20261106.json`,
+SHA-256 `d3c73babcf88a861ea00ac6a411e9aff40a7a3fbf626ba0bd5baea11edb0f884`,
+evidence `ev_f55126920cf34a21d00b0614726c8f68c05c3390626d294ec74db0d537d1866a`.
+Profile comparison: `7c26f45-profile-comment-comparison-20261106.json`,
+SHA-256 `d5f911f6e9e2df3a39d15c7cf1211c12a3c9cd8f9407bc32d2ef460838c7f81e`.
+
+This readback establishes deployment and health, not a native healing gameplay
+smoke. Manual cancellation, clones/conditions/modifiers, effective-level scaling
+and restart progression remain unsupported. The separate quest162 branch is not
+included in this artifact. No launcher feed, audience, frozen client or schema
+changed. The pending owner storage exception and full retail completion goal
+remain open.

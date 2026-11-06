@@ -6,10 +6,12 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **a223a90** is at
-`/home/blizz/gw2-rust-a223a90`, deployed **2026-11-06T08:41:57Z**.
-It restores carried XP/earned stats before quest-completion replay can
-initialize a reward panel. The merchant profile remains unchanged.
+tracks the remaining scope. Live kit **7c26f45** is at
+`/home/blizz/gw2-rust-7c26f45`, deployed **2026-11-06T09:24:16Z**.
+It enables the explicit no-clone Ether Feast self-heal and 20-second recharge,
+with guarded same-process health/cooldown carry and original-roster relog
+redirect. It retains a223a90's carried XP/earned-stat ordering before quest
+reward-panel replay. The merchant profile remains unchanged.
 It retains
 the checked fixed Mesmer tutorial reward, exact item/coin/claim carry and
 transition timers, plus20 world hostiles/12 ambient actors. It retains the
@@ -23,13 +25,16 @@ autoattack/echo. Prepared-character smokes establish transfer and NPC spawn;
 the combined saved-character transfer has not been observed in the client.
 Heart tasks, rewards, NPC looks and placement still include substitutions;
 this is not full retail encounter completion. Root independently verified
-saved-norn mode, one saved record, backup hash, all kit hashes, metadata900,
-effective settings and four healthy listeners at **08:43:03Z**. Zero
-humans/bots were present then; recheck at rollout. Ether Feast healing and
-recharge remain absent from this live artifact. The checked no-clone increment
-**7c26f45** was submitted09:21:27Z to the sole publisher; publication is unverified.
-Verified rollback is **9326c08-vendor**. Merchant
-appearance and placement remain fixture choices. Run224 observes Hero's Moot waypoint discovery; waypoint travel has
+saved-norn mode, one saved record/private 0700 store, unchanged activation
+backup, exact artifact/current and rollback hashes, metadata900, effective
+settings and four owned healthy listeners at **09:27:43.186242Z**. Zero
+humans/bots were present then. Ether Feast is enabled and `story_branch` is
+`none`; verified rollback is **a223a90**. Focused tests, musl build and eight
+off/on startup checks passed. Deployment readback does not establish native
+client acceptance of the new heal/cooldown gameplay. Physical cancellation,
+clones/conditions, retail scaling and restart progression remain unsupported.
+See the [verified Ether Feast release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45).
+Merchant appearance and placement remain fixture choices. Run224 observes Hero's Moot waypoint discovery; waypoint travel has
 offline checks but no client-click observation. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
@@ -61,8 +66,9 @@ includes5516cb4 and remains **withheld, not deployed**. Its coordinator
 handoff task237f1f15ce02 was refused because taskf45083e2793a was already
 active; it was not delivered. The native submission above corrects the
 release candidate to9451cf0 without creating another publisher or task.
-Ether Feast healing/recharge remain unimplemented; the earlier guard only
-prevents generic attack damage and retaliation.
+In that withheld cumulative candidate, Ether Feast healing/recharge remain
+unimplemented; its guard only prevents generic attack damage and retaliation.
+The independently verified 7c26f45 release above now adds the scoped heal path.
 
 The publisher is active again. A read-only REA check of run203 at 03:52:25Z
 found world startup and cleanup, but no sword SkillBegin or combat response.
