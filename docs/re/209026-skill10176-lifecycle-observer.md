@@ -322,7 +322,7 @@ observer accepted all four callbacks with zero rejections:
 | Request | Controlled owner,10176/slot0; request gate does not block; recharge observer notified. |
 | Receiver | Kind0x78, empty order slot0, packed flags0; outer flags41948179. |
 | Start dispatch | Current owned order active in slot0, flags18688/0x4900; pending typed callback dispatch. |
-| Completion return | Same active slot and matching behavior; flags20736/0x5100; callback returns false, so it does not request the normal release path. |
+| Completion return | Current slot remains active and incoming behavior matches; flags20736/0x5100; callback returns false, so it does not request the normal release path. |
 
 The lifecycle terminal reports inferior exit and partial coverage. No
 post-completion flag clear, order release or visible animation completion
@@ -348,3 +348,40 @@ Private REA receipts:
   `ev_c3cee6ee1623a8712065204e674f5a2e098732b30df48fc3b54ac2aabcf57427`.
 - `209026-run223-window32-return-20261106.json`,
   `ev_22a983fdee8eef0963a8ec345ce40b2db774d043acd50fe1e3678571df482165`.
+
+### Completion without release and the next diagnostic
+
+The complete native callback explains the false return: order flags0x2000
+are clear. At14127fed4, the next instruction clears0x100 and the false return
+skips14127ff00. Run223 observed entry/start-dispatch and callback return;
+it did not observe that subsequent clear or release. These current-owner
+checks do not establish allocation continuity between separate events.
+
+The source-supported minimal server84 payload `[0x45]` selects the outer
+order slot using flags bit5 and requires a current typed0x78 order with a
+matching behavior value. If active0x100 remains set, it sets0x2000; otherwise
+it invokes the finish notification and release helper. No result44 byte,
+heal/recharge effect or retail send deadline follows from that contract.
+
+A separate diagnostic server based on exactcac0e9a supports one explicitly
+delayed correlated84/45 after the first owned echoed order. The proposed
+inputs remain diagnostic echo1000ms/finish2000ms. Later same-slot replacement
+cancels the pending finish, and its deadline participates in socket scheduling.
+The option is absent from production. Eight focused Rust tests, isolated musl
+build and two no-listener checks pass.
+
+The separate SLO145F helper adds14127ff52, after the slot is zeroed and
+before the still-live order's virtual release dispatch. Exact caller return
+141286930 distinguishes direct45;14127fee9 identifies the common completion
+path. It checks current owner, typed10176 order, empty slot and release-table
+target and emits only a bounded scalar origin. It never reads the order after
+deallocation. Fifty host and twelve strict-reader checks pass. The original
+seven sites, fresh-marker gating and RCO wiring remain intact.
+
+Root reviewed the server and observer changes. Fresh run226 staging is in
+progress; this checkpoint grants no runtime/archive access and records no new
+client observation. Receipt: `skill-finish-diagnostic-20261106-receipt.json`,
+SHA-256 `4de9b663fddc5cb7f1083df42dd9292d12066a9d4ac30b3ecf087ad895e1bc11`.
+Source contract: `run223-lifecycle-and-finish-diagnostic-20261106.md`.
+REA source: `ev_cce27146fb2fd44ab9b1217dfd5cfbf941e29292adac818dcbc535c32959764a`.
+REA guards: `ev_830d286713c186d8960ad96a9bc916e5404246986075ba81241fcf95da525fa6`.
