@@ -187,6 +187,31 @@ preserved; the successful explicit time resolver supplies the result above.
 
 ## Implementation and checks
 
+The type-2 fact reader is commit `664e2bdcc2411b089762bce2113cfb9016fb83ad`
+on integrated `f7674f1`; main carries the identical reader as `cd871d8`.
+`SkillBuffFactContent209026` resolves all three values with explicit mode and
+bounds, preserves their literal/base/override provenance and owning containers,
+and returns signed integer/time values plus the typed buff. The release includes
+the byte-identical existing named-value resolver dependency. Eight new reader
+tests and nine resolver tests pass. The retained-cache Rust smoke follows both
+actual sword fact paths in all four modes: integer1, time5000, buff738,
+status78/class2, with time resolved from base row5. No conversion, modifier,
+wire count, duration selection or gameplay policy is added.
+
+The musl game build and both current-profile saved auth/world no-listener
+checks pass, preserving all15 story arguments. The artifact is1893424 bytes,
+SHA256 `8f80b79229eca44b34f17d7693853ef20a554331809bc0911b90313e7fa7b3ee`.
+Private receipt `skill-buff-fact-f7674f1-20261106-checks/receipt.json`, SHA256
+`42692ef1e76e0ad86d9c38560faf3f618e7139a48cf6efabd4756140c4bfff1d`.
+REA `ev_f367defb41cb2da332da17e5f9f181e9a0e884f6ea096728d8aaa78aa6d3ed60`
+exits0 without truncation and verifies owned cleanup; four unrelated EACCES
+process environments remain unverified and untouched. Retained evidence
+`209026-skill-buff-fact-rust-cache-smoke-20261106.json`, SHA256
+`0f3b2edcd907bcb27a8954ddd05120d1d561eb5c6494b0592856e837c8957ef0`.
+The exact artifact was handed to the sole publisher; delivery is not a live
+release claim. The later [duration/level trace](209026-buff-duration-level.md)
+also separates the client duration field, modifier level input and UI row count.
+
 The typed reader is commit `11d2c560025922c3729cd89585fdf53b8508fd12`, based
 on integrated release `d0288e1`; main carries the same change as `2c491ed`.
 Eight focused tests cover reference ownership, classified zero offsets,

@@ -30,6 +30,17 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+**664e2bd is tested and handed to the sole publisher, not yet verified live.**
+It adds the bounded type-2 buff-fact reader and its existing named-value resolver
+dependency on current `f7674f1`. Seventeen focused tests, both retained sword
+fact paths in all four explicit modes, the musl build and two current-profile
+startup checks pass. The [reader receipt](re/209026-buff-instance-lifecycle.md#implementation-and-checks)
+pins the artifact. Separately, the [duration/level trace](re/209026-buff-duration-level.md)
+closes client duration and UI row-count consumers and the modifier level-input
+role. These findings add no authoritative condition application/expiry policy.
+The movement-vector observer and run266 harness remain offline preparation;
+there is no new root runtime or resource lease.
+
 **11d2c56 is verified live at16:59:09Z**, deployed16:57:41Z to
 `/home/blizz/gw2-rust-11d2c56`, rollbackd0288e1-powder. It adds a pure bounded
 buff-body reader on integratedd0288e1. Eight focused tests, actual retained
