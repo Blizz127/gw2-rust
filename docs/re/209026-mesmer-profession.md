@@ -51,6 +51,12 @@ Neither constructor values [1,0] nor synthetic test values [3,0] establish
 retail login defaults, clone limits, unlock state or resource semantics.
 Those require the content/state-selection and downstream consumer traces.
 
+The later [resource-consumer trace](209026-mesmer-resource-consumers.md)
+establishes **first = displayed capacity**, **second = current resource
+count** in the ordinary Mesmer status widget. It does not establish a live
+clone census, maximum three, retail login pair or server update policy.
+The raw codec preserves both byte values and keeps the explicit pair API.
+
 ## Implementation and verification
 
 `gw2_proto::mesmer` encodes/decodes 481–483 transactionally. Golden-frame,

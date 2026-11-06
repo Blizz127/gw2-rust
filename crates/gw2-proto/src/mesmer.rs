@@ -13,12 +13,14 @@ use crate::{Decode, Encode};
 pub enum MesmerOperation209026 {
     /// 481 installs a new Mesmer profession component.
     Create {
-        /// Gameplay names unresolved; both bytes are retained without masking.
+        /// Displayed capacity, then current resource count; both remain raw.
+        /// Clone identity and retail defaults are unresolved. See
+        /// `docs/re/209026-mesmer-resource-consumers.md`.
         values: [u8; 2],
     },
     /// 482 removes an existing profession component.
     Remove,
-    /// 483 updates the two unnamed values on an existing Mesmer component.
+    /// 483 updates capacity/current resource count on an existing component.
     Values([u8; 2]),
 }
 
