@@ -100,9 +100,11 @@ A focused source check of the publisher's committedf0a45a4 handover found
 two concrete data/arrival issues: its process-global carry lacks character
 GUID/destination-map binding, and a map28 join without carry retains the
 tutorial's initial spawn. Root reported both through the existing native
-peer and is preparing isolated narrow fixes with focused regressions. These
-findings do not change the verified live version above. No saved-format
-change or progress reset is authorized by this work.
+peer. The publisher has already committed the arrival correction as3bf7842;
+it is not a new live receipt. A narrow isolated carry-binding correction
+is being prepared with a regression that reproduces wrong-character carry
+theft before the fix. These findings do not change the verified live
+version above. No saved-format change or progress reset is authorized.
 
 New static notes bind [cinematic start/stop](re/209026-cinematic-start-contract.md)
 and [shrine location delivery](re/209026-norn-shrine-location-delivery.md).
