@@ -112,9 +112,10 @@ it did not establish working sword combat or a replacement startup input.
 The earlier log inspection below establishes
 that run203 ran and reported cleanup, but does not establish a combat pass.
 
-The later [caster-ownership candidate45c0731](209026-skill-caster-ownership.md)
-is checked and handed to the sole publisher. Neither that handoff nor the
-publisher's5516cb4 preparation is a newer deployment receipt.
+The later cumulative [caster-ownership candidate45c0731](209026-skill-caster-ownership.md)
+remains withheld. Its coordinator handoff was refused and not delivered.
+The corrected independent9451cf0 handoff was submitted to the existing
+native publisher at04:33:23Z; submission alone is not a deployment receipt.
 
 ## Subsequent combat smoke readback
 
@@ -134,8 +135,8 @@ prove a particular client or server defect. Both 5516cb4 and the cumulative
 45c0731 candidate remain undeployed in the available release records. The
 independent Ether Feast guard was released separately as c2cb6fd above.
 The slot-input corrections must not be replaced with guessed damage merely
-to make the smoke appear to pass. Any new observation must stay within
-the subsequently granted window24 and its cleanup boundary.
+to make the smoke appear to pass. Window24 was subsequently returned after
+run148; any new runtime now requires a fresh resource window.
 
 The retained [activation contract](209026-skill-input-action-lifecycle.md#activation0x2a-validation-then-explicit0x23)
 narrows the next observation upstream of accepted-order timing. Given a
@@ -173,3 +174,31 @@ Native availability receipt:
 The shared publisher receipt and owner decision remain in
 `creator-lane-peer-handoff.json#/latest_live_release` and
 `#/saved_norn_reassessment/owner_decision`.
+
+## Spawn-area ambient increment: c2cb6fd-amb
+
+The sole publisher records **2026-11-06T04:30:49Z** deployment of
+`/home/blizz/gw2-rust-c2cb6fd-amb`. This profile-only change adds a neutral
+boar, wolf and two ravens within about600 units of the diagnostic Norn
+spawn. They are placeholders, not the authored Great Hunt population.
+Publisher receipt commit5f482ca records run205 with all7 ambient and4
+hostile NPCs spawned, visible wolf/ravens, no asserts, and a zero-human
+watched cycle ready in3.3s. That smoke was performed by the publisher.
+Rollback is `/home/blizz/gw2-rust-c2cb6fd`.
+
+Root independently verified the selected kit at **04:36:02Z**: all manifest
+hashes pass, health is ready/running with4 owned listeners and0 humans/bots,
+saved-norn remains enabled with one record, store permissions remain0700,
+and the activation backup hash is unchanged. No character contents were read.
+The binary remains SHA-256
+`1da9300828542334c8407cbd758cef65ab850a58cb26562e6da8e03012cf5e1b`.
+The ambient kit's actual manifest SHA-256 is
+`c5f0a3aa8fe412c4c945175d14d51a656a05cc427feaa2197963f9e3ba8c5b9f`;
+the shared publisher summary still carries the obsolete82d8d04 manifest
+hash and must not be used as this kit's checksum. CDN900 root/main hashes
+pass. Feed metadata remains b128 at04:36:03Z; its runner pin and audience
+were not reverified. No root deployment or launcher publication occurred.
+
+Private receipt: `~/re/gw2/notes/209026-live-c2cb6fd-amb-readback-20261106.json`,
+REA `ev_bdbc1fe42c4f02fad060caa78cf5928a8ffdd0ef51bcbb12fc5544b6dd3e4c65`.
+Readback exited0 without truncation; owned-helper cleanup was verified.

@@ -75,10 +75,12 @@ a cinematic. This narrows the remaining intro dependency to authentic
 Norn playback inputs/sequence; the generic UI/view wiring does not select
 them. This source slice emits no Norn cinematic and changes no gameplay.
 
-Latest independently verified live kit: **c2cb6fd**, deployed03:56:12Z with
-the independent Ether Feast damage-exclusion guard and existing diagnostic
-attack behavior. Saved-norn mode has been on since03:29:33Z, following the
-owner's03:29:03 native choice. At04:27:55Z root independently verified
+Latest independently verified live kit: **c2cb6fd-amb**, deployed04:30:49Z.
+It adds four neutral spawn-area creatures (boar, wolf, two ravens) as
+placeholders, not authored Great Hunt population. The c2cb6fd binary,
+Ether Feast damage exclusion and diagnostic attack behavior are unchanged.
+Saved-norn mode has been on since03:29:33Z, following the owner's03:29:03
+native choice. At04:36:02Z root independently verified
 mode/store, one private saved record, activation backup hash, all kit hashes,
 metadata900, four owned listeners and zero humans.
 [Activation/readback evidence](re/209026-saved-norn-live-activation.md).

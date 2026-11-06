@@ -6,13 +6,14 @@ Lead: Claude, session `claude-gw2-rust`, since the 2026-11-01 ~20:19Z host reboo
 
 The owner requested 100% retail-accurate implementation from the frozen
 client, with **Norn first**, then Human. The [completion ledger](MESMER-STARTER.md)
-tracks the remaining scope. Live kit **c2cb6fd** is at
-`/home/blizz/gw2-rust-c2cb6fd`, deployed **2026-11-06T03:56:12Z**. It adds
-the Ether Feast damage-exclusion guard while preserving working diagnostic
-combat. Saved-norn mode remains enabled after the owner's03:29 choice.
-Root independently verified mode/store, one saved record, backup hash,
-all kit hashes, metadata900, four listeners and zero humans at **04:27:55Z**.
-The guard does not implement healing. Rollback is82d8d04-cdn900. See the
+tracks the remaining scope. Live kit **c2cb6fd-amb** is at
+`/home/blizz/gw2-rust-c2cb6fd-amb`, deployed **2026-11-06T04:30:49Z**. It
+adds a neutral boar, wolf and two ravens near spawn; these are placeholders,
+not authored Great Hunt population. The c2cb6fd binary and its Ether Feast
+damage exclusion are unchanged. Saved-norn mode remains enabled after the
+owner's03:29 choice. Root independently verified mode/store, one saved
+record, backup hash, all kit hashes, metadata900, four listeners and zero
+humans at **04:36:02Z**. Healing remains unimplemented. Rollback is c2cb6fd. See the
 [live activation receipt](re/209026-saved-norn-live-activation.md).
 
 The owner can create a Norn Mesmer through the saved roster; the prepared
@@ -20,7 +21,7 @@ Banshee Mesmer is hidden. Initial creation persists, while XP/loot/heart
 progress resets at restart. [Run144](re/209026-saved-norn-creator.md) is the
 prior private creator/save/world/defeat/waypoint acceptance with runner0e6ac30
 and live metadata900. This remains an incomplete diagnostic starter fixture.
-The latest feed readback at03:43:52Z offers b128; its runner pin was not
+The latest feed readback at04:36:03Z offers b128; its runner pin was not
 inspected by that query. The earlier native roster prompt is resolved.
 
 Independent release candidate **9451cf0** applies the seven-line caster

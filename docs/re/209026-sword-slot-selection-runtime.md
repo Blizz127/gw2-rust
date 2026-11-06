@@ -66,6 +66,15 @@ server612 rebuilds it again but selects standard slots0–4. A605 grant for
 initialization. No additional startup packet is justified by the null cache
 alone. No further runtime was performed after returning window24.
 
+A read-only audit of the retained run148 fixture and current Rust startup
+found no equipment-order discrepancy: item33355/instance1004 is created,
+equipped in slot29, then set4 is selected. The full equipment batch precedes
+170 finalization; saved mode retains the weapon/set bytes while adding mask
+and dyes. The explicit skill inputs grant10176 and1080, not10170, but that
+absence does not establish a missing retail grant because other selection
+branches remain possible. Actual runtime item/palette and entry eligibility
+remain the required observations; no packet or grant was changed.
+
 ## Bounded observation and cleanup
 
 The private helper observes seven source-guarded entry, return and call sites.
