@@ -48,7 +48,14 @@ the full retail goal is incomplete.
 [Verified release](re/209026-saved-norn-live-activation.md#verified-ether-feast-release-7c26f45);
 [implementation and limits](re/209026-ether-feast-reconstruction.md).
 
-Run234 reaches General Options and its displayed F11 shortcut, but does not
+Run235 reaches native Control Options: W/S forward/back, A/D strafe, Q/E turn;
+weapon1 and healing6 are also displayed. Root independently viewed the admitted
+image. No settings or gameplay input changed; actual Q/E response remains to be
+exercised. Controller release was within56 seconds; cleanup, privacy, executable
+hashes and original synthetic record pass. Window38 returned09:52:33Z.
+[Bindings and scope](re/209026-saved-norn-creator.md#run235-displayed-movement-and-turn-bindings-established).
+
+Earlier run234 reaches General Options and its displayed F11 shortcut, but does not
 reach Controls or read movement bindings. The controller stayed within its90-second
 hard limit but missed the80-second target. Cleanup, privacy, executable hashes and
 the original synthetic record pass; window37 returned09:40:45Z. The next probe

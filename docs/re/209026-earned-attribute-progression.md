@@ -56,6 +56,48 @@ complete raw/normalized output, exit0 and verified owned cleanup. Full bundle
 `bdada5d1771e578b3859781c578ba20476387146e2f7097170822102135396f0`.
 The earlier missing-cache attempt is retained; no archive fallback ran.
 
+### Authored map and sector display levels
+
+A targeted frozen-source follow-up recovers concrete display inputs from
+already cached content. Type45 map bounds at +0xa8/+0xac are **1–15 for
+map28** (1282830:3731704) and **1–1 for map379** (1282833:3863896).
+Type63 sector +0x40 values are **200→5, 201→2, 202→7, 512→7**. All four
+sector definitions reference map28; the tutorial layout shares200/512/201
+but does not include202. This does not observe the current actor's sector.
+
+The typed consumers establish display semantics. `WmmLabel.cpp` helper
+`0x140978dd0` obtains coreStats through character interface +0xa8 and calls
+its virtual0 getter, which reads earned +0xac with a separately gated80
+override. It clamps that result to the map bounds. Leaf `0x1411c3100`
+converts the level difference into a confidence enum; `0x1414bc2d0`, named
+by `Confidence.cpp` and `currentConfidence`, converts the enum into an
+ARGB color. The repeated label path applies that color to render objects.
+The map-text branch at `0x140978b54` also formats the two bounds. Sector
+branch `0x1409789f9..0x140978ae2` follows the typed layout references,
+reads sector +0x40 and formats it into the sector-name label. Its exact
+localized wording was not decoded; no scaling-cap meaning is assigned.
+
+**These paths do not select or update second level190.** The map clamp is
+a confidence-color calculation, not a recovered downscaling formula.
+The remaining edge is a rule choosing190 from earned level and current
+map/sector, including any area offset or override, followed by matching189
+and health policy. The explicit received190 setter is established; this
+bounded audit does not prove that no other client helper exists. Neither
+`min(earned, map maximum)`, the sector label value, nor second=earned is
+justified as retail policy by these observations. Level-one health388
+remains source-consistent with the current explicit level-one state.
+
+Private receipt: `map-sector-level-display-receipt-20261106.json`, SHA-256
+`45f351551016585ef96ae5ef0b0bfdf2b6b4106de05d789cc02ed4cb13a03ae2`.
+Full12-capture REA bundle: `209026-map-sector-level-display-evidence-20261106.json`,
+SHA-256 `e94a9b1567505a2286a0be1937140034a929b85f14f1c36902a334213fbc7d70`.
+Exact cached rows are in `ev_9ada054279fa1118b7413e24f99b5432abd4152176bb37355e71e517b95eb102`;
+typed label/color bodies in `ev_556a5e6b739127ccd3d924481815609b0301933a37438b4bd40bf7dd3cd093e3`,
+`ev_d7f07429c1e0b881bb1e27bfc2737fd9dae43445e02339089a050f3234d34442`
+and `ev_750104c1f92ec44db7ca3dc0986d85a2bae7cb784591981254eb2f813cbf1af3`.
+All captures exited0 without truncation and with verified owned cleanup;
+cache presence and hashes were checked with archive fallback disabled.
+
 ## Configuration and checks
 
 The existing supervisor forwards `GW2_BASE_ATTRIBUTES=default-curve` to the

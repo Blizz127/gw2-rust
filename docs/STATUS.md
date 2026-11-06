@@ -48,6 +48,12 @@ The latest feed readback at06:25:42Z offers b128; its runner pin and audience
 were not inspected by that query. Existing audience restrictions remain.
 The earlier native roster prompt is resolved.
 
+Run235 independently establishes this fixture's displayed controls: W/S move
+forward/back, A/D strafe and Q/E turn. The controller released within its target;
+cleanup, privacy, client hashes and the synthetic record passed. Actual turning
+and the complete saved-character hunt still need a gameplay run. See the
+[binding evidence](re/209026-saved-norn-creator.md#run235-displayed-movement-and-turn-bindings-established).
+
 Independent fix **9451cf0** applies the seven-line caster
 guard directly to current live c2cb6fd, preserving its combat settings and
 Ether Feast exclusion. Eight focused tests, offline musl build and four

@@ -460,6 +460,57 @@ Controller outcome: `run234-controls-controller-outcome-20261106.json`, SHA-256
 | `209026-run234-norn-controls-readback-20261106.json` | `ev_04be95ad71b0db1b4a431d5fb65bfc38f00d80e24ea7afd99c2047d3603c632e` |
 | `209026-run234-window37-return-20261106.json` | `ev_1c2fbbdcf53338f86cd85c481667f11467572d6d03ba98dd14552e378186e1b4` |
 
+## Run235: displayed movement and turn bindings established
+
+`run235-norn-controls-direct` retains the exact7c26f45 game, tested profile,
+normalstage0, original positions and unchanged native-created synthetic record.
+The publisher granted window38 at09:43:52Z; root verified it09:47:05Z. The
+controller used the displayed F11 shortcut, clicked the observed category tab,
+then scrolled one notch inside the list to move a tooltip away. Each menu action
+included a two-second render pause and screenshot in the same capture.
+
+The resulting page is explicitly titled **Control Options**. Root independently
+checked the admitted image hash and viewed these rows:
+
+| Action | Primary | Secondary |
+| --- | --- | --- |
+| Move Forward | W | Up Arrow |
+| Move Backward | S | Down Arrow |
+| Strafe Left | A | Left Arrow |
+| Strafe Right | D | Right Arrow |
+| Turn Left | Q | blank |
+| Turn Right | E | blank |
+| Dodge | V | blank |
+| Autorun | R | Num Lock |
+| Jump / Swim Up / Fly Up | Space | blank |
+| Weapon Skill 1 | 1 | blank |
+| Healing Skill | 6 | blank |
+
+These are this fixture's **displayed bindings**, not universal defaults or
+executed turn/camera behavior. They explain why D was unsuitable for the earlier
+turn attempt. The camera section was not inspected. No binding editor,
+preference change, gameplay movement or attack was used. Story remains at step1.
+
+The controller released09:51:23.482Z, about56 seconds after claim, inside the
+80-second target and90-second hard limit. Five controller captures are complete
+and untruncated. Root's readback verified wrapper/UI exit0, cleanup, console
+privacy, unchanged executable hashes and original154-byte record. Window38
+returned at **09:52:33.524904Z**. The full hunt remains unproven; its next run can
+use Q/E after observing their actual response and must verify the complete
+objective/reward/transfer sequence separately.
+
+Private root outcome: `run235-norn-controls-direct-outcome-20261106.json`, SHA-256
+`701d7281ad88859b28f0d90b567cbdda0e500116cf50b579107360e1c870b3a9`.
+Controller outcome: `run235-controls-controller-outcome-20261106.json`, SHA-256
+`02f94a22c5bcd09aac6dd9887a6c7f429f1981c8c0ed53312de39d6e415d6406`.
+Readback: `209026-run235-norn-controls-direct-readback-20261106.json`, SHA-256
+`188e5c78b0c104c819952c5ce50b6acb5d810b91c18e919f7e0ad60b193f3c2d`,
+REA `ev_e9d5bd296d134f6df749321aac24bb5fe6ee1be1813c2d5006c5d5eb635d7e41`.
+Return: `209026-run235-window38-return-20261106.json`, REA
+`ev_eb6c1c825eaf3e5cd60697b0ceeeae7af5d53396968c493cdff6d2abad55fbbe`.
+The admitted `controller-controls-bindings-2.png` has SHA-256
+`be4acce1c9bc95d3f3e3f10f869998fda34aea273f8a7a23046cd30400cc5400`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
