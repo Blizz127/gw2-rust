@@ -409,10 +409,12 @@ missing-XML compilation failure is retained separately as a setup failure,
 not counted as the failing regression.
 
 Root reviewed the complete production/test diff and independently checked
-the artifact hash. It submitted the commit to the existing sole publisher;
-the publisher's newer quest162 replay may need the same ordering invariant
-adapted during integration. This checkpoint is **ready/submitted, not live**.
-No new client execution is a release prerequisite under the standing mandate.
+the artifact hash. The existing sole publisher released the exact artifact
+as **a223a90 at08:41:57Z**; independent08:43:03Z readback verifies current and
+rollback hashes, effective profile, saved mode, backup and health.
+The publisher's newer quest162 branch is separate and is not included in
+this live artifact. No new native rejoin observation is claimed.
+[Deployment evidence](209026-saved-norn-live-activation.md#verified-carried-xp-order-release-a223a90).
 
 Artifact:
 `/home/blizz/scratch/gw2-quest154-xp-restore-9326c08-20261106-target/x86_64-unknown-linux-musl/release/gw2-game-observe`,

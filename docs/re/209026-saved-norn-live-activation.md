@@ -1,9 +1,9 @@
 # Saved Norn creation: live activation and independent readback
 
-Saved character creation is live, currently on **9326c08-vendor** at
-`/home/blizz/gw2-rust-9326c08-vendor`, independently verified08:05:25Z.
-The [latest increment](#verified-merchant-profile-release-9326c08-vendor)
-enables the merchant profile on the existing reward/wildlife binary. Saved mode was first
+Saved character creation is live, currently on **a223a90** at
+`/home/blizz/gw2-rust-a223a90`, independently verified08:43:03Z.
+The [latest increment](#verified-carried-xp-order-release-a223a90)
+restores carried XP before rebuilding the completed quest's reward panel. Saved mode was first
 activated on82d8d04-cdn900.
 The sole publisher records the owner's
 native choice at **2026-11-06T03:29:03Z** and activation at **03:29:33Z**.
@@ -726,3 +726,41 @@ Primary log evidence:
 `ev_0e26eaaf63037474a58e9c2ed0ad5d1cebf2d32604940c004a317756ccd56b97`.
 All audit processes exited0 with complete normalized frames and verified
 owned cleanup. Raw evidence remains private.
+
+## Verified carried-XP order release: a223a90
+
+The sole publisher deployed the exact root-reviewed artifact as
+`/home/blizz/gw2-rust-a223a90` at **2026-11-06T08:41:57Z**. Rollback is
+`/home/blizz/gw2-rust-9326c08-vendor`. This changes the order of existing
+map-rejoin frames: carried XP/earned stats precede replayed quest completion,
+so an immediately initialized reward panel reads the restored XP.
+The [source binding and regression](209026-quest154-content.md#reward-initialization-timing-and-carried-xp-ordering-fix)
+record the failure-before test,21 distinct passing focused tests, musl build
+and four startup checks. No XP award policy or storage schema changes.
+
+Root independently verified at **08:43:03.537619Z** that the current link,
+exact executable, full current/rollback manifests and all listed files match.
+All four listeners belong to the selected kit's processes; health is ready
+and running, with zero humans/bots at readback. Saved-norn mode, one private
+record, directory mode0700 and the activation backup remain verified. The
+reader does not open character records or mutate configuration/service state.
+
+The profile is unchanged: vendor and wallet enabled, default-curve attributes,
+damage30,17-byte skills, map28 POIs and14 heart NPCs/20 hostiles/12 ambient
+actors; legacy autoattack and skill-order echo remain absent. Existing fixture
+XP and encounter limitations remain. No new native map-rejoin test or durable
+progression is claimed. The publisher's separate quest162 branch is not live
+in this exact artifact, and no launcher channel/audience changed.
+
+Game SHA-256:
+`d1d09f9bf4c91c547ccfca37a61719dd0394d609b22fe662553b2fe4aef89a6e`.
+Manifest SHA-256:
+`98c371dc836457d8749cd639ec0e8060645db1d1e333af5ebc97414d49fe40bb`.
+Profile SHA-256:
+`d564afee8cacaf1a35aa2c92b91670ed4d173f69aed99d11738533e4ab018f0f`.
+Private verification receipt: `a223a90-release-verification-20261106.json`,
+SHA-256 `b4d9ec1447407b2de8e97f57cabbc76580dc7cca0508de05f2f292362acc4063`.
+Full REA: `209026-a223a90-release-readback-20261106.json`, SHA-256
+`d28601b6dc1edec3281135ba2d754148774180772cda047b627eaaf7cd18d6b4`,
+evidence `ev_9728d30a086bee2365a644f295adbad80a94a8b31e5d95ea9fe8b32428a00d97`.
+The read-only verifier exited0 with verified owned cleanup and complete output.

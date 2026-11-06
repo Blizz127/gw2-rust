@@ -37,17 +37,18 @@ and does not acquire a hostile, so this is no full hunt or combat-code pass.
 Cleanup passes and window35 was returned08:35:16Z.
 [Retained attempts](re/209026-saved-norn-creator.md#run229-native-control-and-targeting-boundary).
 
-**a223a90** is checked and submitted to the sole publisher. It restores
+**a223a90 is live**, deployed08:41:57Z through the sole publisher. It restores
 carried XP/earned stats before quest-completion replay initializes the
 reward panel, fixing a constructor-XP0 sampling defect. A failure-before
 regression,21 distinct focused tests, musl build and four startup checks
-pass. It adds no XP payout policy or schema; it is not yet verified live.
+pass. Independent08:43:03Z readback verifies the exact reviewed artifact,
+all current/rollback hashes, four owned listeners, saved mode and backup.
+It adds no XP payout policy or schema.
 [Fix and source binding](re/209026-quest154-content.md#reward-initialization-timing-and-carried-xp-ordering-fix).
 
-**9326c08-vendor is now live**, deployed07:55:30Z at
-`/home/blizz/gw2-rust-9326c08-vendor`. Independent readback verified all current and
+Current kit: `/home/blizz/gw2-rust-a223a90`. Independent readback verified all current and
 rollback hashes, effective settings, saved mode/one record, unchanged backup
-and four owned listeners at08:05:25Z; zero humans/bots. The profile enables
+and four owned listeners at08:43:03Z; zero humans/bots. The unchanged profile enables
 the tutorial merchant; its appearance and placement remain fixture choices.
 It retains the checked
 quest154 item32138/72-copper claim, exact payout carry and transition timer
@@ -56,10 +57,10 @@ the interleaved-character transfer fix, wallet and map28 POI discovery;
 run224 observes waypoint371 discovery.
 Waypoint travel is offline-tested but not exercised by a client click.
 The earlier earned attribute increment remains active.
-Rollback is9326c08. Prepared publisher226 shows a reward claim, weapon icon
+Rollback is9326c08-vendor. Prepared publisher226 shows a reward claim, weapon icon
 and72 copper, followed by logged map28 restoration. The full saved-character
 flow, retail item binding/XP policy, effective-level/health scaling, healing and durable progression remain
-incomplete. [Release evidence](re/209026-saved-norn-live-activation.md#verified-merchant-profile-release-9326c08-vendor).
+incomplete. [Release evidence](re/209026-saved-norn-live-activation.md#verified-carried-xp-order-release-a223a90).
 
 Run226 accepts the owned Ether Feast10176 request, typed0x78 start/completion,
 then observes the native slot cleared through direct45 handling. The snapshot
