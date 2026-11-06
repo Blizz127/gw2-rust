@@ -117,14 +117,14 @@ class SavedModeTests(unittest.TestCase):
         self.assertNotIn("--mission-base-attributes", auth)
 
     def test_prepared_mode_forwards_explicit_base_attributes_to_world_only(self):
-        self.values["GW2_BASE_ATTRIBUTES"] = "37"
+        self.values["GW2_BASE_ATTRIBUTES"] = "default-curve"
         code, calls, errors = self.launch(4)
         self.assertEqual(code, 143, errors)
         game = [args for name, args in calls if name == "gw2-game-observe"]
         self.assertEqual(len(game), 2)
         world = next(args for args in game if "--mission-preamble" in args)
         auth = next(args for args in game if "--auth-character-record" in args)
-        self.assertEqual(world[world.index("--mission-base-attributes") + 1], "37")
+        self.assertEqual(world[world.index("--mission-base-attributes") + 1], "default-curve")
         self.assertNotIn("--mission-base-attributes", auth)
 
     def test_failed_binary_preflight_starts_no_listeners_or_fallback(self):

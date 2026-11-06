@@ -482,7 +482,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
     let mut equipment_frames: Option<Vec<u8>> = None;
     let mut skill_frames: Option<Vec<u8>> = None;
     let mut initial_health: Option<f32> = None;
-    let mut base_attributes: Option<u16> = None;
+    let mut base_attributes: Option<mission::BaseAttributes> = None;
     let mut talk_npc_spec: Option<(u32, [f32; 3])> = None;
     let mut talk_npc_speaker: Option<String> = None;
     let mut hostile_npcs: Vec<(u32, [f32; 3])> = Vec::new();
@@ -629,7 +629,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
                     return Err(invalid("duplicate --mission-base-attributes"));
                 }
                 let text = args.next().ok_or_else(|| invalid("missing initial base attributes"))?;
-                base_attributes = Some(text.parse().map_err(|_| invalid("initial base attributes must be a u16"))?);
+                base_attributes = Some(mission::BaseAttributes::parse(&text)?);
             }
             "--mission-talk-npc" => {
                 if talk_npc_spec.is_some() {
@@ -814,7 +814,7 @@ fn run(mut args: impl Iterator<Item = String>) -> io::Result<()> {
             }
             _ => {
                 return Err(invalid(
-                    "usage: gw2-game-observe [--check-config] [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-base-attributes VALUE (explicit level-one baseline, no default)] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo DURATION_MS (RESEARCH, 1..=65535, no default)] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
+                    "usage: gw2-game-observe [--check-config] [--no-capture] [--character-store DIR] [--auth-create-route LOOPBACK:PORT] [--creation-scene WORLD_LOOPBACK:PORT] --params BLOB136 --private EXPONENT64 --log DIR [--listen LOOPBACK:PORT] [--reply-frame FILE] [--auth-reply-body FILE [--auth-agreement-state FILE] [--auth-character-record BODY [--auth-play-route LOOPBACK:PORT]] | --mission-preamble [--mission-map-key KEY (= summary +1 Word of the auth character record) [--mission-population RECORD --mission-spawn X,Y,Z [--mission-population-delay-ms MS] [--mission-mesmer-values FIRST,SECOND --mission-reward-tracks A,B,C,D] [--mission-equipment FILE] [--mission-skills FILE] [--mission-health VALUE] [--mission-base-attributes VALUE|default-curve (explicit unmodified profile, no default)] [--mission-quest KEY,FLAGS,GOAL] [--mission-talk-npc SPECIES,X,Y,Z [--mission-talk-npc-speaker NAME]] [--mission-hostile-npc SPECIES,X,Y,Z]... (repeatable, up to 16; agents 3, 4, ...) [--mission-skill-order-echo DURATION_MS (RESEARCH, 1..=65535, no default)] [--mission-npc-cast SKILL] [--mission-damage-on-skill AMOUNT] [--mission-xp-per-kill N] [--mission-starter-bag 959|962|968|970 [--mission-kill-loot]] [--mission-npc-attack DAMAGE] [--mission-sourced-damage KIND]]]]",
                 ));
             }
         }

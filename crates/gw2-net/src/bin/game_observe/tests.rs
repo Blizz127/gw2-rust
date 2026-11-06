@@ -350,7 +350,7 @@ fn check_config_validates_saved_profile_and_identity_without_binding() {
         echo.extend(["--mission-skill-order-echo".into(), duration.into()]);
         run(echo.into_iter()).unwrap();
     }
-    for value in ["0", "37", "65535"] {
+    for value in ["0", "37", "65535", "default-curve"] {
         let mut attributes = args.clone();
         attributes.extend(["--mission-base-attributes".into(), value.into()]);
         run(attributes.into_iter()).unwrap();
@@ -382,18 +382,20 @@ fn check_config_validates_saved_profile_and_identity_without_binding() {
 }
 
 #[test]
-fn base_attributes_config_requires_explicit_u16_and_population() {
+fn base_attributes_config_requires_explicit_profile_and_population() {
     let parse = |tail: &[&str]| {
         run(["--check-config", "--no-capture"].into_iter().chain(tail.iter().copied())
             .map(str::to_owned)).unwrap_err().to_string()
     };
     assert_eq!(parse(&["--mission-base-attributes"]), "missing initial base attributes");
-    for value in ["65536", "-1", "1.5", "NaN", "--mission-preamble"] {
-        assert_eq!(parse(&["--mission-base-attributes", value]), "initial base attributes must be a u16");
+    for value in ["65536", "-1", "1.5", "NaN", "default", "--mission-preamble"] {
+        assert_eq!(parse(&["--mission-base-attributes", value]), "base attributes must be a u16 or default-curve");
     }
     assert_eq!(parse(&["--mission-base-attributes", "0", "--mission-base-attributes", "37"]),
         "duplicate --mission-base-attributes");
     assert_eq!(parse(&["--mission-base-attributes", "37"]),
+        "--mission-base-attributes requires a population");
+    assert_eq!(parse(&["--mission-base-attributes", "default-curve"]),
         "--mission-base-attributes requires a population");
 }
 

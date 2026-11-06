@@ -4,7 +4,7 @@
 use bytes::Bytes;
 use gw2_proto::{Guid, character_creation::CreationRequest209026, population::PopulationProfession209026};
 use std::io;
-use super::{character_store::CharacterStore, equipment::EquipmentFixture, mission::PopulationFixture, skills::SkillFixture};
+use super::{character_store::CharacterStore, equipment::EquipmentFixture, mission::{BaseAttributes, PopulationFixture}, skills::SkillFixture};
 
 #[derive(Clone)]
 pub struct SavedPopulation {
@@ -16,7 +16,7 @@ pub struct SavedPopulation {
     pub equipment: Option<Bytes>,
     pub skills: Option<Bytes>,
     pub initial_health: Option<f32>,
-    pub base_attributes: Option<u16>,
+    pub base_attributes: Option<BaseAttributes>,
 }
 
 fn invalid(message: &str) -> io::Error {
@@ -342,20 +342,22 @@ pub(super) mod tests {
     fn saved_base_attributes_follow_each_selected_character() {
         let mut scenario = SavedScenario::new();
         let original = [frames(scenario.expected(0)), frames(scenario.expected(1))];
-        scenario.profile.base_attributes = Some(37);
-        for selected in [0, 1, 0] {
-            let actual = frames(scenario.profile.for_join(&scenario.preamble(selected)).unwrap());
-            assert_eq!(actual, frames(scenario.expected(selected)));
-            assert_eq!(actual[0], original[selected][0]);
-            assert_eq!(actual[2], original[selected][2]);
-            assert_eq!(actual[1].len(), original[selected][1].len() + 56, "eight attribute updates only");
-            let inserted: Vec<u8> = (1u8..=4).flat_map(|selector| [
-                187, 0, 1, selector, 37, 0, 189, 0, 1, selector, 37, 0, 0, 0,
-            ]).collect();
-            let offset = actual[1].windows(inserted.len()).position(|w| w == inserted).unwrap();
-            assert_eq!(&actual[1][..offset], &original[selected][1][..offset]);
-            assert_eq!(&actual[1][offset + inserted.len()..], &original[selected][1][offset..]);
-            assert_eq!(&actual[1][offset + inserted.len()..offset + inserted.len() + 3], &[170, 0, 1]);
+        for profile in [BaseAttributes::Fixed(37), BaseAttributes::DefaultCurve] {
+            scenario.profile.base_attributes = Some(profile);
+            for selected in [0, 1, 0] {
+                let actual = frames(scenario.profile.for_join(&scenario.preamble(selected)).unwrap());
+                assert_eq!(actual, frames(scenario.expected(selected)));
+                assert_eq!(actual[0], original[selected][0]);
+                assert_eq!(actual[2], original[selected][2]);
+                assert_eq!(actual[1].len(), original[selected][1].len() + 56, "eight attribute updates only");
+                let inserted: Vec<u8> = (1u8..=4).flat_map(|selector| [
+                    187, 0, 1, selector, 37, 0, 189, 0, 1, selector, 37, 0, 0, 0,
+                ]).collect();
+                let offset = actual[1].windows(inserted.len()).position(|w| w == inserted).unwrap();
+                assert_eq!(&actual[1][..offset], &original[selected][1][..offset]);
+                assert_eq!(&actual[1][offset + inserted.len()..], &original[selected][1][offset..]);
+                assert_eq!(&actual[1][offset + inserted.len()..offset + inserted.len() + 3], &[170, 0, 1]);
+            }
         }
     }
 

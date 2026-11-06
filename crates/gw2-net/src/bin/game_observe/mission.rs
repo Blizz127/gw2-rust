@@ -40,6 +40,7 @@ use gw2_proto::{
     skill_order::{AgentBehaviorOrderFrame209026, SkillBeginRequest209026, SkillOrder209026},
     player_startup::PlayerStartupFrame209026,
     population::{self, PopulationPlan, PopulationProfession209026},
+    primary_attribute_curve::default_player_primary_attribute209026,
     quest::{QuestLifecycleFrame209026, QuestLifecycleOperation209026},
     schema::{self, Message},
 };
@@ -179,7 +180,37 @@ pub struct PopulationFixture {
     quest: Option<QuestFixture>,
     equipment: Option<super::equipment::EquipmentFixture>,
     skills: Option<super::skills::SkillFixture>,
-    base_attributes: Option<u16>,
+    base_attributes: Option<BaseAttributes>,
+}
+
+/// Explicit unmodified profile, separate from arbitrary equipment/modifiers
+/// and from the unproved effective-level selection policy.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BaseAttributes {
+    Fixed(u16),
+    DefaultCurve,
+}
+
+impl From<u16> for BaseAttributes {
+    fn from(value: u16) -> Self { Self::Fixed(value) }
+}
+
+impl BaseAttributes {
+    pub fn parse(text: &str) -> io::Result<Self> {
+        if text == "default-curve" {
+            Ok(Self::DefaultCurve)
+        } else {
+            text.parse().map(Self::Fixed).map_err(|_| io::Error::new(
+                ErrorKind::InvalidInput, "base attributes must be a u16 or default-curve"))
+        }
+    }
+
+    fn initial_value(self) -> u16 {
+        match self {
+            Self::Fixed(value) => value,
+            Self::DefaultCurve => default_player_primary_attribute209026(1).unwrap(),
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -271,12 +302,12 @@ impl PopulationFixture {
         Ok(self)
     }
 
-    /// Explicit unmodified level-one profile: selectors 1..=4 have this
-    /// earned/effective value, with raw signed column zero. The frozen default
-    /// curve supplies37, but arbitrary equipment/modifiers are not inferred.
+    /// Explicit unmodified profile: selectors 1..=4 start with this value
+    /// in both columns, with raw signed column zero. Only DefaultCurve updates
+    /// earned attributes on level-up; fixed values retain constant semantics.
     /// See docs/re/209026-starter-base-attributes.md.
-    pub fn with_base_attributes(mut self, value: u16) -> Self {
-        self.base_attributes = Some(value);
+    pub fn with_base_attributes(mut self, value: impl Into<BaseAttributes>) -> Self {
+        self.base_attributes = Some(value.into());
         self
     }
 
@@ -298,7 +329,8 @@ impl PopulationFixture {
                 if let Some(equipment) = &self.equipment {
                     out.extend_from_slice(equipment.bytes());
                 }
-                if let Some(value) = self.base_attributes {
+                if let Some(attributes) = self.base_attributes {
+                    let value = attributes.initial_value();
                     // Existing character/coreStats and all population
                     // components precede this point. Update only the known
                     // attribute columns, without a second creation or guessed
@@ -774,14 +806,29 @@ const RESPAWN_DELAY: Duration = Duration::from_secs(10);
 
 /// On an NPC kill: add experience, send 191, and 188 when the client's
 /// experience table crosses a level (docs/re/209026-npc-talk-loop.md, XP).
-fn award_kill_xp(xp: &mut Option<(u32, u32, u8)>, character_index: u32, out: &mut BytesMut) {
+fn award_kill_xp(xp: &mut Option<(u32, u32, u8)>, attributes: Option<BaseAttributes>, character_index: u32, out: &mut BytesMut) {
     let Some(per_kill) = xp.map(|(per_kill, ..)| per_kill) else { return };
-    award_xp(xp, per_kill, "kill", character_index, out);
+    award_xp(xp, attributes, per_kill, "kill", character_index, out);
+}
+
+/// The explicitly selected curve follows earned level only. Neither 189 nor
+/// the second level/health is inferred from 188. Fixed profiles stay fixed.
+fn encode_earned_attributes(attributes: Option<BaseAttributes>, character_index: u32, level: u8, out: &mut BytesMut) {
+    if attributes == Some(BaseAttributes::DefaultCurve)
+        && let Some(value) = default_player_primary_attribute209026(level)
+    {
+        for attribute in 1..=4 {
+            CoreStatsAttributeFrame209026 {
+                character_index, attribute,
+                operation: CoreStatsAttributeOperation209026::Earned { value },
+            }.encode_frame(out);
+        }
+    }
 }
 
 /// Add `amount` experience for `reason`: 191 with the new total, and 188 when
 /// the client's experience table crosses a level.
-fn award_xp(xp: &mut Option<(u32, u32, u8)>, amount: u32, reason: &str, character_index: u32, out: &mut BytesMut) {
+fn award_xp(xp: &mut Option<(u32, u32, u8)>, attributes: Option<BaseAttributes>, amount: u32, reason: &str, character_index: u32, out: &mut BytesMut) {
     let Some((_, total, level)) = xp.as_mut() else { return };
     *total = total.saturating_add(amount);
     ExperienceFrame209026 { character_index, experience: *total, dword_2: 0, byte_3: 0 }.encode_frame(out);
@@ -790,6 +837,7 @@ fn award_xp(xp: &mut Option<(u32, u32, u8)>, amount: u32, reason: &str, characte
     if reached > *level {
         *level = reached;
         EarnedLevelFrame209026 { character_index, level: reached }.encode_frame(out);
+        encode_earned_attributes(attributes, character_index, reached, out);
         eprintln!("Mission phase: level up to {reached} (server 188)");
     }
 }
@@ -1073,7 +1121,8 @@ impl MissionPhase {
             }
             .encode_frame(out)?;
             eprintln!("Mission phase: NPC {npc} died (server 84 packed 0x33)");
-            award_kill_xp(&mut self.xp, player, out);
+            let attributes = self.population.as_ref().and_then(|p| p.base_attributes);
+            award_kill_xp(&mut self.xp, attributes, player, out);
             advance_heart(&mut self.heart, out)?;
             if let Some(heart) = self.heart.as_mut()
                 && heart.done
@@ -1087,7 +1136,7 @@ impl MissionPhase {
                 }
                 .encode_frame(out)?;
                 eprintln!("Mission phase: renown heart {} reward panel (server 556 type 14)", heart.key);
-                award_xp(&mut self.xp, HEART_XP, "renown heart", player, out);
+                award_xp(&mut self.xp, attributes, HEART_XP, "renown heart", player, out);
             }
             if self.heart.is_some_and(|h| h.done && h.key == 56)
                 && let Some(talk) = self.talk.as_mut()
@@ -1360,6 +1409,7 @@ impl MissionPhase {
                     ExperienceFrame209026 { character_index: fixture.plan.character_index, experience: total, dword_2: 0, byte_3: 0 }
                         .encode_frame(&mut out);
                     EarnedLevelFrame209026 { character_index: fixture.plan.character_index, level }.encode_frame(&mut out);
+                    encode_earned_attributes(fixture.base_attributes, fixture.plan.character_index, level, &mut out);
                 }
                 if self.restore_loot > 0 || self.restore_xp.is_some() {
                     eprintln!("Mission phase: restored {} loot items and experience {:?} after rejoin", self.restore_loot, self.restore_xp);
@@ -2167,8 +2217,11 @@ pub(crate) mod tests {
                 .map(|(_, bytes)| bytes.len()).sum::<usize>()
                 + if with_equipment { equipment.len() } else { 0 };
             assert_eq!(&original[insertion..insertion + 3], &[170, 0, 1]);
-            for value in [0u16, 37, u16::MAX] {
-                let configured = fixture.clone().with_base_attributes(value);
+            for (profile, value) in [
+                (BaseAttributes::Fixed(0), 0u16), (BaseAttributes::Fixed(37), 37),
+                (BaseAttributes::Fixed(u16::MAX), u16::MAX), (BaseAttributes::DefaultCurve, 37),
+            ] {
+                let configured = fixture.clone().with_base_attributes(profile);
                 let stream = configured.population_stream().unwrap();
                 // Independent literal187/189 wire frames, character1.
                 let [lo, hi] = value.to_le_bytes();
@@ -2186,6 +2239,37 @@ pub(crate) mod tests {
                     &[0x0c, 4, 0xaf, 1, 0x53, 0, 1, 0, 1]);
             }
         }
+    }
+
+    #[test]
+    fn base_attributes_curve_tracks_earned_thresholds_and_preserves_fixed_profiles() {
+        for profile in [None, Some(BaseAttributes::Fixed(37)), Some(BaseAttributes::DefaultCurve)] {
+            let mut xp = Some((1, 0, 1));
+            for (amount, total, level, changed, value) in [
+                (1999, 1999, 1, false, 37u16),
+                (1, 2000, 2, true, 44),
+                (u32::MAX, u32::MAX, 80, true, 1000),
+                (1, u32::MAX, 80, false, 1000),
+            ] {
+                let mut actual = BytesMut::new();
+                award_xp(&mut xp, profile, amount, "test", 1, &mut actual);
+                let mut expected = BytesMut::new();
+                ExperienceFrame209026 { character_index: 1, experience: total, dword_2: 0, byte_3: 0 }
+                    .encode_frame(&mut expected);
+                if changed {
+                    expected.extend_from_slice(&[188, 0, 1, level]);
+                    if profile == Some(BaseAttributes::DefaultCurve) {
+                        let [lo, hi] = value.to_le_bytes();
+                        for selector in 1..=4 { expected.extend_from_slice(&[187, 0, 1, selector, lo, hi]); }
+                    }
+                }
+                assert_eq!(actual, expected, "profile {profile:?}, total {total}; no effective/health updates");
+                assert_eq!(xp, Some((1, total, level)));
+            }
+        }
+        let mut out = BytesMut::new();
+        award_xp(&mut None, Some(BaseAttributes::DefaultCurve), 2000, "disabled", 1, &mut out);
+        assert!(out.is_empty());
     }
 
     #[test]
@@ -2931,14 +3015,18 @@ pub(crate) mod tests {
             return;
         }
         assert!(CARRY.lock().unwrap().is_none());
-        let fresh = || populated_phase()
-            .with_hostile_npc(100, [5.0, 0.0, 0.0]).unwrap()
-            .with_damage_on_skill(LEVEL1_NPC_HEALTH)
-            .with_xp_per_kill(10)
-            .with_npc_attack(10.0, 100.0)
-            .with_heart(56, 2).unwrap()
-            .with_respawn_point([1.0, 2.0, 3.0])
-            .with_rejoin_route("127.1.0.4:6112".parse().unwrap());
+        let fresh = || {
+            let mut phase = populated_phase();
+            phase.population.as_mut().unwrap().base_attributes = Some(BaseAttributes::DefaultCurve);
+            phase
+                .with_hostile_npc(100, [5.0, 0.0, 0.0]).unwrap()
+                .with_damage_on_skill(LEVEL1_NPC_HEALTH)
+                .with_xp_per_kill(10)
+                .with_npc_attack(10.0, 100.0)
+                .with_heart(56, 2).unwrap()
+                .with_respawn_point([1.0, 2.0, 3.0])
+                .with_rejoin_route("127.1.0.4:6112".parse().unwrap())
+        };
         let enter = |phase: &mut MissionPhase| {
             phase.respond(&Seen::Map(ClientMapEvent::MapLoaded)).unwrap().unwrap();
             phase.respond(&Seen::Map(ClientMapEvent::AgentsLoaded)).unwrap().unwrap()
@@ -2969,6 +3057,12 @@ pub(crate) mod tests {
             ExperienceFrame209026 { character_index: 1, experience, dword_2: 0, byte_3: 0 }.encode_frame(&mut out);
             (191, out.to_vec())
         }).collect::<Vec<_>>();
+        let attributes = |rows: &[(u16, Vec<u8>)]| rows.iter()
+            .filter(|row| matches!(row.0, 187 | 189)).cloned().collect::<Vec<_>>();
+        let earned = |value: u16| (1..=4).map(|selector| {
+            let [lo, hi] = value.to_le_bytes();
+            (187, vec![187, 0, 1, selector, lo, hi])
+        }).collect::<Vec<_>>();
         let rejoin = |phase: &mut MissionPhase| {
             phase.npc_attack.as_mut().unwrap().defeated = true;
             let redirect = phase.respond(&Seen::Other(210)).unwrap().unwrap();
@@ -2985,13 +3079,16 @@ pub(crate) mod tests {
         enter(&mut phase);
         let first = frames(&phase.respond(&skill_at(3)).unwrap().unwrap());
         assert!(!first.iter().any(|f| f.0 == 556));
+        assert!(attributes(&first).is_empty(), "no attribute update below a level threshold");
         assert_eq!(first.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[10]));
 
         // Incomplete progress survives, and the first completion still pays.
         let (mut phase, opening) = rejoin(&mut phase);
+        assert_eq!(attributes(&opening), earned(37), "rejoin restores the level-one earned profile");
         assert_eq!(opening.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[10]));
         assert!(phase.heart.is_some_and(|h| h.progress == 1 && !h.done));
         let completion = frames(&phase.respond(&skill_at(3)).unwrap().unwrap());
+        assert_eq!(attributes(&completion), earned(51), "heart XP crosses to earned level3; effective state stays fixed");
         let mut reward = BytesMut::new();
         RenownFrame209026::HeartReward {
             reward: 1, heart: 56, currencies: vec![(1, HEART_COINS), (2, HEART_KARMA)],
@@ -3002,12 +3099,22 @@ pub(crate) mod tests {
         // A completed, rewarded heart survives another connection. Its next
         // kill retains ordinary kill XP without replaying panel or heart XP.
         let (mut phase, opening) = rejoin(&mut phase);
+        assert_eq!(attributes(&opening), earned(51), "rejoin restores the earned curve after level-up");
         assert_eq!(opening.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[20 + HEART_XP]));
         assert!(phase.heart.is_some_and(|h| h.progress == 2 && h.done));
         let next_kill = frames(&phase.respond(&skill_at(3)).unwrap().unwrap());
+        assert!(attributes(&next_kill).is_empty());
         assert!(!next_kill.iter().any(|f| f.0 == 556), "completed heart reward must not repeat after respawn");
         assert_eq!(next_kill.into_iter().filter(|f| f.0 == 191).collect::<Vec<_>>(), xp_frames(&[30 + HEART_XP]));
         assert_eq!(phase.xp.unwrap().1, 30 + HEART_XP);
+
+        // The kill reward path also carries the profile when it crosses a
+        // threshold itself, independently of the heart reward above.
+        let mut phase = fresh().with_xp_per_kill(2000);
+        enter(&mut phase);
+        let kill = frames(&phase.respond(&skill_at(3)).unwrap().unwrap());
+        assert_eq!(attributes(&kill), earned(44));
+        assert_eq!(phase.xp.unwrap().2, 2);
     }
 }
 

@@ -80,8 +80,9 @@ preserve every other line. It makes no saved/prepared mode choice. Receipt:
   default argv and explicit prepared/saved forwarding. Shell syntax passes.
 
 These are server output and configuration checks, not a new client observation.
-XP still updates earned level without complete effective-level/attribute
-progression. The startup correction does not resolve that larger requirement,
+The subsequent [explicit curve option](209026-earned-attribute-progression.md)
+adds earned-attribute maintenance on level-up and rejoin. Complete effective-level
+and attribute progression remains unresolved. The startup correction does not resolve that larger requirement,
 skill execution, localization keys or the authored Great Hunt encounter.
 The sole publisher's unanswered roster prompt and runtime hold are preserved.
 

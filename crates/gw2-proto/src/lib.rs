@@ -38,6 +38,7 @@ pub mod play_route;
 pub mod player_creation;
 pub mod player_startup;
 pub mod population;
+pub mod primary_attribute_curve;
 pub mod progress;
 pub mod npc_talk;
 pub mod pvp;
