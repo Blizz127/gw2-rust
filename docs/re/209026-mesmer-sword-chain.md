@@ -117,13 +117,17 @@ separate from this selection contract.
 `skill_key` and `raw_count`, with complete-frame encode/decode methods.
 Decoding commits input consumption only on success. The codec preserves
 the complete Dword/Byte domains, including zero; it imposes no content
-validity or progression policy and is not wired into the mission server.
+validity or progression policy. This original codec slice did not wire it into
+the mission server; the later
+[7cfe9c4 reconstruction and run241 smoke](209026-mesmer-sword-chain-reconstruction.md)
+record that separate integration and its explicit policy limits.
 
 `cargo test -p gw2-proto skill_chain::tests` passed3 focused tests covering
 literal bytes against the extracted schema, consecutive frame boundaries,
 all256 count bytes, every fixture truncation, wrong IDs and malformed
 Dword overflow/continuation without input consumption. `git diff --check`
-also passed. No client-runtime verification or server integration was performed.
+also passed. No client-runtime verification or server integration was performed
+as part of these original codec checks.
 
 ## Retained evidence
 

@@ -19,7 +19,7 @@ API/wiki names may locate content but do not replace client verification.
 | Correct Mesmer components and startup skills/equipment | Partial: set4/item33355/palette90 are observed. Run216's605 grant passes availability and produces a real targeted10170 request with one30-point response and no release hit. Correction is live in4c46cad-sk and independently verified. Final-cache instrumentation is partial; full unlock/stat/effect policy remains open. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
 | Norn opening tutorial (Great Hunt, key 379) | Reconstructed story actions/NPCs and a stand-in boss are live; Thora/trophy-kill progression is client-smoked. Publisher226 starts at stage4 and exercises fixed item/coin claim and map28 transfer. The full saved-character sequence, authentic conditions and retail XP/binding policy remain open. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Transfer/arrival is live in76af245. Prepared217 transfers379→28, renders the character and opens the map UI. Post-transfer movement/combat and combined saved-character runtime admission remain unobserved. | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
-| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast is live; run233 observes cooldown/retry/recast and run240 observes positive native health recovery under ordinary enemy damage. Sword-chain candidate 7cfe9c4 passes focused tests and is handed to the publisher, with no release receipt yet. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
+| Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work. Explicit no-clone Ether Feast is live; run233 observes cooldown/retry/recast and run240 observes positive native health recovery under ordinary enemy damage. Sword-chain increment 7cfe9c4 is included in current403ac37; run241 observes all three native requests, matching hits and the slot icon cycle. Retail effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
 | All starting-map hearts, events and discovery objectives | All15 map28 heart areas and14 substitute NPCs are in76af245. Generic inside-area kill progress and placeholder rewards remain fixture rules. Authored tasks/events and full discovery are incomplete. | Source-backed inventory of objectives, implemented outcomes/rewards, completion counts and client playback for every objective. |
 | XP, leveling, skills and equipment progression within area | Explicit fixture XP/level, loot, armor, biography mask and dyes are exercised; retail reward/unlock rules remain incomplete. | Correct rewards/stat progression/unlocks and inventory changes across the starting experience. |
@@ -30,6 +30,17 @@ API/wiki names may locate content but do not replace client verification.
 
 ## Current checkpoint
 
+**403ac37 is verified live**, deployed at11:54:07Z to
+`/home/blizz/gw2-rust-403ac37`, rollback7cfe9c4. Root's independent11:56:13Z
+readback verifies the exact reviewed binary, all current/rollback hashes, four
+owned healthy listeners, saved mode/one private record and unchanged backup.
+This adds optional movement-log cadence1..1000 for short route observations;
+the live profile, supervisor and data are unchanged and default20 remains active.
+Four focused tests,15 binary CLI/startup checks and the musl build pass. It changes
+no gameplay or client hooks. The native sword/heal observations below remain
+their exact earlier artifacts; no403 native traversal is claimed yet.
+[Release readback](re/209026-saved-norn-live-activation.md#verified-movement-diagnostic-release-403ac37).
+
 Run240 confirms positive native health recovery on unchanged e624c8b in the
 prepared near-wolf fixture. Root reviewed the hash-admitted images: health274
 before healing,255 at the first post-input capture,338 at the follow-up with
@@ -39,18 +50,29 @@ all60 immutable input checks pass; window42 returned11:35:27Z. This is not a
 saved-character/full-hunt, exact effect-timing or retail-mechanics test.
 [Evidence and limits](re/209026-ether-feast-reconstruction.md#run240-positive-native-health-recovery).
 
-Sword-chain candidate **7cfe9c4** was handed directly to the existing sole
-publisher at11:35Z. Its opt-in sequence advances10170→10171→10172 after accepted
-hits, with actual-predecessor/count0 resets on an admitted heal or loss of alive
-state. All29 focused checks, the musl build and two saved-profile startup checks
-pass. Hit-driven progression/reset rules remain explicit reconstruction choices;
-native combo behavior, retail strike timing, damage and expiry are unverified.
-The publisher must preserve its newer story/map work when integrating this
-increment. **No newer deployment receipt is established here.** Private receipt:
+Sword-chain increment **7cfe9c4**, now the rollback, was deployed at11:38:42Z to
+`/home/blizz/gw2-rust-7cfe9c4`; its rollback was e624c8b. Root's independent11:43:05Z
+readback verifies exact binary/profile/supervisor/27-byte skills, current and
+rollback hashes, four healthy owned listeners, saved mode/one private record
+and unchanged backup. No newer live work was overwritten; the publisher's
+later story branch remains separate. Its opt-in sequence advances
+10170→10171→10172 after accepted hits, with actual-predecessor/count0 resets on
+an admitted heal or loss of alive state. All29 focused checks, the musl build
+and two saved-profile startup checks pass. Hit-driven progression/reset rules
+remain explicit reconstruction choices; retail strike timing, damage and expiry
+are unverified. Separate run241 now passes one native three-tap cycle:
+10170→10171→10172, matching enemy health118→88→58→28, and the slot icon returns
+to its original image after the third hit. No extra requests or resets occur.
+Launch/UI0 and cleanup/privacy/PE/prepared-record checks pass; window43 returned
+11:51:19Z. It is a prepared fixture smoke, not a saved-character/full-hunt test.
+[Release readback](re/209026-saved-norn-live-activation.md#verified-sword-chain-release-7cfe9c4);
+[implementation and limits](re/209026-mesmer-sword-chain-reconstruction.md).
+[Native combo evidence](re/209026-mesmer-sword-chain-reconstruction.md#run241-native-three-tap-cycle).
+Private implementation receipt:
 `~/re/gw2/notes/mesmer-sword-chain-e624-20261106-checks/receipt.json`, SHA-256
 `1c709e3dfb679731737306ca432751808910296c1fc5300e101a441180dfe012`.
 
-**e624c8b is verified live**, deployed by the sole publisher at10:35:43Z to
+Earlier **e624c8b**, now the rollback, was deployed by the sole publisher at10:35:43Z to
 `/home/blizz/gw2-rust-e624c8b`. Rollback:7c26f45. Root's10:41:12.080308Z
 readback verifies the exact tested artifact, all kit/rollback hashes, four
 owned healthy listeners, saved mode/one private record and unchanged backup.
@@ -400,7 +422,8 @@ automatic repetition remain unfinished.
 The [sword-chain trace/codec](re/209026-mesmer-sword-chain.md), commitf382933,
 identifies server628's predecessor/count pair:10170 with count≥1 permits
 10171;10171 with count≥1 permits10172, subject to the other palette checks.
-Three raw-codec tests pass. Advancement/reset timing and integration remain
+Three raw-codec tests pass. Later7cfe9c4 integrates explicit hit-driven progression
+and reset policy, with run241 native evidence above; retail timing remains
 unfinished. The [story-start trace](re/209026-quest154-authored-start.md)
 proves story2→starting quest154→goal1→map379; the story9 link, encounter
 actors/placement and step triggers are still unresolved. A bounded manual

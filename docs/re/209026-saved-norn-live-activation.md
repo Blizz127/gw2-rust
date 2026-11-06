@@ -880,3 +880,92 @@ Private files under `/home/blizz/re/gw2/notes/`:
 - `209026-run233-ether-feast-audit-receipt-20261106.json`, SHA-256
   `fb59d10e7a7dcd81b4403dfcee9d7e7b8b973c759658e581e886b5281a326a73`;
   exact binary, source, log and four screenshot pins are retained there.
+
+## Verified sword-chain release: 7cfe9c4
+
+The sole publisher deployed the exact reviewed7cfe9c4 artifact to
+`/home/blizz/gw2-rust-7cfe9c4` at **2026-11-06T11:38:42Z**, retaining
+`/home/blizz/gw2-rust-e624c8b` for rollback. Live was still the exact e624c8b
+base, so this did not overwrite newer live work. The publisher's later quest162
+branch remains separate and must preserve this increment when integrated.
+
+The [opt-in implementation](209026-mesmer-sword-chain-reconstruction.md) advances
+the three sword selections after accepted hits and resets with the actual
+predecessor/count0 on an admitted heal or loss of alive state. Rejected requests
+leave combat and pending healing unchanged. The candidate passed29 focused
+checks, musl build and two saved-profile no-listener startup checks. Only the
+explicit chain option and two additional605 grants change the effective profile.
+Hit-driven progression/reset are reconstruction policy; strike timing, damage,
+expiry and full retail mechanics remain unresolved.
+
+Root's independent **11:43:05.582617Z** readback verifies the selected kit,
+running executable identities, every current/rollback manifest entry, four
+owned healthy listeners, both chain and Ether Feast flags and the exact27-byte
+skills fixture. Saved-norn mode, one private record, directory mode0700 and the
+original activation backup remain unchanged. Record contents were not read.
+Zero humans/bots were present. Damage30/default-curve, vendor/wallet/POIs and
+14 heart NPCs/20 hostiles/12 ambient actors remain configured. Autoattack and
+echo remain absent; `story_branch` is `none`.
+
+| Deployed input | SHA-256 |
+| --- | --- |
+| Game,1834928 bytes | `b411840dea19760e77f826681bd0a2fbe759b9313b1e556b04ff62250f031df2` |
+| Manifest | `c0bdd0f4a70a2d32ffd1d05b59ca2a07fd6111db4d5b04c28dfbf9cb5741c190` |
+| Profile | `c62fa699d43c7e1be49f8c4b6e1331e168b6658e87bf8bd3574a662ca8be2ac8` |
+| Supervisor | `831ea70a1f3bdb2628248e805775c83ff102ccedbe2b3cd15e21fa0dec9629ce` |
+| Skills,27 bytes | `7a8f8c7be4e52f646aec90b0edfaf66feceb6a800d52354cf78fad8f9809d7b1` |
+
+Private receipt `7cfe9c4-release-verification-20261106.json`, SHA-256
+`7f37451e9295022898eb21c640820492933687be39da78cb9809a16840d220a7`.
+Full REA `209026-7cfe9c4-release-readback-20261106.json`, SHA-256
+`b246755e246155f2850e06833699c640763940649add9bc42b993364682e1b92`,
+evidence `ev_cd2a4c15dbd90c1ab71e9f50e7c6a7cc66b1ee1af1c156da1da8174fdbc1b069`.
+The read-only verifier exits0, untruncated, with verified owned cleanup.
+No launcher/feed, audience, frozen client, owner record or schema changes occur.
+The native three-tap smoke was pending at that release readback. Subsequent
+[run241](209026-mesmer-sword-chain-reconstruction.md#run241-native-three-tap-cycle)
+observes the exact live artifact's three native skill requests, corresponding
+hits and slot icon cycle; its sandbox returned cleanly at11:51:19Z. That prepared
+fixture observation does not establish saved-mode/full-hunt or retail mechanics.
+
+## Verified movement-diagnostic release: 403ac37
+
+The sole publisher deployed exact403ac37 to `/home/blizz/gw2-rust-403ac37`
+at **2026-11-06T11:54:07Z**, retaining7cfe9c4 for rollback. This increment adds
+`--mission-movement-log-every N`, accepting1..1000 and defaulting to20. The
+default predicate remains exactly count%20==1, including wraparound; N1 logs
+each report. The option changes log selection only, leaving movement decoding,
+replies, timers, gameplay state, placements and client hooks unchanged. No
+supervisor/profile option enables denser logs on live.
+
+Root reviewed the three-file diff and11 pinned receipt inputs. Four focused tests
+cover default/wrap compatibility, dense/max selection, invalid options and
+unchanged decoded movement/replies;15 binary CLI/no-listener checks and the
+static musl build pass. The common phase application follows prepared/saved
+destination selection; the creator connection has no world phase. The newer
+publisher story branch remains separately integrated and unpublished by this
+exact artifact.
+
+Independent readback at **11:56:13.566234Z** verifies the selected/running binary,
+all current and rollback files, four owned healthy listeners, saved mode/one
+private record/mode0700 and unchanged activation backup. It checks that the
+movement-log override is absent, preserving the reviewed default20. The exact
+profile, supervisor,27-byte skills, chain/healing options and existing world,
+vendor, wallet and POI inputs match7cfe9c4. Zero humans/bots were present.
+No record contents were read or configuration changed.
+
+Game:1834968 bytes, SHA-256
+`123d90c3cd5ea8635d919d232306e5180e32c2044a75333870e8448c5ce26f08`.
+Manifest SHA-256:
+`3a01dab51b0f8132ee60cc5bd94a36660c24136744243abe46bf01c9a53ff082`.
+Implementation receipt `movement-log-every-7cfe9c4-20261106/receipt.json`,
+SHA-256 `6da6488d9452ca413df0149faa63272dc281bf060937c879790e0af903d05818`.
+Release receipt `403ac37-release-verification-20261106.json`, SHA-256
+`fc5dd8dc67245510f66fe72212f8203dea9d5e22904652c40004d88514b5c506`.
+Full REA `209026-403ac37-release-readback-20261106.json`, SHA-256
+`078926bc5df58278b8bc3e41270f7484d17491c7d089bc9974e2a0f2a8f95d70`,
+evidence `ev_f74d29a186b520deaa5798fcebad81479634a1fb07908d16a4e965148d0da163`.
+All receipts remain private under `~/re/gw2/notes/`; readback exits0 with complete
+output and verified owned cleanup. Run241's native combo evidence is specifically
+on the preceding7cfe9c4 artifact. No403 native route traversal, full-retail,
+durable-progression or launcher-feed claim follows from this diagnostic release.

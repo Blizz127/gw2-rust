@@ -85,8 +85,8 @@ uses the first type-0 event quantity to override action +0x10. Applied to
 these records, that yields 900, 800 and 1200. The type-3 quantities are 240,
 400 and 480. These quantities are distinct; neither should silently become
 an authoritative server duration or damage time. The two raw +5 values of 2
-remain raw and are not labeled attack counts. Type 7/9 consumer semantics
-were not expanded in this slice.
+remain raw and are not labeled attack counts. The later ordinary type7/9
+consumer follow-up below does not identify authoritative hit timing.
 
 The [ordinary event-consumer trace](209026-skill10176-animation-event-consumers.md)
 establishes that the shared timed loop divides event quantity by the current
@@ -149,3 +149,34 @@ integer-preserving regeneration
 `ev_996d573470670fc177289630d90f372c4fc7db9943b0aaf0936272f1f2f7fcf6`
 supersedes that copy; the exact suffixed JSON and final passing comparison
 above are authoritative for these extracted rows.
+
+## Ordinary type7/9 consumers: streak effects
+
+The installed ordinary-view listener binds type7 through1411dbc50, slot+3e8
+and14110c050 to AvCharEffect141131370. Type9 reaches141131530 through
+1411dbca0, slot+3f0 and14110c0d0. The named assertion is
+`streakIndex < arrsize(m_streaks[0])`; these sword rows use index0.
+
+Type7 clears/replaces two retained effect-handle slots and selects effect rows
+with flags0x8000/0x20000. Type9 invokes the same manager's virtual+0x30 on the
+existing handles, without clearing those slots itself. Both event branches
+share event-index advancement at order+0xfc. Their covered ordinary consumers
+contain no direct SkillBegin producer,628 setter, health delta or network send.
+The observed role is visual-effect management; raw event quantities are not
+therefore named hit or recovery times.
+
+Two further complete bodies,14112a1c0 and14112a390, extend effect setup. Nested
+141129980 and the concrete effect-manager virtual+0x20/+0x30 methods remain
+unexpanded. This is a bounded installed-listener trace, not a census of all
+dynamic subscribers or virtual descendants, and changes no server timing policy.
+
+Private14-record bundle:
+`209026-sword-event79-consumer-closure-evidence-20261106.json`, SHA-256
+`150c5717dcc5bba233863d5304537ec0ede83f4039d3fbeb39272f1c3d1a5d1f`.
+Findings `209026-sword-event79-consumer-closure-findings-20261106.json`, SHA-256
+`bed10f896485effb02d04b2b33940e0b1b0a450ee9586e4d844b06e5f8bd5035`.
+New complete setup evidence:
+`ev_43ec971dd4070fbfed2803c7ba329d6bba6ca491789e19fb48feccae90ee0a6a`
+and`ev_3bcfc6eeb0ee81a2fef6383d27bcc6ed115e2266271229f27dc3f8f6785b6aee`.
+Both exit0 with verified owned cleanup and complete raw/normalized output;
+one omits duplicated rendered-terminal state. No archive or runtime was accessed.
