@@ -47,9 +47,12 @@ Future production artifacts must include deployed commit
 publisher for merge/build/test. Run264 uses older403 only as an isolated
 diagnostic comparison. It is now staged and root-reviewed:9 controller tests,
 8 reader tests, exact-name/syntax checks and two startup checks pass. Root
-verifies48 metadata pins and all1839 manifest rows. Fresh window55 was verified
-at16:28:51Z and the one bounded run started at16:29:22Z. Its result and resource
-return are pending at this checkpoint; no native movement success is assumed.
+verifies48 metadata pins and all1839 manifest rows. Run264 now stops incomplete:
+S750/A750 produce44 fresh reports, then W750 and one passive follow-up produce
+none. It releases before B5 or local entry; launch/UI13 is retained. Window55
+returns16:35:45Z with70 immutable inputs, original record, PE/privacy and
+container cleanup verified. No movement cause or local clearance is inferred.
+[Run264 outcome](re/209026-saved-norn-creator.md#run264-prefix-incomplete-no-local-steps).
 
 Earlier **a9399dc was independently verified at16:13:00Z**, publisher deployment
 16:10:49Z to `/home/blizz/gw2-rust-a9399dc`, rollback `fccd1b0`. Independent
@@ -66,8 +69,15 @@ policy remain unresolved. [Source and codec](re/209026-buff-instance-lifecycle.m
 
 One subsequent bounded source trace names buff-body+0x18 value2 as the native
 `conditionCount` subset for tracked status keys; key94 bypasses that bookkeeping.
-The boon class, authored buff records and authoritative cleanse/effect policy
-remain unresolved. No gameplay effect follows from this classification alone.
+The boon class and authoritative cleanse/effect policy remain unresolved.
+No gameplay effect follows from this classification alone.
+
+The next retained-record slice finds a concrete authored link:10170 and10171
+both reference buff SkillDef738/UID9153, status78/class2, through their type2
+description facts. The existing generic classified-reference APIs can support
+a dedicated bounded buff-body reader; no new archive extraction is needed.
+These facts do not establish application timing, duration or effect policy.
+[Retained record and next reader](re/209026-buff-instance-lifecycle.md#retained-mesmer-sword-buff-record).
 
 Earlier **fccd1b0**, retained as rollback, had publisher deployment15:30:21Z to
 `/home/blizz/gw2-rust-fccd1b0`, rollbackec69643-alpinehall. Independent15:35:13Z
@@ -185,8 +195,8 @@ source-defined initial fallback boxes miss the local crop. A partial selected
 terrain section from the observed endpoint through unwalked C1/C2 is joined
 without height jumps; it does not establish native clearance. The other92
 animation/blocker references, filters and actor swept shape remain outside
-the model. Fresh run264 is staged with at most four short feedback-driven local
-holds; no resource grant or runtime has started at this checkpoint.
+the model. Run264's later prefix failure means those candidate local points
+remain unwalked; its shared-resource window is now returned.
 [Bounds, section and limits](re/209026-saved-norn-creator.md#resolved-fallback-bounds-and-partial-selected-section).
 
 Run240 confirms positive native health recovery on unchanged e624c8b in the

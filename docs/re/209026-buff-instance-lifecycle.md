@@ -110,6 +110,37 @@ a total condition-instance count covering every status key. The trace does
 not name the other +0x18 values as boons, inspect actual authored buff records,
 or establish cleanse eligibility, priority, count or timing.
 
+## Retained Mesmer sword buff record
+
+A bounded cached-record follow-up resolves the type2 description facts of
+both10170 and10171 to the same buff SkillDef738, UID9153. The fact payload's
+typed64 external reference selects container27/file1282857, offset4625960.
+The record validates type64 and kind1; its classified local+0x60 reference
+resolves body offset4626176 in the same container. The checked body minimum
+is0x1c bytes: status key+0x14 is78 and class+0x18 is2. Status78 is not the
+excluded94, so this record belongs to the named condition-count subset above.
+No complete buff-structure size or localized buff name is established.
+
+The existing Rust `SkillDefinition209026` reader exposes key/flags but no
+buff body. `ContentIndex::reference` and `resolve_reference` preserve local
+and external ownership and bounds, so a dedicated pure reader can validate
+the0x68 SkillDef, require kind1, resolve its body and expose these raw fields.
+This is a concrete next implementation, not an effect change already present.
+Description facts do not supply authoritative application, duration, stacking,
+targeting, damage modifiers, timing or cleanse policy.
+
+Private findings `209026-mesmer-sword-authored-buff-reader-findings-20261106.json`,
+SHA256 `d936621c728d7bfc5b781c940dfa65b08e27a848598237553f50cccc64fbc619`.
+Exact record evidence SHA256
+`dcb95be297dc5688e62933deb6fdad40a3e0fd0d7337c3d8c453a9d734605cdf`,
+REA `ev_9e65ace5129ff98da025e44249f18168504734cfe4b2caf107888c39462c7349`.
+The preceding fact-reference capture is
+`ev_0acb97209defd9a295ef202d07f627620d26a0f6a9db97d8a2f6eb3a06337654`.
+Both exit0 without truncation and verify owned cleanup. Root checks16 distinct
+referenced pins and the bounded helpers. Only retained caches are read;
+unverified unrelated processes remain untouched. No archive or runtime access
+occurs in this follow-up.
+
 ## Implementation and checks
 
 `gw2_proto::buff::{BuffFrame209026, BuffOperation209026}` implements explicit

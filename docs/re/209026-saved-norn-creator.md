@@ -1149,6 +1149,58 @@ unrelated environment-permission failures remain recorded and untouched.
 All geometry work uses retained files, with no client, archive or shared
 sandbox access.
 
+## Run264: prefix incomplete, no local steps
+
+Fresh run264 uses exact403 with movement-log cadence1 and the original154-byte
+synthetic saved character, preserving spawn, actors and stage0. Its offline
+controller/reader guards pass9/8 focused checks plus exact-name, syntax and
+two no-listener startup checks. Root verifies48 metadata pins and all1839
+manifest rows. Fresh window55 is verified at16:28:51Z; one bounded launch
+starts at16:29:22Z. This isolated comparison never replaces live d0288e1-pups.
+
+S750 yields29 new movement reports, ending[-3305,-25600,-3745]. A750 yields15,
+ending[-3305,-25506,-3745], ordinal44. The next W750 yields no new reports;
+one permitted passive follow-up also yields none. The controller releases
+incomplete immediately. Same owned focus identity is admitted before/after
+the W input and at the passive view; this does not establish whether input
+delivery, collision or another cause accounts for the missing samples.
+B5 remains1248.319270 XY units away. Local entry, C1/C2 steps, turns,
+combat/target/interaction/story inputs and retries do not occur.
+
+Root views the hash-verified last passive image: the purple male Norn, health388,
+stands outside the open arched lodge among nearby NPCs and tables, with a
+Greet[F] prompt. The frame supplies no specific cause for the missing forward
+samples. Claim/release output is collected at16:32:53.749Z/16:34:25.673Z,
+91.924seconds apart; these are not exact native event timestamps. Root checks
+17 files pinned by the controller receipt. All six controller captures exit0
+without truncation, while the launch/UI exit13 correctly retains the incomplete
+route. The strict readback exits0 and is complete.
+
+Window55 returns at **16:35:45.225296Z** after verifying all70 immutable non-prefix
+inputs, unchanged original record, frozen/working executable hashes, console
+privacy and named-container absence. Capture cleanup covers its owned process
+group; unrelated unverified host processes remain untouched. No lease or next
+runtime is active. Retained comparison should precede another movement proposal;
+neither a full route nor local clearance is established.
+
+Private evidence under `~/re/gw2/notes/`:
+
+- Root outcome `run264-norn-local-step-outcome-20261106.json`, SHA256
+  `ebfe943b496074f44ca888f9ac6e9b7b669deadb28c9f80a55a68eb76e0c24ff`.
+- Controller receipt `run264-controller-outcome-receipt-20261106.json`, SHA256
+  `e19b23fceda58d7cd22b64c13a74f0d623323ca1e55384ff9039dcb66d04a215`.
+- Launch `209026-run264-norn-local-step-launch-20261106.json`, SHA256
+  `368b59ec9c8b48093aecb1ee4eda6be60a29b2b9c8bb56124d36a29d72ed1786`,
+  REA `ev_3e1cba678425389909ffdb61a9bccc2f92cdc892ce277e25eb0e6c72013a4b0f`.
+- Readback `209026-run264-norn-local-step-readback-20261106.json`, SHA256
+  `407155c2a57889e82d1a79821ee336c1dfdcb7a4468a278f18d6102c03aa73cf`,
+  REA `ev_ea3d1755965999b64a888de3a9c3e1fb6edff8fabf24d2a7cacb4b003a3e0e45`.
+- Return `209026-run264-return-window55-20261106.json`, SHA256
+  `c8645c202ffe954b04139c8319b30e3603ed7073cd13302781aa140a3e15ac3f`,
+  REA `ev_6d808e00bb2d2e9fe2cd4c2660ca95be360a34e5b84f404b7ab56fb896661deb`.
+- Final passive image SHA256
+  `97900e07cae3dd4f96547a4b2c3112380c89b9d2a736089b1df9eb7bb86c243d`.
+
 ## Retained REA evidence
 
 - Run119: `ev_34c13ab8e5acd423ac493b6e304bf0468235eea3a6b6f562c7a7de4a7614bfcd`.
