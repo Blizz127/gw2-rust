@@ -323,7 +323,10 @@ The publisher integrated exact9914a835 in9326c08 and deployed it at
 current/rollback hashes, health, saved mode and effective profile. See the
 [live release receipt](209026-saved-norn-live-activation.md#verified-live-release-9326c08).
 Root marked the handoff published; no duplicate release was started. Native
-claim interaction remains a separate observation from deployment verification.
+claim interaction is covered by the separate bounded
+[prepared-stage4 audit](209026-saved-norn-live-activation.md#retained-publisher-payout-smoke):
+visible item/coin presentation before transfer and logged restoration on28,
+with no duplicate/restart/saved-mode claim.
 
 ## Exact XP display expression, no new XP payout policy
 

@@ -17,7 +17,7 @@ API/wiki names may locate content but do not replace client verification.
 | --- | --- | --- |
 | Norn Mesmer creation/selection and correct appearance | Private creation/save/world/waypoint flow passes in run144; restart relog passes in run127. Saved mode enabled live03:29:33Z and independently verified03:43:51Z. | Creation/rendering and activation evidence available; preserve biography/appearance/equipment through the remaining full gameplay experience. |
 | Correct Mesmer components and startup skills/equipment | Partial: set4/item33355/palette90 are observed. Run216's605 grant passes availability and produces a real targeted10170 request with one30-point response and no release hit. Correction is live in4c46cad-sk and independently verified. Final-cache instrumentation is partial; full unlock/stat/effect policy remains open. | Client-backed defaults/selection rules, real skill bar and equipped items, correct unlocks and stats. |
-| Norn opening tutorial (Great Hunt, key 379) | Reconstructed story actions/NPCs and a stand-in boss are live; Thora/trophy-kill progression is client-smoked. Private217 starts at stage4 and exercises boss/transfer only. Full sequence, authentic conditions and reward delivery remain unproved. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
+| Norn opening tutorial (Great Hunt, key 379) | Reconstructed story actions/NPCs and a stand-in boss are live; Thora/trophy-kill progression is client-smoked. Publisher226 starts at stage4 and exercises fixed item/coin claim and map28 transfer. The full saved-character sequence, authentic conditions and retail XP/binding policy remain open. | Source-backed spawn, intro/dialogue, NPC encounters/objectives/boss, rewards and tutorial exit in client. |
 | Wayfarer Foothills (key 28) terrain, movement and travel | Transfer/arrival is live in76af245. Prepared217 transfers379→28, renders the character and opens the map UI. Post-transfer movement/combat and combined saved-character runtime admission remain unobserved. | Correct entry/spawn, collision, movement, map transitions, waypoint use/death recovery in client. |
 | Mesmer combat and profession mechanics | Diagnostic target damage, downed/defeat and waypoint rejoin work; retail skill effects and profession mechanics remain incomplete. | Relevant weapons, attacks, healing, clones/phantasms/shatters, cooldowns, conditions/boons, target/death/downed behavior verified in encounters. |
 | Starting-area NPCs, enemies, vendors and interactions | NPC/dialogue/combat/loot foundations and ambient ravens are available; authored Great Hunt population and placements remain open. | Client-backed population/identity/placement plus exercised dialogue, shops, combat, loot and respawns. |
@@ -40,8 +40,9 @@ the interleaved-character transfer fix, wallet and map28 POI discovery;
 run224 observes waypoint371 discovery.
 Waypoint travel is offline-tested but not exercised by a client click.
 Vendor remains disabled. The earlier earned attribute increment remains active.
-Rollback is b2d6d24-poi. Full native reward interaction, retail item binding/XP
-policy, effective-level/health scaling, healing and durable progression remain
+Rollback is b2d6d24-poi. Prepared publisher226 shows a reward claim, weapon icon
+and72 copper, followed by logged map28 restoration. The full saved-character
+flow, retail item binding/XP policy, effective-level/health scaling, healing and durable progression remain
 incomplete. [Release evidence](re/209026-saved-norn-live-activation.md#verified-live-release-9326c08).
 
 Run226 accepts the owned Ether Feast10176 request, typed0x78 start/completion,

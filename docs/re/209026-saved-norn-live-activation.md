@@ -627,7 +627,37 @@ SHA-256 `849da57bc66b05aadd270aee6c3828b336c7bd40f076b0ed863c68f812b0bd3e`,
 evidence `ev_bf047a5dd912cfa8ed0d15a49d7d740a49116d2b0c9e50c1e9d89234ea1d2f7a`.
 
 This verifies deployment/source/profile/health, not a replayed native reward
-click. The publisher's reported payout smoke is a separate evidence question.
+click. The publisher's retained payout smoke is audited separately below.
 The [fixed-payout record](209026-quest154-content.md) preserves its focused
 tests, native-default item choices, unchanged XP and process-local limits.
 Original character files remain intact; gameplay restart persistence is absent.
+
+### Retained publisher payout smoke
+
+The separate `run226-hunt-payout` uses prepared auth/mission records, no
+character store and hunt stage4. It is distinct from root's Ether Feast
+`run226-skill10176-finish`. One client205 claim is logged, followed by one
+credit log and a successful33-byte network write. The selected key is not
+logged; selected0 follows from the exact9326 source guard, not decoded wire.
+The959/276/204/526 batch is established by pinned code plus its successful
+write. Raw frame capture was disabled, so it is not independently decoded.
+
+Admitted screenshot inspection shows a completion panel with reward icon,
+72 copper and Accept; after acceptance the panel is closed and a72-copper
+toast is visible. Inventory shows2/20 slots, the matching weapon icon and72
+copper. After approximately12.393 seconds the server transfers379→28, applies
+the carry, restores two allocations and reports wallet72/0. A later image
+shows the avatar in the new world; its wallet/item are not visible there.
+Thus native pretransfer presentation and logged post-transfer restoration
+have distinct evidence boundaries.
+
+No duplicate claim, arbitrary disconnect, restart or saved-mode restore was
+exercised. Run logs retain cleanup, executable-hash and console privacy checks.
+The audit capture verifies its own process cleanup; an unrelated EACCES
+process probe remains unverified and was untouched.
+
+Receipt: `publisher-run226-payout-scope-20261106.json`, SHA-256
+`aafd38ad43f5a89a20c62cb5a6915a902f965df1fed09b4657227ef3e4fd285e`.
+Full REA: `209026-publisher-run226-payout-audit-20261106.json`, SHA-256
+`3ea560aa1924fdaf81b60cc17617822eb0f314d32e83c611a834d96386ab6c17`,
+evidence `ev_ade464c54f1eb60e6edc36974a8804b2528142b2e937d14d39d2a5e6d7d2dba5`.
