@@ -149,7 +149,7 @@ fn find_value<'a>(
     let Some(rows) = array(containers, variables, 8, count, 0x40)? else {
         return Ok(None);
     };
-    for (index, bytes) in rows.bytes.chunks_exact(0x40).enumerate() {
+    for (index, bytes) in rows.bytes.as_chunks::<0x40>().0.iter().enumerate() {
         // A different raw hash never reaches the native string comparison.
         if dword(bytes, 8) != hash {
             continue;
@@ -228,7 +228,7 @@ pub fn resolve_ability_value209026<'a>(
     }
     let mut remaining_rows = limits.max_combined_rows;
     if let Some(groups) = array(containers, description, 0x20, group_count, 0x18)? {
-        for (group_index, bytes) in groups.bytes.chunks_exact(0x18).enumerate() {
+        for (group_index, bytes) in groups.bytes.as_chunks::<0x18>().0.iter().enumerate() {
             if !eligible(dword(bytes, 0), mode) {
                 continue;
             }
