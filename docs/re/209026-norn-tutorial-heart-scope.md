@@ -42,9 +42,21 @@ an owned empty temporary store and ephemeral test identity.
 
 Private `checks.json` SHA256:
 `4f0d0d19fc7560b294a84506aa16a89ccd2f7c3de10f206f5482ad90a23e508c`.
-The ready candidate was delivered once to the existing sole publisher under
-`root_norn379_heart_scope_ready_20261107`; this document alone is not a live
-deployment receipt. Preserve the explicit blank in subsequent kits.
+The sole publisher deployed **cb8622a-q171-h379** at
+`/home/blizz/gw2-rust-cb8622a-q171-h379`, reporting time
+2026-11-07T00:07:21Z. Root independently verified the live selection at
+00:10:32 UTC: all current and rollback hashes, the exact one-line profile
+delta, four owned healthy listeners, zero humans/bots, saved mode on,
+126 unchanged story arguments and CDN950 readback. Only BUILD and the
+profile differ from rollback `/home/blizz/gw2-rust-cb8622a-q171`.
+Owner record contents were not read; the activation backup hash is unchanged.
+
+Private verification `cb8622a-q171-h379-release-verification-20261107.json`
+has SHA256 `b8f7fba689424a607fb01e2863da42139dabc2350438e85152318b59396ca669`.
+Full REA readback `209026-cb8622a-q171-h379-release-readback-20261107.json`
+has SHA256 `c03d8350595fa2b49d0eba43ac733cbf9a95ff91591ae20adc6602998bec5cec`,
+evidence `ev_2a954fbb386580510f180d9b6435e49068154c379c1c883d7a78e69858efc228`,
+exit0 with untruncated coverage. Preserve the explicit blank in subsequent kits.
 
 This change does not replace reconstructed trophy actors/placements, alter
 the kill-to-step2 predicate, repair tutorial respawn coordinates or establish
