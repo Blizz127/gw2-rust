@@ -40,7 +40,12 @@ confirms deployment and configuration; it is not a native regeneration
 playback result. Optional new chapter2 and vendor-stock configuration remains
 disabled. The owner-only launcher publication hold is unchanged.
 
-## Quest154 visibility candidate
+## Verified quest154 visibility release
+
+The sole publisher deployed `f9a48c0-q154vis` at
+**2026-11-07 00:52:26 UTC**, kit `/home/blizz/gw2-rust-f9a48c0-q154vis`.
+Rollback `/home/blizz/gw2-rust-3b68f65-regen` is retained. The publisher's
+rebuild is byte-identical to the creator artifact below.
 
 Creator commit `f9a48c0daef337b339cdd7d9233c47c12011405a` is based on the
 regeneration release. It adds the recovered547(step2) notification after
@@ -56,7 +61,7 @@ an intermediate test-reader limitation remain separately recorded in
 The final regression checks used the corrected tests against the exact parent
 implementation, then passed after restoring the committed fix.
 
-Candidate musl executable: 2,092,480 bytes, SHA256
+Deployed musl executable: 2,092,480 bytes, SHA256
 `c92c98a5bb9a03eacc3a99fc35347ee67910ca3a164fb0e73c03d601eded8ed4`.
 Offline auth/world startup checks passed at **00:49:21 UTC**, without
 listeners, using the current kit's profile/supervisor and126 story arguments.
@@ -64,10 +69,40 @@ The original synthetic record remained unchanged and temporary identity/store
 were removed. Receipt
 `quest154-step2-visibility-f9a48c0-preflight-20261107/checks.json`, SHA256
 `0e63fe6c490f119ce2edde2cb57c734952e52cdcf7e8511b70dd7f515027f36a`.
-The candidate was sent directly to the verified native sole publisher and
+The change was sent directly to the verified native sole publisher and
 recorded under shared key `root_quest154_step2_visibility_ready_20261107`.
-This handoff does not itself establish publication. The
+Independent readback at **00:53:45.729690 UTC** verifies publication: all53
+current and rollback sums, four healthy owned listeners, zero players,
+saved-character mode, unchanged profile/supervisor,126 story arguments and
+CDN readback. Only BUILD and the executable differ from rollback. Character
+contents were not read; private modes and the existing backup are preserved.
+
+- Manifest SHA256:
+  `c360b16433659a0802b78679c47938e5a7024a37729809d121dc4e188b2ffe4e`.
+- Private receipt `f9a48c0-q154vis-release-verification-20261107.json`, SHA256
+  `c316f7275e56ef449facb090c6874c154bf1e659fb76dd94b8600248e115115f`.
+- Full readback `209026-f9a48c0-q154vis-release-readback-20261107.json`, SHA256
+  `43342738a714c2e15889c666839eb6b59cb97ed6058c55e0632410aecd1bfdd9`,
+  Evidence `ev_97d04f11b36bfee0132bc61af04a374c82277a566ffd5eb6f4bc3a6f91e888d9`.
+
+The readback exited0, untruncated, with owned capture cleanup verified. The
 [visibility findings](209026-quest154-step-visibility.md) distinguish the
 client mechanism from reconstructed server triggers. Missing localization,
 authored trophy actor/credit rules and later objective visibility remain
 unresolved; full starter fidelity is incomplete.
+
+## Next bounded work
+
+The retained [step table](209026-quest154-content.md) also contains step3 at
+`1282830:4146504`, definition flags2, initial runtime flags0xa, objective0,
+text34080 and sector201. The same547 mechanism supports revealing it after
+the existing reconstructed stage1→2 trophy transition completes step2.
+Fresh stage2 restoration would replay527/532/528/542(1)/542(2), then547(3).
+That is a separate unimplemented increment; this release reveals only step2.
+It must preserve accepted-kill eligibility and duplicate/lifecycle guards.
+Calling this objective Ido and choosing the trophy-credit trigger remain
+server reconstruction. Stage3 and the step6/4 visibility policy are unresolved.
+
+The separate [run281 record](209026-run281-hover-binding.md) closes window71
+and records the procedural hover-confirmation correction for a future fresh
+client run. No runtime remains held, and no lateral-vector result was obtained.
