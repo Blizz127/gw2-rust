@@ -1,5 +1,26 @@
 # Ether Feast admission on configured Norn story maps
 
+## Verified cumulative resume release
+
+The current release is **10803b4-efresume** at
+`/home/blizz/gw2-rust-10803b4-efresume`, deployed by the sole publisher at
+the reported time2026-11-07T00:19:11Z. Root independently verified it at
+00:19:43 UTC. The reviewed2002824-byte game binary is SHA256
+`ca15f7b729a403c42438f87d31220f0847cb0c9b13e13c1f61ca0c7d00926af8`;
+the publisher's independent rebuild is identical. All current and rollback
+hashes pass, four owned listeners are healthy, humans/bots are zero, saved
+mode remains on, and126 story arguments and CDN950 are unchanged.
+Rollback is `/home/blizz/gw2-rust-168e7e4-efmaps`. Only BUILD and the game
+binary differ; the h379 tutorial-heart correction is preserved.
+
+Private receipt `10803b4-efresume-release-verification-20261107.json`, SHA256
+`d8663521a5f5849dca5c75a733462e4250efac5b8d120b3e1944e38c8bd2ff7e`,
+binds the untruncated REA readback
+`ev_060e1bac26ba8f54df874747f3070cccfba494007021732983b74bd5fd0e9ae0`.
+Full capture SHA256 is
+`ba5e0e13146264412273e16365125e1ce3654675f9be49c7f762cc53a12e27ba`.
+Owner record contents were not read; the activation backup is unchanged.
+
 ## Verified admission release
 
 The sole publisher reports **168e7e4-efmaps** deployed at
@@ -15,9 +36,8 @@ Private receipt `168e7e4-efmaps-release-verification-20261107.json`, SHA256
 `85411cfc19c329a496db968a9835af8217115af69602445694480f600169980d`,
 binds full untruncated REA
 `ev_85f9dc562f9fe707ac52caaf388de1fe2166bbcf904c357dc120049a047f2b49`.
-The separate10803b4 resume correction described below has passed its build,
-focused regression and startup checks and is with the sole publisher;
-it is not included in this admission release.
+This earlier admission release did not include the resume correction;
+the subsequent10803b4 release above includes both changes.
 
 The cb8622a-q171 profile enables Ether Feast and configures maps393,401,396,
 405,400 and407. Both prepared and saved-character joins rebuild their mission
@@ -93,6 +113,14 @@ The three passing focused tests and actual failure-before log are retained in
 The source commit also built as a static PIE musl game observer; its separate
 `musl-release-receipt.json` pins the artifact and build log. These are offline
 implementation checks, not a deployment receipt or native reconnect proof.
-The resume correction is not live until a separate publication/readback
-receipt establishes that state. Normal story placements, authored encounter
-rules and full retail fidelity remain open.
+The separate publication/readback above establishes the live version.
+Normal story placements, authored encounter rules and full retail fidelity
+remain open. Process-local progress still does not survive a server restart.
+
+The final cumulative startup receipt is
+`ether-feast-story-resume-10803b4-preflight-20261107/checks.json`, SHA256
+`93951681b13ef3df8a3916b98de35f9673c84d05e78897fef06a0679655f4c69`.
+Both full saved-mode auth/world checks and six supported prepared-map checks
+pass without listeners; map15 is rejected by the expected skill guard.
+The explicit blank tutorial-heart profile and all126 story arguments are
+preserved. Tests use only synthetic owned temporary records/stores.
