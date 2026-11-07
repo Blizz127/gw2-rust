@@ -58,7 +58,15 @@ implementation, then passed after restoring the committed fix.
 
 Candidate musl executable: 2,092,480 bytes, SHA256
 `c92c98a5bb9a03eacc3a99fc35347ee67910ca3a164fb0e73c03d601eded8ed4`.
-This candidate section does not itself establish publication. The
+Offline auth/world startup checks passed at **00:49:21 UTC**, without
+listeners, using the current kit's profile/supervisor and126 story arguments.
+The original synthetic record remained unchanged and temporary identity/store
+were removed. Receipt
+`quest154-step2-visibility-f9a48c0-preflight-20261107/checks.json`, SHA256
+`0e63fe6c490f119ce2edde2cb57c734952e52cdcf7e8511b70dd7f515027f36a`.
+The candidate was sent directly to the verified native sole publisher and
+recorded under shared key `root_quest154_step2_visibility_ready_20261107`.
+This handoff does not itself establish publication. The
 [visibility findings](209026-quest154-step-visibility.md) distinguish the
 client mechanism from reconstructed server triggers. Missing localization,
 authored trophy actor/credit rules and later objective visibility remain
