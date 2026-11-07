@@ -621,3 +621,23 @@ The next discriminating observation should reserve the single instrumented
 the unchanged observer deadline. Successful W sampling does not diagnose the
 later unsampled A input. No longer-hold fix, collision cause, full normal hunt
 or retail accuracy is established. This diagnostic produced no live release.
+
+### Retained lateral-binding check, 2026-11-07
+
+The retained Controls evidence identifies A/D as Strafe Left/Right and Q/E
+as Turn Left/Right. Run278 shows the lateral rows and E; the unobscured Q
+row is retained from235. Both279/280 helpers dispatch the requested lower-case
+key directly through keydown, bounded sleep and keyup, with cleanup keyup.
+There is no supported key-remapping correction.
+
+Run279's earlier A250 already produced seven reports, moving from
+`[-3123,-26071,-3689]` to `[-3087,-26071,-3691]`; run275 D250 also produced
+eleven reports. Those observations contradict a general unbound-lateral or
+minimum-duration explanation for the later silent279D/280A steps. The failed
+windows still lack native-vector coverage and do not establish collision.
+The next single pulse remains assigned to an actual lateral step.
+
+Private retained-only audit `run279-280-lateral-binding-audit-20261107.json`,
+SHA256 `c1f1675b41e057f446337359796f813699d4096aef81bb54a4f0dbd83ce04159`,
+pins the Controls captures, unchanged dispatch helpers and individual actions.
+This audit launched no runtime and changed no input policy.
