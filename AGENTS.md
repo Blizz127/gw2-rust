@@ -1,5 +1,30 @@
 # GW2 Rust standing instructions
 
+## Release cadence and policy resume — 2026-11-07
+
+Owner direction `pt904u/pt905u`, relayed by verified Devbox Coordinator message
+`4eae841ded99649e`, supersedes earlier discretionary project pauses and holds.
+The former `ad6e809b` wake-controller rollout pause is no longer a blocker.
+Historical receipts retain their original status; use the newest deployment
+receipt rather than an older shared-state summary when reporting what is live.
+
+- Release genuinely new ready increments immediately through the existing sole
+  publisher, with at most 45 minutes between useful releases while a releasable
+  increment exists. Do not wait for the clock, bump versions without changes,
+  compile blindly on a timer, or install a release-watch routine in this lane.
+- A successful build and brief startup/crash smoke ordinarily suffice. Broader
+  regression, stress and long feature-parity testing have very low priority;
+  run additional checks only for a concrete integrity or changed-feature risk.
+- Resume useful unfinished work with existing owners and workers. Preserve the
+  shared heavy-work capacity budget; no compiler/test fanout, duplicate publisher,
+  retired-provider revival, lead/model change, job kill or risky server restart.
+- Keep actual native approvals, access/security restrictions, active-player
+  protection, data integrity, backup/rollback and single-writer safeguards.
+  This direction does not grant new public/private access or accept prompts.
+- If no new increment is releasable, report the exact technical, safety, native
+  approval or missing-artifact blocker and the next useful action. Missing retail
+  source evidence remains a technical dependency, not a discretionary pause.
+
 ## Continuous private releases — owner standing order
 
 Blizz issued this permanent order on 2026-11-05 through the verified Devbox
@@ -29,10 +54,12 @@ it:
   existing sole integrator/publisher and publisher baton. Prefer established
   server updates, then existing client feeds; no routine signoff is needed.
   Reference: `~/.local/share/devbox-coordinator/COORDINATOR.md`, section
-  `OWNER CONTINUOUS DEPLOY MANDATE 20261105`. This does not clear any hold or
-  authorize new targets, credentials, policy, or schema changes.
-- Preserve explicit owner pauses, unresolved owner restrictions, genuine
-  release holds, native trust/login/tool-permission prompts and actual denials.
+  `OWNER CONTINUOUS DEPLOY MANDATE 20261105`. The later policy-resume section
+  above supersedes discretionary holds; no new targets, credentials or schema
+  changes are authorized.
+- Preserve unresolved access/security restrictions, concrete release safeguards,
+  native trust/login/tool-permission prompts and actual denials. Earlier
+  discretionary pauses are superseded by the policy-resume section above.
   Do not evade a denial through another publication path. Report the exact
   conflict once and continue independent authorized work.
 - This order adds no authorization for real credentials, security/access
